@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7fbff;
+  --foreground: #0b1220;
+
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-highlight: rgba(255, 255, 255, 0.24);
+  --shadow-glass: 0 24px 80px rgba(0, 0, 0, 0.25);
 }
 
 @theme inline {
@@ -14,13 +19,77 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #05070d;
+    --foreground: #f6f8ff;
+
+    --glass-bg: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-highlight: rgba(255, 255, 255, 0.18);
+    --shadow-glass: 0 24px 80px rgba(0, 0, 0, 0.5);
   }
 }
 
 body {
-  background: var(--background);
+  background: radial-gradient(1200px 600px at 20% 0%, rgba(125, 211, 252, 0.35), transparent 55%),
+    radial-gradient(900px 500px at 80% 10%, rgba(196, 181, 253, 0.28), transparent 50%),
+    radial-gradient(800px 500px at 60% 90%, rgba(110, 231, 183, 0.18), transparent 55%),
+    linear-gradient(to bottom, var(--background), var(--background));
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100dvh;
+}
+
+@layer utilities {
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-glass);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .glass-3d {
+    position: relative;
+    transform: translateZ(0);
+  }
+
+  .glass-3d::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.22),
+      rgba(255, 255, 255, 0.06) 35%,
+      rgba(255, 255, 255, 0) 70%
+    );
+    mix-blend-mode: screen;
+    opacity: 0.55;
+  }
+
+  .text-icy {
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.18), 0 16px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .ring-icy {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+      0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 18s linear infinite;
+  }
 }
