@@ -96,14 +96,14 @@ export function AuthModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.985 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="glass glass-3d ring-icy relative w-full max-w-md overflow-hidden rounded-3xl"
+            className="glass-panel-heavy shadow-2xl relative w-full max-w-md overflow-hidden rounded-3xl"
           >
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
-              <div className="text-base font-semibold tracking-tight text-white">{title}</div>
+            <div className="flex items-center justify-between gap-3 border-b border-black/10 px-6 py-4">
+              <div className="text-base font-bold tracking-tight text-black">{title}</div>
               <button
                 type="button"
                 onClick={onClose}
-                className="glass glass-3d ring-icy inline-flex h-10 w-10 items-center justify-center rounded-full text-white/85 hover:text-white"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-black/60 hover:text-black hover:bg-black/10 transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -114,10 +114,10 @@ export function AuthModal({
                 <button
                   type="button"
                   onClick={() => setMode("sign-in")}
-                  className={`h-10 rounded-2xl text-sm font-semibold ring-1 ring-white/10 ${
+                  className={`h-10 rounded-2xl text-sm font-bold transition-all ${
                     mode === "sign-in"
-                      ? "bg-white text-black"
-                      : "bg-white/5 text-white/85 hover:bg-white/10"
+                      ? "bg-black text-white shadow-lg"
+                      : "bg-black/5 text-black/60 hover:bg-black/10"
                   }`}
                 >
                   Sign in
@@ -125,10 +125,10 @@ export function AuthModal({
                 <button
                   type="button"
                   onClick={() => setMode("sign-up")}
-                  className={`h-10 rounded-2xl text-sm font-semibold ring-1 ring-white/10 ${
+                  className={`h-10 rounded-2xl text-sm font-bold transition-all ${
                     mode === "sign-up"
-                      ? "bg-white text-black"
-                      : "bg-white/5 text-white/85 hover:bg-white/10"
+                      ? "bg-black text-white shadow-lg"
+                      : "bg-black/5 text-black/60 hover:bg-black/10"
                   }`}
                 >
                   Sign up
@@ -137,13 +137,13 @@ export function AuthModal({
 
               <form onSubmit={onSubmit} className="mt-4 grid gap-3">
                 {mode === "sign-up" ? (
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    type="text"
-                    placeholder="Name"
-                    className="h-11 w-full rounded-2xl bg-white/5 px-3 text-sm text-white placeholder:text-white/40 ring-1 ring-white/10 outline-none focus:ring-white/25"
-                  />
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      type="text"
+                      placeholder="Name"
+                      className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
+                    />
                 ) : null}
 
                 <input
@@ -151,7 +151,7 @@ export function AuthModal({
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   placeholder="Email"
-                  className="h-11 w-full rounded-2xl bg-white/5 px-3 text-sm text-white placeholder:text-white/40 ring-1 ring-white/10 outline-none focus:ring-white/25"
+                  className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
                   required
                 />
                 <input
@@ -159,17 +159,17 @@ export function AuthModal({
                   onChange={(e) => setPassword(e.target.value)}
                   type="password"
                   placeholder="Password (min 6)"
-                  className="h-11 w-full rounded-2xl bg-white/5 px-3 text-sm text-white placeholder:text-white/40 ring-1 ring-white/10 outline-none focus:ring-white/25"
+                  className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
                   required
                   minLength={6}
                 />
 
-                {error ? <div className="text-sm text-rose-200">{error}</div> : null}
+                {error ? <div className="text-sm text-red-600 font-medium">{error}</div> : null}
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-1 inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-black shadow-lg shadow-black/20 transition hover:translate-y-[-1px] disabled:opacity-60"
+                  className="mt-1 inline-flex h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-bold text-white shadow-lg shadow-black/20 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
                 >
                   {loading ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
                 </button>

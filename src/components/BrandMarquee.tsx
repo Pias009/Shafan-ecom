@@ -6,44 +6,42 @@ export function BrandMarquee() {
   const items = [...demoBrands, ...demoBrands];
 
   return (
-    <section id="brands" className="mx-auto max-w-6xl px-4 pt-6">
-      <div className="glass glass-3d ring-icy overflow-hidden rounded-3xl">
-        <div className="px-6 py-5">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <div className="text-xs font-medium uppercase tracking-[0.25em] text-white/60">
-                Brands
-              </div>
-              <div className="mt-2 text-xl font-semibold tracking-tight text-white">
-                A layer of icons that moves right-to-left
-              </div>
-            </div>
-            <div className="hidden text-xs text-white/55 md:block">Live marquee</div>
+    <section id="brands" className="mx-auto max-w-7xl px-6 pt-6">
+      <div className="glass-panel overflow-hidden">
+        <div className="px-6 py-10 md:py-16 text-center">
+          <div className="font-body text-xs font-bold uppercase tracking-[0.25em] text-black/60">
+            Brands
           </div>
-        </div>
+          <div className="font-display mt-3 text-4xl md:text-5xl font-bold text-black">
+            Our partner brands
+          </div>
+          <p className="font-body text-black/70 mt-4 max-w-xl mx-auto">
+            Curated partners in premium skincare
+          </p>
 
-        <div className="relative border-t border-white/10 bg-white/5 py-4">
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-black/35 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black/35 to-transparent" />
-
-          <div className="overflow-hidden">
-            <div className="marquee gap-3 px-6">
-              {items.map((b, idx) => (
-                <div
-                  key={`${b.id}-${idx}`}
-                  className="glass glass-3d ring-icy inline-flex items-center gap-3 rounded-2xl px-4 py-3 text-white/85"
-                >
-                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-lg ring-1 ring-white/15">
-                    {b.icon}
-                  </div>
-                  <div className="text-sm font-semibold">{b.name}</div>
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4 md:px-8">
+            {demoBrands.slice(0, 4).map((b, idx) => (
+              <div
+                key={`${b.id}-${idx}`}
+                className="glass-panel rounded-2xl p-8 hover:scale-[1.02] transition-transform duration-500 cursor-pointer group text-left"
+              >
+                <div className="w-14 h-14 rounded-full bg-black flex items-center justify-center mb-5 ring-1 ring-black/10 p-2 shadow-sm">
+                  <span className="font-display text-2xl text-white">{b.name[0]}</span>
                 </div>
-              ))}
-            </div>
+                <h3 className="font-display text-2xl text-black mb-1 font-bold">
+                  {b.name}
+                </h3>
+                <p className="font-body text-sm text-black/70 italic">
+                  Premium collection
+                </p>
+                <p className="font-body text-xs text-black/60 mt-4 font-bold">
+                  Explore products →
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
     </section>
   );
 }
-

@@ -8,7 +8,11 @@ import { Hero } from "@/components/Hero";
 import { Navbar } from "@/components/Navbar";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
+import { Footer } from "@/components/Footer";
 import { demoProducts, type DemoProduct } from "@/lib/demo-data";
+import { useCartStore } from "@/lib/cart-store";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [q, setQ] = useState("");
@@ -16,6 +20,9 @@ export default function Home() {
   const [brand, setBrand] = useState<string>("All");
   const [maxPrice, setMaxPrice] = useState<number>(999);
   const [quickView, setQuickView] = useState<DemoProduct | null>(null);
+
+  const addItem = useCartStore((state) => state.addItem);
+  const router = useRouter();
 
   const brands = useMemo(() => {
     const set = new Set(demoProducts.map((p) => p.brand));
@@ -46,22 +53,26 @@ export default function Home() {
   const hot = useMemo(() => demoProducts.filter((p) => p.hot), []);
 
   function addToCart(product: DemoProduct) {
-    // TODO: replace with real cart store + DB
-    alert(`Added to cart: ${product.name}`);
+    addItem(product, 1);
+    toast.success(`Added ${product.name} to cart`);
   }
 
   function orderNow(product: DemoProduct) {
     addToCart(product);
-    // TODO: navigate to /cart
+    router.push("/cart");
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative z-0">
       <Navbar />
-      <Hero />
-      <BannerSlider />
-      <BrandMarquee />
 
+      {/* Hero — full-screen radiant-skin style */}
+      <Hero />
+
+      {/* Banner */}
+      <BannerSlider />
+
+      {/* Category pills */}
       <CategorySection
         onPick={(c) => {
           setCategory(c);
@@ -69,20 +80,18 @@ export default function Home() {
         }}
       />
 
-      <main className="mx-auto max-w-6xl px-4 pb-16 pt-10">
-        <section id="hot">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <div className="text-xs font-medium uppercase tracking-[0.25em] text-white/60">
-                Hot products
-              </div>
-              <div className="mt-2 text-2xl font-semibold tracking-tight text-white">
-                Trending right now
-              </div>
-            </div>
+      <main className="mx-auto max-w-7xl px-6 pb-20">
+        {/* Hot Products */}
+        <section id="hot" className="pt-16">
+          <div className="text-center mb-10">
+            <p className="font-body text-xs font-bold uppercase tracking-[0.25em] text-black/60">
+              Hot products
+            </p>
+            <h2 className="font-display text-4xl text-black mt-2 font-bold">Trending Now</h2>
+            <p className="font-body text-black/70 mt-2 font-medium">Our most loved products</p>
           </div>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-3">
             {hot.map((p) => (
               <ProductCard
                 key={p.id}
@@ -94,64 +103,59 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="products" className="pt-12">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <div className="text-xs font-medium uppercase tracking-[0.25em] text-white/60">
-                All products
-              </div>
-              <div className="mt-2 text-2xl font-semibold tracking-tight text-white">
-                Filter live by name, category, price, brands
-              </div>
-            </div>
+        {/* All Products + Filters */}
+        <section id="products" className="pt-20">
+          <div className="text-center mb-10">
+            <p className="font-body text-xs font-bold uppercase tracking-[0.25em] text-black/60">
+              All products
+            </p>
+            <h2 className="font-display text-4xl text-black mt-2 font-bold">New Arrivals</h2>
+            <p className="font-body text-black/70 mt-2 font-medium">Fresh additions to our collection</p>
+          </div>
 
-            <div className="glass glass-3d ring-icy grid w-full gap-3 rounded-3xl p-4 md:max-w-3xl md:grid-cols-4">
+          {/* Filter bar */}
+          <div className="glass-panel-heavy rounded-3xl p-5 mb-8 grid gap-4 md:grid-cols-4 border border-black/5">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search name / brand…"
+              className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold"
+            />
+
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+            >
+              {categories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            <select
+              value={brand}
+              onChange={(e) => setBrand(e.target.value)}
+              className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+            >
+              {brands.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+
+            <div className="flex items-center gap-4 px-2">
+              <div className="font-bold text-xs text-black/70 min-w-[70px]">Max ${maxPrice}</div>
               <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search name / brand…"
-                className="h-10 w-full rounded-2xl bg-white/5 px-3 text-sm text-white placeholder:text-white/40 ring-1 ring-white/10 outline-none focus:ring-white/25"
+                type="range"
+                min={5}
+                max={150}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                className="w-full accent-black cursor-pointer"
               />
-
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="h-10 w-full rounded-2xl bg-white/5 px-3 text-sm text-white ring-1 ring-white/10 outline-none focus:ring-white/25"
-              >
-                {categories.map((c) => (
-                  <option key={c} value={c} className="bg-black">
-                    {c}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                className="h-10 w-full rounded-2xl bg-white/5 px-3 text-sm text-white ring-1 ring-white/10 outline-none focus:ring-white/25"
-              >
-                {brands.map((b) => (
-                  <option key={b} value={b} className="bg-black">
-                    {b}
-                  </option>
-                ))}
-              </select>
-
-              <div className="flex items-center gap-3">
-                <div className="text-xs text-white/65">${maxPrice}</div>
-                <input
-                  type="range"
-                  min={5}
-                  max={150}
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="w-full accent-white"
-                />
-              </div>
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((p) => (
               <ProductCard
                 key={p.id}
@@ -161,8 +165,16 @@ export default function Home() {
               />
             ))}
           </div>
+
+          {filtered.length === 0 && (
+            <p className="text-center font-bold text-black/50 mt-12 italic">
+              No products found. Try adjusting your filters.
+            </p>
+          )}
         </section>
       </main>
+
+      <Footer />
 
       <ProductQuickViewModal
         product={quickView}

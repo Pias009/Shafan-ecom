@@ -1,23 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
   preload: false,
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
   preload: false,
 });
 
 export const metadata: Metadata = {
-  title: "Shafan — Icy Glass Store",
-  description: "Modern ecommerce with glass 3D UI.",
+  title: "Shafan — Radiant Skin Store",
+  description: "Premium skincare crafted with nature's finest ingredients.",
 };
 
 export default function RootLayout({
@@ -28,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased selection:bg-sky-300/30 selection:text-white`}
+        className={`${playfairDisplay.variable} ${dmSans.variable} antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

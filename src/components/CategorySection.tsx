@@ -8,30 +8,27 @@ export function CategorySection({
   onPick: (category: (typeof demoCategories)[number]["label"]) => void;
 }) {
   return (
-    <section className="mx-auto max-w-6xl px-4 pt-6">
-      <div className="grid gap-4 md:grid-cols-3">
+    <section className="mx-auto max-w-7xl px-6 pt-10">
+      <div className="text-center mb-8">
+        <p className="font-body text-xs uppercase tracking-[0.25em] text-black/60 font-bold">Shop by category</p>
+        <h2 className="font-display text-3xl text-black mt-2 font-bold">Browse Collection</h2>
+      </div>
+
+      <div className="flex items-center justify-center gap-4 flex-wrap">
         {demoCategories.map((c) => (
           <button
             key={c.id}
             type="button"
             onClick={() => onPick(c.label)}
-            className="glass glass-3d ring-icy group relative overflow-hidden rounded-3xl p-6 text-left transition hover:translate-y-[-2px]"
+            className="glass-panel px-8 py-4 rounded-full font-display text-lg text-black font-bold tracking-wider transition-all duration-300 hover:bg-black hover:text-white group"
           >
-            <div className="text-xs font-medium uppercase tracking-[0.25em] text-white/60">
-              Category
-            </div>
-            <div className="mt-2 text-xl font-semibold tracking-tight text-white">
-              {c.label}
-            </div>
-            <div className="mt-2 text-sm leading-6 text-white/70">{c.description}</div>
-            <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white/90">
-              Quick navigation
-              <span className="transition group-hover:translate-x-0.5">→</span>
-            </div>
+            <span className="block text-xs font-body font-bold uppercase tracking-widest text-black/50 group-hover:text-white/70 mb-0.5">
+              {c.description ?? "Category"}
+            </span>
+            {c.label}
           </button>
         ))}
       </div>
     </section>
   );
 }
-
