@@ -52,17 +52,17 @@ function ResetPasswordForm() {
   return (
     <div className="mx-auto grid min-h-[calc(100dvh-120px)] max-w-6xl place-items-center px-4 py-10">
       <div className="glass glass-3d ring-icy w-full max-w-md rounded-3xl p-6">
-        <div className="text-xs font-medium uppercase tracking-[0.25em] text-white/60">
+        <div className="text-xs font-medium uppercase tracking-[0.25em] text-black/60">
           Reset Password
         </div>
-        <div className="mt-2 text-2xl font-semibold tracking-tight text-white">
+        <div className="mt-2 text-2xl font-semibold tracking-tight text-black">
           Choose a new password
         </div>
 
         {message ? (
           <div className="mt-6">
-            <div className="text-sm text-green-200">{message}</div>
-            <Link href="/auth/sign-in" className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-black shadow-lg shadow-black/20 transition hover:translate-y-[-1px]">
+            <div className="text-sm text-green-600">{message}</div>
+            <Link href="/auth/sign-in" className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition hover:translate-y-[-1px]">
               Sign in
             </Link>
           </div>
@@ -73,7 +73,7 @@ function ResetPasswordForm() {
               onChange={(e) => setPassword(e.target.value)}
               type="password"
               placeholder="New Password"
-              className="h-11 w-full rounded-2xl bg-white/5 px-3 text-sm text-white placeholder:text-white/40 ring-1 ring-white/10 outline-none focus:ring-white/25"
+              className="h-11 w-full rounded-2xl bg-black/5 px-3 text-sm text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-black/25"
               required
               minLength={6}
             />
@@ -82,21 +82,21 @@ function ResetPasswordForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               type="password"
               placeholder="Confirm New Password"
-              className="h-11 w-full rounded-2xl bg-white/5 px-3 text-sm text-white placeholder:text-white/40 ring-1 ring-white/10 outline-none focus:ring-white/25"
+              className="h-11 w-full rounded-2xl bg-black/5 px-3 text-sm text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-black/25"
               required
               minLength={6}
             />
 
-            {error ? <div className="text-sm text-rose-200">{error}</div> : null}
+            {error ? <div className="text-sm text-rose-500">{error}</div> : null}
 
             <button
               type="submit"
               disabled={loading || !token}
-              className="mt-2 inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-black shadow-lg shadow-black/20 transition hover:translate-y-[-1px] disabled:opacity-60"
+              className="mt-2 inline-flex h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition hover:translate-y-[-1px] disabled:opacity-60"
             >
               {loading ? "Resetting..." : "Reset Password"}
             </button>
-            {!token && <div className="text-sm text-rose-200">No reset token found in URL.</div>}
+            {!token && <div className="text-sm text-rose-500">No reset token found in URL.</div>}
           </form>
         )}
       </div>

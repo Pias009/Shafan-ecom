@@ -5,7 +5,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function SignInPage() {
+import { Suspense } from "react";
+
+function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -111,6 +113,14 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SignInForm />
+    </Suspense>
   );
 }
 
