@@ -1,6 +1,8 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export default async function BannersPage() {
   const banners = await (prisma as any).banner.findMany({
     select: { id: true, imageUrl: true, title: true, link: true, active: true, createdAt: true },

@@ -1,6 +1,8 @@
 import { wooApi } from "@/lib/woocommerce";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 // Simple in-memory cache
 let cachedProducts: any = null;
 let lastFetchTime = 0;

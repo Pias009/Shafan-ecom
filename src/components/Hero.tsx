@@ -53,8 +53,6 @@ export function Hero() {
               alt="Hero Graphic"
               className="h-full w-auto object-contain max-h-[600px] relative z-0"
             />
-            {/* Subtle radial glow */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.8)_0%,transparent_70%)] pointer-events-none" />
           </div>
 
           {/* Right — Tagline (Bigger and closer to center) */}
@@ -75,25 +73,25 @@ export function Hero() {
           </motion.div>
         </div>
 
-        {/* 3 Small Product Cards in Hero Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Small Product Cards in Hero Section */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-8">
           {products.map((p, idx) => (
             <motion.div
               key={p.id}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 + idx * 0.15 }}
-              className="glass-panel-heavy p-4 rounded-[2rem] flex items-center gap-5 border border-black/5 hover:shadow-xl transition-all cursor-pointer group"
+              className={`glass-panel-heavy p-2 md:p-4 rounded-3xl md:rounded-[2rem] flex items-center gap-3 md:gap-5 border border-black/5 hover:shadow-xl transition-all cursor-pointer group ${idx === 2 ? 'hidden md:flex' : 'flex'}`}
             >
-              <div className="w-20 h-20 bg-black/5 rounded-2xl overflow-hidden shrink-0">
+              <div className="w-12 h-12 md:w-20 md:h-20 bg-black/5 rounded-xl md:rounded-2xl overflow-hidden shrink-0">
                 <img src={p.mainImage || "/placeholder-product.png"} alt={p.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-black truncate">{p.name}</h4>
-                <div className="flex items-center justify-between mt-1">
-                  <Price amount={p.priceCents / 100} className="text-xs font-black text-black/40" />
-                  <button className="p-2 bg-black text-white rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                    <ShoppingBag size={12} />
+                <h4 className="text-[10px] md:text-sm font-bold text-black truncate">{p.name}</h4>
+                <div className="flex items-center justify-between mt-0.5 md:mt-1">
+                  <Price amount={p.priceCents / 100} className="text-[10px] md:text-xs font-black text-black/40" />
+                  <button className="p-1.5 md:p-2 bg-black text-white rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                    <ShoppingBag size={10} className="md:w-3 md:h-3" />
                   </button>
                 </div>
               </div>

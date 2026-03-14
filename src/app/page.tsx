@@ -11,8 +11,9 @@ import { Footer } from "@/components/Footer";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Filter, X } from "lucide-react";
 import { Price } from "@/components/Price";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
@@ -22,6 +23,7 @@ export default function Home() {
   const [brand, setBrand] = useState<string>("All");
   const [maxPrice, setMaxPrice] = useState<number>(5000);
   const [quickView, setQuickView] = useState<any | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const addItem = useCartStore((state) => state.addItem);
   const router = useRouter();
@@ -125,7 +127,7 @@ export default function Home() {
                   <p className="font-body text-black/70 mt-2 font-medium">Our most loved products</p>
                 </div>
 
-                <div className="grid gap-6 md:grid-cols-3">
+                <div className="grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-3">
                   {hot.map((p) => (
                     <ProductCard
                       key={p.id}
@@ -152,52 +154,76 @@ export default function Home() {
                 <p className="font-body text-black/70 mt-2 font-medium">Fresh additions to our collection</p>
               </div>
 
-              {/* Filter bar */}
-              <div className="glass-panel-heavy rounded-[2rem] p-3 md:p-5 mb-8 grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 border border-black/5">
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search name / brand…"
-                  className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold"
-                />
-
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+              {/* Filter Row */}
+              <div className="flex justify-center mb-8">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
+                    showFilters ? "bg-black text-white" : "glass-panel text-black hover:bg-black hover:text-white"
+                  }`}
                 >
-                  <option value="All">All Categories</option>
-                  {categories.filter(c => c !== "All").map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
-                >
-                  <option value="All">All Brands</option>
-                  {brands.filter(b => b !== "All").map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
-                </select>
-
-                <div className="flex items-center gap-4 px-2 h-10 md:h-11">
-                  <div className="font-bold text-[10px] md:text-xs text-black/70 min-w-[60px] md:min-w-[70px]">Max <Price amount={maxPrice} /></div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={5000}
-                    step={10}
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(Number(e.target.value))}
-                    className="w-full accent-black cursor-pointer h-1.5"
-                  />
-                </div>
+                  {showFilters ? <X size={14} /> : <Filter size={14} />}
+                  {showFilters ? "Hide Filters" : "Show Filters"}
+                </button>
               </div>
 
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {/* Filter bar */}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: "auto" }}
+                    exit={{ opacity: 0, y: -20, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="glass-panel-heavy rounded-[2rem] p-3 md:p-5 mb-10 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 border border-black/5">
+                      <input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Search…"
+                        className="col-span-2 md:col-span-1 h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold"
+                      />
+
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+                      >
+                        <option value="All">All Categories</option>
+                        {categories.filter(c => c !== "All").map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={brand}
+                        onChange={(e) => setBrand(e.target.value)}
+                        className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+                      >
+                        <option value="All">All Brands</option>
+                        {brands.filter(b => b !== "All").map((b) => (
+                          <option key={b} value={b}>{b}</option>
+                        ))}
+                      </select>
+
+                      <div className="flex items-center gap-4 px-2 h-10 md:h-11">
+                        <div className="font-bold text-[10px] md:text-xs text-black/70 min-w-[60px] md:min-w-[70px]">Max <Price amount={maxPrice} /></div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={5000}
+                          step={10}
+                          value={maxPrice}
+                          onChange={(e) => setMaxPrice(Number(e.target.value))}
+                          className="w-full accent-black cursor-pointer h-1.5"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <div className="grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filtered.map((p) => (
                   <ProductCard
                     key={p.id}
