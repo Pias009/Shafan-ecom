@@ -1,26 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ProductsSlider } from "@/components/ProductsSlider";
 import { ProductCard } from "@/components/ProductCard";
-import { demoProducts, demoBrands, demoCategories } from "@/lib/demo-data";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-import { useEffect } from "react";
-
-// Server action or API route would be better, but for simplicity I'll fetch in useEffect or use a separate file for initial data.
-// Actually, I'll update it to handle "priceCents" which is in DB.
+import { Loader2 } from "lucide-react";
+import { Price } from "@/components/Price";
+import { useCurrencyStore } from "@/lib/currency-store";
 
 export default function AllProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState("All");
-  const [maxPrice, setMaxPrice] = useState(150);
+  const [maxPrice, setMaxPrice] = useState(5000);
   const [quickView, setQuickView] = useState<any>(null);
 
   const addItem = useCartStore((state) => state.addItem);
@@ -30,14 +28,14 @@ export default function AllProductsPage() {
       try {
         const res = await fetch("/api/products");
         const data = await res.json();
-        // Transform cents to dollars for the UI compatibility
+        // Transform data for UI compatibility
         const transformed = data.map((p: any) => ({
           ...p,
           price: p.priceCents / 100,
           discountPrice: p.discountCents ? p.discountCents / 100 : undefined,
-          brand: p.brand?.name || "Unknown",
-          category: p.category?.name || "Unknown",
-          imageUrl: p.images?.[0] || ""
+          brandName: p.brand?.name || "Generic",
+          categoryName: p.category?.name || "General",
+          imageUrl: p.mainImage || "/placeholder-product.png"
         }));
         setProducts(transformed);
       } catch (err) {
@@ -49,21 +47,37 @@ export default function AllProductsPage() {
     fetchProducts();
   }, []);
 
+  const brands = useMemo(() => {
+    const set = new Set(products.map(p => p.brandName).filter(Boolean));
+    return ["All", ...Array.from(set).sort()];
+  }, [products]);
+
+  const categories = useMemo(() => {
+    const set = new Set(products.map(p => p.categoryName).filter(Boolean));
+    return Array.from(set).sort();
+  }, [products]);
+
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const price = p.discountPrice ?? p.price;
       const matchesSearch = p.name.toLowerCase().includes(q.toLowerCase()) ||
-        p.brand.toLowerCase().includes(q.toLowerCase());
-      const matchesBrand = brand === "All" || p.brand === brand;
+        p.brandName.toLowerCase().includes(q.toLowerCase());
+      const matchesBrand = brand === "All" || p.brandName === brand;
       const matchesPrice = price <= maxPrice;
       return matchesSearch && matchesBrand && matchesPrice;
     });
   }, [q, brand, maxPrice, products]);
 
-  const categories = ["Skincare", "Haircare", "Fragrance"];
-
   function addToCart(product: any) {
-    addItem(product, 1);
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      brand: product.brandName,
+      category: product.categoryName,
+      price: product.price,
+      imageUrl: product.imageUrl,
+    };
+    addItem(cartItem, 1);
     toast.success(`Added ${product.name} to cart`);
   }
 
@@ -72,10 +86,8 @@ export default function AllProductsPage() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
-        {/* Animated Top Slider */}
         <ProductsSlider />
 
-        {/* Advanced Filters */}
         <div className="mt-12 glass-panel rounded-3xl p-3 flex flex-wrap gap-6 items-end sticky top-24 z-20 shadow-lg">
           <div className="flex-1 min-w-[250px]">
             <label className="block text-xs font-bold uppercase tracking-widest text-black mb-2 px-1">Search</label>
@@ -95,21 +107,20 @@ export default function AllProductsPage() {
               onChange={(e) => setBrand(e.target.value)}
               className="w-full bg-white/50 border-none rounded-2xl px-5 py-3 text-black font-body text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer"
             >
-              <option value="All">All Brands</option>
-              {demoBrands.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
+              {brands.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
           </div>
 
           <div className="min-w-[200px] flex-grow md:flex-grow-0">
             <div className="flex justify-between items-center mb-2 px-1">
               <label className="text-xs font-bold uppercase tracking-widest text-black">Max Price</label>
-              <span className="text-sm font-bold">${maxPrice}</span>
+              <Price amount={maxPrice} className="text-sm font-bold" />
             </div>
             <input
               type="range"
-              min="10"
-              max="150"
-              step="5"
+              min="0"
+              max="5000"
+              step="10"
               value={maxPrice}
               onChange={(e) => setMaxPrice(Number(e.target.value))}
               className="w-full h-2 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
@@ -117,19 +128,17 @@ export default function AllProductsPage() {
           </div>
         </div>
 
-        {/* Loading State */}
         {loading && (
-          <div className="py-20 text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-forest border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-            <p className="mt-4 font-body text-forest/60">Fetching latest products...</p>
+          <div className="py-20 text-center flex flex-col items-center">
+            <Loader2 className="h-8 w-8 animate-spin text-black/20" />
+            <p className="mt-4 font-body text-black/60">Fetching latest products...</p>
           </div>
         )}
 
-        {/* Categorized Sections */}
         {!loading && (
           <div className="mt-20 space-y-24">
             {categories.map((cat) => {
-              const productsInCat = filtered.filter(p => p.category === cat);
+              const productsInCat = filtered.filter(p => p.categoryName === cat);
               if (productsInCat.length === 0) return null;
 
               return (
@@ -170,7 +179,7 @@ export default function AllProductsPage() {
             <div className="text-6xl mb-6 opacity-30">🔍</div>
             <p className="font-display text-3xl text-black">No products found</p>
             <p className="text-black/50 mt-2">Try adjusting your filters or search term</p>
-            <button onClick={() => { setQ(""); setBrand("All"); setMaxPrice(150); }} className="mt-8 text-black underline font-bold underline-offset-4">Reset all filters</button>
+            <button onClick={() => { setQ(""); setBrand("All"); setMaxPrice(5000); }} className="mt-8 text-black underline font-bold underline-offset-4">Reset all filters</button>
           </div>
         )}
       </main>

@@ -8,6 +8,7 @@ import { useMemo, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AuthModal } from "./AuthModal";
 import { UserDropdown } from "./UserDropdown";
+import { CurrencySelector } from "./CurrencySelector";
 import { useCartStore } from "@/lib/cart-store";
 
 const navLinks = [
@@ -128,6 +129,7 @@ export function Navbar() {
             <UserDropdown open={userMenuOpen} onClose={() => setUserMenuOpen(false)} />
           </div>
 
+          <CurrencySelector />
           <ThemeToggle />
         </div>
       </div>

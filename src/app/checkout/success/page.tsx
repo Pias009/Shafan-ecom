@@ -11,6 +11,7 @@ import { Footer } from "@/components/Footer";
 function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const orderId = searchParams.get("order_id");
   const clearCart = useCartStore(state => state.clearCart);
 
   useEffect(() => {
@@ -27,10 +28,10 @@ function SuccessContent() {
             <CheckCircle2 className="w-16 h-16 text-green-500" />
           </div>
 
-          <h1 className="text-4xl font-black text-black mb-4 tracking-tight">Payment Successful!</h1>
+          <h1 className="text-4xl font-black text-black mb-4 tracking-tight">Order Received!</h1>
           <p className="text-lg text-black/60 font-medium mb-1">Your order has been received and is being processed.</p>
-          {sessionId && (
-            <p className="text-[10px] font-black uppercase tracking-widest text-black/20 mb-8">Ref: {sessionId.slice(0, 20)}...</p>
+          {(orderId || sessionId) && (
+            <p className="text-[10px] font-black uppercase tracking-widest text-black/20 mb-8">Ref: {orderId ? `#${orderId}` : sessionId?.slice(0, 20)}</p>
           )}
 
           <div className="grid sm:grid-cols-2 gap-4 mt-10">

@@ -121,17 +121,43 @@ model Category {
   updatedAt DateTime  @updatedAt
 }
 
+model Banner {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl  String
+  title     String?
+  link      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  action     String
+  actorId    String  @db.ObjectId
+  subjectId  String  @db.ObjectId
+  details    String?
+  createdAt  DateTime @default(now())
+
+  actor      User    @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  subject    User    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
 model Product {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String
   description   String
   features      String[]
   images        String[]
+  mainImage     String?
+  stockQuantity Int       @default(0)
+  variants      Json?
   priceCents    Int
   discountCents Int?
   currency      String    @default("usd")
   active        Boolean   @default(true)
   hot           Boolean   @default(false)
+  trending      Boolean   @default(false)
 
   brandId       String?   @db.ObjectId
   categoryId    String?   @db.ObjectId

@@ -1,16 +1,24 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { DemoProduct } from "./demo-data"; // Currently using DemoProduct since there are no schema definitions for Product.
+export interface ProductSummary {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  price: number;
+  imageUrl: string;
+  discountPrice?: number;
+}
 
-export interface CartItem extends DemoProduct {
+export interface CartItem extends ProductSummary {
   quantity: number;
 }
 
 interface CartState {
   items: CartItem[];
   couponCode: string | null;
-  couponDiscount: number; // For demo: e.g. 0.1 for 10% off
-  addItem: (product: DemoProduct, quantity?: number) => void;
+  couponDiscount: number;
+  addItem: (product: ProductSummary, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   applyCoupon: (code: string) => void;

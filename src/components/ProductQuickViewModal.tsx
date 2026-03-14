@@ -1,9 +1,21 @@
 "use client";
 
-import type { DemoProduct } from "@/lib/demo-data";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { Price } from "./Price";
+
+interface QuickViewProduct {
+  id: string;
+  name: string;
+  brand?: string | { name: string };
+  category?: string | { name: string };
+  price: number;
+  discountPrice?: number;
+  imageUrl: string;
+  details?: string;
+  features?: string[];
+}
 
 export function ProductQuickViewModal({
   product,
@@ -11,11 +23,23 @@ export function ProductQuickViewModal({
   onAddToCart,
   onOrderNow,
 }: {
-  product: DemoProduct | null;
+  product: QuickViewProduct | null;
   onClose: () => void;
-  onAddToCart: (product: DemoProduct) => void;
-  onOrderNow: (product: DemoProduct) => void;
+  onAddToCart: (product: any) => void;
+  onOrderNow: (product: any) => void;
 }) {
+  if (!product) return <AnimatePresence />;
+
+  const brandName = typeof product.brand === "string" 
+    ? product.brand 
+    : product.brand?.name || "Shafan Global";
+
+  const categoryName = typeof product.category === "string" 
+    ? product.category 
+    : product.category?.name || "General";
+
+  const displayPrice = product.discountPrice ?? product.price;
+
   return (
     <AnimatePresence>
       {product ? (
@@ -39,29 +63,29 @@ export function ProductQuickViewModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.985 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="glass-panel-heavy shadow-2xl relative w-full max-w-3xl overflow-hidden rounded-3xl"
+            className="glass-panel-heavy shadow-2xl relative w-full max-w-4xl overflow-hidden rounded-[2.5rem] bg-white"
           >
-            <div className="flex items-center justify-between gap-3 border-b border-black/10 px-6 py-4">
+            <div className="flex items-center justify-between gap-3 border-b border-black/5 px-8 py-5 bg-black/5">
               <div className="min-w-0">
-                <div className="truncate text-sm text-black/60 font-bold">{product.brand}</div>
-                <div className="truncate text-lg font-bold tracking-tight text-black">
+                <div className="truncate text-[10px] text-black/40 font-black uppercase tracking-widest">{brandName}</div>
+                <div className="truncate text-xl font-bold tracking-tight text-black">
                   {product.name}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-black/60 hover:text-black hover:bg-black/10 transition-colors"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-md hover:scale-110 active:scale-95 transition-all"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="grid gap-6 p-6 md:grid-cols-2">
-              <div className="glass-panel rounded-3xl overflow-hidden bg-black/5 p-2">
-                <div className="relative aspect-square rounded-2xl overflow-hidden">
+            <div className="grid gap-8 p-8 md:grid-cols-2 max-h-[80vh] overflow-y-auto">
+              <div className="glass-panel rounded-[2rem] overflow-hidden bg-black/[0.02] p-3 h-fit">
+                <div className="relative aspect-square rounded-[1.5rem] overflow-hidden shadow-inner">
                   <Image
-                    src={product.imageUrl}
+                    src={product.imageUrl || "/placeholder-product.png"}
                     alt={product.name}
                     fill
                     sizes="(max-width: 768px) 100vw, 520px"
@@ -72,43 +96,48 @@ export function ProductQuickViewModal({
               </div>
 
               <div className="flex flex-col">
-                <div className="text-xs font-bold uppercase tracking-wider text-black/60">Category</div>
-                <div className="mt-1 text-base font-bold text-black">{product.category}</div>
+                <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Category</div>
+                <div className="mt-1 text-base font-bold text-black">{categoryName}</div>
 
-                <div className="mt-4 text-xs font-bold uppercase tracking-wider text-black/60">Price</div>
-                <div className="mt-1 flex items-end gap-2">
-                  <div className="text-2xl font-bold text-black">
-                    ${product.discountPrice ?? product.price}
-                  </div>
-                  {product.discountPrice ? (
-                    <div className="text-sm text-black/40 line-through font-medium">${product.price}</div>
+                <div className="mt-6 text-[10px] font-black uppercase tracking-wider text-black/30">Price</div>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <Price amount={displayPrice} className="text-3xl font-black text-black" />
+                  {product.discountPrice && product.discountPrice < product.price ? (
+                    <Price amount={product.price} className="text-base text-black/20 line-through font-bold" />
                   ) : null}
                 </div>
 
-                <div className="mt-5 text-xs font-bold uppercase tracking-wider text-black/60">Details</div>
-                <div className="mt-1 text-sm leading-6 text-black/80 font-medium">{product.details}</div>
+                <div className="mt-6 text-[10px] font-black uppercase tracking-wider text-black/30">Description</div>
+                <div 
+                  className="mt-2 text-sm leading-relaxed text-black/70 font-medium prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: product.details || "No description available." }}
+                />
 
-                <div className="mt-5 text-xs font-bold uppercase tracking-wider text-black/60">Features</div>
-                <ul className="mt-2 grid gap-2 text-sm text-black/80">
-                  {product.features.map((f) => (
-                    <li key={f} className="glass-panel-heavy rounded-xl px-4 py-2 font-medium">
-                      {f}
-                    </li>
-                  ))}
-                </ul>
+                {product.features && product.features.length > 0 && (
+                  <>
+                    <div className="mt-6 text-[10px] font-black uppercase tracking-wider text-black/30">Information</div>
+                    <ul className="mt-3 grid gap-2">
+                      {product.features.map((f, i) => (
+                        <li key={i} className="glass-panel rounded-xl px-4 py-2 text-xs font-bold text-black/60 border border-black/5 bg-black/[0.01]">
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
 
-                <div className="mt-8 flex flex-wrap gap-3">
+                <div className="mt-10 flex flex-wrap gap-4 pt-6 border-t border-black/5">
                   <button
                     type="button"
                     onClick={() => onAddToCart(product)}
-                    className="inline-flex h-11 items-center rounded-full bg-black/5 border border-black/10 px-6 text-sm font-bold text-black transition-colors hover:bg-black/10"
+                    className="flex-1 min-w-[140px] h-14 rounded-full bg-white border border-black/10 px-8 text-xs font-black uppercase tracking-widest text-black transition-all hover:bg-black hover:text-white shadow-sm"
                   >
                     Add to cart
                   </button>
                   <button
                     type="button"
                     onClick={() => onOrderNow(product)}
-                    className="inline-flex h-11 items-center rounded-full bg-black px-6 text-sm font-bold text-white shadow-xl shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    className="flex-1 min-w-[140px] h-14 rounded-full bg-black px-8 text-xs font-black uppercase tracking-widest text-white shadow-2xl shadow-black/20 hover:scale-[1.03] active:scale-95 transition-all"
                   >
                     Order now
                   </button>

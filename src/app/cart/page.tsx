@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { useRouter } from "next/navigation";
+import { Price } from "@/components/Price";
 
 function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, applyCoupon, removeCoupon, subtotalCents, discountCents, totalCents }: any) {
   const router = useRouter();
@@ -24,8 +25,8 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       return;
     }
     
-    toast.loading("Redirecting to checkout...", { id: "checkout" });
-    fetch("/api/stripe/checkout", {
+    toast.loading("Creating your order...", { id: "checkout" });
+    fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
@@ -36,9 +37,10 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
     .then(r => r.json())
     .then(data => {
       if (data.url) {
+        toast.success("Order created!", { id: "checkout" });
         window.location.href = data.url;
       } else {
-        toast.error("Checkout failed", { id: "checkout" });
+        toast.error(data.error || "Checkout failed", { id: "checkout" });
       }
     })
     .catch(() => {
@@ -81,7 +83,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                         {item.name}
                       </h3>
                     </div>
-                    <div className="font-body font-black text-black text-lg">${(price * item.quantity).toFixed(2)}</div>
+                    <Price amount={price * item.quantity} className="font-body font-black text-black text-lg" />
                   </div>
 
                   <div className="mt-6 flex items-center justify-between">
@@ -128,7 +130,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
             <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between font-body text-sm text-black/40 font-bold uppercase tracking-wider">
                 <div>Subtotal</div>
-                <div className="text-black font-black">${(subtotalCents / 100).toFixed(2)}</div>
+                <Price amount={subtotalCents / 100} className="text-black font-black" />
               </div>
 
               {couponCode && (
@@ -137,13 +139,13 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                     Promo ({couponCode})
                     <button onClick={removeCoupon} className="text-[10px] underline">(remove)</button>
                   </div>
-                  <div className="font-black">-${(discountCents / 100).toFixed(2)}</div>
+                  <div className="font-black">- <Price amount={discountCents / 100} /></div>
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-6 border-t border-black/5">
                 <div className="font-black text-sm uppercase tracking-widest">Total</div>
-                <div className="text-3xl font-black text-black">${(totalCents / 100).toFixed(2)}</div>
+                <Price amount={totalCents / 100} className="text-3xl font-black text-black" />
               </div>
             </div>
 
