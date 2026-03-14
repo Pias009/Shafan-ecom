@@ -10,7 +10,7 @@ interface PriceProps {
 }
 
 export function Price({ amount, className = "" }: PriceProps) {
-  const formatPrice = useCurrencyStore((state) => state.formatPrice);
+  const { formatPrice, currentCurrency } = useCurrencyStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
