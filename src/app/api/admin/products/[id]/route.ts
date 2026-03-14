@@ -16,13 +16,14 @@ const UpdateSchema = z.object({
   variants: z.any().optional(),
 });
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getServerAuthSession();
   if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
     return new Response('Unauthorized', { status: 401 });
   }
   const product = await (prisma as any).product.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     select: {
       id: true,
       name: true,
@@ -37,7 +38,8 @@ export async function GET({ params }: { params: { id: string } }) {
   return new Response(JSON.stringify(product), { headers: { 'Content-Type': 'application/json' } });
 }
 
-export async function POST({ params, request }: { params: { id: string }, request: Request }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getServerAuthSession();
   if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
     return new Response('Unauthorized', { status: 401 });
@@ -96,13 +98,13 @@ export async function POST({ params, request }: { params: { id: string }, reques
     if (Object.keys(updates).length === 0) {
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
-    const updated = await (prisma as any).product.update({ where: { id: params.id }, data: updates });
+    const updated = await (prisma as any).product.update({ where: { id: id }, data: updates });
     try {
       await (prisma as any).auditLog.create({
         data: {
           action: 'UPDATE_PRODUCT',
           actorId: (session.user as any).id,
-          subjectId: params.id,
+          subjectId: id,
           details: JSON.stringify(updates),
         },
       });

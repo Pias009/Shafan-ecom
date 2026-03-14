@@ -32,7 +32,7 @@ const statusMap: Record<string, string> = {
   FAILED: "failed",
 };
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerAuthSession();
   const user = session?.user as any;
   if (!session || !["ADMIN", "SUPERADMIN"].includes(user?.role)) {

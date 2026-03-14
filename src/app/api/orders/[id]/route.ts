@@ -4,7 +4,7 @@ import { getServerAuthSession } from "@/lib/auth";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerAuthSession();
   if (!session?.user?.email) {
@@ -12,11 +12,11 @@ export async function GET(
   }
 
   try {
-    const { id } = params;
+    const { id } = await params;
     const { data: order } = await wooApi.get(`orders/${id}`);
 
     // Security check: Ensure this order belongs to the logged-in user
-    if (order.billing.email !== session.user.email) {
+    if (order.billing?.email?.toLowerCase() !== session.user.email.toLowerCase()) {
       return NextResponse.json({ error: "Unauthorized access to order" }, { status: 403 });
     }
 

@@ -10,17 +10,19 @@ const UpdateSchema = z.object({
   password: z.string().min(6).optional()
 });
 
-export async function GET({ params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getServerAuthSession();
   if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
     return new Response('Unauthorized', { status: 401 });
   }
-  const user = await (prisma as any).user.findUnique({ where: { id: params.id }, select: { id: true, email: true, name: true, role: true } });
+  const user = await (prisma as any).user.findUnique({ where: { id: id }, select: { id: true, email: true, name: true, role: true } });
   if (!user) return new Response('Not found', { status: 404 });
   return new Response(JSON.stringify(user), { headers: { 'Content-Type': 'application/json' } });
 }
 
-export async function POST({ params, request }: { params: { id: string }, request: Request }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getServerAuthSession();
   if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
     return new Response('Unauthorized', { status: 401 });
@@ -41,7 +43,7 @@ export async function POST({ params, request }: { params: { id: string }, reques
     if (typeof parsed.data.email !== 'undefined') {
       // ensure email uniqueness
       const existing = await (prisma as any).user.findFirst({ where: { email: parsed.data.email } });
-      if (existing && existing.id !== params.id) {
+      if (existing && existing.id !== id) {
         return new Response(JSON.stringify({ error: 'Email already in use' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
       updates.email = parsed.data.email;
@@ -53,14 +55,14 @@ export async function POST({ params, request }: { params: { id: string }, reques
     if (Object.keys(updates).length === 0) {
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
-    const updated = await (prisma as any).user.update({ where: { id: params.id }, data: updates });
+    const updated = await (prisma as any).user.update({ where: { id: id }, data: updates });
     // Audit log for the update
     try {
       await (prisma as any).auditLog.create({
         data: {
           action: 'UPDATE_USER',
           actorId: (session.user as any).id,
-          subjectId: params.id,
+          subjectId: id,
           details: JSON.stringify(updates),
         },
       });

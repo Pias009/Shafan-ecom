@@ -28,12 +28,27 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const items = useCartStore((state) => state.items);
 
+  const [visible, setVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
   useEffect(() => {
     setMounted(true);
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 20);
+      
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down
+        setVisible(false);
+      } else {
+        // Scrolling up
+        setVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [lastScrollY]);
 
   // Sync address status
   const setHasAddress = useCartStore(state => state.setHasAddress);
@@ -69,9 +84,9 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 transform ${
         scrolled ? "glass-nav shadow-sm" : "bg-transparent"
-      }`}
+      } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between relative">
         {/* Centered Desktop Nav */}

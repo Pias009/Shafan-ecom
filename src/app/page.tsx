@@ -153,18 +153,18 @@ export default function Home() {
               </div>
 
               {/* Filter bar */}
-              <div className="glass-panel-heavy rounded-3xl p-5 mb-8 grid gap-4 md:grid-cols-4 border border-black/5">
+              <div className="glass-panel-heavy rounded-[2rem] p-3 md:p-5 mb-8 grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4 border border-black/5">
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder="Search name / brand…"
-                  className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold"
+                  className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold"
                 />
 
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+                  className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
                 >
                   <option value="All">All Categories</option>
                   {categories.filter(c => c !== "All").map((c) => (
@@ -175,7 +175,7 @@ export default function Home() {
                 <select
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
-                  className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+                  className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
                 >
                   <option value="All">All Brands</option>
                   {brands.filter(b => b !== "All").map((b) => (
@@ -183,8 +183,8 @@ export default function Home() {
                   ))}
                 </select>
 
-                <div className="flex items-center gap-4 px-2">
-                  <div className="font-bold text-xs text-black/70 min-w-[70px]">Max <Price amount={maxPrice} /></div>
+                <div className="flex items-center gap-4 px-2 h-10 md:h-11">
+                  <div className="font-bold text-[10px] md:text-xs text-black/70 min-w-[60px] md:min-w-[70px]">Max <Price amount={maxPrice} /></div>
                   <input
                     type="range"
                     min={0}
@@ -192,7 +192,7 @@ export default function Home() {
                     step={10}
                     value={maxPrice}
                     onChange={(e) => setMaxPrice(Number(e.target.value))}
-                    className="w-full accent-black cursor-pointer"
+                    className="w-full accent-black cursor-pointer h-1.5"
                   />
                 </div>
               </div>

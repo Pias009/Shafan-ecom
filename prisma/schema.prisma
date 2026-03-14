@@ -36,6 +36,8 @@ model User {
 
   address       Address?
   orders        Order[]
+  actorAuditLogs   AuditLog[] @relation("ActorAuditLogs")
+  subjectAuditLogs  AuditLog[] @relation("SubjectAuditLogs")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -139,8 +141,8 @@ model AuditLog {
   details    String?
   createdAt  DateTime @default(now())
 
-  actor      User    @relation(fields: [actorId], references: [id], onDelete: Cascade)
-  subject    User    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  actor      User    @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: Cascade)
+  subject    User    @relation("SubjectAuditLogs", fields: [subjectId], references: [id], onDelete: Cascade)
 }
 
 model Product {

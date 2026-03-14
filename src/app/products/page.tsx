@@ -88,43 +88,45 @@ export default function AllProductsPage() {
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
         <ProductsSlider />
 
-        <div className="mt-12 glass-panel rounded-3xl p-3 flex flex-wrap gap-6 items-end sticky top-24 z-20 shadow-lg">
-          <div className="flex-1 min-w-[250px]">
-            <label className="block text-xs font-bold uppercase tracking-widest text-black mb-2 px-1">Search</label>
+        <div className="mt-8 md:mt-12 glass-panel rounded-[2rem] p-3 md:p-4 flex flex-col md:flex-row gap-3 md:gap-6 items-stretch md:items-end sticky top-24 z-20 shadow-lg border border-black/5">
+          <div className="flex-1">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">Search</label>
             <input
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Find a product..."
-              className="w-full bg-white/50 border-none rounded-2xl px-5 py-3 text-black font-body text-sm focus:ring-2 focus:ring-black outline-none placeholder:text-black/30"
+              className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none placeholder:text-black/20"
             />
           </div>
 
-          <div className="min-w-[150px]">
-            <label className="block text-xs font-bold uppercase tracking-widest text-black mb-2 px-1">Brand</label>
+          <div className="w-full md:w-[150px]">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">Brand</label>
             <select
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
-              className="w-full bg-white/50 border-none rounded-2xl px-5 py-3 text-black font-body text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer"
+              className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
             >
               {brands.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
           </div>
 
-          <div className="min-w-[200px] flex-grow md:flex-grow-0">
-            <div className="flex justify-between items-center mb-2 px-1">
-              <label className="text-xs font-bold uppercase tracking-widest text-black">Max Price</label>
-              <Price amount={maxPrice} className="text-sm font-bold" />
+          <div className="w-full md:w-[220px]">
+            <div className="flex justify-between items-center mb-1.5 px-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/30">Max Price</label>
+              <Price amount={maxPrice} className="text-[10px] font-black" />
             </div>
-            <input
-              type="range"
-              min="0"
-              max="5000"
-              step="10"
-              value={maxPrice}
-              onChange={(e) => setMaxPrice(Number(e.target.value))}
-              className="w-full h-2 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
-            />
+            <div className="px-2 h-10 md:h-12 flex items-center">
+              <input
+                type="range"
+                min="0"
+                max="5000"
+                step="10"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
+              />
+            </div>
           </div>
         </div>
 
