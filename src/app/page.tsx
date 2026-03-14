@@ -229,7 +229,8 @@ export default function Home() {
                     key={p.id}
                     product={{
                       ...p,
-                      price: p.priceCents / 100,
+                      price: p.regularPriceCents / 100,
+                      discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
                       imageUrl: p.mainImage,
                       brand: p.brand?.name,
                     }}

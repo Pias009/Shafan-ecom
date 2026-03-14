@@ -32,8 +32,8 @@ export default function AllProductsPage() {
         // Transform data for UI compatibility
         const transformed = data.map((p: any) => ({
           ...p,
-          price: p.priceCents / 100,
-          discountPrice: p.discountCents ? p.discountCents / 100 : undefined,
+          price: p.regularPriceCents / 100,
+          discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
           brandName: p.brand?.name || "Generic",
           categoryName: p.category?.name || "General",
           imageUrl: p.mainImage || "/placeholder-product.png"

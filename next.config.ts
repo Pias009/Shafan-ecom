@@ -15,7 +15,15 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "shanfaglobal.com",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
     ],
+    formats: ['image/avif', 'image/webp'],
+  },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
 };
 

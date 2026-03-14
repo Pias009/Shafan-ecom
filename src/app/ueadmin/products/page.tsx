@@ -60,9 +60,9 @@ export default async function ProductsPage() {
                     </div>
                   </td>
                   <td className="px-8 py-5 text-center">
-                    <div className="font-black text-sm">${parseFloat(p.price || '0').toFixed(2)}</div>
+                    <div className="font-black text-sm">AED {parseFloat(p.price || '0').toFixed(2)}</div>
                     {p.regular_price !== p.price && (
-                      <div className="text-[10px] text-black/20 line-through font-bold">${parseFloat(p.regular_price || '0').toFixed(2)}</div>
+                      <div className="text-[10px] text-black/20 line-through font-bold">AED {parseFloat(p.regular_price || '0').toFixed(2)}</div>
                     )}
                   </td>
                   <td className="px-8 py-5 text-center">

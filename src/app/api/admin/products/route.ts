@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { getServerAuthSession } from '@/lib/auth';
 import { uploadFromUrl } from '@/lib/cloudinary';
+import { wooApi } from '@/lib/woocommerce';
 
 const ProductCreateSchema = z.object({
   name: z.string(),
@@ -12,6 +13,7 @@ const ProductCreateSchema = z.object({
   trending: z.boolean().optional(),
   priceCents: z.number(),
   discountCents: z.number().optional(),
+  stockQuantity: z.number().optional(),
   brandName: z.string().optional(),
   categoryName: z.string().optional(),
   hot: z.boolean().optional()
@@ -47,90 +49,100 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const parsed = ProductCreateSchema.safeParse(body);
-    if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 });
+    if (!parsed.success) {
+      console.error("Validation Error:", parsed.error);
+      return new Response(JSON.stringify({ error: 'Invalid payload', details: parsed.error }), { status: 400 });
+    }
     const data = parsed.data;
-    // Normalize features if provided as a comma-separated string
-    if (typeof data.features === 'string') {
-      data.features = (data.features as string).split(',').map((s: string) => s.trim()).filter((x: string) => x);
-    }
+
     // Cloudinary: handle mainImage upload and images processing
-    let mainImageUrl: string | undefined = undefined;
+    let mainImageUrl: string | null = null;
     if (data.mainImage) {
-      mainImageUrl = await uploadFromUrl(data.mainImage).catch(() => data.mainImage);
-    }
-    // Normalize images input
-    if (Array.isArray(data.images)) {
-      if ((data.images as string[]).length > 0) {
-        const uploaded = await Promise.all((data.images as string[]).map((u) => uploadFromUrl(u).catch(() => u)));
-        data.images = uploaded as string[];
-      } else {
-        data.images = [] as string[];
-      }
-    } else if (data.images) {
-      const arr = (data.images as string).split(',').map((s) => s.trim()).filter(Boolean);
-      const uploaded = await Promise.all(arr.map((u) => uploadFromUrl(u).catch(() => u)));
-      data.images = uploaded as string[];
-    }
-    if (mainImageUrl) {
-      const exists = Array.isArray(data.images) && data.images.includes(mainImageUrl);
-      if (!exists) data.images = [mainImageUrl, ...(Array.isArray(data.images) ? data.images : [])];
-      data.mainImage = mainImageUrl;
+      mainImageUrl = await uploadFromUrl(data.mainImage).catch(() => data.mainImage || null);
     }
 
-    // Upload provided image URLs to Cloudinary (if configured)
-    if (Array.isArray(data.images)) {
-      if (data.images.length > 0) {
-        const uploaded = await Promise.all(data.images.map((u: string) => uploadFromUrl(u).catch(() => u)));
-        data.images = uploaded as string[];
-      } else {
-        data.images = [] as string[];
-      }
-    } else if (data.images) {
-      const arr = (data.images as string).split(',').map((s: string) => s.trim()).filter(Boolean);
-      const uploaded = await Promise.all(arr.map((u: string) => uploadFromUrl(u).catch(() => u)));
-      data.images = uploaded as string[];
+    // Combine mainImage and gallery images
+    let finalImages: string[] = [];
+    if (mainImageUrl) {
+      finalImages.push(mainImageUrl);
     }
+    
+    if (Array.isArray(data.images)) {
+      const uploadedGallery = await Promise.all(
+        data.images
+          .filter(img => img !== mainImageUrl)
+          .map(img => uploadFromUrl(img).catch(() => img))
+      );
+      finalImages = [...finalImages, ...uploadedGallery];
+    }
+    data.images = finalImages;
 
     // Resolve brand/category by name if provided
-    let brandId: string | undefined;
-    let categoryId: string | undefined;
-    if (data.brandName) {
+    let brandId: string | null = null;
+    let categoryId: string | null = null;
+    if (data.brandName && data.brandName !== 'All') {
       const b = await (prisma as any).brand.findFirst({ where: { name: data.brandName } });
-      brandId = b?.id;
+      brandId = b?.id || null;
     }
-    if (data.categoryName) {
+    if (data.categoryName && data.categoryName !== 'All') {
       const c = await (prisma as any).category.findFirst({ where: { name: data.categoryName } });
-      categoryId = c?.id;
+      categoryId = c?.id || null;
     }
 
-    const product = await (prisma as any).product.upsert({
-      where: { name: data.name },
-      update: {
-        description: data.description,
-        features: data.features ?? [],
-        images: (data.images as string[]) ?? [],
-        priceCents: data.priceCents,
-        discountCents: data.discountCents,
-        hot: data.hot ?? false,
-        brandId,
-        categoryId,
-        mainImage: data.mainImage,
-      },
-      create: {
+    // Check for existing product by name to avoid non-unique upsert error
+    const existingProduct = await (prisma as any).product.findFirst({ where: { name: data.name } });
+    
+    const productData = {
+      description: data.description || '',
+      features: data.features ?? [],
+      images: (data.images as string[]) ?? [],
+      priceCents: data.priceCents,
+      discountCents: data.discountCents || 0,
+      stockQuantity: data.stockQuantity ?? 0,
+      hot: data.hot ?? false,
+      trending: data.trending ?? false,
+      brandId,
+      categoryId,
+      mainImage: mainImageUrl,
+    };
+
+    let product;
+    if (existingProduct) {
+      product = await (prisma as any).product.update({
+        where: { id: existingProduct.id },
+        data: productData,
+      });
+    } else {
+      product = await (prisma as any).product.create({
+        data: {
+          name: data.name,
+          ...productData,
+        },
+      });
+    }
+
+    // Sync with WooCommerce
+    try {
+      await wooApi.post('products', {
         name: data.name,
-        description: data.description,
-        features: data.features ?? [],
-        images: (data.images as string[]) ?? [],
-        priceCents: data.priceCents,
-        discountCents: data.discountCents,
-        hot: data.hot ?? false,
-        brandId,
-        categoryId,
-        mainImage: data.mainImage,
-      },
-    });
-    return new Response(JSON.stringify(product), { status: 303, headers: { 'Location': '/ueadmin/products', 'Content-Type': 'application/json' } });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
+        type: 'simple',
+        regular_price: (data.priceCents / 100).toString(),
+        sale_price: data.discountCents ? (data.discountCents / 100).toString() : undefined,
+        description: data.description || '',
+        short_description: data.description?.substring(0, 150) || '',
+        categories: data.categoryName ? [{ name: data.categoryName }] : [],
+        images: finalImages.map(src => ({ src })),
+        manage_stock: true,
+        stock_quantity: data.stockQuantity || 0,
+        status: 'publish'
+      });
+    } catch (wooErr) {
+      console.error('WooCommerce Sync Error:', wooErr);
+    }
+
+    return new Response(JSON.stringify(product), { status: 201, headers: { 'Content-Type': 'application/json' } });
+  } catch (e: any) {
+    console.error("PRODUCT_POST_FATAL_ERROR:", e);
+    return new Response(JSON.stringify({ error: e.message || 'Server error' }), { status: 500 });
   }
 }
