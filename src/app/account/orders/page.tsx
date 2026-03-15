@@ -10,9 +10,19 @@ export default async function OrdersPage() {
 
   let orders: any[] = [];
   try {
-    const { data } = await wooApi.get("orders", {
-      customer: session.user.email,
-    });
+    // 1. Try to fetch customer ID by email
+    const { data: customers } = await wooApi.get("customers", { email: session.user.email });
+    
+    let queryParams: any = {};
+    if (customers && customers.length > 0) {
+      queryParams.customer = customers[0].id;
+    } else {
+      // Fallback to search by email (works for guest orders too)
+      queryParams.search = session.user.email;
+    }
+
+    const { data } = await wooApi.get("orders", queryParams);
+    
     orders = data.map((o: any) => ({
       id: String(o.id),
       totalCents: Math.round(parseFloat(o.total) * 100),

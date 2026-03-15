@@ -33,12 +33,13 @@ export default function CustomPaymentPage() {
         setOrder(data);
 
         // 2. Fetch Stripe Intent (Client Secret)
-        const stripeRes = await fetch("/api/checkout/stripe-intent", {
+        const stripeRes = await fetch("/api/payments/stripe/create-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId: id }),
         });
         const stripeData = await stripeRes.json();
+        if (stripeData.error) throw new Error(stripeData.error);
         setClientSecret(stripeData.clientSecret);
       } catch (err: any) {
         toast.error(err.message || "Failed to load payment details");

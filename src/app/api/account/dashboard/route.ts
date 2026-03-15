@@ -9,10 +9,17 @@ export async function GET() {
   }
 
   try {
-    const { data: wooOrders } = await wooApi.get("orders", {
-      customer: session.user.email, // Search by email if customer ID is unknown
-      per_page: 10,
-    });
+    // 1. Try to fetch customer ID by email
+    const { data: customers } = await wooApi.get("customers", { email: session.user.email });
+    
+    let queryParams: any = { per_page: 10 };
+    if (customers && customers.length > 0) {
+      queryParams.customer = customers[0].id;
+    } else {
+      queryParams.search = session.user.email;
+    }
+
+    const { data: wooOrders } = await wooApi.get("orders", queryParams);
 
     const orders = wooOrders.map((o: any) => ({
       id: String(o.id),

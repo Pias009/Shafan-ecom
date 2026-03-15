@@ -26,7 +26,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
     }
     
     toast.loading("Creating your order...", { id: "checkout" });
-    fetch("/api/checkout", {
+    fetch("/api/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
@@ -36,9 +36,9 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
     })
     .then(r => r.json())
     .then(data => {
-      if (data.url) {
+      if (data.orderId) {
         toast.success("Order created!", { id: "checkout" });
-        window.location.href = data.url;
+        router.push(`/checkout/payment/${data.orderId}`);
       } else {
         toast.error(data.error || "Checkout failed", { id: "checkout" });
       }
