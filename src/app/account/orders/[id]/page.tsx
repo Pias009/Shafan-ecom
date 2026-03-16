@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Package, CreditCard, User, MapPin, CheckCircle2, ShoppingBag } from "lucide-react";
 import { Price } from "@/components/Price";
+import OrderActions from "./OrderActions";
 
 export const dynamic = 'force-dynamic';
 
@@ -155,6 +156,13 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-center md:text-left">Transaction Verified and Secured</p>
         </div>
       </section>
+
+      {/* Dynamic Actions: Cancel (30m) or Refund (Delivered) */}
+      <OrderActions 
+        orderId={order.id.toString()} 
+        status={order.status} 
+        createdAt={order.date_created} 
+      />
     </div>
   );
 }
