@@ -1,28 +1,40 @@
-import { wooApi } from "@/lib/woocommerce";
 import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic';
-
-// Simple in-memory cache
-let cachedProducts: any = null;
-let lastFetchTime = 0;
-const CACHE_DURATION = 1 * 60 * 1000; // 1 minute
+export const revalidate = 60; // Revalidate every 60 seconds (Incremental Static Regeneration)
 
 export async function GET() {
-  const now = Date.now();
-
-  // Return cached data if available and not expired
-  if (cachedProducts && (now - lastFetchTime < CACHE_DURATION)) {
-    return NextResponse.json(cachedProducts);
-  }
-
   try {
-    // Optimization: Only fetch the fields we actually use
-    const { data: wooProducts } = await wooApi.get("products", {
-      status: "publish",
-      per_page: 100,
-      _fields: "id,name,description,attributes,images,stock_quantity,price,regular_price,sale_price,status,featured,on_sale,categories"
+    const woocommerceUrl = (process.env.NEXT_PUBLIC_WOOCOMMERCE_URL || "").replace(/\/$/, "");
+    const consumerKey = process.env.WOOCOMMERCE_CONSUMER_KEY || "";
+    const consumerSecret = process.env.WOOCOMMERCE_CONSUMER_SECRET || "";
+
+    // Generate Basic Auth token for WooCommerce REST API
+    const authHeader = `Basic ${Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')}`;
+
+    // Use Next.js native fetch to leverage its aggressive Data Cache
+    // This makes product loading super fast across all users
+    const url = new URL(`${woocommerceUrl}/wp-json/wc/v3/products`);
+    url.searchParams.append("status", "publish");
+    url.searchParams.append("per_page", "100");
+    url.searchParams.append("_fields", "id,name,description,attributes,images,stock_quantity,price,regular_price,sale_price,status,featured,on_sale,categories");
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        "Authorization": authHeader,
+        "Content-Type": "application/json",
+      },
+      next: {
+        revalidate: 60, // Cache on Vercel Edge/Server for 60 seconds
+        tags: ['products'], 
+      }
     });
+
+    if (!response.ok) {
+      throw new Error(`WooCommerce API responded with status: ${response.status}`);
+    }
+
+    const wooProducts = await response.json();
 
     const products = wooProducts.map((p: any) => {
       const regularPrice = parseFloat(p.regular_price || p.price || "0");
@@ -36,11 +48,8 @@ export async function GET() {
         images: p.images?.map((img: any) => img.src) || [],
         mainImage: p.images?.[0]?.src || null,
         stockQuantity: p.stock_quantity || 0,
-        // Active price for sorting/filtering
         priceCents: Math.round((salePrice || regularPrice) * 100),
-        // Original price for showing strikethrough
         regularPriceCents: Math.round(regularPrice * 100),
-        // Sale price for showing sale badge
         salePriceCents: salePrice ? Math.round(salePrice * 100) : null,
         currency: "AED",
         active: p.status === "publish",
@@ -51,25 +60,14 @@ export async function GET() {
       };
     });
 
-    // Update cache
-    cachedProducts = products;
-    lastFetchTime = now;
-
     return NextResponse.json(products, {
       headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       }
     });
   } catch (error) {
-    console.error("WooCommerce API Error:", error);
-    // Return cached data as fallback even if expired
-    if (cachedProducts) {
-      return NextResponse.json(cachedProducts, {
-        headers: {
-          'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
-        }
-      });
-    }
-    return NextResponse.json([]);
+    console.error("WooCommerce Products Fetch Error:", error);
+    // Return empty array to prevent complete crash on error
+    return NextResponse.json([], { status: 500 });
   }
 }
