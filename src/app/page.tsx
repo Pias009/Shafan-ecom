@@ -117,8 +117,47 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen relative z-0">
-      <Navbar />
+    <AnimatePresence mode="wait">
+      {loading ? (
+        <motion.div
+           key="loader"
+           initial={{ opacity: 1 }}
+           exit={{ opacity: 0 }}
+           transition={{ duration: 0.5 }}
+           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#f8f5f0]"
+        >
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="flex flex-col items-center"
+          >
+             <div className="relative w-20 h-20 mb-6">
+                <div className="absolute inset-0 border-[3px] border-black/10 rounded-full"></div>
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 border-[3px] border-black rounded-full border-t-transparent"
+                ></motion.div>
+                <div className="absolute inset-0 flex items-center justify-center text-xl">✨</div>
+             </div>
+             <h1 className="font-display text-3xl font-black tracking-tighter text-black mb-2 uppercase">
+               Shafan Global
+             </h1>
+             <p className="font-body text-[10px] font-black uppercase tracking-[0.4em] text-black/40">
+               Organizing Collection
+             </p>
+          </motion.div>
+        </motion.div>
+      ) : (
+        <motion.div 
+           key="content"
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           transition={{ duration: 0.5 }}
+           className="min-h-screen relative z-0"
+        >
+          <Navbar />
 
       <Hero />
 
@@ -132,15 +171,6 @@ export default function Home() {
       />
 
       <main className="mx-auto max-w-7xl px-6 pb-20">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-40">
-            <Loader2 className="w-10 h-10 animate-spin text-black/20" />
-            <p className="mt-4 font-body text-xs font-bold uppercase tracking-widest text-black/30">
-              Loading Products...
-            </p>
-          </div>
-        ) : (
-          <>
             {/* Hot Products */}
             {hot.length > 0 && (
               <section id="hot" className="pt-16">
@@ -271,8 +301,6 @@ export default function Home() {
                 </p>
               )}
             </section>
-          </>
-        )}
       </main>
 
       <Footer />
@@ -288,6 +316,8 @@ export default function Home() {
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
       />
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
