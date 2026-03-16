@@ -10,18 +10,33 @@ export default async function OrdersPage() {
 
   let orders: any[] = [];
   try {
-    // 1. Try to fetch customer ID by email
-    const { data: customers } = await wooApi.get("customers", { email: session.user.email });
+    let customers = [];
+    try {
+      const res = await wooApi.get("customers", { email: session.user.email });
+      customers = res.data;
+    } catch (e) {
+      console.warn("Customer fetch slow/failed", e);
+    }
     
-    let queryParams: any = {};
+    let queryParams: any = { 
+      per_page: 10,
+      orderby: 'date',
+      order: 'desc'
+    };
+    
     if (customers && customers.length > 0) {
       queryParams.customer = customers[0].id;
     } else {
-      // Fallback to search by email (works for guest orders too)
       queryParams.search = session.user.email;
     }
 
-    const { data } = await wooApi.get("orders", queryParams);
+    let data = [];
+    try {
+      const res = await wooApi.get("orders", queryParams);
+      data = res.data;
+    } catch (e) {
+      console.error("Orders fetch slow/failed", e);
+    }
     
     orders = data.map((o: any) => ({
       id: String(o.id),
@@ -30,6 +45,7 @@ export default async function OrdersPage() {
       createdAt: o.date_created,
       itemCount: o.line_items.reduce((acc: number, item: any) => acc + item.quantity, 0),
       paymentMethod: o.payment_method_title,
+      items: o.line_items.map((it: any) => it.name),
     }));
   } catch (error) {
     console.error("WooCommerce Orders Page Error:", error);
@@ -61,14 +77,14 @@ export default async function OrdersPage() {
             {orders.map((order) => (
               <div 
                 key={order.id}
-                className="glass-panel-heavy rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 transition hover:bg-black/[0.02] border border-black/5 shadow-sm bg-white"
+                className="glass-panel-heavy rounded-2xl p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6 transition hover:bg-black/[0.02] border border-black/5 shadow-sm bg-white"
               >
-                <div className="flex items-start gap-6">
+                <div className="flex flex-col sm:flex-row items-start gap-6 flex-1">
                   <div className="w-16 h-16 rounded-2xl bg-black text-white flex flex-col items-center justify-center shrink-0 shadow-xl shadow-black/10">
                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Order</span>
-                    <span className="text-sm font-black">#{order.id.slice(-4)}</span>
+                    <span className="text-sm font-black">#{order.id}</span>
                   </div>
-                  <div>
+                  <div className="space-y-3 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="text-2xl font-black text-black">
                         ${(order.totalCents / 100).toFixed(2)}
@@ -81,12 +97,23 @@ export default async function OrdersPage() {
                         {order.status}
                       </span>
                     </div>
+
+                    {/* Product Names */}
+                    <div className="flex flex-wrap gap-2">
+                       {order.items.slice(0, 3).map((name: string, i: number) => (
+                         <span key={i} className="text-[10px] font-bold text-black/50 bg-black/5 px-3 py-1 rounded-lg">
+                           {name}
+                         </span>
+                       ))}
+                       {order.items.length > 3 && (
+                         <span className="text-[10px] font-bold text-black/30 px-2 py-1">+{order.items.length - 3} more</span>
+                       )}
+                    </div>
+
                     <div className="mt-2 flex items-center gap-4 text-[10px] text-black/40 font-black uppercase tracking-widest">
-                      <span>{order.itemCount} Items</span>
+                      <span>{new Date(order.createdAt).toLocaleDateString()}</span>
                       <span className="w-1 h-1 bg-black/10 rounded-full" />
                       <span>{order.paymentMethod || 'Unknown Payment'}</span>
-                      <span className="w-1 h-1 bg-black/10 rounded-full" />
-                      <span>{new Date(order.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                 </div>

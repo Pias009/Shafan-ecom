@@ -49,60 +49,60 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
   }
 
   return (
-    <div className="pt-28 pb-20 px-6 max-w-5xl mx-auto">
+    <div className="pt-24 md:pt-32 pb-20 px-4 md:px-6 max-w-6xl mx-auto">
       <Link
         href="/"
-        className="inline-flex items-center gap-2 font-body text-xs font-black uppercase tracking-widest text-black/30 hover:text-black transition-colors mb-8"
+        className="inline-flex items-center gap-2 font-body text-[10px] md:text-xs font-black uppercase tracking-widest text-black/30 hover:text-black transition-colors mb-6 md:mb-8"
       >
-        <ArrowLeft size={16} /> Continue Shopping
+        <ArrowLeft size={14} className="md:w-4 md:h-4" /> Continue Shopping
       </Link>
 
-      <h1 className="font-display text-5xl font-black text-black mb-2 tracking-tight">Your Cart</h1>
-      <p className="font-body text-xs font-bold uppercase tracking-[0.2em] text-black/30 mb-8">
+      <h1 className="font-display text-4xl md:text-5xl font-black text-black mb-2 tracking-tight">Your Cart</h1>
+      <p className="font-body text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-black/30 mb-8 md:mb-12">
         {items.reduce((acc: number, i: any) => acc + i.quantity, 0)} item(s) in your bag
       </p>
 
-      <div className="grid gap-8 lg:grid-cols-12">
+      <div className="grid gap-6 md:gap-8 lg:grid-cols-12">
         <div className="lg:col-span-8 space-y-4">
           {items.map((item: any) => {
             const price = item.discountPrice ?? item.price;
             return (
               <div
                 key={item.id}
-                className="glass-panel-heavy flex flex-col sm:flex-row items-center gap-6 rounded-3xl p-5 border border-black/5 shadow-sm group hover:shadow-md transition-shadow"
+                className="glass-panel-heavy flex flex-row items-center gap-4 md:gap-6 rounded-2xl md:rounded-3xl p-3 md:p-5 border border-black/5 shadow-sm group hover:shadow-md transition-shadow"
               >
-                <div className="relative h-28 w-28 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-2xl bg-black/[0.02] border border-black/5">
+                <div className="relative h-20 w-20 md:h-32 md:w-32 shrink-0 overflow-hidden rounded-xl md:rounded-2xl bg-black/[0.02] border border-black/5">
                   <Image src={item.imageUrl} alt={item.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                 </div>
 
-                <div className="flex flex-1 flex-col justify-center min-w-0 w-full">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-body text-[10px] font-black uppercase tracking-widest text-black/30">{item.brand}</div>
-                      <h3 className="font-display text-xl font-bold text-black leading-tight line-clamp-1">
+                <div className="flex flex-1 flex-col justify-center min-w-0">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <div className="font-body text-[8px] md:text-[10px] font-black uppercase tracking-widest text-black/30 truncate">{item.brand}</div>
+                      <h3 className="font-display text-base md:text-xl font-bold text-black leading-tight line-clamp-1">
                         {item.name}
                       </h3>
                     </div>
-                    <Price amount={price * item.quantity} className="font-body font-black text-black text-lg" />
+                    <Price amount={price * item.quantity} className="font-body font-black text-black text-sm md:text-lg shrink-0" />
                   </div>
 
-                  <div className="mt-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4 glass-panel rounded-full px-4 py-2 border border-black/5">
+                  <div className="mt-4 md:mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-3 md:gap-4 glass-panel rounded-full px-3 md:px-4 py-1.5 md:py-2 border border-black/5">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         className="p-1 rounded-full hover:bg-black/5 text-black/40 hover:text-black transition"
                         disabled={item.quantity <= 1}
                       >
-                        <Minus className="w-3.5 h-3.5" />
+                        <Minus className="w-3 h-3 md:w-3.5 md:h-3.5" />
                       </button>
-                      <span className="w-6 text-center font-body text-sm font-black text-black">
+                      <span className="w-4 md:w-6 text-center font-body text-xs md:text-sm font-black text-black">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         className="p-1 rounded-full hover:bg-black/5 text-black/40 hover:text-black transition"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3 h-3 md:w-3.5 md:h-3.5" />
                       </button>
                     </div>
 
@@ -111,9 +111,9 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                         removeItem(item.id);
                         toast.success(`Removed ${item.name}`);
                       }}
-                      className="text-black/20 hover:text-red-500 transition flex items-center gap-2 p-2 font-body text-[10px] font-black uppercase tracking-widest"
+                      className="text-black/20 hover:text-red-500 transition flex items-center gap-2 p-2 font-body text-[8px] md:text-[10px] font-black uppercase tracking-widest"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                       <span className="hidden sm:inline">Remove Item</span>
                     </button>
                   </div>
@@ -124,49 +124,49 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         </div>
 
         <div className="lg:col-span-4">
-          <div className="glass-panel-heavy sticky top-28 rounded-3xl p-8 border border-black/5 shadow-2xl">
-            <h3 className="font-black text-2xl text-black mb-8">Summary</h3>
+          <div className="glass-panel-heavy lg:sticky lg:top-32 rounded-3xl p-6 md:p-8 border border-black/5 shadow-2xl bg-white/50 backdrop-blur-md">
+            <h3 className="font-black text-xl md:text-2xl text-black mb-6 md:mb-8">Summary</h3>
 
             <div className="space-y-4 pt-1">
-              <div className="flex items-center justify-between font-body text-sm text-black/40 font-bold uppercase tracking-wider">
+              <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-black/40 font-bold uppercase tracking-wider">
                 <div>Subtotal</div>
                 <Price amount={subtotalCents / 100} className="text-black font-black" />
               </div>
 
               {couponCode && (
-                <div className="flex items-center justify-between font-body text-sm text-green-600 font-bold uppercase tracking-wider">
+                <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-green-600 font-bold uppercase tracking-wider">
                   <div className="flex items-center gap-2">
                     Promo ({couponCode})
-                    <button onClick={removeCoupon} className="text-[10px] underline">(remove)</button>
+                    <button onClick={removeCoupon} className="text-[9px] underline">(remove)</button>
                   </div>
                   <div className="font-black">- <Price amount={discountCents / 100} /></div>
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-6 border-t border-black/5">
-                <div className="font-black text-sm uppercase tracking-widest">Total</div>
-                <Price amount={totalCents / 100} className="text-3xl font-black text-black" />
+                <div className="font-black text-xs md:text-sm uppercase tracking-widest">Total</div>
+                <Price amount={totalCents / 100} className="text-2xl md:text-3xl font-black text-black" />
               </div>
             </div>
 
             <button
               onClick={handleCheckout}
-              className="mt-10 w-full rounded-full bg-black text-white py-4 font-body text-xs font-black tracking-[0.2em] transition hover:scale-[1.02] shadow-xl shadow-black/20 active:scale-95"
+              className="mt-8 md:mt-10 w-full rounded-full bg-black text-white py-4 md:py-5 font-body text-[10px] md:text-xs font-black tracking-[0.2em] transition hover:scale-[1.02] shadow-xl shadow-black/20 active:scale-95 flex items-center justify-center gap-2"
             >
               COMPLETE PURCHASE
             </button>
             
             {!hasAddress && (
-              <p className="mt-4 text-[10px] text-red-500/80 font-bold uppercase text-center flex items-center justify-center gap-1.5 px-4 leading-tight">
+              <p className="mt-4 text-[9px] md:text-[10px] text-red-500/80 font-bold uppercase text-center flex items-center justify-center gap-1.5 px-4 leading-tight">
                 <Info className="w-3 h-3 shrink-0" />
                 Shipping address required in Dashboard
               </p>
             )}
             
-            <div className="mt-10 flex items-center justify-center gap-3 opacity-20 filter grayscale">
-              <Image src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" width={40} height={20} />
+            <div className="mt-8 md:mt-10 flex items-center justify-center gap-3 opacity-20 filter grayscale">
+              <Image src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" width={40} height={20} className="w-8 h-4 md:w-10 md:h-5" />
               <div className="w-px h-3 bg-black" />
-              <div className="text-[8px] font-black uppercase tracking-widest">Secure Checkout</div>
+              <div className="text-[7px] md:text-[8px] font-black uppercase tracking-widest">Secure Checkout</div>
             </div>
           </div>
         </div>

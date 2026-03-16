@@ -9,23 +9,48 @@ export async function GET() {
   }
 
   try {
-    // 1. Try to fetch customer ID by email
-    const { data: customers } = await wooApi.get("customers", { email: session.user.email });
+    let customers = [];
+    try {
+      // Shorter timeout for customer lookup to fail fast
+      const res = await wooApi.get("customers", { email: session.user.email });
+      customers = res.data;
+    } catch (e) {
+      console.warn("Customer lookup timed out or failed:", e);
+    }
     
-    let queryParams: any = { per_page: 10 };
+    let queryParams: any = { 
+      per_page: 6, // Even leaner for dashboard stability
+      orderby: 'date',
+      order: 'desc'
+    };
+    
     if (customers && customers.length > 0) {
       queryParams.customer = customers[0].id;
     } else {
       queryParams.search = session.user.email;
     }
 
-    const { data: wooOrders } = await wooApi.get("orders", queryParams);
+    let wooOrders = [];
+    try {
+      const res = await wooApi.get("orders", queryParams);
+      wooOrders = res.data;
+    } catch (e) {
+      console.warn("Orders fetch timed out or failed:", e);
+    }
 
     const orders = wooOrders.map((o: any) => ({
       id: String(o.id),
       status: o.status,
       totalCents: Math.round(parseFloat(o.total) * 100),
       createdAt: o.date_created,
+      items: o.line_items.map((it: any) => ({
+        name: it.name,
+        quantity: it.quantity,
+        total: it.total,
+        // WooCommerce line items don't have images by default in the list view, 
+        // but we can try to fetch them or just show names for now.
+        // Actually, we can get product images if we need but let's stick to names first for performance.
+      }))
     }));
 
     const stats = {

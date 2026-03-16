@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 // Simple in-memory cache
 let cachedProducts: any = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 1 * 60 * 1000; // 1 minute
 
 export async function GET() {
   const now = Date.now();

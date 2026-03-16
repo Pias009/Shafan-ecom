@@ -25,7 +25,7 @@ export default function Home() {
   const [quickView, setQuickView] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const addItem = useCartStore((state) => state.addItem);
+  const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -73,22 +73,47 @@ export default function Home() {
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
 
   function addToCart(product: any) {
-    // Map internal product structure to what cart store expects if different
     const cartItem = {
       id: product.id,
       name: product.name,
-      brand: product.brand?.name || "Generic",
-      category: product.category?.name || "General",
-      price: product.priceCents / 100,
-      imageUrl: product.mainImage || "/placeholder-product.png",
+      brand: product.brand?.name || product.brand || "Generic",
+      category: product.category?.name || product.category || "General",
+      price: product.price ?? product.priceCents / 100,
+      imageUrl: product.mainImage || product.imageUrl || "/placeholder-product.png",
     };
     addItem(cartItem, 1);
     toast.success(`Added ${product.name} to cart`);
   }
 
-  function orderNow(product: any) {
-    addToCart(product);
-    router.push("/cart");
+  async function orderNow(product: any) {
+    if (!hasAddress) {
+      toast.error("Please add your shipping address in Dashboard first!", { duration: 3000 });
+      router.push("/account/address");
+      return;
+    }
+
+    const tid = toast.loading("Preparing your order...");
+    try {
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          items: [{ productId: product.id, quantity: 1 }] 
+        }),
+      });
+      const data = await res.json();
+      if (data.orderId) {
+        toast.success("Redirecting to payment...", { id: tid });
+        router.push(`/checkout/payment/${data.orderId}`);
+      } else {
+        throw new Error(data.error || "Failed to create order");
+      }
+    } catch (err: any) {
+      toast.error(err.message, { id: tid });
+      // Fallback to cart if something goes wrong
+      addToCart(product);
+      router.push("/cart");
+    }
   }
 
   return (

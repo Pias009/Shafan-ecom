@@ -11,6 +11,7 @@ export const wooApi = new WooCommerceRestApi({
   version: "wc/v3",
   queryStringAuth: true,
   axiosConfig: {
+    timeout: 25000, 
     headers: {
       'Content-Type': 'application/json',
     }

@@ -137,17 +137,31 @@ export default function AccountDashboardClient() {
               {data.orders.slice(0, 3).map((order) => (
                 <div key={order.id} className="p-4 rounded-2xl bg-black/[0.02] border border-black/5 group hover:bg-white transition-all shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-[10px] font-bold text-black/40 uppercase tracking-tighter">ID: #{order.id.slice(-6)}</div>
+                    <div className="text-[10px] font-bold text-black/40 uppercase tracking-tighter">ID: #{order.id}</div>
                     <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
-                      order.status === 'DELIVERED' ? 'bg-green-100 text-green-700' :
-                      order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                      order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                      order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                       'bg-yellow-100 text-yellow-700'
                     }`}>
                       {order.status}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
+                  
+                  {/* Product List Summary */}
+                  <div className="mb-4 space-y-2">
+                    {order.items?.map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <div className="p-1 bg-black/5 rounded-lg">
+                          <Package className="w-3 h-3 text-black/20" />
+                        </div>
+                        <span className="text-[11px] font-bold text-black/70 truncate flex-1">{item.name}</span>
+                        <span className="text-[10px] font-black text-black/30">×{item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-black/5">
                     <div>
                       <div className="text-lg font-black text-black">${(order.totalCents / 100).toFixed(2)}</div>
                       <div className="text-[10px] font-bold text-black/30 uppercase">{new Date(order.createdAt).toLocaleDateString()}</div>
