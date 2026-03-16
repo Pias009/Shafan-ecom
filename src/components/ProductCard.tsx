@@ -16,12 +16,14 @@ interface ProductCardProps {
   };
   onQuickView: (product: any) => void;
   onAddToCart: (product: any) => void;
+  onOrderNow?: (product: any) => void;
 }
 
 export function ProductCard({
   product,
   onQuickView,
   onAddToCart,
+  onOrderNow,
 }: ProductCardProps) {
   // Safely get the display price
   const price = product.discountPrice ?? product.price;
@@ -85,17 +87,31 @@ export function ProductCard({
             )}
           </div>
           
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart(product);
-            }}
-            className="p-2 md:p-3 rounded-full bg-black text-white transition-all duration-300 hover:scale-110 active:scale-90 shadow-lg shadow-black/10"
-            aria-label="Add to cart"
-          >
-            <ShoppingBag size={14} className="md:w-[18px] md:h-[18px]" />
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCart(product);
+              }}
+              className="p-2 md:p-3 rounded-full bg-white text-black border border-black/10 transition-all duration-300 hover:scale-110 active:scale-90 shadow-lg shadow-black/10"
+              aria-label="Add to cart"
+            >
+              <ShoppingBag size={14} className="md:w-[18px] md:h-[18px]" />
+            </button>
+            {onOrderNow && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOrderNow(product);
+                }}
+                className="px-4 md:px-5 py-2 md:py-3 rounded-full bg-black text-white text-[10px] md:text-xs font-black uppercase tracking-widest transition-all duration-300 hover:scale-[1.05] active:scale-95 shadow-lg shadow-black/20"
+              >
+                Order
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Filter, X } from "lucide-react";
 import { Price } from "@/components/Price";
 import { useCurrencyStore } from "@/lib/currency-store";
+import { useRouter } from "next/navigation";
 
 export default function AllProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -22,7 +23,8 @@ export default function AllProductsPage() {
   const [quickView, setQuickView] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
 
-  const addItem = useCartStore((state) => state.addItem);
+  const { addItem, hasAddress } = useCartStore();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchProducts() {
@@ -80,6 +82,36 @@ export default function AllProductsPage() {
     };
     addItem(cartItem, 1);
     toast.success(`Added ${product.name} to cart`);
+  }
+
+  async function orderNow(product: any) {
+    if (!hasAddress) {
+      toast.error("Please add your shipping address in Dashboard first!", { duration: 3000 });
+      router.push("/account/address");
+      return;
+    }
+
+    const tid = toast.loading("Preparing your order...");
+    try {
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          items: [{ productId: product.id, quantity: 1 }] 
+        }),
+      });
+      const data = await res.json();
+      if (data.orderId) {
+        toast.success("Redirecting to payment...", { id: tid });
+        router.push(`/checkout/payment/${data.orderId}`);
+      } else {
+        throw new Error(data.error || "Failed to create order");
+      }
+    } catch (err: any) {
+      toast.error(err.message, { id: tid });
+      addToCart(product);
+      router.push("/cart");
+    }
   }
 
   return (
@@ -190,6 +222,7 @@ export default function AllProductsPage() {
                           product={product}
                           onQuickView={(p) => setQuickView(p)}
                           onAddToCart={(p) => addToCart(p)}
+                          onOrderNow={(p) => orderNow(p)}
                         />
                       </motion.div>
                     ))}
@@ -216,7 +249,7 @@ export default function AllProductsPage() {
         product={quickView}
         onClose={() => setQuickView(null)}
         onAddToCart={(p) => addToCart(p)}
-        onOrderNow={(p) => { addToCart(p); }}
+        onOrderNow={(p) => orderNow(p)}
       />
     </div>
   );
