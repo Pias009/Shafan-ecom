@@ -51,7 +51,7 @@ export function CurrencySelector() {
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   currentCurrency.code === currency.code
-                    ? "bg-black text-white shadow-lg shadow-black/10 scale-[0.98]"
+                    ? "bg-black/5 text-black border border-black/10 shadow-sm scale-[0.98]"
                     : "text-black/60 hover:bg-black/5 hover:text-black"
                 }`}
               >

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, RefreshCw } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, RefreshCw, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -35,7 +35,8 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
           discountCents: product.sale_price ? Math.round(parseFloat(product.sale_price) * 100) : undefined,
           stockQuantity: product.stock_quantity || 0,
           status: product.status,
-          // We can add more fields if we want to sync them
+          mainImage: product.images?.[0]?.src || '',
+          images: product.images?.slice(1).map((i: any) => i.src) || [],
         }),
       });
 
@@ -166,13 +167,103 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-black/5 rounded-xl"><ImageIcon size={16} /></div>
-              <h3 className="font-bold">Primary Asset</h3>
+              <h3 className="font-bold">Media Assets</h3>
             </div>
-            {product.images?.[0]?.src && (
-              <div className="aspect-square rounded-2xl bg-black/5 overflow-hidden border border-black/5">
-                <img src={product.images[0].src} alt="Product" className="w-full h-full object-cover" />
+            
+            <div className="space-y-6">
+              {/* Main Image */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/20 ml-2">Main Image (Primary)</label>
+                <div className="relative group aspect-square rounded-2xl bg-black/5 overflow-hidden border border-black/5">
+                  {product.images?.[0]?.src ? (
+                    <>
+                      <img src={product.images[0].src} alt="Product" className="w-full h-full object-cover" />
+                      <button 
+                        onClick={() => {
+                          const newImgs = [...(product.images || [])];
+                          newImgs.shift();
+                          setProduct({...product, images: newImgs});
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full hover:bg-black transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <X size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-black/10 transition-all">
+                      <ImageIcon size={24} className="text-black/20 mb-2" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black/40">Upload Main</span>
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const tid = toast.loading('Uploading...');
+                          try {
+                            const fd = new FormData();
+                            fd.append('file', file);
+                            const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+                            const data = await res.json();
+                            if (data.url) {
+                              const newImgs = [{ src: data.url }, ...(product.images || [])];
+                              setProduct({...product, images: newImgs});
+                              toast.dismiss(tid);
+                            }
+                          } catch (err) { toast.error('Upload failed', { id: tid }); }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Gallery */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/20 ml-2">Gallery</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {product.images?.slice(1).map((img: any, idx: number) => (
+                    <div key={idx} className="aspect-square rounded-xl bg-black/5 overflow-hidden border border-black/5 relative group">
+                      <img src={img.src} alt="Gallery" className="w-full h-full object-cover" />
+                      <button 
+                        onClick={() => {
+                          const newImgs = [...(product.images || [])];
+                          newImgs.splice(idx + 1, 1);
+                          setProduct({...product, images: newImgs});
+                        }}
+                        className="absolute top-1.5 right-1.5 p-1 bg-black/50 text-white rounded-full hover:bg-black transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="aspect-square rounded-xl bg-black/5 border-2 border-dashed border-black/10 hover:border-black/20 transition-all flex flex-col items-center justify-center cursor-pointer group">
+                    <ImageIcon className="text-black/20 mb-1" size={16} />
+                    <span className="text-[8px] font-black uppercase tracking-widest text-black/40">Add</span>
+                    <input 
+                      type="file" 
+                      multiple 
+                      className="hidden"
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files || []);
+                        const tid = toast.loading('Uploading...');
+                        try {
+                          const newUrls = await Promise.all(files.map(async f => {
+                            const fd = new FormData();
+                            fd.append('file', f);
+                            const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+                            const data = await res.json();
+                            return { src: data.url };
+                          }));
+                          setProduct({...product, images: [...(product.images || []), ...newUrls]});
+                          toast.success('Gallery updated', { id: tid });
+                        } catch (err) { toast.error('Upload failed', { id: tid }); }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </div>

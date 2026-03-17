@@ -105,7 +105,9 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
           {order.line_items.map((it: any) => (
             <div key={it.id} className="glass-panel-heavy rounded-2xl p-4 border border-black/5 flex justify-between items-center gap-4">
               <div className="min-w-0">
-                <div className="font-bold text-xs truncate leading-tight">{it.name}</div>
+                <Link href={`/products/${it.product_id}`} className="font-bold text-xs truncate leading-tight hover:underline">
+                  {it.name}
+                </Link>
                 <div className="text-[8px] font-black text-black/20 uppercase tracking-widest mt-1">Ref: {it.sku || 'N/A'} • Qty: {it.quantity}</div>
               </div>
               <div className="text-right font-black text-xs shrink-0">
@@ -129,7 +131,9 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
               {order.line_items.map((it: any) => (
                 <tr key={it.id}>
                   <td className="px-8 py-6">
-                    <div className="font-bold text-sm">{it.name}</div>
+                    <Link href={`/products/${it.product_id}`} className="font-bold text-sm hover:underline">
+                      {it.name}
+                    </Link>
                     <div className="text-[9px] font-black text-black/20 uppercase tracking-widest mt-1">Ref: {it.sku || 'N/A'}</div>
                   </td>
                   <td className="px-8 py-6 text-center font-black text-black/40">{it.quantity}</td>

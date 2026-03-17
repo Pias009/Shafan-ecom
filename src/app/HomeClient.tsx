@@ -11,9 +11,13 @@ import { Footer } from "@/components/Footer";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Loader2, Filter, X } from "lucide-react";
+import { Loader2, Filter, X, ArrowRight } from "lucide-react";
 import { Price } from "@/components/Price";
 import { AnimatePresence, motion } from "framer-motion";
+import { OfferBannersSection } from "@/components/OfferBannersSection";
+import { BlogShowcase } from "@/components/BlogShowcase";
+import { useLanguageStore } from "@/lib/language-store";
+import { translations } from "@/lib/translations";
 
 export default function HomeClient({ initialProducts }: { initialProducts: any[] }) {
   const [products] = useState<any[]>(initialProducts || []);
@@ -101,6 +105,9 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
     }
   }
 
+  const { currentLanguage } = useLanguageStore();
+  const t = translations[currentLanguage.code as keyof typeof translations];
+
   return (
     <div className="min-h-screen relative z-0">
       <Navbar />
@@ -116,16 +123,19 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
         }}
       />
 
+      {/* Offer Banners Section */}
+      <OfferBannersSection />
+
       <main className="mx-auto max-w-7xl px-6 pb-20">
             {/* Hot Products */}
             {hot.length > 0 && (
               <section id="hot" className="pt-16">
                 <div className="text-center mb-10">
                   <p className="font-body text-xs font-bold uppercase tracking-[0.25em] text-black/60">
-                    Hot products
+                    {t.home.hotProducts}
                   </p>
-                  <h2 className="font-display text-4xl text-black mt-2 font-bold">Trending Now</h2>
-                  <p className="font-body text-black/70 mt-2 font-medium">Our most loved products</p>
+                  <h2 className="font-display text-4xl text-black mt-2 font-bold">{t.home.trendingNow}</h2>
+                  <p className="font-body text-black/70 mt-2 font-medium">{t.home.mostLoved}</p>
                 </div>
 
                 <div className="grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-3">
@@ -135,10 +145,16 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                       product={{
                         ...p,
                         price: p.priceCents / 100,
-                        imageUrl: p.mainImage
+                        imageUrl: p.mainImage,
+                        brand: p.brand?.name,
+                        averageRating: p.averageRating,
+                        ratingCount: p.ratingCount,
+                        stockQuantity: p.stockQuantity,
+                        totalSales: p.totalSales,
                       }}
                       onQuickView={(pp) => setQuickView(pp)}
                       onAddToCart={(pp) => addToCart(pp)}
+                      onOrderNow={(pp) => orderNow(pp)}
                     />
                   ))}
                 </div>
@@ -148,11 +164,13 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
             {/* All Products + Filters */}
             <section id="products" className="pt-20">
               <div className="text-center mb-10">
-                <p className="font-body text-xs font-bold uppercase tracking-[0.25em] text-black/60">
-                  All products
-                </p>
-                <h2 className="font-display text-4xl text-black mt-2 font-bold">New Arrivals</h2>
-                <p className="font-body text-black/70 mt-2 font-medium">Fresh additions to our collection</p>
+                <div className="relative z-10">
+                  <p className="font-body text-xs font-bold uppercase tracking-[0.25em] text-black/60">
+                    All products
+                  </p>
+                  <h2 className="font-display text-4xl text-black mt-2 font-bold">New Arrivals</h2>
+                  <p className="font-body text-black/70 mt-2 font-medium">Fresh additions to our collection</p>
+                </div>
               </div>
 
               {/* Filter Row */}
@@ -225,7 +243,7 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
               </AnimatePresence>
 
               <div className="grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((p) => (
+                {filtered.slice(0, 15).map((p) => (
                   <ProductCard
                     key={p.id}
                     product={{
@@ -234,12 +252,33 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                       discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
                       imageUrl: p.mainImage,
                       brand: p.brand?.name,
+                      averageRating: p.averageRating,
+                      ratingCount: p.ratingCount,
+                      stockQuantity: p.stockQuantity,
+                      totalSales: p.totalSales,
                     }}
                     onQuickView={(pp) => setQuickView(pp)}
                     onAddToCart={(pp) => addToCart(pp)}
+                    onOrderNow={(pp) => orderNow(pp)}
                   />
                 ))}
               </div>
+
+              {filtered.length > 15 && (
+                <div className="mt-12 flex justify-center">
+                  <button
+                    onClick={() => router.push("/products")}
+                    className="group flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.05]"
+                  >
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/5 border border-black/10 group-hover:bg-black group-hover:text-white transition-colors">
+                      <ArrowRight className="w-6 h-6" />
+                    </div>
+                    <span className="font-bold text-xs uppercase tracking-widest text-black/60 group-hover:text-black">
+                      See All Products
+                    </span>
+                  </button>
+                </div>
+              )}
 
               {filtered.length === 0 && (
                 <p className="text-center font-bold text-black/50 mt-12 italic">
@@ -248,6 +287,9 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
               )}
             </section>
       </main>
+
+      {/* Blog Showcase Section */}
+      <BlogShowcase />
 
       <Footer />
 

@@ -3,10 +3,12 @@
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { SessionProvider } from "next-auth/react";
 import { Toaster } from "react-hot-toast";
+import { GlobalInitializer } from "@/components/GlobalInitializer";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
+      <GlobalInitializer />
       <NextThemesProvider
         attribute="class"
         defaultTheme="dark"

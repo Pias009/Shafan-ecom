@@ -5,9 +5,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Price } from "./Price";
 import { ShoppingBag, ArrowRight } from "lucide-react";
+import { useLanguageStore } from "@/lib/language-store";
+import { translations } from "@/lib/translations";
 
 export function Hero() {
   const [products, setProducts] = useState<any[]>([]);
+  const { currentLanguage } = useLanguageStore();
+  const t = translations[currentLanguage.code as keyof typeof translations];
 
   useEffect(() => {
     fetch("/api/products")
@@ -34,11 +38,11 @@ export function Hero() {
             className="flex-shrink-0 flex flex-col justify-center items-center p-12 md:w-[250px] z-10"
           >
             <div className="md:-rotate-90 whitespace-nowrap text-center">
-              <h1 className="font-display text-7xl md:text-9xl font-black text-black leading-none tracking-tighter">
-                GLOW
+              <h1 className="font-display text-7xl md:text-9xl font-black text-black leading-none tracking-tighter uppercase">
+                {t.home.glow}
               </h1>
               <p className="font-display text-lg text-black/40 mt-2 italic tracking-[0.3em] uppercase">
-                pure essence
+                {t.home.pureEssence}
               </p>
             </div>
           </motion.div>
@@ -62,12 +66,12 @@ export function Hero() {
             transition={{ duration: 1.2, delay: 0.4 }}
             className="flex-shrink-0 flex flex-col justify-center p-12 md:p-16 text-center md:text-right z-10"
           >
-            <p className="font-display text-4xl md:text-6xl text-black font-bold italic leading-[1.1] tracking-tight">
-              water<br />sun<br /><span className="text-black/20">ice</span>
+            <p className="font-display text-4xl md:text-6xl text-black font-bold italic leading-[1.1] tracking-tight uppercase">
+              {t.home.water}<br />{t.home.sun}<br /><span className="text-black/20">{t.home.ice}</span>
             </p>
             <div className="mt-8 flex justify-center md:justify-end">
                 <Link href="/products" className="glass-panel inline-flex items-center gap-3 px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-lg active:scale-95">
-                    Explore All <ArrowRight size={14} />
+                    {t.home.exploreAll} <ArrowRight size={14} />
                 </Link>
             </div>
           </motion.div>

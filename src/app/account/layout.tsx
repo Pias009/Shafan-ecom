@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getServerAuthSession } from "@/lib/auth";
 import { AccountNav } from "./_components/AccountNav";
+import { AccountDashboardHeader } from "./_components/AccountDashboardHeader";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -20,14 +21,7 @@ export default async function AccountLayout({
     <>
       <Navbar />
       <div className="mx-auto max-w-7xl px-6 py-10 pt-32 min-height-screen">
-        <div className="mb-10">
-            <h1 className="text-4xl font-black tracking-tight text-black">
-            Dashboard
-            </h1>
-            <p className="mt-2 text-sm text-black/40 font-bold uppercase tracking-widest">
-            Manage your profile, orders, and preferences.
-            </p>
-        </div>
+        <AccountDashboardHeader />
         
         <div className="grid gap-8 md:grid-cols-[260px_1fr]">
           <AccountNav />

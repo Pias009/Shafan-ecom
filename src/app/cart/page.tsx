@@ -10,14 +10,16 @@ import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { useRouter } from "next/navigation";
 import { Price } from "@/components/Price";
+import { useLanguageStore } from "@/lib/language-store";
+import { translations } from "@/lib/translations";
 
-function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, applyCoupon, removeCoupon, subtotalCents, discountCents, totalCents }: any) {
+function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, applyCoupon, removeCoupon, subtotalCents, discountCents, totalCents, t }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
 
   function handleCheckout() {
     if (!hasAddress) {
-      toast.error("Please add your shipping address in Dashboard first!", {
+      toast.error(t.cart.addressRequired, {
         duration: 4000,
         icon: "📍",
       });
@@ -25,7 +27,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       return;
     }
     
-    toast.loading("Creating your order...", { id: "checkout" });
+    toast.loading(t.cart.creatingOrder, { id: "checkout" });
     fetch("/api/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -54,12 +56,12 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         href="/"
         className="inline-flex items-center gap-2 font-body text-[10px] md:text-xs font-black uppercase tracking-widest text-black/30 hover:text-black transition-colors mb-6 md:mb-8"
       >
-        <ArrowLeft size={14} className="md:w-4 md:h-4" /> Continue Shopping
+        <ArrowLeft size={14} className="md:w-4 md:h-4" /> {t.cart.continueShopping}
       </Link>
 
-      <h1 className="font-display text-4xl md:text-5xl font-black text-black mb-2 tracking-tight">Your Cart</h1>
+      <h1 className="font-display text-4xl md:text-5xl font-black text-black mb-2 tracking-tight">{t.cart.title}</h1>
       <p className="font-body text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-black/30 mb-8 md:mb-12">
-        {items.reduce((acc: number, i: any) => acc + i.quantity, 0)} item(s) in your bag
+        {items.reduce((acc: number, i: any) => acc + i.quantity, 0)} {t.cart.itemsInBag}
       </p>
 
       <div className="grid gap-6 md:gap-8 lg:grid-cols-12">
@@ -114,7 +116,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                       className="text-black/20 hover:text-red-500 transition flex items-center gap-2 p-2 font-body text-[8px] md:text-[10px] font-black uppercase tracking-widest"
                     >
                       <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                      <span className="hidden sm:inline">Remove Item</span>
+                      <span className="hidden sm:inline">{t.cart.removeItem}</span>
                     </button>
                   </div>
                 </div>
@@ -125,26 +127,26 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
 
         <div className="lg:col-span-4">
           <div className="glass-panel-heavy lg:sticky lg:top-32 rounded-3xl p-6 md:p-8 border border-black/5 shadow-2xl bg-white/50 backdrop-blur-md">
-            <h3 className="font-black text-xl md:text-2xl text-black mb-6 md:mb-8">Summary</h3>
+            <h3 className="font-black text-xl md:text-2xl text-black mb-6 md:mb-8">{t.cart.summary}</h3>
 
             <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-black/40 font-bold uppercase tracking-wider">
-                <div>Subtotal</div>
+                <div>{t.cart.subtotal}</div>
                 <Price amount={subtotalCents / 100} className="text-black font-black" />
               </div>
 
               {couponCode && (
                 <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-green-600 font-bold uppercase tracking-wider">
                   <div className="flex items-center gap-2">
-                    Promo ({couponCode})
-                    <button onClick={removeCoupon} className="text-[9px] underline">(remove)</button>
+                    {t.cart.promo} ({couponCode})
+                    <button onClick={removeCoupon} className="text-[9px] underline">({t.cart.remove})</button>
                   </div>
                   <div className="font-black">- <Price amount={discountCents / 100} /></div>
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-6 border-t border-black/5">
-                <div className="font-black text-xs md:text-sm uppercase tracking-widest">Total</div>
+                <div className="font-black text-xs md:text-sm uppercase tracking-widest">{t.cart.total}</div>
                 <Price amount={totalCents / 100} className="text-2xl md:text-3xl font-black text-black" />
               </div>
             </div>
@@ -153,13 +155,13 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
               onClick={handleCheckout}
               className="mt-8 md:mt-10 w-full rounded-full bg-black text-white py-4 md:py-5 font-body text-[10px] md:text-xs font-black tracking-[0.2em] transition hover:scale-[1.02] shadow-xl shadow-black/20 active:scale-95 flex items-center justify-center gap-2"
             >
-              COMPLETE PURCHASE
+              {t.cart.checkout}
             </button>
             
             {!hasAddress && (
               <p className="mt-4 text-[9px] md:text-[10px] text-red-500/80 font-bold uppercase text-center flex items-center justify-center gap-1.5 px-4 leading-tight">
                 <Info className="w-3 h-3 shrink-0" />
-                Shipping address required in Dashboard
+                {t.cart.addressRequired}
               </p>
             )}
             
@@ -185,6 +187,8 @@ export default function CartPage() {
     removeCoupon,
   } = useCartStore();
   const [mounted, setMounted] = useState(false);
+  const { currentLanguage } = useLanguageStore();
+  const t = translations[currentLanguage.code as keyof typeof translations];
 
   useEffect(() => {
     setMounted(true);
@@ -206,13 +210,13 @@ export default function CartPage() {
         <div className="pt-28 pb-20 px-6 max-w-4xl mx-auto text-center">
           <div className="glass-panel mx-auto flex max-w-md flex-col items-center justify-center rounded-3xl p-10 border border-black/5 shadow-xl">
             <div className="mb-4 text-6xl">🛒</div>
-            <h1 className="font-display text-3xl text-black font-black">Your Cart</h1>
-            <p className="font-body mt-3 text-black/40 font-bold uppercase tracking-widest text-xs">Looks like you haven&apos;t added anything yet.</p>
+            <h1 className="font-display text-3xl text-black font-black">{t.cart.title}</h1>
+            <p className="font-body mt-3 text-black/40 font-bold uppercase tracking-widest text-xs">{t.cart.emptyCart}</p>
             <Link
               href="/"
               className="mt-8 inline-block bg-black text-white rounded-full px-8 py-3 font-body text-sm font-bold tracking-widest transition hover:scale-105 shadow-lg shadow-black/20"
             >
-              SHOP NOW
+              {t.cart.shopNow}
             </Link>
           </div>
         </div>
@@ -235,6 +239,7 @@ export default function CartPage() {
         discountCents={discountCents}
         totalCents={totalCents}
         applyCoupon={() => {}}
+        t={t}
       />
       <Footer />
     </>

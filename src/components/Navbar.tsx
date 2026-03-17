@@ -2,24 +2,19 @@
 
 import Link from "next/link";
 import { ShoppingBag, UserRound, Menu, X } from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
 import { useSession } from "next-auth/react";
 import { useMemo, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { AuthModal } from "./AuthModal";
 import { UserDropdown } from "./UserDropdown";
 import { CurrencySelector } from "./CurrencySelector";
+import { LanguageSelector } from "./LanguageSelector";
 import { useCartStore } from "@/lib/cart-store";
-
-const navLinks = [
-  { href: "/", label: "HOME" },
-  { href: "/brands", label: "BRANDS" },
-  { href: "#hot", label: "HOT" },
-  { href: "/products", label: "ALL PRODUCTS" },
-];
+import { useLanguageStore } from "@/lib/language-store";
+import { translations } from "@/lib/translations";
 
 export function Navbar() {
-  const { data, status } = useSession();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const [authOpen, setAuthOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -27,6 +22,18 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const items = useCartStore((state) => state.items);
+  const { currentLanguage } = useLanguageStore();
+
+  const t = translations[currentLanguage.code as keyof typeof translations];
+
+  const navLinks = [
+    { href: "/", label: t.nav.home },
+    { href: "/brands", label: t.nav.brands },
+    { href: "/products?category=Skin+Care", label: t.nav.skinCare },
+    { href: "/products?category=Hair+Care", label: t.nav.hairCare },
+    { href: "/products", label: t.nav.products },
+    { href: "/announcements", label: t.nav.offers },
+  ];
 
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -69,10 +76,10 @@ export function Navbar() {
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
   const userLabel = useMemo(() => {
-    const u = data?.user;
+    const u = session?.user;
     if (!u) return null;
-    return u.name?.trim() || u.email?.trim() || "Account";
-  }, [data?.user]);
+    return u.name?.trim() || u.email?.trim() || t.nav.account;
+  }, [session?.user, t.nav.account]);
 
   function onUserButtonClick() {
     if (status === "authenticated") {
@@ -90,20 +97,26 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between relative">
         {/* Centered Desktop Nav */}
-        <div className="hidden md:flex items-center gap-1 glass-panel rounded-full px-8 py-2 absolute left-1/2 -translate-x-1/2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`px-5 py-2 text-xs font-bold tracking-[0.1em] transition-all duration-300 rounded-full ${
-                pathname === link.href
-                  ? "text-black bg-black/5"
-                  : "text-black/60 hover:text-black hover:bg-black/5"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="hidden md:flex items-center gap-6 glass-panel rounded-full pl-8 pr-2 py-1.5 absolute left-1/2 -translate-x-1/2 transition-all duration-300">
+          <div className="flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-5 py-2 text-[10px] font-black tracking-[0.15em] transition-all duration-300 rounded-full ${
+                  pathname === link.href
+                    ? "text-black bg-black/5"
+                    : "text-black/60 hover:text-black hover:bg-black/5"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 border-l border-black/5 pl-4 ml-1">
+            <LanguageSelector />
+            <CurrencySelector />
+          </div>
         </div>
 
         {/* Mobile hamburger */}
@@ -115,7 +128,7 @@ export function Navbar() {
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        {/* Right side: Auth + Cart + Theme */}
+        {/* Right side Actions */}
         <div className="flex items-center gap-3">
 
           {/* Cart - only visible if signed in */}
@@ -136,16 +149,13 @@ export function Navbar() {
               type="button"
               onClick={onUserButtonClick}
               className="glass-panel inline-flex h-9 items-center gap-2 rounded-full px-4 text-xs font-bold text-black transition hover:bg-black/5"
-              aria-label={userLabel ? "Open user menu" : "Sign in"}
+              aria-label={userLabel ? "Open user menu" : t.nav.signIn}
             >
               <UserRound size={16} />
-              <span className="hidden sm:inline uppercase tracking-wider">{userLabel ?? "Sign in"}</span>
+              <span className="hidden sm:inline uppercase tracking-wider">{userLabel ?? t.nav.signIn}</span>
             </button>
             <UserDropdown open={userMenuOpen} onClose={() => setUserMenuOpen(false)} />
           </div>
-
-          <CurrencySelector />
-          <ThemeToggle />
         </div>
       </div>
 
@@ -162,6 +172,13 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          <div className="pt-4 mt-2 border-t border-black/5 flex items-center justify-between px-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-black/40">Settings</span>
+            <div className="flex items-center gap-2">
+              <LanguageSelector />
+              <CurrencySelector />
+            </div>
+          </div>
         </div>
       )}
 

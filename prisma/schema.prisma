@@ -132,6 +132,33 @@ model Banner {
   updatedAt DateTime @updatedAt
 }
 
+model BlogPost {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  content     String
+  coverImage  String?
+  tags        String[]
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, createdAt])
+}
+
+model OfferBanner {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl    String
+  title       String?
+  subtitle    String?
+  link        String?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model AuditLog {
   id         String  @id @default(auto()) @map("_id") @db.ObjectId
   action     String
@@ -146,8 +173,8 @@ model AuditLog {
 
 model Product {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  name          String
-  description   String
+  name          String    @unique
+  woocommerceId String?   
   features      String[]
   images        String[]
   mainImage     String?

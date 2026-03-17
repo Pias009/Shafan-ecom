@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -215,33 +215,105 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
               <ImageIcon size={14} /> Media Assets
             </h3>
             
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Main Product Image URL</label>
-                <input
-                  name="mainImage"
-                  value={formData.mainImage}
-                  onChange={handleChange}
-                  placeholder="https://cloudinary.com/..."
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-[10px] font-bold focus:ring-2 focus:ring-black outline-none"
-                />
+            <div className="space-y-6">
+              {/* Main Image Upload */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Main Image (Primary)</label>
+                <div className="relative group">
+                  {formData.mainImage ? (
+                    <div className="aspect-square rounded-2xl bg-black/5 overflow-hidden border border-black/5 relative">
+                      <img src={formData.mainImage} alt="Main" className="w-full h-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, mainImage: '' }))}
+                        className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full hover:bg-black transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="aspect-square rounded-2xl bg-black/5 border-2 border-dashed border-black/10 hover:border-black/20 transition-all flex flex-col items-center justify-center cursor-pointer group">
+                      <ImageIcon className="text-black/20 mb-2 group-hover:scale-110 transition-transform" size={24} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black/40">Upload Main</span>
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const tid = toast.loading('Uploading...');
+                          try {
+                            const fd = new FormData();
+                            fd.append('file', file);
+                            const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+                            const data = await res.json();
+                            if (data.url) {
+                              setFormData(p => ({ ...p, mainImage: data.url }));
+                              toast.dismiss(tid);
+                            } else {
+                              throw new Error(data.error);
+                            }
+                          } catch (err: any) {
+                            toast.error(err.message || 'Upload failed', { id: tid });
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
-              {formData.mainImage && (
-                <div className="aspect-square rounded-2xl bg-black/5 overflow-hidden border border-black/5">
-                  <img src={formData.mainImage} alt="Preview" className="w-full h-full object-cover" />
+              {/* Gallery Upload */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Gallery (Min 2 recommended)</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {formData.images.split(',').filter(Boolean).map((img, idx) => (
+                    <div key={idx} className="aspect-square rounded-xl bg-black/5 overflow-hidden border border-black/5 relative group">
+                      <img src={img} alt="Gallery" className="w-full h-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const imgs = formData.images.split(',').filter(Boolean);
+                          imgs.splice(idx, 1);
+                          setFormData(p => ({ ...p, images: imgs.join(',') }));
+                        }}
+                        className="absolute top-1.5 right-1.5 p-1 bg-black/50 text-white rounded-full hover:bg-black transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="aspect-square rounded-xl bg-black/5 border-2 border-dashed border-black/10 hover:border-black/20 transition-all flex flex-col items-center justify-center cursor-pointer group">
+                    <ImageIcon className="text-black/20 mb-1 group-hover:scale-110 transition-transform" size={16} />
+                    <span className="text-[8px] font-black uppercase tracking-widest text-black/40">Add More</span>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      multiple
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length === 0) return;
+                        const tid = toast.loading(`Uploading ${files.length} images...`);
+                        try {
+                          const urls = await Promise.all(files.map(async file => {
+                            const fd = new FormData();
+                            fd.append('file', file);
+                            const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+                            const data = await res.json();
+                            return data.url;
+                          }));
+                          const current = formData.images.split(',').filter(Boolean);
+                          setFormData(p => ({ ...p, images: [...current, ...urls].join(',') }));
+                          toast.success('Gallery updated', { id: tid });
+                        } catch (err) {
+                          toast.error('Gallery upload partially failed', { id: tid });
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Gallery URLs (comma separated)</label>
-                <textarea
-                  name="images"
-                  value={formData.images}
-                  onChange={handleChange}
-                  rows={4}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-[10px] font-bold focus:ring-2 focus:ring-black outline-none resize-none"
-                />
               </div>
             </div>
           </section>

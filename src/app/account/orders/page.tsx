@@ -45,7 +45,7 @@ export default async function OrdersPage() {
       createdAt: o.date_created,
       itemCount: o.line_items.reduce((acc: number, item: any) => acc + item.quantity, 0),
       paymentMethod: o.payment_method_title,
-      items: o.line_items.map((it: any) => it.name),
+      items: o.line_items.map((it: any) => ({ name: it.name, id: it.product_id })),
     }));
   } catch (error) {
     console.error("WooCommerce Orders Page Error:", error);
@@ -98,12 +98,16 @@ export default async function OrdersPage() {
                       </span>
                     </div>
 
-                    {/* Product Names */}
+                    {/* Product Names as Links */}
                     <div className="flex flex-wrap gap-2">
-                       {order.items.slice(0, 3).map((name: string, i: number) => (
-                         <span key={i} className="text-[10px] font-bold text-black/50 bg-black/5 px-3 py-1 rounded-lg">
-                           {name}
-                         </span>
+                       {order.items.slice(0, 3).map((item: any, i: number) => (
+                         <Link 
+                           key={i} 
+                           href={`/products/${item.id}`}
+                           className="text-[10px] font-bold text-black/50 bg-black/5 px-3 py-1 rounded-lg hover:bg-black hover:text-white transition-colors"
+                         >
+                           {item.name}
+                         </Link>
                        ))}
                        {order.items.length > 3 && (
                          <span className="text-[10px] font-bold text-black/30 px-2 py-1">+{order.items.length - 3} more</span>

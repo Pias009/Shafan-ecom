@@ -3,24 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { User, ShoppingCart, Package, Shield, LayoutDashboard, MapPin } from "lucide-react";
-
-const links = [
-  { href: "/account", label: "Overview", icon: LayoutDashboard },
-  { href: "/account/profile", label: "Profile", icon: User },
-  { href: "/account/address", label: "Address", icon: MapPin },
-  { href: "/account/orders", label: "Orders", icon: Package },
-];
+import { User, Package, Shield, LayoutDashboard, MapPin } from "lucide-react";
+import { useLanguageStore } from "@/lib/language-store";
+import { translations } from "@/lib/translations";
 
 export function AccountNav() {
   const pathname = usePathname();
   const { data } = useSession();
   const role = (data?.user as any)?.role;
+  const { currentLanguage } = useLanguageStore();
+  const t = translations[currentLanguage.code as keyof typeof translations];
+
+  const links = [
+    { href: "/account", label: t.account.overview, icon: LayoutDashboard },
+    { href: "/account/profile", label: t.account.profile, icon: User },
+    { href: "/account/address", label: t.account.address, icon: MapPin },
+    { href: "/account/orders", label: t.account.orders, icon: Package },
+  ];
 
   return (
     <nav className="glass-panel-heavy border border-black/5 grid gap-1 rounded-3xl p-4 h-fit sticky top-24 shadow-xl">
       <div className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-black/30">
-        Account Settings
+        {t.account.settings}
       </div>
       {links.map((link) => {
         const isActive = pathname === link.href;
@@ -50,7 +54,7 @@ export function AccountNav() {
           }`}
         >
           <Shield className="h-4 w-4" />
-          Admin Panel
+          {t.account.adminPanel}
         </Link>
       )}
     </nav>

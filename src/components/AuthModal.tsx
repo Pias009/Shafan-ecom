@@ -1,11 +1,25 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Globe } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
+import { useLanguageStore } from "@/lib/language-store";
+import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
+import { translations } from "@/lib/translations";
 
 type Mode = "sign-in" | "sign-up";
+
+// Shared country list for Saudi/Kuwait/etc.
+const COUNTRIES = [
+  { code: "AE", name: "United Arab Emirates", currency: "AED" },
+  { code: "KW", name: "Kuwait", currency: "KWD" },
+  { code: "SA", name: "Saudi Arabia", currency: "SAR" },
+  { code: "BH", name: "Bahrain", currency: "BHD" },
+  { code: "QA", name: "Qatar", currency: "QAR" },
+  { code: "OM", name: "Oman", currency: "OMR" },
+  { code: "US", name: "United States", currency: "USD" },
+];
 
 export function AuthModal({
   open,
@@ -17,13 +31,26 @@ export function AuthModal({
   defaultMode?: Mode;
 }) {
   const { status } = useSession();
-  const [mode, setMode] = useState<Mode>(defaultMode);
+  const { currentLanguage } = useLanguageStore();
+  const { currentCurrency, setCurrency } = useCurrencyStore();
+  const t = translations[currentLanguage.code as keyof typeof translations];
 
+  const [mode, setMode] = useState<Mode>(defaultMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-detect based on current currency code
+  useEffect(() => {
+    if (!open) return;
+    if (mode === "sign-up" && !country) {
+        const found = COUNTRIES.find(c => c.currency === currentCurrency.code);
+        if (found) setCountry(found.name);
+    }
+  }, [open, mode, currentCurrency.code, country]);
 
   useEffect(() => {
     if (!open) return;
@@ -37,8 +64,8 @@ export function AuthModal({
   }, [status, open, onClose]);
 
   const title = useMemo(() => {
-    return mode === "sign-in" ? "Sign in" : "Sign up";
-  }, [mode]);
+    return mode === "sign-in" ? t.auth.signIn : t.auth.signUp;
+  }, [mode, t.auth.signIn, t.auth.signUp]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,7 +77,7 @@ export function AuthModal({
         const r = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email, password, country }),
         });
         if (!r.ok) {
           const msg = (await r.json().catch(() => null)) as { error?: string } | null;
@@ -77,7 +104,7 @@ export function AuthModal({
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-[70] grid place-items-center p-4"
+          className="fixed inset-0 z-[70] grid place-items-center p-4 overflow-y-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -88,7 +115,7 @@ export function AuthModal({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/55 backdrop-blur-sm"
           />
 
           <motion.div
@@ -120,7 +147,7 @@ export function AuthModal({
                       : "bg-black/5 text-black/60 hover:bg-black/10"
                   }`}
                 >
-                  Sign in
+                    {t.auth.signIn}
                 </button>
                 <button
                   type="button"
@@ -131,26 +158,44 @@ export function AuthModal({
                       : "bg-black/5 text-black/60 hover:bg-black/10"
                   }`}
                 >
-                  Sign up
+                  {t.auth.signUp}
                 </button>
               </div>
 
               <form onSubmit={onSubmit} className="mt-4 grid gap-3">
-                {mode === "sign-up" ? (
+                {mode === "sign-up" && (
+                  <>
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       type="text"
-                      placeholder="Name"
+                      placeholder={t.auth.name}
                       className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
+                      required
                     />
-                ) : null}
+                    
+                    <div className="relative group">
+                        <Globe size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 group-focus-within:text-black transition-colors" />
+                        <select
+                            value={country}
+                            onChange={(e) => setCountry(e.target.value)}
+                            required
+                            className="h-11 w-full rounded-2xl bg-black/5 pl-10 pr-4 text-sm text-black outline-none ring-1 ring-black/10 focus:ring-black/25 appearance-none"
+                        >
+                            <option value="" disabled>{t.auth.selectCountry}</option>
+                            {COUNTRIES.map(c => (
+                                <option key={c.code} value={c.name}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                  </>
+                )}
 
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
-                  placeholder="Email"
+                  placeholder={t.auth.email}
                   className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
                   required
                 />
@@ -158,7 +203,7 @@ export function AuthModal({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   type="password"
-                  placeholder="Password (min 6)"
+                  placeholder={t.auth.password}
                   className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
                   required
                   minLength={6}
@@ -171,9 +216,18 @@ export function AuthModal({
                   disabled={loading}
                   className="mt-1 inline-flex h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-bold text-white shadow-lg shadow-black/20 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60"
                 >
-                  {loading ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
+                  {loading ? t.auth.pleaseWait : mode === "sign-in" ? t.auth.signIn : t.auth.createAccount}
                 </button>
               </form>
+
+              <div className="mt-6 text-center">
+                <button 
+                    onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+                    className="text-xs font-bold text-black/40 hover:text-black transition-colors"
+                >
+                    {mode === "sign-in" ? t.auth.noAccount : t.auth.hasAccount}
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -181,4 +235,3 @@ export function AuthModal({
     </AnimatePresence>
   );
 }
-

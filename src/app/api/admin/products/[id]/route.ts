@@ -99,6 +99,57 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
     const updated = await (prisma as any).product.update({ where: { id: id }, data: updates });
+
+    // Sync with WooCommerce
+    try {
+      const { wooApi } = await import('@/lib/woocommerce');
+      const wooData = {
+        name: updated.name,
+        regular_price: (updated.priceCents / 100).toString(),
+        sale_price: updated.discountCents ? (updated.discountCents / 100).toString() : undefined,
+        description: updated.description || '',
+        short_description: updated.description?.substring(0, 150) || '',
+        manage_stock: true,
+        stock_quantity: updated.stockQuantity || 0,
+        images: updated.images?.map((src: string) => {
+          const fullUrl = src.startsWith('/') 
+            ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${src}`
+            : src;
+          return { src: fullUrl };
+        }) || [],
+        status: updated.active ? 'publish' : 'draft'
+      };
+
+      if (updated.woocommerceId) {
+        try {
+          await wooApi.put(`products/${updated.woocommerceId}`, wooData);
+        } catch (putErr: any) {
+          // If deleted on WC, recreate
+          if (putErr.response?.status === 404) {
+            const { data: newWoo } = await wooApi.post('products', wooData);
+            await (prisma as any).product.update({
+              where: { id: updated.id },
+              data: { woocommerceId: newWoo.id.toString() }
+            });
+          } else {
+            throw putErr;
+          }
+        }
+      } else {
+        // No WC ID yet, create and save it
+        const { data: newWoo } = await wooApi.post('products', wooData);
+        await (prisma as any).product.update({
+          where: { id: updated.id },
+          data: { woocommerceId: newWoo.id.toString() }
+        });
+      }
+    } catch (wooErr: any) {
+      console.error('WooCommerce Sync Error [ID Route]:', {
+        message: wooErr.message,
+        response: wooErr.response?.data
+      });
+    }
+
     try {
       await (prisma as any).auditLog.create({
         data: {
@@ -113,6 +164,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     return new Response(JSON.stringify(updated), { status: 303, headers: { 'Location': '/ueadmin/products' } });
   } catch (e) {
+    console.error('PRODUCT_UPDATE_FATAL:', e);
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }

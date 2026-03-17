@@ -13,7 +13,8 @@ export default async function ProductsPage() {
     discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
     brandName: p.brand?.name || "Generic",
     categoryName: p.category?.name || "General",
-    imageUrl: p.mainImage || "/placeholder-product.png"
+    imageUrl: p.mainImage || "/placeholder-product.png",
+    images: p.images || []
   }));
 
   return <ProductsClient initialProducts={transformed} />;

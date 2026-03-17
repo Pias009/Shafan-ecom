@@ -1,9 +1,10 @@
-"use client";
-
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Price } from "./Price";
+import { useLanguageStore } from "@/lib/language-store";
+import { translations } from "@/lib/translations";
 
 interface QuickViewProduct {
   id: string;
@@ -13,6 +14,7 @@ interface QuickViewProduct {
   price: number;
   discountPrice?: number;
   imageUrl: string;
+  images?: string[];
   details?: string;
   features?: string[];
 }
@@ -28,6 +30,29 @@ export function ProductQuickViewModal({
   onAddToCart: (product: any) => void;
   onOrderNow: (product: any) => void;
 }) {
+  const { currentLanguage } = useLanguageStore();
+  const t = translations[currentLanguage.code as keyof typeof translations];
+  
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isEnlarged, setIsEnlarged] = useState(false);
+
+  // Combine main image with gallery images, filtering out duplicates
+  const allImages = [
+    product?.imageUrl,
+    ...(product?.images || [])
+  ].filter((img, index, self) => img && self.indexOf(img) === index) as string[];
+
+  // Auto-slide effect
+  useEffect(() => {
+    if (!product || allImages.length <= 1 || isEnlarged) return;
+    
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [product, allImages.length, isEnlarged]);
+
   if (!product) return <AnimatePresence />;
 
   const brandName = typeof product.brand === "string" 
@@ -44,7 +69,7 @@ export function ProductQuickViewModal({
     <AnimatePresence>
       {product ? (
         <motion.div
-          className="fixed inset-0 z-[60] grid place-items-center p-4"
+          className="fixed inset-0 z-[60] grid place-items-center p-4 overflow-y-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -55,96 +80,194 @@ export function ProductQuickViewModal({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="absolute inset-0 bg-black/55 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/70 backdrop-blur-md"
           />
 
           <motion.div
-            initial={{ opacity: 0, y: 18, scale: 0.985 }}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 18, scale: 0.985 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="glass-panel-heavy shadow-2xl relative w-full max-w-4xl overflow-hidden rounded-[2.5rem] bg-white"
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-5xl overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col md:flex-row max-h-[90vh] md:min-h-[500px]"
           >
-            <div className="flex items-center justify-between gap-3 border-b border-black/5 px-8 py-5 bg-black/5">
-              <div className="min-w-0">
-                <div className="truncate text-[10px] text-black/40 font-black uppercase tracking-widest">{brandName}</div>
-                <div className="truncate text-xl font-bold tracking-tight text-black">
-                  {product.name}
+            {/* Image Gallery Side */}
+            <div className="md:w-1/2 relative bg-black/[0.02] p-4 md:p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0">
+              <div className="relative w-full aspect-square md:aspect-auto md:h-full max-h-[300px] md:max-h-none rounded-[1.5rem] md:rounded-[2rem] overflow-hidden group cursor-zoom-in" onClick={() => setIsEnlarged(true)}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentImageIndex}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                    className="relative w-full h-full"
+                  >
+                    <Image
+                      src={allImages[currentImageIndex] || "/placeholder-product.png"}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Gallery Controls */}
+                {allImages.length > 1 && (
+                  <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(p => (p - 1 + allImages.length) % allImages.length); }}
+                      className="w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(p => (p + 1) % allImages.length); }}
+                      className="w-10 h-10 rounded-full bg-white/90 shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+                )}
+                
+                <div className="absolute bottom-4 right-4 p-2 bg-black/20 backdrop-blur-md rounded-full text-white pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Maximize2 size={16} />
                 </div>
               </div>
+
+              {/* Thumbnails */}
+              {allImages.length > 1 && (
+                <div className="mt-4 md:mt-6 flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide px-2 w-full justify-center">
+                  {allImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={`relative w-12 h-12 md:w-16 md:h-16 rounded-lg md:rounded-xl overflow-hidden flex-shrink-0 transition-all border-2 ${
+                        currentImageIndex === idx ? "border-black scale-110 shadow-lg" : "border-transparent opacity-50 hover:opacity-100"
+                      }`}
+                    >
+                      <Image src={img} alt="Thumb" fill className="object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Content Side */}
+            <div className="md:w-1/2 p-6 md:p-10 flex flex-col justify-between bg-white relative overflow-y-auto">
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-md hover:scale-110 active:scale-95 transition-all"
+                className="absolute top-6 right-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/5 text-black hover:bg-black hover:text-white transition-all z-10"
               >
                 <X className="h-5 w-5" />
               </button>
-            </div>
 
-            <div className="grid gap-8 p-8 md:grid-cols-2 max-h-[80vh] overflow-y-auto">
-              <div className="glass-panel rounded-[2rem] overflow-hidden bg-black/[0.02] p-3 h-fit">
-                <div className="relative aspect-square rounded-[1.5rem] overflow-hidden shadow-inner">
-                  <Image
-                    src={product.imageUrl || "/placeholder-product.png"}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 520px"
-                    className="object-cover"
-                    priority
-                  />
+              <div className="space-y-6">
+                <div>
+                  <div className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-black/20 mb-1 md:mb-2">{brandName}</div>
+                  <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-black leading-tight">
+                    {product.name}
+                  </h2>
+                  <div className="mt-2 inline-block px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                    {categoryName}
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col">
-                <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Category</div>
-                <div className="mt-1 text-base font-bold text-black">{categoryName}</div>
-
-                <div className="mt-6 text-[10px] font-black uppercase tracking-wider text-black/30">Price</div>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <Price amount={displayPrice} className="text-3xl font-black text-black" />
+                <div className="flex items-baseline gap-3">
+                  <Price amount={displayPrice} className="text-2xl md:text-4xl font-black text-black" />
                   {product.discountPrice && product.discountPrice < product.price ? (
-                    <Price amount={product.price} className="text-base text-black/20 line-through font-bold" />
+                    <Price amount={product.price} className="text-base md:text-lg text-red-500 line-through font-bold" />
                   ) : null}
                 </div>
 
-                <div className="mt-6 text-[10px] font-black uppercase tracking-wider text-black/30">Description</div>
-                <div 
-                  className="mt-2 text-sm leading-relaxed text-black/70 font-medium prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: product.details || "No description available." }}
-                />
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-black/20">{t.product.description}</div>
+                  <div 
+                    className="text-sm leading-relaxed text-black/60 font-medium prose prose-sm max-w-none line-clamp-6"
+                    dangerouslySetInnerHTML={{ __html: product.details || t.product.noDescription }}
+                  />
+                </div>
 
                 {product.features && product.features.length > 0 && (
-                  <>
-                    <div className="mt-6 text-[10px] font-black uppercase tracking-wider text-black/30">Information</div>
-                    <ul className="mt-3 grid gap-2">
+                  <div className="space-y-3">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-black/20">{t.product.information}</div>
+                    <div className="flex flex-wrap gap-2">
                       {product.features.map((f, i) => (
-                        <li key={i} className="glass-panel rounded-xl px-4 py-2 text-xs font-bold text-black/60 border border-black/5 bg-black/[0.01]">
+                        <span key={i} className="px-4 py-1.5 bg-black/[0.03] rounded-full text-[10px] font-bold text-black/40 border border-black/5">
                           {f}
-                        </li>
+                        </span>
                       ))}
-                    </ul>
-                  </>
+                    </div>
+                  </div>
                 )}
+              </div>
 
-                <div className="mt-10 flex flex-wrap gap-4 pt-6 border-t border-black/5">
-                  <button
-                    type="button"
-                    onClick={() => onAddToCart(product)}
-                    className="flex-1 min-w-[140px] h-14 rounded-full bg-white border border-black/10 px-8 text-xs font-black uppercase tracking-widest text-black transition-all hover:bg-black hover:text-white shadow-sm"
-                  >
-                    Add to cart
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onOrderNow(product)}
-                    className="flex-1 min-w-[140px] h-14 rounded-full bg-black px-8 text-xs font-black uppercase tracking-widest text-white shadow-2xl shadow-black/20 hover:scale-[1.03] active:scale-95 transition-all"
-                  >
-                    Order now
-                  </button>
-                </div>
+              <div className="mt-8 md:mt-10 flex gap-3 md:gap-4 items-center">
+                <button
+                  type="button"
+                  onClick={() => onAddToCart(product)}
+                  className="w-14 h-14 md:w-auto md:h-16 md:flex-1 rounded-xl md:rounded-2xl bg-white border-2 border-black flex items-center justify-center md:px-8 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-black transition-all hover:bg-black hover:text-white active:scale-95 shrink-0"
+                  title={t.product.addToCart}
+                >
+                  <ShoppingBag size={20} className="md:hidden" />
+                  <span className="hidden md:inline">{t.product.addToCart}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOrderNow(product)}
+                  className="flex-1 h-14 md:h-16 rounded-xl md:rounded-2xl bg-black px-6 md:px-8 text-[11px] md:text-sm font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-black/30 hover:scale-[1.02] active:scale-95 transition-all text-center flex items-center justify-center whitespace-nowrap"
+                >
+                  {t.product.orderNow}
+                </button>
               </div>
             </div>
           </motion.div>
+
+          {/* Lightbox / Enlarged View */}
+          <AnimatePresence>
+            {isEnlarged && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[70] bg-black flex flex-col items-center justify-center p-4 md:p-10"
+              >
+                <button 
+                  onClick={() => setIsEnlarged(false)}
+                  className="absolute top-10 right-10 w-14 h-14 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition-all z-[80]"
+                >
+                  <X size={32} />
+                </button>
+                
+                <div className="relative w-full h-full max-w-6xl max-h-[80vh]">
+                  <Image 
+                    src={allImages[currentImageIndex]} 
+                    alt="Full View" 
+                    fill 
+                    className="object-contain"
+                  />
+                </div>
+
+                {allImages.length > 1 && (
+                  <div className="mt-8 flex gap-4">
+                    <button 
+                      onClick={() => setCurrentImageIndex(p => (p - 1 + allImages.length) % allImages.length)}
+                      className="w-16 h-16 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10"
+                    >
+                      <ChevronLeft size={32} />
+                    </button>
+                    <button 
+                      onClick={() => setCurrentImageIndex(p => (p + 1) % allImages.length)}
+                      className="w-16 h-16 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10"
+                    >
+                      <ChevronRight size={32} />
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       ) : null}
     </AnimatePresence>

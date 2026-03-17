@@ -123,7 +123,7 @@ export async function POST(req: Request) {
 
     // Sync with WooCommerce
     try {
-      await wooApi.post('products', {
+      const wooData = {
         name: data.name,
         type: 'simple',
         regular_price: (data.priceCents / 100).toString(),
@@ -131,13 +131,45 @@ export async function POST(req: Request) {
         description: data.description || '',
         short_description: data.description?.substring(0, 150) || '',
         categories: data.categoryName ? [{ name: data.categoryName }] : [],
-        images: finalImages.map(src => ({ src })),
+        images: finalImages.map(src => {
+          const fullUrl = src.startsWith('/') 
+            ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${src}`
+            : src;
+          return { src: fullUrl };
+        }),
         manage_stock: true,
         stock_quantity: data.stockQuantity || 0,
         status: 'publish'
+      };
+
+      if (existingProduct?.woocommerceId) {
+        try {
+          await wooApi.put(`products/${existingProduct.woocommerceId}`, wooData);
+        } catch (putErr: any) {
+          // If product deleted on WC side (404), recreate it
+          if (putErr.response?.status === 404) {
+             const { data: newWooProduct } = await wooApi.post('products', wooData);
+             await (prisma as any).product.update({
+               where: { id: product.id },
+               data: { woocommerceId: newWooProduct.id.toString() }
+             });
+          } else {
+            throw putErr;
+          }
+        }
+      } else {
+        const { data: newWooProduct } = await wooApi.post('products', wooData);
+        await (prisma as any).product.update({
+          where: { id: product.id },
+          data: { woocommerceId: newWooProduct.id.toString() }
+        });
+      }
+    } catch (wooErr: any) {
+      console.error('WooCommerce Sync Error Details:', {
+        message: wooErr.message,
+        response: wooErr.response?.data,
+        status: wooErr.response?.status
       });
-    } catch (wooErr) {
-      console.error('WooCommerce Sync Error:', wooErr);
     }
 
     return new Response(JSON.stringify(product), { status: 201, headers: { 'Content-Type': 'application/json' } });
