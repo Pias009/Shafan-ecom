@@ -2,7 +2,7 @@
 
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { ArrowRight, ChevronDown, Facebook, Instagram } from "lucide-react";
+import { ArrowRight, ChevronDown, Facebook, Instagram, Mail, Phone, Clock } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -62,161 +62,152 @@ export function Footer() {
 
   return (
     <footer className="w-full bg-black text-white font-body selection:bg-white selection:text-black">
+
       {/* Newsletter Section */}
-      <div className="max-w-7xl mx-auto px-6 py-20 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-10">
-        <div className="max-w-xl">
-          <h2 className="font-display text-4xl md:text-5xl font-black text-white mb-4 leading-none italic tracking-tighter">
-            {t.footer.wantOff}
-          </h2>
-          <p className="text-xl font-bold text-white mb-2">{t.footer.joinNewsletter}</p>
-          <p className="text-sm font-medium text-white/50">
-            {t.footer.receiveCode}
-          </p>
-        </div>
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-24">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-10 md:gap-20">
+          
+          {/* Left text */}
+          <div className="text-center md:text-left max-w-lg">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-white/40 mb-3">
+              {t.footer.joinNewsletter}
+            </p>
+            <h2 className="font-display text-4xl md:text-6xl font-black text-white mb-4 leading-none italic tracking-tighter">
+              {t.footer.wantOff}
+            </h2>
+            <p className="text-sm font-medium text-white/50 leading-relaxed">
+              {t.footer.receiveCode}
+            </p>
+          </div>
 
-        <div className="w-full max-w-md">
-          <form 
-            onSubmit={(e) => e.preventDefault()}
-            className="relative group h-fit flex items-center"
-          >
-            <input
-              type="email"
-              placeholder={t.footer.enterEmail}
-              className="w-full h-14 bg-white/5 border border-white/10 px-6 pr-14 text-sm font-bold text-white placeholder:text-white/20 outline-none focus:border-white transition-colors"
-            />
-            <button 
-              type="submit"
-              className="absolute right-1 top-1 bottom-1 w-12 bg-white text-black flex items-center justify-center hover:bg-white/90 transition-colors"
+          {/* Newsletter Form */}
+          <div className="w-full max-w-md">
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="relative flex items-center"
             >
-              <ArrowRight size={20} />
-            </button>
-          </form>
-          <p className="mt-3 text-[10px] text-white/40 font-bold uppercase tracking-widest leading-relaxed">
-            {t.footer.disclosure}
-          </p>
-        </div>
-      </div>
-
-      {/* Main Footer Links - Desktop */}
-      <div className="bg-white/5 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-6 py-16 hidden md:grid md:grid-cols-4 lg:grid-cols-4 gap-12">
-          {sections.map((section) => (
-            <div key={section.id}>
-              <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] mb-8 border-b border-white/5 pb-4">
-                {section.title}
-              </h3>
-              <div className="flex flex-col gap-4">
-                {section.links.map((link) => (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    className="text-xs font-bold text-white/50 hover:text-white transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Accordion Footer - Mobile */}
-        <div className="md:hidden">
-          {sections.map((section) => (
-            <div key={section.id} className="border-b border-white/5">
+              <Mail size={16} className="absolute left-4 text-white/30 pointer-events-none" />
+              <input
+                type="email"
+                placeholder={t.footer.enterEmail}
+                className="w-full h-14 bg-white/5 border border-white/20 pl-10 pr-16 text-sm font-bold text-white placeholder:text-white/30 outline-none focus:border-white/60 transition-colors rounded-xl"
+              />
               <button
-                onClick={() => toggleSection(section.id)}
-                className="w-full flex items-center justify-between px-6 py-6 text-sm font-black text-white uppercase tracking-[0.2em]"
+                type="submit"
+                className="absolute right-2 top-2 bottom-2 px-4 bg-white text-black text-xs font-black uppercase tracking-widest hover:bg-white/90 transition-colors rounded-lg flex items-center gap-1.5"
               >
-                {section.title}
-                <ChevronDown 
-                  size={16} 
-                  className={`transition-transform duration-300 ${openSection === section.id ? "rotate-180" : ""}`} 
-                />
+                <ArrowRight size={14} />
               </button>
-              <AnimatePresence>
-                {openSection === section.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden bg-white/[0.02]"
-                  >
-                    <div className="flex flex-col gap-4 px-6 pb-8">
-                      {section.links.map((link) => (
-                        <Link
-                          key={link.label}
-                          href={link.href}
-                          className="text-xs font-bold text-white/50"
-                        >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+            </form>
+            <p className="mt-3 text-[10px] text-white/30 font-bold uppercase tracking-widest leading-relaxed">
+              {t.footer.disclosure}
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Divider */}
+      <div className="border-t border-white/10" />
+
+      {/* Main Footer Links — Desktop */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-14 hidden md:grid md:grid-cols-4 gap-12">
+        {sections.map((section) => (
+          <div key={section.id}>
+            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-6 pb-3 border-b border-white/10">
+              {section.title}
+            </h3>
+            <div className="flex flex-col gap-3.5">
+              {section.links.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="text-sm font-medium text-white/60 hover:text-white transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Accordion Footer — Mobile */}
+      <div className="md:hidden">
+        {sections.map((section) => (
+          <div key={section.id} className="border-b border-white/10">
+            <button
+              onClick={() => toggleSection(section.id)}
+              className="w-full flex items-center justify-between px-6 py-5 text-xs font-black text-white uppercase tracking-[0.2em]"
+            >
+              {section.title}
+              <ChevronDown
+                size={16}
+                className={`text-white/50 transition-transform duration-300 ${openSection === section.id ? "rotate-180" : ""}`}
+              />
+            </button>
+            <AnimatePresence>
+              {openSection === section.id && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex flex-col gap-4 px-6 pb-6 pt-1">
+                    {section.links.map((link) => (
+                      <Link
+                        key={link.label}
+                        href={link.href}
+                        className="text-sm font-medium text-white/70 hover:text-white transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-white/10" />
 
       {/* Bottom Bar */}
-      <div className="bg-black text-white w-full border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-10 md:py-8 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-8 md:gap-4">
-          
-          {/* Contact Info */}
-          <div className="flex flex-col gap-1 md:gap-2">
-            <div className="flex items-center justify-between md:justify-start md:gap-6">
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 md:text-white/60">
-                    {t.footer.contactUs}
-                </span>
-                <span className="md:hidden text-[10px] font-black uppercase tracking-widest text-white/40">
-                    {t.footer.followUs}
-                </span>
-            </div>
-            
-            <div className="flex items-center justify-between md:justify-start md:gap-10">
-                <span className="text-lg md:text-xl font-black italic tracking-tighter text-white">
-                    +971 4 543 4800
-                </span>
-                <div className="md:hidden flex items-center gap-4">
-                    <Link href="#" className="p-1 hover:text-white/70 transition-colors"><Facebook size={20} /></Link>
-                    <Link href="#" className="p-1 hover:text-white/70 transition-colors"><Instagram size={20} /></Link>
-                </div>
-            </div>
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-4">
 
-            <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest md:text-white/60">
-                {t.footer.workingHours}
-            </span>
+        {/* Contact Info */}
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-10 text-center md:text-left">
+          <div className="flex items-center gap-2 text-white">
+            <Phone size={14} className="text-white/50" />
+            <span className="text-base font-black italic tracking-tight text-white">+971 4 543 4800</span>
           </div>
-
-          {/* Social Links - Desktop */}
-          <div className="hidden md:flex items-center gap-10">
-            <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 text-right">{t.footer.followUs}</span>
-                <div className="flex items-center gap-6">
-                    <Link href="#" className="flex items-center gap-2 group">
-                        <Facebook size={18} className="text-white group-hover:text-white/70 transition-colors" />
-                        <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline ml-1">Facebook</span>
-                    </Link>
-                    <Link href="#" className="flex items-center gap-2 group">
-                       <Instagram size={18} className="text-white group-hover:text-white/70 transition-colors" />
-                       <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline ml-1">Instagram</span>
-                    </Link>
-                </div>
-            </div>
-            <div className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 border-l border-white/10 pl-10 h-10 flex items-center">
-                © 2026 Shafan {t.footer.rights}
-            </div>
+          <div className="flex items-center gap-2 text-white/50">
+            <Clock size={14} />
+            <span className="text-xs font-bold uppercase tracking-wider">{t.footer.workingHours}</span>
           </div>
+        </div>
 
-          {/* Copyright - Mobile Only */}
-          <div className="md:hidden text-[9px] font-black uppercase tracking-[0.2em] text-white/20 text-center border-t border-white/5 pt-6">
-             © 2026 Shafan {t.footer.rights}
+        {/* Social + Copyright */}
+        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+          <div className="flex items-center gap-5">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{t.footer.followUs}</span>
+            <Link href="#" className="flex items-center gap-1.5 group">
+              <Facebook size={16} className="text-white/60 group-hover:text-white transition-colors" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">Facebook</span>
+            </Link>
+            <Link href="#" className="flex items-center gap-1.5 group">
+              <Instagram size={16} className="text-white/60 group-hover:text-white transition-colors" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">Instagram</span>
+            </Link>
+          </div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 md:border-l md:border-white/10 md:pl-10">
+            © 2026 Shafan. {t.footer.rights}
           </div>
         </div>
       </div>
+
     </footer>
   );
 }

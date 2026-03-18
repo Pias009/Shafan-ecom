@@ -44,18 +44,34 @@ body {
   background: url('/images/background.svg') no-repeat center center fixed;
   background-size: cover;
   background-color: hsl(var(--background-hsl));
-  color: #000000 !important;
   font-family: var(--font-body);
   min-height: 100dvh;
 }
 
-h1, h2, h3, h4, h5, h6, p, span, label, input, select, textarea {
-  color: #000000 !important;
-  font-family: var(--font-display);
-}
+@layer base {
+  body {
+    color: #000000;
+  }
 
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
+  h1, h2, h3, h4, h5, h6, p, span, label, input, select, textarea {
+    font-family: var(--font-display);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+  }
+
+  /* Footer and any section with class bg-black should have white text */
+  .bg-black, footer {
+    color: #ffffff;
+  }
+  .bg-black h1, .bg-black h2, .bg-black h3, .bg-black h4,
+  .bg-black h5, .bg-black h6, .bg-black p, .bg-black span,
+  .bg-black a, .bg-black label,
+  footer h1, footer h2, footer h3, footer h4,
+  footer h5, footer h6, footer p, footer span, footer a, footer label {
+    color: #ffffff;
+  }
 }
 
 @layer utilities {

@@ -12,7 +12,7 @@ export async function getProducts(storeCode?: string) {
     let dbProducts: any[] = [];
     
     if (storeCode) {
-      const inventories = await prisma.storeInventory.findMany({
+      const inventories = await (prisma as any).storeInventory.findMany({
         where: {
           store: { code: storeCode }
         },
@@ -25,12 +25,12 @@ export async function getProducts(storeCode?: string) {
           }
         }
       });
-      dbProducts = inventories.map((inv) => ({
+      dbProducts = inventories.map((inv: any) => ({
         ...inv.product,
         priceCents: Math.round(inv.price * 100),
         discountCents: null,
         stockQuantity: inv.quantity
-      })).filter((p) => p.active);
+      })).filter((p: any) => p.active);
     } else {
       dbProducts = await prisma.product.findMany({
         where: {
