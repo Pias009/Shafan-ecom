@@ -7,20 +7,44 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
-export async function getProducts() {
+export async function getProducts(storeCode?: string) {
   try {
-    const dbProducts = await prisma.product.findMany({
-      where: {
-        active: true,
-      },
-      include: {
-        brand: true,
-        category: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    let dbProducts: any[] = [];
+    
+    if (storeCode) {
+      const inventories = await prisma.storeInventory.findMany({
+        where: {
+          store: { code: storeCode }
+        },
+        include: {
+          product: {
+            include: {
+              brand: true,
+              category: true,
+            }
+          }
+        }
+      });
+      dbProducts = inventories.map((inv) => ({
+        ...inv.product,
+        priceCents: Math.round(inv.price * 100),
+        discountCents: null,
+        stockQuantity: inv.quantity
+      })).filter((p) => p.active);
+    } else {
+      dbProducts = await prisma.product.findMany({
+        where: {
+          active: true,
+        },
+        include: {
+          brand: true,
+          category: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
 
     const products = dbProducts.map((p: any) => {
       const regularPrice = p.priceCents / 100;

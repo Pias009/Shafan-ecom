@@ -1,16 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 enum Role {
@@ -19,28 +13,46 @@ enum Role {
   SUPERADMIN
 }
 
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+model Store {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  code      String   @unique
+  name      String
+  country   String
+  region    String
+  active    Boolean  @default(true)
+  currency  String   @default("usd")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders          Order[]          @relation("StoreOrders")
+  courierServices CourierService[] @relation("StoreCouriers")
+  products        Product[]        @relation("StoreProducts")
+  storeInventories StoreInventory[] @relation("StoreInventories")
+}
+
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-
   role          Role      @default(USER)
   passwordHash  String?
   isVerified    Boolean   @default(false)
-  verificationToken String?
-  verificationExpires DateTime?
-
+  
   accounts      Account[]
   sessions      Session[]
-  passwordResetTokens PasswordResetToken[]
-
-  address       Address?
   orders        Order[]
-  actorAuditLogs   AuditLog[] @relation("ActorAuditLogs")
-  subjectAuditLogs  AuditLog[] @relation("SubjectAuditLogs")
-
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -54,13 +66,7 @@ model Account {
   refresh_token     String?
   access_token      String?
   expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([provider, providerAccountId])
 }
 
@@ -72,108 +78,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model VerificationToken {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model PasswordResetToken {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId  String   @db.ObjectId
-  token   String   @unique
-  expires DateTime
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, token])
-}
-
-model Address {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String   @unique @db.ObjectId
-  fullName    String?
-  phone       String?
-  email       String?
-  country     String?
-  city        String?
-  address1    String?
-  address2    String?
-  postalCode  String?
-  notes       String?
-  updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Brand {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String    @unique
-  iconUrl   String?
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Category {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Banner {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  imageUrl  String
-  title     String?
-  link      String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model BlogPost {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  slug        String   @unique
-  excerpt     String?
-  content     String
-  coverImage  String?
-  tags        String[]
-  published   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([published, createdAt])
-}
-
-model OfferBanner {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  imageUrl    String
-  title       String?
-  subtitle    String?
-  link        String?
-  active      Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model AuditLog {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  action     String
-  actorId    String  @db.ObjectId
-  subjectId  String  @db.ObjectId
-  details    String?
-  createdAt  DateTime @default(now())
-
-  actor      User    @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: Cascade)
-  subject    User    @relation("SubjectAuditLogs", fields: [subjectId], references: [id], onDelete: Cascade)
-}
-
 model Product {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String    @unique
@@ -182,78 +86,52 @@ model Product {
   images        String[]
   mainImage     String?
   stockQuantity Int       @default(0)
-  variants      Json?
   priceCents    Int
   discountCents Int?
-  currency      String    @default("usd")
   active        Boolean   @default(true)
   hot           Boolean   @default(false)
   trending      Boolean   @default(false)
-  averageRating Float     @default(0)
-  ratingCount   Int       @default(0)
-  totalSales    Int       @default(0)
 
+  storeId       String?   @db.ObjectId
+  store         Store?    @relation(fields: [storeId], references: [id], name: "StoreProducts")
+  
   brandId       String?   @db.ObjectId
   categoryId    String?   @db.ObjectId
   brand         Brand?    @relation(fields: [brandId], references: [id])
   category      Category? @relation(fields: [categoryId], references: [id])
-
   orderItems    OrderItem[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
-  @@index([active, hot])
-  @@index([priceCents])
-  @@index([brandId])
-  @@index([categoryId])
 }
 
-enum OrderStatus {
-  PENDING_PAYMENT
-  PAID
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  REFUNDED
+model Brand {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String    @unique
+  products  Product[]
+}
+
+model Category {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String    @unique
+  products  Product[]
 }
 
 model Order {
   id                 String      @id @default(auto()) @map("_id") @db.ObjectId
+  storeId            String?     @db.ObjectId
+  store              Store?      @relation(fields: [storeId], references: [id], name: "StoreOrders")
   userId             String?     @db.ObjectId
-  email              String?
   user               User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-
+  email              String?
   status             OrderStatus @default(PENDING_PAYMENT)
-  currency           String      @default("usd")
-  subtotalCents      Int
-  discountCents      Int         @default(0)
-  shippingCents      Int         @default(0)
   totalCents         Int
-
   billingAddress     Json?
   shippingAddress    Json?
-  paymentMethod      String?
-  paymentMethodTitle String?
-
-  couponId           String?     @db.ObjectId
-  coupon             Coupon?     @relation(fields: [couponId], references: [id], onDelete: SetNull)
-
-  stripeCheckoutId   String?
   stripePaymentIntentId String?
-
   items              OrderItem[]
-  shipment           Shipment?
-
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
-
-  @@index([status])
-  @@index([createdAt])
-  @@index([userId])
-  @@index([stripeCheckoutId])
-  @@index([stripePaymentIntentId])
 }
 
 model OrderItem {
@@ -263,44 +141,38 @@ model OrderItem {
   quantity     Int
   unitPriceCents Int
   nameSnapshot String
-  imageSnapshot String?
-
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
-
-  @@index([orderId])
-  @@index([productId])
 }
 
-model Coupon {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  code         String   @unique
-  percentOff   Int
-  active       Boolean  @default(true)
-  startsAt     DateTime?
-  endsAt       DateTime?
-  usageLimit   Int?
-  usedCount    Int      @default(0)
-
-  orders       Order[]
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-model Shipment {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  orderId       String   @unique @db.ObjectId
-  courier       String
-  externalId    String
-  trackingCode  String?
-  trackingUrl   String?
-  status        String
-  lastEventAt   DateTime?
-  lastEventText String?
-
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
+model CourierService {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  storeId   String @db.ObjectId
+  store     Store  @relation(fields: [storeId], references: [id], name: "StoreCouriers")
+  enabled   Boolean @default(false)
+  config    Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model StoreInventory {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  store     Store   @relation(fields: [storeId], references: [id], name: "StoreInventories")
+  storeId   String  @db.ObjectId
+  product   Product @relation(fields: [productId], references: [id])
+  productId String  @db.ObjectId
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OfferBanner {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl    String
+  title       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

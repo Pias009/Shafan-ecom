@@ -7,7 +7,7 @@ export const translations = {
       hairCare: "HAIR",
       products: "PRODUCTS",
       offers: "OFFERS",
-      signIn: "SIGN IN",
+      signIn: "LOGIN",
       account: "ACCOUNT",
     },
     home: {
@@ -29,7 +29,7 @@ export const translations = {
       exploreAll: "Explore All",
     },
     auth: {
-      signIn: "Sign in",
+      signIn: "Login",
       signUp: "Sign up",
       createAccount: "Create account",
       name: "Name",

@@ -13,7 +13,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (status === "loading") return;
     // Allow login page to render without guard
-    const isAuthPage = pathname.startsWith("/ueadmin/login");
+    const isAuthPage = pathname?.startsWith("/ueadmin/login");
     if (isAuthPage) return;
     const ok = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
     if (!ok) {
@@ -34,7 +34,7 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   }
 
   // While not authenticated, render nothing (redirect happening)
-  const isAuthPage = pathname.startsWith("/ueadmin/login");
+  const isAuthPage = pathname?.startsWith("/ueadmin/login");
   const ok = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
   if (!ok && !isAuthPage) return null;
 

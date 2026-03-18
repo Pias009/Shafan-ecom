@@ -3,9 +3,11 @@ import { getProducts } from "@/lib/products";
 
 export const revalidate = 60; // Revalidate every 60 seconds (Incremental Static Regeneration)
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const products = await getProducts();
+    const { searchParams } = new URL(req.url);
+    const store = searchParams.get('store');
+    const products = await getProducts(store || undefined);
     
     return NextResponse.json(products, {
       headers: {

@@ -104,7 +104,7 @@ export function AuthModal({
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-[70] grid place-items-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -123,14 +123,14 @@ export function AuthModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.985 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="glass-panel-heavy shadow-2xl relative w-full max-w-md overflow-hidden rounded-3xl"
+            className="bg-white shadow-2xl relative w-full max-w-md overflow-hidden rounded-3xl border border-black"
           >
-            <div className="flex items-center justify-between gap-3 border-b border-black/10 px-6 py-4">
-              <div className="text-base font-bold tracking-tight text-black">{title}</div>
+            <div className="flex items-center justify-between gap-3 border-b border-black px-6 py-4">
+              <div className="text-xl font-bold tracking-tight text-black">{title}</div>
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-black/60 hover:text-black hover:bg-black/10 transition-colors"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/10 text-black hover:bg-black/20 transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -170,17 +170,17 @@ export function AuthModal({
                       onChange={(e) => setName(e.target.value)}
                       type="text"
                       placeholder={t.auth.name}
-                      className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
+                      className="h-11 w-full rounded-2xl bg-white border border-black px-4 text-sm font-semibold text-black placeholder:text-black/60 outline-none focus:ring-2 focus:ring-black"
                       required
                     />
                     
                     <div className="relative group">
-                        <Globe size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/30 group-focus-within:text-black transition-colors" />
+                        <Globe size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/60 group-focus-within:text-black transition-colors" />
                         <select
                             value={country}
                             onChange={(e) => setCountry(e.target.value)}
                             required
-                            className="h-11 w-full rounded-2xl bg-black/5 pl-10 pr-4 text-sm text-black outline-none ring-1 ring-black/10 focus:ring-black/25 appearance-none"
+                            className="h-11 w-full rounded-2xl bg-white border border-black pl-10 pr-4 text-sm font-semibold text-black outline-none focus:ring-2 focus:ring-black appearance-none"
                         >
                             <option value="" disabled>{t.auth.selectCountry}</option>
                             {COUNTRIES.map(c => (
@@ -196,7 +196,7 @@ export function AuthModal({
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   placeholder={t.auth.email}
-                  className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
+                  className="h-11 w-full rounded-2xl bg-white border border-black px-4 text-sm font-semibold text-black placeholder:text-black/60 outline-none focus:ring-2 focus:ring-black"
                   required
                 />
                 <input
@@ -204,7 +204,7 @@ export function AuthModal({
                   onChange={(e) => setPassword(e.target.value)}
                   type="password"
                   placeholder={t.auth.password}
-                  className="h-11 w-full rounded-2xl bg-black/5 px-4 text-sm text-black placeholder:text-black/40 outline-none ring-1 ring-black/10 focus:ring-black/25"
+                  className="h-11 w-full rounded-2xl bg-white border border-black px-4 text-sm font-semibold text-black placeholder:text-black/60 outline-none focus:ring-2 focus:ring-black"
                   required
                   minLength={6}
                 />

@@ -92,7 +92,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </div>
             
             <div className="divide-y divide-black/5">
-              {order.items.map((it) => (
+              {order.items.map((it: any) => (
                 <div key={it.id} className="p-4 md:p-8 flex items-center gap-4 hover:bg-black/[0.01] transition-colors">
                   <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-black/5 overflow-hidden flex-shrink-0 border border-black/5">
                     {it.imageSnapshot ? (

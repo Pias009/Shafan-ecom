@@ -90,7 +90,8 @@ export function Navbar() {
   }
 
   return (
-    <header
+    <>
+      <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 transform ${
         scrolled ? "glass-nav shadow-sm" : "bg-transparent"
       } ${visible ? "translate-y-0" : "-translate-y-full"}`}
@@ -182,7 +183,8 @@ export function Navbar() {
         </div>
       )}
 
+      </header>
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
-    </header>
+    </>
   );
 }

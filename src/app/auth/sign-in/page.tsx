@@ -16,7 +16,7 @@ function SignInForm() {
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = searchParams?.get("callbackUrl") || "/";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

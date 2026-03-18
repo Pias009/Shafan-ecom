@@ -18,9 +18,11 @@ import { OfferBannersSection } from "@/components/OfferBannersSection";
 import { BlogShowcase } from "@/components/BlogShowcase";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import { useCurrencyStore } from "@/lib/currency-store";
+import { useEffect } from "react";
 
 export default function HomeClient({ initialProducts }: { initialProducts: any[] }) {
-  const [products] = useState<any[]>(initialProducts || []);
+  const [products, setProducts] = useState<any[]>(initialProducts || []);
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<string>("All");
   const [brand, setBrand] = useState<string>("All");
@@ -30,8 +32,45 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
 
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
+  const { setCurrency } = useCurrencyStore();
 
+  useEffect(() => {
+    async function detectCountry() {
+      try {
+        const cached = localStorage.getItem("user_country");
+        if (cached === "KW") {
+          // fetch wait logic omitted for brevity if already cached KW
+          // we can just refetch products silently
+          const res = await fetch("/api/products?store=KUW");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.length > 0) setProducts(data);
+          }
+          return;
+        } else if (cached) {
+          return; // other country
+        }
 
+        const res = await fetch("https://ipapi.co/json/");
+        const data = await res.json();
+        
+        if (data.country_code) {
+          localStorage.setItem("user_country", data.country_code);
+          if (data.country_code === "KW") {
+            setCurrency("KWD");
+            const pRes = await fetch("/api/products?store=KUW");
+            if (pRes.ok) {
+              const kwProducts = await pRes.json();
+              if (kwProducts.length > 0) setProducts(kwProducts);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Geo detect failed", err);
+      }
+    }
+    detectCountry();
+  }, [setCurrency]);
 
   const brands = useMemo(() => {
     const set = new Set(products.map((p) => p.brand?.name).filter(Boolean));

@@ -10,8 +10,8 @@ import { Footer } from "@/components/Footer";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
-  const orderId = searchParams.get("order_id");
+  const sessionId = searchParams?.get("session_id");
+  const orderId = searchParams?.get("order_id");
   const clearCart = useCartStore(state => state.clearCart);
 
   useEffect(() => {
