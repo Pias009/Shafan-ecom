@@ -47,38 +47,17 @@ export async function POST(req: Request) {
           data.images = uploaded;
         }
         if (updates.brandName) {
-          const b = await (prisma as any).brand.findFirst({ where: { name: updates.brandName } });
+          const b = await prisma.brand.findFirst({ where: { name: updates.brandName } });
           if (b) data.brandId = b.id;
         }
         if (updates.categoryName) {
-          const c = await (prisma as any).category.findFirst({ where: { name: updates.categoryName } });
+          const c = await prisma.category.findFirst({ where: { name: updates.categoryName } });
           if (c) data.categoryId = c.id;
         }
         if (updates.variants !== undefined) data.variants = updates.variants;
         
-        const updated = await (prisma as any).product.update({ where: { id }, data });
+        await prisma.product.update({ where: { id }, data });
         
-        // WooCommerce Sync
-        try {
-          const { wooApi } = await import('@/lib/woocommerce');
-          const wooData: any = {};
-          if (updated.name) wooData.name = updated.name;
-          if (updated.priceCents) wooData.regular_price = (updated.priceCents / 100).toString();
-          if (updated.discountCents !== undefined) wooData.sale_price = updated.discountCents ? (updated.discountCents / 100).toString() : '';
-          if (updated.stockQuantity !== undefined) {
-             wooData.manage_stock = true;
-             wooData.stock_quantity = updated.stockQuantity;
-          }
-          if (updated.images) wooData.images = updated.images.map((src: string) => ({ src }));
-          if (updated.active !== undefined) wooData.status = updated.active ? 'publish' : 'draft';
-
-          if (updated.woocommerceId) {
-            await wooApi.put(`products/${updated.woocommerceId}`, wooData).catch(() => {});
-          }
-        } catch (wooErr) {
-           console.error(`Bulk Sync Error for ${id}:`, wooErr);
-        }
-
         updatedCount++;
       } catch (err) {
         console.error(`Bulk Update Failed for ${id}:`, err);

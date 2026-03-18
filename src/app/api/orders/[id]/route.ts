@@ -1,22 +1,31 @@
-import { wooApi } from "@/lib/woocommerce";
 import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerAuthSession();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const { id } = await params;
-    const { data: order } = await wooApi.get(`orders/${id}`);
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: true
+      }
+    });
+
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
 
     // Security check: Ensure this order belongs to the logged-in user
-    if (order.billing?.email?.toLowerCase() !== session.user.email.toLowerCase()) {
+    if (order.userId !== session.user.id) {
       return NextResponse.json({ error: "Unauthorized access to order" }, { status: 403 });
     }
 

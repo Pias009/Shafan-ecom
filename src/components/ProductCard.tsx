@@ -8,6 +8,11 @@ import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 
+function isValidImageUrl(url: any): boolean {
+  if (!url || typeof url !== 'string') return false;
+  return url.startsWith('/') || url.startsWith('http');
+}
+
 interface ProductCardProps {
   product: {
     id: string;
@@ -54,7 +59,7 @@ export function ProductCard({
         className="block w-full text-left relative aspect-[5/4] md:aspect-[4/3] overflow-hidden bg-black/[0.02]"
       >
         <Image
-          src={product.imageUrl || "/placeholder-product.png"}
+          src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}
           alt={product.name}
           fill
           sizes="(max-width: 768px) 100vw, 400px"

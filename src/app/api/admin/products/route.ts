@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { getServerAuthSession } from '@/lib/auth';
 import { uploadFromUrl } from '@/lib/cloudinary';
-import { wooApi } from '@/lib/woocommerce';
 
 const ProductCreateSchema = z.object({
   name: z.string(),
@@ -24,7 +23,7 @@ export async function GET() {
   if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
     return new Response('Unauthorized', { status: 401 });
   }
-  const products = await (prisma as any).product.findMany({
+  const products = await prisma.product.findMany({
     select: {
       id: true,
       name: true,
@@ -81,16 +80,16 @@ export async function POST(req: Request) {
     let brandId: string | null = null;
     let categoryId: string | null = null;
     if (data.brandName && data.brandName !== 'All') {
-      const b = await (prisma as any).brand.findFirst({ where: { name: data.brandName } });
+      const b = await prisma.brand.findFirst({ where: { name: data.brandName } });
       brandId = b?.id || null;
     }
     if (data.categoryName && data.categoryName !== 'All') {
-      const c = await (prisma as any).category.findFirst({ where: { name: data.categoryName } });
+      const c = await prisma.category.findFirst({ where: { name: data.categoryName } });
       categoryId = c?.id || null;
     }
 
     // Check for existing product by name to avoid non-unique upsert error
-    const existingProduct = await (prisma as any).product.findFirst({ where: { name: data.name } });
+    const existingProduct = await prisma.product.findFirst({ where: { name: data.name } });
     
     const productData = {
       description: data.description || '',
@@ -108,67 +107,16 @@ export async function POST(req: Request) {
 
     let product;
     if (existingProduct) {
-      product = await (prisma as any).product.update({
+      product = await prisma.product.update({
         where: { id: existingProduct.id },
         data: productData,
       });
     } else {
-      product = await (prisma as any).product.create({
+      product = await prisma.product.create({
         data: {
           name: data.name,
           ...productData,
         },
-      });
-    }
-
-    // Sync with WooCommerce
-    try {
-      const wooData = {
-        name: data.name,
-        type: 'simple',
-        regular_price: (data.priceCents / 100).toString(),
-        sale_price: data.discountCents ? (data.discountCents / 100).toString() : undefined,
-        description: data.description || '',
-        short_description: data.description?.substring(0, 150) || '',
-        categories: data.categoryName ? [{ name: data.categoryName }] : [],
-        images: finalImages.map(src => {
-          const fullUrl = src.startsWith('/') 
-            ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${src}`
-            : src;
-          return { src: fullUrl };
-        }),
-        manage_stock: true,
-        stock_quantity: data.stockQuantity || 0,
-        status: 'publish'
-      };
-
-      if (existingProduct?.woocommerceId) {
-        try {
-          await wooApi.put(`products/${existingProduct.woocommerceId}`, wooData);
-        } catch (putErr: any) {
-          // If product deleted on WC side (404), recreate it
-          if (putErr.response?.status === 404) {
-             const { data: newWooProduct } = await wooApi.post('products', wooData);
-             await (prisma as any).product.update({
-               where: { id: product.id },
-               data: { woocommerceId: newWooProduct.id.toString() }
-             });
-          } else {
-            throw putErr;
-          }
-        }
-      } else {
-        const { data: newWooProduct } = await wooApi.post('products', wooData);
-        await (prisma as any).product.update({
-          where: { id: product.id },
-          data: { woocommerceId: newWooProduct.id.toString() }
-        });
-      }
-    } catch (wooErr: any) {
-      console.error('WooCommerce Sync Error Details:', {
-        message: wooErr.message,
-        response: wooErr.response?.data,
-        status: wooErr.response?.status
       });
     }
 

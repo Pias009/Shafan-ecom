@@ -1,8 +1,9 @@
 import { getServerAuthSession } from "@/lib/auth";
-import { wooApi } from "@/lib/woocommerce";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PackageOpen, ExternalLink } from "lucide-react";
+import { OrderStatus } from "@prisma/client";
 
 export default async function OrdersPage() {
   const session = await getServerAuthSession();
@@ -10,45 +11,32 @@ export default async function OrdersPage() {
 
   let orders: any[] = [];
   try {
-    let customers = [];
-    try {
-      const res = await wooApi.get("customers", { email: session.user.email });
-      customers = res.data;
-    } catch (e) {
-      console.warn("Customer fetch slow/failed", e);
-    }
+    const dbOrders = await (prisma as any).order.findMany({
+      where: {
+        OR: [
+          { user: { email: session.user.email } },
+          { email: session.user.email }
+        ]
+      },
+      include: {
+        items: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
     
-    let queryParams: any = { 
-      per_page: 10,
-      orderby: 'date',
-      order: 'desc'
-    };
-    
-    if (customers && customers.length > 0) {
-      queryParams.customer = customers[0].id;
-    } else {
-      queryParams.search = session.user.email;
-    }
-
-    let data = [];
-    try {
-      const res = await wooApi.get("orders", queryParams);
-      data = res.data;
-    } catch (e) {
-      console.error("Orders fetch slow/failed", e);
-    }
-    
-    orders = data.map((o: any) => ({
+    orders = dbOrders.map((o: any) => ({
       id: String(o.id),
-      totalCents: Math.round(parseFloat(o.total) * 100),
-      status: o.status.toUpperCase(),
-      createdAt: o.date_created,
-      itemCount: o.line_items.reduce((acc: number, item: any) => acc + item.quantity, 0),
-      paymentMethod: o.payment_method_title,
-      items: o.line_items.map((it: any) => ({ name: it.name, id: it.product_id })),
+      totalCents: o.totalCents,
+      status: o.status,
+      createdAt: o.createdAt,
+      itemCount: o.items.reduce((acc: number, item: any) => acc + item.quantity, 0),
+      paymentMethod: o.paymentMethodTitle,
+      items: o.items.map((it: any) => ({ name: it.name, id: it.productId })),
     }));
   } catch (error) {
-    console.error("WooCommerce Orders Page Error:", error);
+    console.error("Prisma Orders Page Error:", error);
   }
 
   return (
@@ -57,7 +45,7 @@ export default async function OrdersPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-black">My Orders</h2>
-            <p className="mt-1 text-sm text-black/60 font-medium whitespace-nowrap overflow-hidden text-ellipsis">Manage and track your recent purchases.</p>
+            <p className="mt-1 text-sm text-black/60 font-medium whitespace-nowrap overflow-hidden text-ellipsis">Manage and track your recent purchases (MongoDB).</p>
           </div>
           <div className="p-3 bg-black/5 rounded-2xl ring-1 ring-black/10 hidden sm:block">
             <PackageOpen className="w-6 h-6 text-black" />
@@ -82,7 +70,7 @@ export default async function OrdersPage() {
                 <div className="flex flex-col sm:flex-row items-start gap-6 flex-1">
                   <div className="w-16 h-16 rounded-2xl bg-black text-white flex flex-col items-center justify-center shrink-0 shadow-xl shadow-black/10">
                     <span className="text-[9px] font-black uppercase tracking-widest opacity-40">Order</span>
-                    <span className="text-sm font-black">#{order.id}</span>
+                    <span className="text-xs font-black">#{order.id.substring(0,6)}</span>
                   </div>
                   <div className="space-y-3 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
@@ -90,8 +78,9 @@ export default async function OrdersPage() {
                         ${(order.totalCents / 100).toFixed(2)}
                       </span>
                       <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
-                        order.status === 'COMPLETED' ? 'bg-green-100 text-green-800 border-green-200' : 
-                        ['PENDING', 'PROCESSING', 'ON-HOLD'].includes(order.status) ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
+                        order.status === OrderStatus.DELIVERED ? 'bg-green-100 text-green-800 border-green-200' : 
+                        [OrderStatus.PAID, OrderStatus.PROCESSING].includes(order.status) ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                        [OrderStatus.PENDING_PAYMENT].includes(order.status) ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
                         'bg-black/5 text-black/40 border-black/5'
                       }`}>
                         {order.status}

@@ -47,7 +47,7 @@ export default function AccountDashboardClient() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Pending", value: data?.stats.pending ?? 0, icon: Loader2, color: "text-yellow-600", bg: "bg-yellow-50" },
           { label: "Shipped", value: data?.stats.shipped ?? 0, icon: Truck, color: "text-blue-600", bg: "bg-blue-50" },
@@ -64,7 +64,7 @@ export default function AccountDashboardClient() {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Current Cart */}
         <div className="glass-panel-heavy rounded-3xl p-8 border border-black/5 shadow-xl">
@@ -77,22 +77,22 @@ export default function AccountDashboardClient() {
             </Link>
           </div>
           
-          {cartItems.length === 0 ? (
+              {cartItems.length === 0 ? (
             <div className="py-10 text-center">
               <div className="inline-flex p-4 bg-black/5 rounded-full mb-4">
                 <ShoppingBag className="w-8 h-8 text-black/20" />
               </div>
               <p className="text-sm font-medium text-black/40 italic">Your cart is empty.</p>
             </div>
-          ) : (
-            <div className="space-y-4">
+              ) : (
+                <div className="space-y-4">
               {cartItems.slice(0, 3).map((item) => (
-                <div key={item.id} className="flex items-center gap-4 p-3 rounded-2xl bg-black/[0.02] border border-black/5">
-                  <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-white shadow-sm border border-black/5">
+                <div key={item.id} className="flex flex-wrap items-center gap-4 p-3 rounded-2xl bg-black/[0.02] border border-black/5">
+                  <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden bg-white shadow-sm border border-black/5">
                     <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-black truncate">{item.name}</div>
+                    <div className="text-sm font-bold text-black break-words">{item.name}</div>
                     <div className="text-xs text-black/40 font-bold uppercase tracking-tighter">{item.brand}</div>
                   </div>
                   <div className="text-sm font-black text-black">${item.discountPrice ?? item.price}</div>
@@ -155,7 +155,7 @@ export default function AccountDashboardClient() {
                         <div className="p-1 bg-black/5 rounded-lg">
                           <Package className="w-3 h-3 text-black/20" />
                         </div>
-                        <span className="text-[11px] font-bold text-black/70 truncate flex-1">{item.name}</span>
+                  <span className="text-[11px] font-bold text-black/70 break-words flex-1">{item.name}</span>
                         <span className="text-[10px] font-black text-black/30">×{item.quantity}</span>
                       </div>
                     ))}

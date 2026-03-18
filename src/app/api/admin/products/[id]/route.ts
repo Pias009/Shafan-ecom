@@ -22,13 +22,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
     return new Response('Unauthorized', { status: 401 });
   }
-  const product = await (prisma as any).product.findUnique({
+  const product = await prisma.product.findUnique({
     where: { id: id },
     select: {
       id: true,
       name: true,
       priceCents: true,
       discountCents: true,
+      description: true,
       active: true,
       brand: { select: { name: true } },
       category: { select: { name: true } },
@@ -88,70 +89,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     }
     if (parsed.data.brandName) {
-      const b = await (prisma as any).brand.findFirst({ where: { name: parsed.data.brandName } });
+      const b = await prisma.brand.findFirst({ where: { name: parsed.data.brandName } });
       if (b) updates.brandId = b.id;
     }
     if (parsed.data.categoryName) {
-      const c = await (prisma as any).category.findFirst({ where: { name: parsed.data.categoryName } });
+      const c = await prisma.category.findFirst({ where: { name: parsed.data.categoryName } });
       if (c) updates.categoryId = c.id;
     }
     if (Object.keys(updates).length === 0) {
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
-    const updated = await (prisma as any).product.update({ where: { id: id }, data: updates });
-
-    // Sync with WooCommerce
-    try {
-      const { wooApi } = await import('@/lib/woocommerce');
-      const wooData = {
-        name: updated.name,
-        regular_price: (updated.priceCents / 100).toString(),
-        sale_price: updated.discountCents ? (updated.discountCents / 100).toString() : undefined,
-        description: updated.description || '',
-        short_description: updated.description?.substring(0, 150) || '',
-        manage_stock: true,
-        stock_quantity: updated.stockQuantity || 0,
-        images: updated.images?.map((src: string) => {
-          const fullUrl = src.startsWith('/') 
-            ? `${process.env.NEXT_PUBLIC_APP_URL || ''}${src}`
-            : src;
-          return { src: fullUrl };
-        }) || [],
-        status: updated.active ? 'publish' : 'draft'
-      };
-
-      if (updated.woocommerceId) {
-        try {
-          await wooApi.put(`products/${updated.woocommerceId}`, wooData);
-        } catch (putErr: any) {
-          // If deleted on WC, recreate
-          if (putErr.response?.status === 404) {
-            const { data: newWoo } = await wooApi.post('products', wooData);
-            await (prisma as any).product.update({
-              where: { id: updated.id },
-              data: { woocommerceId: newWoo.id.toString() }
-            });
-          } else {
-            throw putErr;
-          }
-        }
-      } else {
-        // No WC ID yet, create and save it
-        const { data: newWoo } = await wooApi.post('products', wooData);
-        await (prisma as any).product.update({
-          where: { id: updated.id },
-          data: { woocommerceId: newWoo.id.toString() }
-        });
-      }
-    } catch (wooErr: any) {
-      console.error('WooCommerce Sync Error [ID Route]:', {
-        message: wooErr.message,
-        response: wooErr.response?.data
-      });
-    }
+    const updated = await prisma.product.update({ where: { id: id }, data: updates });
 
     try {
-      await (prisma as any).auditLog.create({
+      await prisma.auditLog.create({
         data: {
           action: 'UPDATE_PRODUCT',
           actorId: (session.user as any).id,

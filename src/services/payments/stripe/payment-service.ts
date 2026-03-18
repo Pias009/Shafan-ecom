@@ -7,7 +7,7 @@ export async function createPaymentIntent(amount: number, orderId: string, custo
     // Stripe expects amount in cents
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
-      currency: "usd", // Adjust based on your WooCommerce currency
+      currency: "usd", // Adjust based on your MongoDB currency
       receipt_email: customerEmail,
       metadata: {
         orderId: orderId,

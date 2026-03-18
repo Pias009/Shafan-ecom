@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { verifyStripeWebhook } from "@/services/payments/stripe/payment-service";
-import { updateWooCommerceOrderStatus } from "@/services/woocommerce/order-service";
+import { prisma } from "@/lib/prisma";
+import { OrderStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -15,8 +16,15 @@ export async function POST(req: Request) {
       const orderId = paymentIntent.metadata.orderId;
 
       if (orderId) {
-        console.log(`Payment succeeded for Order ID: ${orderId}. Updating WooCommerce status...`);
-        await updateWooCommerceOrderStatus(parseInt(orderId), "processing");
+        console.log(`Payment succeeded for Order ID: ${orderId}. Updating Prisma status...`);
+        
+        await prisma.order.update({
+          where: { id: orderId },
+          data: { 
+            status: OrderStatus.PAID,
+            stripePaymentIntentId: paymentIntent.id
+          }
+        });
       }
     }
 

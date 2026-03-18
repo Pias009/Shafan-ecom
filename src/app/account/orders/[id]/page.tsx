@@ -1,10 +1,10 @@
 import { getServerAuthSession } from "@/lib/auth";
-import { wooApi } from "@/lib/woocommerce";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Package, CreditCard, User, MapPin, CheckCircle2, ShoppingBag } from "lucide-react";
-import { Price } from "@/components/Price";
+import { ArrowLeft, CreditCard, User, MapPin, CheckCircle2, ShoppingBag } from "lucide-react";
 import OrderActions from "./OrderActions";
+import { OrderStatus } from "@prisma/client";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,10 +16,19 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
   let order;
 
   try {
-    const { data } = await wooApi.get(`orders/${id}`);
+    const data = await (prisma as any).order.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        user: true,
+      }
+    });
     
+    if (!data) throw new Error("Not found");
+
     // Security check: Ensure this order belongs to the logged-in user
-    if (data.billing?.email?.toLowerCase() !== session.user.email.toLowerCase()) {
+    const orderEmail = data.email?.toLowerCase() || data.user?.email?.toLowerCase();
+    if (orderEmail !== session.user.email.toLowerCase()) {
       return (
         <div className="pt-20 text-center">
           <h2 className="text-xl font-bold">Unauthorized Access</h2>
@@ -28,7 +37,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
         </div>
       );
     }
-    order = data;
+    order = data as any;
   } catch (error) {
     return (
       <div className="pt-20 text-center">
@@ -37,6 +46,9 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
       </div>
     );
   }
+
+  const billing = order.billingAddress || {};
+  const shipping = order.shippingAddress || {};
 
   return (
     <div className="max-w-4xl mx-auto py-8 md:py-16 px-4 md:px-6 space-y-8 md:space-y-12">
@@ -47,18 +59,18 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8 border-b border-black/5 pb-8 md:pb-10">
         <div className="text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-2">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tighter">Receipt #{order.id}</h1>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tighter">Receipt #{order.id.substring(0, 8)}</h1>
             <span className="bg-black text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
               {order.status}
             </span>
           </div>
           <p className="text-[10px] md:text-xs font-bold text-black/30 uppercase tracking-widest">
-            {new Date(order.date_created).toLocaleDateString()} at {new Date(order.date_created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
         <div className="text-center md:text-right bg-black/5 p-6 rounded-3xl md:bg-transparent md:p-0">
           <div className="text-[10px] font-black uppercase tracking-widest text-black/20 mb-1">Total Paid</div>
-          <Price amount={order.total} className="text-4xl md:text-5xl font-black" />
+          <div className="text-4xl md:text-5xl font-black">${(order.totalCents / 100).toFixed(2)}</div>
         </div>
       </div>
 
@@ -71,11 +83,11 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
           <div className="space-y-4 px-2">
             <div>
               <div className="text-[9px] font-black uppercase tracking-widest text-black/20">Name</div>
-              <div className="font-bold text-sm">{order.billing?.first_name} {order.billing?.last_name}</div>
+              <div className="font-bold text-sm">{billing.first_name} {billing.last_name}</div>
             </div>
             <div>
               <div className="text-[9px] font-black uppercase tracking-widest text-black/20">Email Address</div>
-              <div className="font-bold text-xs md:text-sm text-black/60 truncate">{order.billing?.email}</div>
+              <div className="font-bold text-xs md:text-sm text-black/60 truncate">{billing.email}</div>
             </div>
           </div>
         </section>
@@ -86,10 +98,10 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
              <h3 className="font-black uppercase tracking-widest text-xs">Delivery Address</h3>
           </div>
           <div className="px-2 text-[10px] md:text-xs font-bold text-black/60 leading-relaxed uppercase tracking-widest">
-            {order.shipping?.address_1}<br />
-            {order.shipping?.address_2 && <>{order.shipping.address_2}<br /></>}
-            {order.shipping?.city}, {order.shipping?.state} {order.shipping?.postcode}<br />
-            {order.shipping?.country}
+            {shipping.address_1}<br />
+            {shipping.address_2 && <>{shipping.address_2}<br /></>}
+            {shipping.city}, {shipping.state} {shipping.postcode}<br />
+            {shipping.country}
           </div>
         </section>
       </div>
@@ -102,16 +114,16 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
         
         {/* Mobile List View */}
         <div className="md:hidden space-y-4">
-          {order.line_items.map((it: any) => (
+          {order.items.map((it: any) => (
             <div key={it.id} className="glass-panel-heavy rounded-2xl p-4 border border-black/5 flex justify-between items-center gap-4">
               <div className="min-w-0">
-                <Link href={`/products/${it.product_id}`} className="font-bold text-xs truncate leading-tight hover:underline">
+                <Link href={`/products/${it.productId}`} className="font-bold text-xs truncate leading-tight hover:underline">
                   {it.name}
                 </Link>
-                <div className="text-[8px] font-black text-black/20 uppercase tracking-widest mt-1">Ref: {it.sku || 'N/A'} • Qty: {it.quantity}</div>
+                <div className="text-[8px] font-black text-black/20 uppercase tracking-widest mt-1">Qty: {it.quantity}</div>
               </div>
               <div className="text-right font-black text-xs shrink-0">
-                <Price amount={it.total} />
+                ${(it.priceCents * it.quantity / 100).toFixed(2)}
               </div>
             </div>
           ))}
@@ -128,16 +140,15 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {order.line_items.map((it: any) => (
+              {order.items.map((it: any) => (
                 <tr key={it.id}>
                   <td className="px-8 py-6">
-                    <Link href={`/products/${it.product_id}`} className="font-bold text-sm hover:underline">
+                    <Link href={`/products/${it.productId}`} className="font-bold text-sm hover:underline">
                       {it.name}
                     </Link>
-                    <div className="text-[9px] font-black text-black/20 uppercase tracking-widest mt-1">Ref: {it.sku || 'N/A'}</div>
                   </td>
                   <td className="px-8 py-6 text-center font-black text-black/40">{it.quantity}</td>
-                  <td className="px-8 py-6 text-right font-black text-sm"><Price amount={it.total} /></td>
+                  <td className="px-8 py-6 text-right font-black text-sm">${(it.priceCents * it.quantity / 100).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -152,7 +163,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
            </div>
            <div className="text-center md:text-left">
               <div className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Payment Method</div>
-              <div className="text-lg md:text-xl font-black">{order.payment_method_title || 'N/A'}</div>
+              <div className="text-lg md:text-xl font-black">{order.paymentMethodTitle || 'N/A'}</div>
            </div>
         </div>
         <div className="flex items-center gap-3 text-white/60">
@@ -165,7 +176,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
       <OrderActions 
         orderId={order.id.toString()} 
         status={order.status} 
-        createdAt={order.date_created} 
+        createdAt={order.createdAt} 
       />
     </div>
   );

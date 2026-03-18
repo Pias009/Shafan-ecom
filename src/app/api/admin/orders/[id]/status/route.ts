@@ -1,36 +1,11 @@
-import { wooApi } from "@/lib/woocommerce";
 import { getServerAuthSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { OrderStatus } from "@prisma/client";
 import { z } from "zod";
 
 const StatusSchema = z.object({
-  status: z.enum([
-    "PENDING", 
-    "PROCESSING", 
-    "ON_HOLD", 
-    "COMPLETED", 
-    "CANCELLED", 
-    "REFUNDED", 
-    "FAILED",
-    "PENDING_PAYMENT",
-    "PAID",
-    "SHIPPED",
-    "DELIVERED"
-  ]).optional(),
+  status: z.nativeEnum(OrderStatus),
 });
-
-const statusMap: Record<string, string> = {
-  PENDING: "pending",
-  PENDING_PAYMENT: "pending",
-  PROCESSING: "processing",
-  PAID: "processing",
-  ON_HOLD: "on-hold",
-  SHIPPED: "on-hold",
-  COMPLETED: "completed",
-  DELIVERED: "completed",
-  CANCELLED: "cancelled",
-  REFUNDED: "refunded",
-  FAILED: "failed",
-};
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerAuthSession();
@@ -44,17 +19,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const body = await req.json();
     const parsed = StatusSchema.safeParse(body);
-    if (!parsed.success || !parsed.data.status) {
-      return new Response(JSON.stringify({ error: "Invalid payload or status" }), {
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: "Invalid status provided", details: parsed.error }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const wooStatus = statusMap[parsed.data.status];
-
-    const { data: updatedOrder } = await wooApi.put(`orders/${id}`, {
-      status: wooStatus,
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: {
+        status: parsed.data.status
+      }
     });
 
     return new Response(JSON.stringify(updatedOrder), {
@@ -62,8 +38,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       headers: { "Content-Type": "application/json" },
     });
   } catch (e: any) {
-    console.error("WooCommerce Admin Order Update Error:", e?.response?.data || e.message);
-    return new Response(JSON.stringify({ error: "Server error or WooCommerce update failed" }), {
+    console.error("Admin Order Update Error:", e.message);
+    return new Response(JSON.stringify({ error: "Server error or order update failed" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });

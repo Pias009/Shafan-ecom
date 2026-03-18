@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -19,12 +19,12 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
     brandName: brands[0]?.name || '',
     categoryName: categories[0]?.name || '',
     description: '',
-    features: '',
+    features: [] as string[],
     priceCents: 0,
     discountCents: 0,
     stockQuantity: 0,
     mainImage: '',
-    images: '',
+    images: [] as string[],
     hot: false,
     trending: false
   });
@@ -49,11 +49,7 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          features: formData.features.split(',').map(f => f.trim()).filter(Boolean),
-          images: formData.images.split(',').map(f => f.trim()).filter(Boolean),
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (res.ok) {
@@ -268,15 +264,15 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Gallery (Min 2 recommended)</label>
                 <div className="grid grid-cols-2 gap-3">
-                  {formData.images.split(',').filter(Boolean).map((img, idx) => (
+                  {formData.images.map((img, idx) => (
                     <div key={idx} className="aspect-square rounded-xl bg-black/5 overflow-hidden border border-black/5 relative group">
                       <img src={img} alt="Gallery" className="w-full h-full object-cover" />
                       <button 
                         type="button"
                         onClick={() => {
-                          const imgs = formData.images.split(',').filter(Boolean);
+                          const imgs = [...formData.images];
                           imgs.splice(idx, 1);
-                          setFormData(p => ({ ...p, images: imgs.join(',') }));
+                          setFormData(p => ({ ...p, images: imgs }));
                         }}
                         className="absolute top-1.5 right-1.5 p-1 bg-black/50 text-white rounded-full hover:bg-black transition-colors opacity-0 group-hover:opacity-100"
                       >
@@ -304,8 +300,7 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
                             const data = await res.json();
                             return data.url;
                           }));
-                          const current = formData.images.split(',').filter(Boolean);
-                          setFormData(p => ({ ...p, images: [...current, ...urls].join(',') }));
+                          setFormData(p => ({ ...p, images: [...p.images, ...urls] }));
                           toast.success('Gallery updated', { id: tid });
                         } catch (err) {
                           toast.error('Gallery upload partially failed', { id: tid });

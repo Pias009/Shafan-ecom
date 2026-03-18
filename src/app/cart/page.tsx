@@ -13,6 +13,11 @@ import { Price } from "@/components/Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 
+function isValidImageUrl(url: any): boolean {
+  if (!url || typeof url !== 'string') return false;
+  return url.startsWith('/') || url.startsWith('http');
+}
+
 function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, applyCoupon, removeCoupon, subtotalCents, discountCents, totalCents, t }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
@@ -74,7 +79,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 className="glass-panel-heavy flex flex-row items-center gap-4 md:gap-6 rounded-2xl md:rounded-3xl p-3 md:p-5 border border-black/5 shadow-sm group hover:shadow-md transition-shadow"
               >
                 <div className="relative h-20 w-20 md:h-32 md:w-32 shrink-0 overflow-hidden rounded-xl md:rounded-2xl bg-black/[0.02] border border-black/5">
-                  <Image src={item.imageUrl} alt={item.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <Image src={isValidImageUrl(item.imageUrl) ? item.imageUrl : "/placeholder-product.png"} alt={item.name} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
                 </div>
 
                 <div className="flex flex-1 flex-col justify-center min-w-0">

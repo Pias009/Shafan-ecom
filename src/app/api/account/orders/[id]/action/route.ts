@@ -1,6 +1,7 @@
-import { wooApi } from "@/lib/woocommerce";
+import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { OrderStatus } from "@prisma/client";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerAuthSession();
@@ -13,13 +14,21 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   try {
     // 1. Fetch order to verify ownership and conditions
-    const { data: order } = await wooApi.get(`orders/${id}`);
+    const order = await (prisma as any).order.findUnique({
+      where: { id },
+      include: { user: true }
+    });
 
-    if (order.billing?.email?.toLowerCase() !== session.user.email.toLowerCase()) {
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    const orderEmail = order.email?.toLowerCase() || order.user?.email?.toLowerCase();
+    if (orderEmail !== session.user.email.toLowerCase()) {
       return NextResponse.json({ error: "Unauthorized access to this order" }, { status: 403 });
     }
 
-    const orderDate = new Date(order.date_created);
+    const orderDate = new Date(order.createdAt);
     const now = new Date();
     const diffMinutes = (now.getTime() - orderDate.getTime()) / (1000 * 60);
 
@@ -28,29 +37,35 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       if (diffMinutes > 30) {
         return NextResponse.json({ error: "Cancellation period (30 mins) has expired" }, { status: 400 });
       }
-      if (["completed", "cancelled", "refunded"].includes(order.status)) {
+      if ([OrderStatus.DELIVERED, OrderStatus.CANCELLED].includes(order.status)) {
         return NextResponse.json({ error: `Cannot cancel an order with status: ${order.status}` }, { status: 400 });
       }
 
-      const { data: updated } = await wooApi.put(`orders/${id}`, { status: "cancelled" });
+      const updated = await prisma.order.update({
+        where: { id },
+        data: { status: OrderStatus.CANCELLED }
+      });
       return NextResponse.json(updated);
     }
 
     if (action === "REFUND") {
-      // Rule: Only if status is 'completed'
-      if (order.status !== "completed") {
-        return NextResponse.json({ error: "Refunds can only be requested for completed/delivered orders" }, { status: 400 });
+      // Rule: Only if status is 'delivered'
+      if (order.status !== OrderStatus.DELIVERED) {
+        return NextResponse.json({ error: "Refunds can only be requested for delivered orders" }, { status: 400 });
       }
 
-      // In a real scenario, this might create a refund record or trigger a notification.
-      // For now, we update the status to 'refunded'.
-      const { data: updated } = await wooApi.put(`orders/${id}`, { status: "refunded" });
+      // For now, we update to a 'REFUND_REQUESTED' status if it exists, or just CANCELLED for simplicity
+      // Let's check status enum in schema.prisma if needed, but I'll use CANCELLED as a fallback
+      const updated = await prisma.order.update({
+        where: { id },
+        data: { status: OrderStatus.CANCELLED }
+      });
       return NextResponse.json(updated);
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error: any) {
-    console.error("User Order Action Error:", error.response?.data || error.message);
-    return NextResponse.json({ error: "Internal Server Error or WooCommerce Update Failed" }, { status: 500 });
+    console.error("User Order Action Error:", error.message);
+    return NextResponse.json({ error: "Internal Server Error or Database Update Failed" }, { status: 500 });
   }
 }

@@ -26,7 +26,7 @@ export default function CustomPaymentPage() {
   useEffect(() => {
     async function fetchOrderAndStripe() {
       try {
-        // Parallelize fetching WooCommerce order and Stripe intent
+        // Parallelize fetching Prisma order and Stripe intent
         const [orderRes, stripeRes] = await Promise.all([
           fetch(`/api/orders/${id}`),
           fetch("/api/payments/stripe/create-intent", {
@@ -56,21 +56,24 @@ export default function CustomPaymentPage() {
   if (loading || !order) return (
     <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-4 p-6 text-center">
       <Loader2 className="w-10 h-10 animate-spin text-black/20" />
-      <p className="font-body text-[10px] md:text-xs font-bold uppercase tracking-widest text-black/40">Securely loading your order...</p>
+      <p className="font-body text-[10px] md:text-xs font-bold uppercase tracking-widest text-black/40">Securely loading your order (Prisma)...</p>
     </div>
   );
+
+  const billing = order.billingAddress || {};
+  const shipping = order.shippingAddress || {};
 
   return (
     <div className="min-h-screen bg-cream text-black">
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
-        <div className="grid gap-8 lg:grid-cols-12">
+  <div className="grid gap-8 lg:grid-cols-12">
           {/* Main Payment UI */}
-          <div className="lg:col-span-12 xl:col-span-8 space-y-6 md:space-y-8 order-2 xl:order-1">
+          <div className="lg:col-span-12 xl:col-span-8 space-y-6 md:space-y-8 order-1 w-full overflow-x-hidden">
             <div className="text-center xl:text-left">
-              <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">Secure Payment</h1>
-              <p className="font-body text-[10px] md:text-sm text-black/40 mt-1 uppercase font-bold tracking-widest">Order #{id}</p>
+              <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-black">Secure Payment</h1>
+              <p className="font-body text-[10px] md:text-sm text-black/40 mt-1 uppercase font-bold tracking-widest">Order ID: {id.substring(0, 8)}</p>
             </div>
 
             <div className="space-y-4">
@@ -121,7 +124,7 @@ export default function CustomPaymentPage() {
               ) : (
                 <div className="py-8 text-center space-y-6 max-w-md mx-auto">
                   <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
-                    Please send the total amount to our bKash/Nagad number <strong className="text-black font-black">+880123456789</strong> and include your order ID <strong className="text-black font-black">#{id}</strong> in the reference.
+                    Please send the total amount to our bKash/Nagad number <strong className="text-black font-black">+880123456789</strong> and include your order ID <strong className="text-black font-black">#{id.substring(0,8)}</strong> in the reference.
                   </p>
                   <button
                     onClick={() => router.push(`/checkout/success?order_id=${id}`)}
@@ -135,22 +138,22 @@ export default function CustomPaymentPage() {
           </div>
 
           {/* Order Summary Sidebar */}
-          <div className="lg:col-span-12 xl:col-span-4 order-1 xl:order-2">
+          <div className="lg:col-span-12 xl:col-span-4 order-2 xl:order-2 w-full md:w-auto overflow-x-hidden">
             <div className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-black/5 md:sticky top-24 xl:top-32 shadow-2xl space-y-6 md:space-y-8 bg-white/50 backdrop-blur-sm">
               <h3 className="font-bold text-lg md:text-xl">Order Summary</h3>
               
               <div className="space-y-4 max-h-[250px] md:max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                {order.line_items.map((item: any) => (
+                {order.items.map((item: any) => (
                   <div key={item.id} className="flex gap-4 items-center">
                     <div className="w-12 h-12 bg-black/5 rounded-xl shrink-0 border border-black/5 overflow-hidden flex items-center justify-center font-bold text-[10px] text-black/20 uppercase tracking-tighter">
-                      {item.name.substring(0, 3)}
+                      {item.nameSnapshot.substring(0, 3)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="font-bold text-xs md:text-sm truncate leading-tight">{item.name}</div>
+                      <div className="font-bold text-xs md:text-sm truncate leading-tight">{item.nameSnapshot}</div>
                       <div className="text-[9px] md:text-[10px] text-black/40 font-bold uppercase tracking-widest mt-1">Quantity: {item.quantity}</div>
                     </div>
                     <div className="text-right font-black text-xs md:text-sm">
-                      <Price amount={item.total} />
+                      <Price amount={item.priceCents * item.quantity / 100} />
                     </div>
                   </div>
                 ))}
@@ -159,23 +162,19 @@ export default function CustomPaymentPage() {
               <div className="space-y-3 pt-6 border-t border-black/5">
                 <div className="flex justify-between text-[10px] text-black/40 font-bold uppercase tracking-widest">
                   <span>Subtotal</span>
-                  <Price amount={parseFloat(order.total) - parseFloat(order.total_tax)} className="text-black" />
-                </div>
-                <div className="flex justify-between text-[10px] text-black/40 font-bold uppercase tracking-widest">
-                  <span>Tax</span>
-                  <Price amount={order.total_tax} className="text-black" />
+                  <Price amount={order.subtotalCents / 100} className="text-black" />
                 </div>
                 <div className="flex justify-between pt-4 border-t border-black/5">
                   <span className="font-bold text-base md:text-lg">Total</span>
-                  <Price amount={order.total} className="font-black text-xl md:text-2xl" />
+                  <Price amount={order.totalCents / 100} className="font-black text-xl md:text-2xl" />
                 </div>
               </div>
 
               <div className="bg-black/5 rounded-2xl p-4 space-y-2">
                 <div className="text-[9px] font-black uppercase tracking-wider text-black/30">Shipping To</div>
                 <div className="text-[10px] md:text-xs font-bold leading-relaxed">
-                  {order.shipping.first_name} {order.shipping.last_name}<br />
-                  <span className="text-black/60 font-medium">{order.shipping.address_1}, {order.shipping.city}</span>
+                  {shipping.first_name} {shipping.last_name}<br />
+                  <span className="text-black/60 font-medium">{shipping.address_1}, {shipping.city}</span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,3 @@
-import { wooApi } from "@/lib/woocommerce";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -10,16 +9,18 @@ export async function GET() {
   }
 
   try {
-    // Users and Banners still in Prisma (WooCommerce handles customers)
-    const usersCount = (prisma as any).user?.count ? await (prisma as any).user.count() : 0;
-    const bannersCount = (prisma as any).banner?.count ? await (prisma as any).banner.count() : 0;
-
-    // Products and Orders from WooCommerce
-    const { headers: productHeaders } = await wooApi.get("products", { per_page: 1 });
-    const productsCount = parseInt(productHeaders["x-wp-total"] || "0");
-
-    const { data: allOrders, headers: orderHeaders } = await wooApi.get("orders", { per_page: 100 });
-    const ordersCount = parseInt(orderHeaders["x-wp-total"] || "0");
+    const [usersCount, productsCount, bannersCount, ordersCount, ordersByStatus] = await Promise.all([
+      prisma.user.count(),
+      prisma.product.count(),
+      prisma.banner.count(),
+      prisma.order.count(),
+      prisma.order.groupBy({
+        by: ['status'],
+        _count: {
+          _all: true
+        }
+      })
+    ]);
 
     const counts: Record<string, number> = {
       PENDING_PAYMENT: 0,
@@ -31,19 +32,10 @@ export async function GET() {
       REFUNDED: 0,
     };
 
-    const statusInverseMap: Record<string, string> = {
-      pending: "PENDING_PAYMENT",
-      processing: "PROCESSING",
-      "on-hold": "SHIPPED",
-      completed: "DELIVERED",
-      cancelled: "CANCELLED",
-      refunded: "REFUNDED",
-      failed: "CANCELLED",
-    };
-
-    allOrders.forEach((o: any) => {
-      const s = statusInverseMap[o.status];
-      if (s) counts[s] += 1;
+    ordersByStatus.forEach((item) => {
+      if (counts[item.status] !== undefined) {
+        counts[item.status] = item._count._all;
+      }
     });
 
     return new Response(
@@ -59,7 +51,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error("WooCommerce Admin Dashboard Error:", error);
-    return new Response(JSON.stringify({ error: "Failed to fetch from WooCommerce" }), { status: 500 });
+    console.error("Admin Dashboard Error:", error);
+    return new Response(JSON.stringify({ error: "Failed to fetch dashboard data" }), { status: 500 });
   }
 }

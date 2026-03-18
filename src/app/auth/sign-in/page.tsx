@@ -1,9 +1,11 @@
 "use client";
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
 
 import { Suspense } from "react";
 
@@ -117,10 +119,20 @@ function SignInForm() {
 }
 
 export default function SignInPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // Auto-redirect SUPERADMIN to the Super Admin Console after login
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (session?.user?.role === 'SUPERADMIN') {
+      router.replace('/ueadmin/super');
+    }
+  }, [session, status, router]);
+
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
       <SignInForm />
     </Suspense>
   );
 }
-

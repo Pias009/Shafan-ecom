@@ -2,36 +2,36 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { OrderStatus } from '@prisma/client';
 
 export default function OrderStatusActions({ orderId, currentStatus }: { orderId: string, currentStatus: string }) {
   const [status, setStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
 
   const statuses = [
-    { id: 'pending', label: 'Pending Payment' },
-    { id: 'processing', label: 'Processing' },
-    { id: 'on-hold', label: 'On Hold' },
-    { id: 'completed', label: 'Completed' },
-    { id: 'cancelled', label: 'Cancelled' },
-    { id: 'refunded', label: 'Refunded' },
+    { id: OrderStatus.PENDING_PAYMENT, label: 'Pending' },
+    { id: OrderStatus.PAID, label: 'Paid' },
+    { id: OrderStatus.PROCESSING, label: 'Processing' },
+    { id: OrderStatus.SHIPPED, label: 'Shipped' },
+    { id: OrderStatus.DELIVERED, label: 'Delivered' },
+    { id: OrderStatus.CANCELLED, label: 'Cancelled' },
+    { id: OrderStatus.REFUNDED, label: 'Refunded' },
   ];
 
-  async function updateStatus(newStatus: string) {
-    const apiStatus = newStatus.toUpperCase().replace('-', '_'); // Map to API format if needed
-    
+  async function updateStatus(newStatus: OrderStatus) {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/orders/${orderId}/status`, {
-        method: 'POST', // Changed from PATCH to match route.ts
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: apiStatus }),
+        body: JSON.stringify({ status: newStatus }),
       });
       
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Failed to update");
       
-      setStatus(newStatus.toLowerCase());
+      setStatus(newStatus);
       toast.success(`Order status updated to ${newStatus}`);
       window.location.reload();
     } catch (err: any) {
@@ -46,7 +46,7 @@ export default function OrderStatusActions({ orderId, currentStatus }: { orderId
       <div className="flex items-center justify-between">
         <div className="text-[10px] font-black uppercase tracking-widest text-black/30">Order Control</div>
         <button
-          onClick={() => updateStatus('cancelled')}
+          onClick={() => updateStatus(OrderStatus.CANCELLED)}
           disabled={loading}
           className="bg-red-500 hover:bg-red-600 text-white text-[9px] font-black uppercase tracking-[0.2em] px-6 py-2 rounded-full shadow-lg shadow-red-200 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
         >
@@ -77,7 +77,7 @@ export default function OrderStatusActions({ orderId, currentStatus }: { orderId
       {loading && (
         <div className="flex items-center gap-2 text-[10px] font-bold text-black/40 animate-pulse">
           <Loader2 size={12} className="animate-spin" />
-          Updating WooCommerce database...
+          Updating database...
         </div>
       )}
     </div>

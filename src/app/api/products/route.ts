@@ -13,7 +13,7 @@ export async function GET() {
       }
     });
   } catch (error) {
-    console.error("WooCommerce Products Fetch Error:", error);
+    console.error("MongoDB Products Fetch Error:", error);
     // Return empty array to prevent complete crash on error
     return NextResponse.json([], { status: 500 });
   }

@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -103,6 +104,18 @@ async function main() {
     });
   }
   console.log("Banners seeded.");
+  // 6. Create SUPERADMIN (verification flow starts here)
+  const superAdminEmail = "pvs178380@gmail.com";
+  const rawSuperPwd = "superadmin123";
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+  const verificationExpires = new Date(Date.now() + 24*60*60*1000);
+  const hashedSuper = await bcrypt.hash(rawSuperPwd, 10);
+  const superAdmin = await prisma.user.upsert({
+    where: { email: superAdminEmail },
+    update: { passwordHash: hashedSuper, role: "SUPERADMIN" },
+    create: { email: superAdminEmail, name: "Super Admin", passwordHash: hashedSuper, role: "SUPERADMIN" },
+  });
+  console.log(`Super Admin prepared: ${superAdmin.email} (verification required)`);
 
   // 5. Audit log seed (sample)
   try {

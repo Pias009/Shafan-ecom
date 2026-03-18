@@ -6,6 +6,11 @@ import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 
+function isValidImageUrl(url: any): boolean {
+  if (!url || typeof url !== 'string') return false;
+  return url.startsWith('/') || url.startsWith('http');
+}
+
 interface QuickViewProduct {
   id: string;
   name: string;
@@ -103,7 +108,7 @@ export function ProductQuickViewModal({
                     className="relative w-full h-full"
                   >
                     <Image
-                      src={allImages[currentImageIndex] || "/placeholder-product.png"}
+                      src={isValidImageUrl(allImages[currentImageIndex]) ? allImages[currentImageIndex] : "/placeholder-product.png"}
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -146,7 +151,7 @@ export function ProductQuickViewModal({
                         currentImageIndex === idx ? "border-black scale-110 shadow-lg" : "border-transparent opacity-50 hover:opacity-100"
                       }`}
                     >
-                      <Image src={img} alt="Thumb" fill className="object-cover" />
+                      <Image src={isValidImageUrl(img) ? img : "/placeholder-product.png"} alt="Thumb" fill className="object-cover" />
                     </button>
                   ))}
                 </div>
@@ -242,7 +247,7 @@ export function ProductQuickViewModal({
                 
                 <div className="relative w-full h-full max-w-6xl max-h-[80vh]">
                   <Image 
-                    src={allImages[currentImageIndex]} 
+                    src={isValidImageUrl(allImages[currentImageIndex]) ? allImages[currentImageIndex] : "/placeholder-product.png"} 
                     alt="Full View" 
                     fill 
                     className="object-contain"

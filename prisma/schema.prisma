@@ -28,6 +28,9 @@ model User {
 
   role          Role      @default(USER)
   passwordHash  String?
+  isVerified    Boolean   @default(false)
+  verificationToken String?
+  verificationExpires DateTime?
 
   accounts      Account[]
   sessions      Session[]
@@ -174,7 +177,7 @@ model AuditLog {
 model Product {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String    @unique
-  woocommerceId String?   
+  description   String?
   features      String[]
   images        String[]
   mainImage     String?
@@ -186,6 +189,9 @@ model Product {
   active        Boolean   @default(true)
   hot           Boolean   @default(false)
   trending      Boolean   @default(false)
+  averageRating Float     @default(0)
+  ratingCount   Int       @default(0)
+  totalSales    Int       @default(0)
 
   brandId       String?   @db.ObjectId
   categoryId    String?   @db.ObjectId
@@ -216,6 +222,7 @@ enum OrderStatus {
 model Order {
   id                 String      @id @default(auto()) @map("_id") @db.ObjectId
   userId             String?     @db.ObjectId
+  email              String?
   user               User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   status             OrderStatus @default(PENDING_PAYMENT)
@@ -224,6 +231,11 @@ model Order {
   discountCents      Int         @default(0)
   shippingCents      Int         @default(0)
   totalCents         Int
+
+  billingAddress     Json?
+  shippingAddress    Json?
+  paymentMethod      String?
+  paymentMethodTitle String?
 
   couponId           String?     @db.ObjectId
   coupon             Coupon?     @relation(fields: [couponId], references: [id], onDelete: SetNull)
@@ -237,8 +249,9 @@ model Order {
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
-  @@index([userId, createdAt])
   @@index([status])
+  @@index([createdAt])
+  @@index([userId])
   @@index([stripeCheckoutId])
   @@index([stripePaymentIntentId])
 }

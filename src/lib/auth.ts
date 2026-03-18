@@ -30,6 +30,13 @@ export const authOptions: NextAuthOptions = {
         const parsed = CredentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
 
+        // Super Admin gating: only allow the dedicated Gmail for SUPERADMIN login for now
+        const allowedSuperEmail = "pvs178380@gmail.com";
+        if (parsed.data.email !== allowedSuperEmail) {
+          // For now, deny non-super-admin login until admin creation workflow is implemented
+          return null;
+        }
+
         const user = await prisma.user.findUnique({
           where: { email: parsed.data.email },
         });
@@ -70,4 +77,3 @@ export const authOptions: NextAuthOptions = {
 export async function getServerAuthSession() {
   return getServerSession(authOptions);
 }
-

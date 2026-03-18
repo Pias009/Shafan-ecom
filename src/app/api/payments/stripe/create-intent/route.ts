@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createPaymentIntent } from "@/services/payments/stripe/payment-service";
-import { getWooCommerceOrder } from "@/services/woocommerce/order-service";
+import { prisma } from "@/lib/prisma";
+import { OrderStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -10,19 +11,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    // Fetch order from WooCommerce to get the correct total
-    const order = await getWooCommerceOrder(orderId);
+    // Fetch order from Prisma
+    const order = await (prisma as any).order.findUnique({
+      where: { id: orderId }
+    });
 
     if (!order) {
-      return NextResponse.json({ error: "Order not found in WooCommerce" }, { status: 404 });
+      return NextResponse.json({ error: "Order not found in database" }, { status: 404 });
     }
 
-    if (order.status !== "pending") {
-      return NextResponse.json({ error: "Order is not in pending status" }, { status: 400 });
+    if (order.status !== OrderStatus.PENDING_PAYMENT) {
+      return NextResponse.json({ error: "Order is not awaiting payment" }, { status: 400 });
     }
 
-    const amount = parseFloat(order.total);
-    const customerEmail = order.billing.email;
+    const amount = order.totalCents / 100;
+    const billing = (order.billingAddress as any) || {};
+    const customerEmail = billing.email;
 
     const paymentIntent = await createPaymentIntent(amount, orderId.toString(), customerEmail);
 

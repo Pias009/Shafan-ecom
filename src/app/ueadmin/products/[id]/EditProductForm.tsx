@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, RefreshCw, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -16,27 +16,35 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
   const [product, setProduct] = useState(initialProduct);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setProduct((prev: any) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    let finalValue: any = value;
+    
+    if (type === 'number') {
+      finalValue = parseFloat(value);
+    } else if (type === 'checkbox') {
+      finalValue = (e.target as HTMLInputElement).checked;
+    }
+    
+    setProduct((prev: any) => ({ ...prev, [name]: finalValue }));
   };
 
   const handleSave = async () => {
     setLoading(true);
     try {
-      // In this setup, we might want a specific PUT route, 
-      // but we can reuse the POST route as it uses upsert by name
-      const res = await fetch('/api/admin/products', {
+      const res = await fetch(`/api/admin/products/${product.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: product.name,
-          description: product.description?.replace(/<[^>]*>/g, ''),
-          priceCents: Math.round(parseFloat(product.regular_price || "0") * 100),
-          discountCents: product.sale_price ? Math.round(parseFloat(product.sale_price) * 100) : undefined,
-          stockQuantity: product.stock_quantity || 0,
-          status: product.status,
-          mainImage: product.images?.[0]?.src || '',
-          images: product.images?.slice(1).map((i: any) => i.src) || [],
+          description: product.description,
+          priceCents: Math.round((product.priceCents || 0)),
+          discountCents: Math.round((product.discountCents || 0)),
+          stockQuantity: parseInt(product.stockQuantity || 0),
+          active: product.active,
+          mainImage: product.mainImage || '',
+          images: product.images || [],
+          brandName: product.brand?.name,
+          categoryName: product.category?.name,
         }),
       });
 
@@ -44,7 +52,8 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
         toast.success('Product updated successfully!');
         router.refresh();
       } else {
-        toast.error('Failed to update product');
+        const errorData = await res.json();
+        toast.error(errorData.error || 'Failed to update product');
       }
     } catch (error) {
       toast.error('Error saving product');
@@ -73,7 +82,7 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
         <h1 className="text-4xl font-black tracking-tight text-black flex items-center gap-3">
            Edit Product
         </h1>
-        <p className="text-sm font-medium text-black/30 mt-1 uppercase tracking-[0.2em]">#{product.id} — {product.sku || 'No SKU'}</p>
+        <p className="text-sm font-medium text-black/30 mt-1 uppercase tracking-[0.2em]">#{product.id}</p>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -92,21 +101,21 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
 
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Regular Price ($)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Price (Cents)</label>
                   <input 
-                    name="regular_price"
+                    name="priceCents"
                     type="number"
-                    value={product.regular_price}
+                    value={product.priceCents || 0}
                     onChange={handleChange}
                     className="w-full h-14 px-6 rounded-2xl bg-black/5 border-none font-bold text-black focus:ring-2 focus:ring-black transition"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Sale Price ($)</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Discount (Cents)</label>
                   <input 
-                    name="sale_price"
+                    name="discountCents"
                     type="number"
-                    value={product.sale_price}
+                    value={product.discountCents || 0}
                     onChange={handleChange}
                     className="w-full h-14 px-6 rounded-2xl bg-black/5 border-none font-bold text-black focus:ring-2 focus:ring-black transition"
                   />
@@ -117,7 +126,7 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
                 <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Description</label>
                 <textarea 
                   name="description"
-                  value={product.description?.replace(/<[^>]*>/g, '')} 
+                  value={product.description || ''} 
                   onChange={handleChange}
                   rows={6}
                   className="w-full p-6 rounded-2xl bg-black/5 border-none font-medium text-sm text-black/80 focus:ring-2 focus:ring-black transition resize-none"
@@ -133,16 +142,16 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
               <div className="p-2 bg-black/5 rounded-xl"><Tag size={16} /></div>
               <h3 className="font-bold">Status</h3>
             </div>
-            <select 
-              name="status"
-              value={product.status}
-              onChange={handleChange}
-              className="w-full h-12 px-4 rounded-xl bg-black/5 border-none font-bold text-xs uppercase tracking-widest outline-none focus:ring-2 focus:ring-black"
-            >
-              <option value="publish">Published</option>
-              <option value="draft">Draft</option>
-              <option value="pending">Pending Review</option>
-            </select>
+            <div className="flex items-center gap-3 px-4">
+              <input 
+                type="checkbox"
+                name="active"
+                checked={product.active}
+                onChange={(e) => setProduct({...product, active: e.target.checked})}
+                className="w-5 h-5 rounded border-black/10 text-black focus:ring-black"
+              />
+              <span className="text-xs font-black uppercase tracking-widest">Active / Visible</span>
+            </div>
           </section>
 
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
@@ -152,13 +161,13 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
             </div>
             <div className="space-y-4">
                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Current Stock</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Stock Quantity</span>
                   <input 
-                    name="stock_quantity"
+                    name="stockQuantity"
                     type="number"
-                    value={product.stock_quantity || 0}
+                    value={product.stockQuantity || 0}
                     onChange={handleChange}
-                    className="w-20 bg-black/5 border-none rounded-lg p-1 text-center font-black"
+                    className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"
                   />
                </div>
             </div>
@@ -171,19 +180,14 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
             </div>
             
             <div className="space-y-6">
-              {/* Main Image */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/20 ml-2">Main Image (Primary)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/20 ml-2">Main Image</label>
                 <div className="relative group aspect-square rounded-2xl bg-black/5 overflow-hidden border border-black/5">
-                  {product.images?.[0]?.src ? (
+                  {product.mainImage ? (
                     <>
-                      <img src={product.images[0].src} alt="Product" className="w-full h-full object-cover" />
+                      <img src={product.mainImage} alt="Product" className="w-full h-full object-cover" />
                       <button 
-                        onClick={() => {
-                          const newImgs = [...(product.images || [])];
-                          newImgs.shift();
-                          setProduct({...product, images: newImgs});
-                        }}
+                        onClick={() => setProduct({...product, mainImage: ''})}
                         className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full hover:bg-black transition-all opacity-0 group-hover:opacity-100"
                       >
                         <X size={14} />
@@ -206,9 +210,8 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
                             const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
                             const data = await res.json();
                             if (data.url) {
-                              const newImgs = [{ src: data.url }, ...(product.images || [])];
-                              setProduct({...product, images: newImgs});
-                              toast.dismiss(tid);
+                              setProduct({...product, mainImage: data.url});
+                              toast.success('Uploaded!', { id: tid });
                             }
                           } catch (err) { toast.error('Upload failed', { id: tid }); }
                         }}
@@ -218,17 +221,16 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
                 </div>
               </div>
 
-              {/* Gallery */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-black/20 ml-2">Gallery</label>
                 <div className="grid grid-cols-2 gap-3">
-                  {product.images?.slice(1).map((img: any, idx: number) => (
+                  {product.images?.map((img: string, idx: number) => (
                     <div key={idx} className="aspect-square rounded-xl bg-black/5 overflow-hidden border border-black/5 relative group">
-                      <img src={img.src} alt="Gallery" className="w-full h-full object-cover" />
+                      <img src={img} alt="Gallery" className="w-full h-full object-cover" />
                       <button 
                         onClick={() => {
                           const newImgs = [...(product.images || [])];
-                          newImgs.splice(idx + 1, 1);
+                          newImgs.splice(idx, 1);
                           setProduct({...product, images: newImgs});
                         }}
                         className="absolute top-1.5 right-1.5 p-1 bg-black/50 text-white rounded-full hover:bg-black transition-all opacity-0 group-hover:opacity-100"
@@ -253,7 +255,7 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
                             fd.append('file', f);
                             const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
                             const data = await res.json();
-                            return { src: data.url };
+                            return data.url;
                           }));
                           setProduct({...product, images: [...(product.images || []), ...newUrls]});
                           toast.success('Gallery updated', { id: tid });
