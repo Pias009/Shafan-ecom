@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import React from 'react';
 import { AddProductForm } from './AddProductForm';
+import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,5 +10,9 @@ export default async function AddProductPage() {
     (prisma as any).category.findMany({ select: { name: true }, orderBy: { name: 'asc' } })
   ]);
 
-  return <AddProductForm brands={brands} categories={categories} />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddProductForm brands={brands} categories={categories} />
+    </Suspense>
+  );
 }

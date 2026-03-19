@@ -38,5 +38,4 @@ export async function inviteAdmin(formData: FormData) {
   }
 
   revalidatePath("/ueadmin/super");
-  return { success: true };
 }
