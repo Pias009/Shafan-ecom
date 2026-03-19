@@ -112,8 +112,26 @@ export default function CustomPaymentPage() {
 
             {/* Dynamic Payment Forms */}
             <div className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-black/5 bg-white shadow-xl">
+              {!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
+                <div className="p-4 bg-red-50 text-red-500 rounded-xl text-xs font-bold uppercase tracking-widest text-center border border-red-100">
+                  CRITICAL: Stripe Publishable Key is missing in environment variables.
+                </div>
+              )}
+              
               {method === "card" && clientSecret ? (
-                <Elements key={clientSecret} stripe={stripePromise} options={{ clientSecret }}>
+                <Elements 
+                  key={clientSecret} 
+                  stripe={stripePromise} 
+                  options={{ 
+                    clientSecret,
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#000000',
+                      }
+                    }
+                  }}
+                >
                   <StripePaymentForm orderId={id} />
                 </Elements>
               ) : method === "card" ? (
