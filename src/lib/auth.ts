@@ -30,22 +30,28 @@ export const authOptions: NextAuthOptions = {
         const parsed = CredentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
 
-        // Super Admin gating: only allow the dedicated Gmail for SUPERADMIN login for now
-        const allowedSuperEmail = "pvs178380@gmail.com";
-        if (parsed.data.email !== allowedSuperEmail) {
-          // For now, deny non-super-admin login until admin creation workflow is implemented
-          return null;
-        }
-
-        const user = await prisma.user.findUnique({
+        console.log("AUTH_DEBUG_EMAIL:", parsed.data.email);
+        const user = await prisma.user.findFirst({
           where: { email: parsed.data.email },
         });
 
-        if (!user?.passwordHash) return null;
+        if (!user) {
+          console.log("AUTH_DEBUG: User not found");
+          return null;
+        }
+
+        if (!user.passwordHash) {
+          console.log("AUTH_DEBUG: No password hash for user");
+          return null;
+        }
 
         const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
-        if (!ok) return null;
+        if (!ok) {
+          console.log("AUTH_DEBUG: Password comparison FAIL");
+          return null;
+        }
 
+        console.log("AUTH_DEBUG: SUCCESS for user:", user.email, "Role:", user.role);
         return {
           id: user.id,
           email: user.email,

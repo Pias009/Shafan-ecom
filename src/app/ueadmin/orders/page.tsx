@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { OrderStatus } from '@prisma/client';
+import { OrderFilter } from './_components/OrderFilter';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,22 +54,10 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
         </div>
       </div>
 
-      <div className="glass-panel overflow-hidden rounded-2xl md:rounded-3xl border border-black/5 shadow-sm bg-white">
-        <div className="mb-2 p-2">
-          <form method="get" className="flex flex-wrap items-center gap-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-black/50">Filter:</label>
-            <select 
-              name="status" 
-              defaultValue={status} 
-              onInput={(e) => { (e.target as HTMLSelectElement).form?.submit(); }}
-              className="border rounded px-2 py-1 text-sm bg-white"
-            >
-              <option value="ALL">All</option>
-              {Object.values(OrderStatus).map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </form>
+      <div className="glass-panel-heavy overflow-hidden rounded-3xl border border-black/5 shadow-sm bg-white">
+        <div className="mb-2 p-6 flex items-center justify-between border-b border-black/5">
+           <OrderFilter currentStatus={status} />
+           <div className="text-[10px] font-black uppercase tracking-widest text-black/20 italic">Global Fulfilment Flow</div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[800px] md:min-w-0">

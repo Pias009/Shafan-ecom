@@ -1,8 +1,9 @@
 
 import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
-import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock, Store } from 'lucide-react';
+import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock, Store, Edit2, Plus } from 'lucide-react';
 import { OrderStatus } from "@prisma/client";
+import { StockUpdateBtn } from "./_components/StockUpdateBtn";
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +11,7 @@ export default async function KuwaitDashboard() {
   const storeCode = 'KUW';
 
   // Fetch store first to get ID for reliable filtering
-  const store = await (prisma as any).store.findUnique({ where: { code: storeCode } });
+  const store = await prisma.store.findUnique({ where: { code: storeCode } });
   
   if (!store) {
     return (
@@ -22,6 +23,7 @@ export default async function KuwaitDashboard() {
   }
 
   const storeId = store.id;
+  const currencySymbol = store.currency.toUpperCase();
 
   const [
     totalOrdersCount,
@@ -31,23 +33,23 @@ export default async function KuwaitDashboard() {
     revenueData,
     inventory
   ] = await Promise.all([
-    (prisma as any).order.count({ where: { storeId } }),
-    (prisma as any).product.count({ where: { storeInventories: { some: { storeId } } } }),
-    (prisma as any).user.count({ where: { orders: { some: { storeId } } } }),
-    (prisma as any).order.findMany({
+    prisma.order.count({ where: { storeId } }),
+    prisma.product.count({ where: { storeInventories: { some: { storeId } } } }),
+    prisma.user.count({ where: { orders: { some: { storeId } } } }),
+    prisma.order.findMany({
       where: { storeId },
       take: 10,
       orderBy: { createdAt: 'desc' },
       include: { user: true }
     }),
-    (prisma as any).order.aggregate({
+    prisma.order.aggregate({
       _sum: { totalCents: true },
       where: { 
         storeId,
         NOT: { status: OrderStatus.CANCELLED } 
       }
     }),
-    (prisma as any).storeInventory.findMany({
+    prisma.storeInventory.findMany({
       where: { storeId },
       include: { product: true },
       take: 20,
@@ -70,13 +72,23 @@ export default async function KuwaitDashboard() {
 
   return (
     <div className="space-y-10 pb-20">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-black/5 pb-10">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-black">Kuwait Store Dashboard</h1>
-          <p className="text-sm font-medium text-black/30 mt-1 uppercase tracking-[0.2em]">Kuwait Inventory & Orders (MongoDB)</p>
+          <div className="flex items-center gap-3 mb-3">
+             <div className="p-2 bg-black rounded-xl text-white shadow-xl shadow-black/20"><Store size={20} /></div>
+             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-black/40">Marketplace Identity</span>
+          </div>
+          <h1 className="text-5xl font-black tracking-tight text-black">Kuwait Terminal</h1>
+          <p className="text-sm font-medium text-black/30 mt-2 uppercase tracking-[0.2em]">Regional Inventory & Order Infrastructure</p>
         </div>
-        <div className="px-5 py-2.5 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-           Store Active: {storeCode}
+        
+        <div className="flex flex-wrap gap-4">
+           <Link href="/ueadmin/products/add?storeId=KUW" className="h-14 px-8 rounded-full bg-black text-white font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20">
+              <Plus size={16} /> New Kuwait Product
+           </Link>
+           <Link href="/ueadmin/kuwait/inventory" className="h-14 px-8 rounded-full bg-black/5 text-black font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-black hover:text-white transition-all border border-black/5">
+              <Package size={16} /> Global Catalog
+           </Link>
         </div>
       </div>
 
@@ -107,20 +119,20 @@ export default async function KuwaitDashboard() {
           <div className="p-4 bg-black/5 rounded-2xl text-black"><TrendingUp size={24} /></div>
           <div>
             <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Store Revenue</div>
-            <div className="text-3xl font-black text-black">${totalRevenue.toLocaleString()}</div>
+            <div className="text-3xl font-black text-black">{totalRevenue.toLocaleString()} <span className="text-sm">{currencySymbol}</span></div>
           </div>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-10">
+      <div className="grid lg:grid-cols-5 gap-10">
         {/* Recent Orders Section */}
-        <section className="space-y-6">
+        <section className="lg:col-span-3 space-y-6">
           <div className="flex items-center justify-between">
              <h3 className="text-xl font-bold flex items-center gap-3">
                 <Clock size={20} className="text-black/30" /> Recent Activity
              </h3>
-             <Link href="/ueadmin/orders" className="text-[10px] font-black uppercase tracking-widest text-black/40 hover:text-black transition flex items-center gap-2">
-                All Orders <ArrowRight size={14} />
+             <Link href="/ueadmin/kuwait/orders" className="text-[10px] font-black uppercase tracking-widest text-black/40 hover:text-black transition flex items-center gap-2">
+                All Kuwait Orders <ArrowRight size={14} />
              </Link>
           </div>
 
@@ -147,7 +159,7 @@ export default async function KuwaitDashboard() {
                              </span>
                           </td>
                           <td className="px-6 py-5 text-right font-black text-sm">
-                            ${(o.totalCents / 100).toFixed(2)}
+                            {(o.totalCents / 100).toFixed(2)} {currencySymbol}
                           </td>
                         </tr>
                      ))}
@@ -158,10 +170,10 @@ export default async function KuwaitDashboard() {
         </section>
 
         {/* Kuwait Inventory section */}
-        <section className="space-y-6">
+        <section className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
              <h3 className="text-xl font-bold flex items-center gap-3">
-                <Store size={20} className="text-black/30" /> Kuwait Inventory
+                <Package size={20} className="text-black/30" /> Kuwait Inventory
              </h3>
              <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Stock Overview</div>
           </div>
@@ -173,22 +185,23 @@ export default async function KuwaitDashboard() {
                      <tr className="bg-[#FAF9F6] text-black/40">
                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">Product</th>
                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Stock</th>
-                       <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-right">Price</th>
+                       <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-right">Action</th>
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-black/5">
                      {inventory.map((it: any) => (
                         <tr key={it.id} className="hover:bg-black/[0.01] transition-colors">
                           <td className="px-6 py-5">
-                            <div className="font-bold text-sm truncate max-w-[150px]">{it.product?.name || 'Unknown'}</div>
+                            <div className="font-bold text-sm truncate max-w-[120px]">{it.product?.name || 'Unknown'}</div>
+                            <div className="text-[9px] font-bold text-black/20">{it.price.toFixed(2)} {currencySymbol}</div>
                           </td>
                           <td className="px-6 py-5 text-center">
                             <div className={`text-sm font-black ${it.quantity < 10 ? 'text-red-500' : 'text-black'}`}>
                               {it.quantity}
                             </div>
                           </td>
-                          <td className="px-6 py-5 text-right font-bold text-sm">
-                            ${it.price.toFixed(2)}
+                          <td className="px-6 py-5 text-right">
+                             <StockUpdateBtn inventoryId={it.id} currentQty={it.quantity} />
                           </td>
                         </tr>
                      ))}

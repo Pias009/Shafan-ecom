@@ -4,9 +4,12 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { MapPin, Phone, Mail, Globe, Home, Send, Loader2, Save } from "lucide-react";
 import toast from "react-hot-toast";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function AddressForm() {
   const { data: session } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,6 +54,11 @@ export default function AddressForm() {
         throw new Error(err.error || "Update failed");
       }
       toast.success("Address saved successfully!");
+      
+      const red = searchParams?.get("redirect");
+      if (red === "order") {
+        router.push("/");
+      }
     } catch (err: any) {
       toast.error(err.message);
     } finally {

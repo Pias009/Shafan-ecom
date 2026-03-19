@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
+import { getServerAuthSession } from '@/lib/auth';
 import { EditProductForm } from './EditProductForm';
 
 export const dynamic = 'force-dynamic';
@@ -8,11 +9,17 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
   const { id } = await params;
   
   try {
-    const product = await (prisma as any).product.findUnique({
+    const session = await getServerAuthSession();
+    const isSuper = session?.user?.email === "pvs178380@gmail.com";
+
+    const product = await prisma.product.findUnique({
       where: { id },
       include: {
         brand: true,
         category: true,
+        storeInventories: {
+          include: { store: true }
+        }
       }
     });
 
@@ -25,7 +32,18 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       );
     }
 
-    return <EditProductForm product={product} />;
+    // Flatten inventories for the form
+    const kuwaitInv = (product as any).storeInventories?.find((i: any) => i.store?.code === 'KUW');
+    
+    const productWithGlobal = {
+      ...product,
+      kuwaitPrice: kuwaitInv?.price || 0,
+      kuwaitStock: kuwaitInv?.quantity || 0,
+      allInventories: (product as any).storeInventories || [], // For Super Admin
+      isSuper
+    };
+
+    return <EditProductForm product={productWithGlobal} />;
   } catch (error) {
     console.error("Error loading product:", error);
     return (

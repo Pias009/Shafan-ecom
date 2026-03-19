@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -13,6 +13,9 @@ interface AddProductFormProps {
 
 export function AddProductForm({ brands, categories }: AddProductFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialStoreId = searchParams?.get('storeId') || "GLOBAL";
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -26,7 +29,8 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
     mainImage: '',
     images: [] as string[],
     hot: false,
-    trending: false
+    trending: false,
+    storeId: 'GLOBAL', // Default to global
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -198,6 +202,33 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
                   onChange={handleChange}
                   className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                 />
+              </div>
+            </div>
+          </section>
+
+          {/* Store Availability */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+              <Store size={14} /> Store Availability
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Primary Store</label>
+                <select
+                  name="storeId"
+                  value={formData.storeId}
+                  onChange={handleChange}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                >
+                  <option value="GLOBAL">Global Store</option>
+                  <option value="KUW">Kuwait Store</option>
+                </select>
+              </div>
+              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
+                 <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">
+                    Note: Product will be added to this store&apos;s active inventory immediately.
+                 </div>
               </div>
             </div>
           </section>

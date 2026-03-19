@@ -1,0 +1,39 @@
+"use client";
+
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export default function SuperGuard({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  const SUPER_ADMIN_EMAIL = "pvs178380@gmail.com";
+
+  useEffect(() => {
+    if (status === "loading") return;
+    
+    // Strict email check
+    const isSuper = session?.user?.email === SUPER_ADMIN_EMAIL;
+    
+    if (!isSuper) {
+      router.push("/ueadmin/dashboard"); // Send to regular admin if not super
+    }
+  }, [session, status, router]);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-4 border-black/10 border-t-black animate-spin" />
+          <p className="text-sm font-bold text-black/40">Verifying Super Admin…</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isSuper = session?.user?.email === SUPER_ADMIN_EMAIL;
+  if (!isSuper) return null;
+
+  return <>{children}</>;
+}

@@ -113,7 +113,7 @@ export default function CustomPaymentPage() {
             {/* Dynamic Payment Forms */}
             <div className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-black/5 bg-white shadow-xl">
               {method === "card" && clientSecret ? (
-                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <Elements key={clientSecret} stripe={stripePromise} options={{ clientSecret }}>
                   <StripePaymentForm orderId={id} />
                 </Elements>
               ) : method === "card" ? (

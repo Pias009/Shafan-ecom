@@ -7,7 +7,7 @@ export function getStripe() {
   if (!key) throw new Error("Stripe not configured: missing STRIPE_SECRET_KEY");
 
   if (!stripeSingleton) {
-    stripeSingleton = new Stripe(key, { apiVersion: "2026-02-25.clover" });
+    stripeSingleton = new Stripe(key, { apiVersion: "2025-01-27.acacia" as any });
   }
 
   return stripeSingleton;

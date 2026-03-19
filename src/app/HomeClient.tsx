@@ -10,8 +10,10 @@ import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { Footer } from "@/components/Footer";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Filter, X, ArrowRight } from "lucide-react";
+import { AuthModal } from "@/components/AuthModal";
+import { useSession } from "next-auth/react";
 import { Price } from "@/components/Price";
 import { AnimatePresence, motion } from "framer-motion";
 import { OfferBannersSection } from "@/components/OfferBannersSection";
@@ -29,6 +31,9 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   const [maxPrice, setMaxPrice] = useState<number>(5000);
   const [quickView, setQuickView] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const searchParams = useSearchParams();
+  const { status } = useSession();
 
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
@@ -37,36 +42,36 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   useEffect(() => {
     async function detectCountry() {
       try {
+        // 1. Check if store_code is already in cookies (set by middleware)
+        const getCookie = (name: string) => {
+          if (typeof document === 'undefined') return null;
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(';').shift();
+          return null;
+        };
+
+        const storeCode = getCookie('store_code');
         const cached = localStorage.getItem("user_country");
-        if (cached === "KW") {
-          // fetch wait logic omitted for brevity if already cached KW
-          // we can just refetch products silently
+
+        if (storeCode === "KUW" || cached === "KW") {
+          setCurrency("KWD");
           const res = await fetch("/api/products?store=KUW");
           if (res.ok) {
             const data = await res.json();
             if (data.length > 0) setProducts(data);
           }
+          if (storeCode === "KUW") localStorage.setItem("user_country", "KW");
           return;
-        } else if (cached) {
-          return; // other country
         }
 
-        const res = await fetch("https://ipapi.co/json/");
-        const data = await res.json();
+        // 2. If no cookie, try a silent local check or just default to global
+        // Avoiding external ipapi.co to prevent "Failed to fetch" errors.
+        // The middleware will eventually set the cookie on next refresh.
         
-        if (data.country_code) {
-          localStorage.setItem("user_country", data.country_code);
-          if (data.country_code === "KW") {
-            setCurrency("KWD");
-            const pRes = await fetch("/api/products?store=KUW");
-            if (pRes.ok) {
-              const kwProducts = await pRes.json();
-              if (kwProducts.length > 0) setProducts(kwProducts);
-            }
-          }
-        }
       } catch (err) {
-        console.error("Geo detect failed", err);
+        // Silently fail, defaulting to initialProducts from server
+        console.debug("Geo sync skipped", err);
       }
     }
     detectCountry();
@@ -114,9 +119,14 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   }
 
   async function orderNow(product: any) {
+    if (status !== "authenticated") {
+      setAuthOpen(true);
+      return;
+    }
+
     if (!hasAddress) {
       toast.error("Please add your shipping address in Dashboard first!", { duration: 3000 });
-      router.push("/account/address");
+      router.push(`/account/address?redirect=order&productId=${product.id}`);
       return;
     }
 
@@ -343,6 +353,8 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
       />
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }

@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     // Fetch order from Prisma
-    const order = await (prisma as any).order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id: orderId }
     });
 
@@ -21,21 +21,31 @@ export async function POST(req: Request) {
     }
 
     if (order.status !== OrderStatus.PENDING_PAYMENT) {
-      return NextResponse.json({ error: "Order is not awaiting payment" }, { status: 400 });
+      return NextResponse.json({ error: "Order is already paid or cancelled" }, { status: 400 });
     }
 
-    const amount = order.totalCents / 100;
+    const amountInCents = order.totalCents || 0;
+    if (amountInCents <= 0) {
+      return NextResponse.json({ error: "Order total must be greater than 0" }, { status: 400 });
+    }
+
+    const amount = amountInCents / 100;
     const billing = (order.billingAddress as any) || {};
     const customerEmail = billing.email;
+    const orderCurrency = order.currency || "usd";
 
-    const paymentIntent = await createPaymentIntent(amount, orderId.toString(), customerEmail);
+    const paymentIntent = await createPaymentIntent(amount, orderId.toString(), customerEmail, orderCurrency);
 
     return NextResponse.json({ 
       clientSecret: paymentIntent.client_secret,
       id: paymentIntent.id
     });
   } catch (error: any) {
-    console.error("Stripe Create Intent Route Error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("CRITICAL: Stripe Intent Route Failed:", {
+      message: error.message,
+      stack: error.stack,
+      raw: error
+    });
+    return NextResponse.json({ error: error.message || "Stripe creation crashed" }, { status: 500 });
   }
 }

@@ -209,6 +209,21 @@ export function AuthModal({
                   minLength={6}
                 />
 
+                {mode === "sign-in" && (
+                  <div className="flex justify-end -mt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        window.location.href = "/auth/forgot-password";
+                      }}
+                      className="text-[10px] font-bold text-black/40 hover:text-black transition-colors"
+                    >
+                      {t.auth.forgotPassword}
+                    </button>
+                  </div>
+                )}
+
                 {error ? <div className="text-sm text-red-600 font-medium">{error}</div> : null}
 
                 <button

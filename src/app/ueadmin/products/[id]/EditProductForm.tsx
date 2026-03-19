@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Store, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -45,6 +45,8 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
           images: product.images || [],
           brandName: product.brand?.name,
           categoryName: product.category?.name,
+          kuwaitPrice: product.kuwaitPrice,
+          kuwaitStock: product.kuwaitStock,
         }),
       });
 
@@ -161,7 +163,7 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
             </div>
             <div className="space-y-4">
                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Stock Quantity</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Global Stock</span>
                   <input 
                     name="stockQuantity"
                     type="number"
@@ -172,6 +174,39 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
                </div>
             </div>
           </section>
+
+          {/* Kuwait Specifics */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><Store size={16} /></div>
+              <h3 className="font-bold">Kuwait Specifics</h3>
+            </div>
+            <div className="space-y-4">
+               <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Kuwait Price</span>
+                  <input 
+                    name="kuwaitPrice"
+                    type="number"
+                    step="0.01"
+                    value={product.kuwaitPrice || 0}
+                    onChange={handleChange}
+                    className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"
+                  />
+               </div>
+               <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Kuwait Stock</span>
+                  <input 
+                    name="kuwaitStock"
+                    type="number"
+                    value={product.kuwaitStock || 0}
+                    onChange={handleChange}
+                    className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"
+                  />
+               </div>
+            </div>
+          </section>
+
+
 
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <div className="flex items-center gap-3 mb-2">

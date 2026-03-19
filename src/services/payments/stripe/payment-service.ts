@@ -1,13 +1,15 @@
 import { getStripe } from "@/lib/stripe";
 
-export async function createPaymentIntent(amount: number, orderId: string, customerEmail?: string) {
+export async function createPaymentIntent(amount: number, orderId: string, customerEmail?: string, currency: string = "usd") {
   const stripe = getStripe();
   
   try {
+    console.log(`STRIIPE: Creating intent for ${amount} ${currency} (Order: ${orderId})`);
+    
     // Stripe expects amount in cents
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100),
-      currency: "usd", // Adjust based on your MongoDB currency
+      currency: currency.toLowerCase(), // Real order currency
       receipt_email: customerEmail,
       metadata: {
         orderId: orderId,
@@ -19,9 +21,14 @@ export async function createPaymentIntent(amount: number, orderId: string, custo
 
     return paymentIntent;
   } catch (error: any) {
-    console.error("Stripe Payment Intent Error:", error.message);
-    throw new Error("Failed to create Stripe payment intent");
+    console.error("STRIPE SDK ERROR:", {
+      message: error.message,
+      type: error.type,
+      code: error.code
+    });
+    throw new Error(`Stripe: ${error.message}`);
   }
+
 }
 
 export async function verifyStripeWebhook(body: string, signature: string) {

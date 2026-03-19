@@ -28,17 +28,31 @@ async function getMailer(): Promise<Transporter | null> {
   return null
 }
 
-export async function sendOrderEmail(to: string, subject: string, html: string, text?: string) {
+export async function sendEmail({ to, subject, html, text }: { to: string, subject: string, html: string, text?: string }) {
   try {
-    const mailer = await getMailer()
+    const mailer = await getMailer();
     if (!mailer) {
-      console.log('Email config not provided. Skipping actual send.');
-      return true
+      console.warn("⚠️ SMTP environment variables missing. Email was NOT sent.");
+      return false;
     }
-    await mailer.sendMail({ from: process.env.SMTP_FROM || 'no-reply@example.com', to, subject, text, html });
-    return true
-  } catch (e) {
-    console.error('Failed to send email', e)
-    return false
+    
+    await mailer.sendMail({
+      from: process.env.SMTP_FROM || `"Shafan Store" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      text,
+      html,
+    });
+    
+    return true;
+  } catch (err) {
+    console.error("❌ Email failed to send:", err);
+    return false;
   }
 }
+
+// Backwards compatibility for order emails
+export async function sendOrderEmail(to: string, subject: string, html: string, text?: string) {
+  return sendEmail({ to, subject, html, text });
+}
+

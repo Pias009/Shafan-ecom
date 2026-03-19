@@ -120,6 +120,34 @@ export async function POST(req: Request) {
       });
     }
 
+    // Handle initial store inventory if storeId provided
+    if (body.storeId) {
+      const store = await prisma.store.findFirst({
+        where: { code: body.storeId }
+      });
+      
+      if (store) {
+        await prisma.storeInventory.upsert({
+          where: {
+            storeId_productId: {
+              storeId: store.id,
+              productId: product.id
+            }
+          },
+          update: {
+            quantity: data.stockQuantity || 0,
+            price: data.priceCents / 100
+          },
+          create: {
+            storeId: store.id,
+            productId: product.id,
+            quantity: data.stockQuantity || 0,
+            price: data.priceCents / 100
+          }
+        });
+      }
+    }
+
     return new Response(JSON.stringify(product), { status: 201, headers: { 'Content-Type': 'application/json' } });
   } catch (e: any) {
     console.error("PRODUCT_POST_FATAL_ERROR:", e);

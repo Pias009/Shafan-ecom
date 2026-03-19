@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getProducts } from "@/lib/products";
 
 export const revalidate = 60; // Revalidate every 60 seconds (Incremental Static Regeneration)
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
