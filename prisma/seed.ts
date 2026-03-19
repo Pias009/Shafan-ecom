@@ -97,10 +97,10 @@ async function main() {
   ];
 
   for (const b of banners) {
-    await (prisma as any).banner.upsert({
+    await prisma.offerBanner.upsert({
       where: { imageUrl: b.imageUrl },
       update: { title: b.title, link: b.link, active: b.active },
-      create: b,
+      create: { ...b },
     });
   }
   console.log("Banners seeded.");
@@ -120,7 +120,7 @@ async function main() {
   // 5. Audit log seed (sample)
   try {
     const adminForLog = admin;
-    const seedLog = await (prisma as any).auditLog.create({
+    const seedLog = await prisma.auditLog.create({
       data: {
         action: "SEED",
         actorId: adminForLog.id,

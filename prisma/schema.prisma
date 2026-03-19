@@ -53,6 +53,8 @@ model User {
   accounts      Account[]
   sessions      Session[]
   orders        Order[]
+  address       Address?
+  resetTokens   PasswordResetToken[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -91,6 +93,11 @@ model Product {
   active        Boolean   @default(true)
   hot           Boolean   @default(false)
   trending      Boolean   @default(false)
+  sku           String?   @unique
+  currency      String    @default("USD")
+  averageRating Float     @default(0)
+  ratingCount   Int       @default(0)
+  totalSales    Int       @default(0)
 
   storeId       String?   @db.ObjectId
   store         Store?    @relation(fields: [storeId], references: [id], name: "StoreProducts")
@@ -100,6 +107,7 @@ model Product {
   brand         Brand?    @relation(fields: [brandId], references: [id])
   category      Category? @relation(fields: [categoryId], references: [id])
   orderItems    OrderItem[]
+  storeInventories StoreInventory[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -125,11 +133,16 @@ model Order {
   user               User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   email              String?
   status             OrderStatus @default(PENDING_PAYMENT)
+  currency           String      @default("usd")
+  subtotalCents      Int
   totalCents         Int
+  paymentMethod      String?
+  paymentMethodTitle String?
   billingAddress     Json?
   shippingAddress    Json?
   stripePaymentIntentId String?
   items              OrderItem[]
+  shipment           Shipment?
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 }
@@ -141,6 +154,7 @@ model OrderItem {
   quantity     Int
   unitPriceCents Int
   nameSnapshot String
+  imageSnapshot String?
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
 }
@@ -170,9 +184,78 @@ model StoreInventory {
 
 model OfferBanner {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  imageUrl    String
+  imageUrl    String   @unique
   title       String?
+  subtitle    String?
+  link        String?
+  sortOrder   Int      @default(0)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Address {
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String @unique @db.ObjectId
+  fullName     String
+  phone        String
+  email        String
+  country      String
+  city         String
+  address1     String
+  address2     String?
+  postalCode   String
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  token     String   @unique
+  expires   DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  action    String
+  actorId   String   @db.ObjectId
+  subjectId String?  @db.ObjectId
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model Banner {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl    String   @unique
+  title       String?
+  link        String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BlogPost {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  content     String?
+  coverImage  String?
+  tags        String[]
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Shipment {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId      String   @unique @db.ObjectId
+  courier      String
+  trackingCode String
+  trackingUrl  String?
+  status       String   @default("Created")
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

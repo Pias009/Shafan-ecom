@@ -12,7 +12,7 @@ export async function GET() {
     const [usersCount, productsCount, bannersCount, ordersCount, ordersByStatus] = await Promise.all([
       prisma.user.count(),
       prisma.product.count(),
-      prisma.banner.count(),
+      prisma.offerBanner.count(),
       prisma.order.count(),
       prisma.order.groupBy({
         by: ['status'],

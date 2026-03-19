@@ -9,7 +9,8 @@ export default function UeAdminLayout({ children }: { children: React.ReactNode 
         <aside className="w-64 border-r border-black/5 bg-white p-4 hidden md:block">
           <div className="mb-6 text-xl font-bold">Admin Panel</div>
           <nav className="flex flex-col gap-2">
-            <Link href="/ueadmin" className="px-3 py-2 rounded-lg hover:bg-black/5 font-medium">Dashboard</Link>
+            <Link href="/ueadmin/dashboard" className="px-3 py-2 rounded-lg hover:bg-black/5 font-medium">Global Dashboard</Link>
+            <Link href="/ueadmin/kuwait" className="px-3 py-2 rounded-lg hover:bg-black/5 font-medium">Kuwait Dashboard</Link>
             <Link href="/ueadmin/users" className="px-3 py-2 rounded-lg hover:bg-black/5 font-medium">Users</Link>
             <Link href="/ueadmin/products" className="px-3 py-2 rounded-lg hover:bg-black/5 font-medium">Products</Link>
             <Link href="/ueadmin/banners" className="px-3 py-2 rounded-lg hover:bg-black/5 font-medium">Banners</Link>
