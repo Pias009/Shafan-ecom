@@ -9,21 +9,76 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [mfaSent, setMfaSent] = useState(false);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    setLoading(false);
-    if (res?.ok) {
-      window.location.href = "/ueadmin";
-    } else {
-      setError("Invalid email or password. Please try again.");
+
+    try {
+      const mfaRes = await fetch("/api/auth/mfa/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const mfaData = await mfaRes.json();
+
+      if (!mfaRes.ok) {
+        throw new Error(mfaData.error || "Login initiation failed");
+      }
+
+      if (mfaData.mfaRequired) {
+        setMfaSent(true);
+        setLoading(false);
+        return;
+      }
+
+      // If NO MFA required (standard user reaching admin? should be blocked later by Guard)
+      // Or if user is already logged in? Actually, we should only reach here for users.
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (res?.ok) {
+        window.location.href = "/ueadmin";
+      } else {
+        setError("Invalid email or password. Please try again.");
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  }
+
+  if (mfaSent) {
+    return (
+      <div className="mx-auto grid min-h-screen max-w-2xl place-items-center px-4 py-10">
+        <div className="w-full max-w-md rounded-3xl border border-black/10 bg-white p-8 shadow-2xl shadow-black/5 text-center">
+          <div className="mb-6">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-black text-white text-3xl font-black">✉️</div>
+            <h2 className="text-2xl font-black text-black">Check Your Email</h2>
+            <p className="mt-2 text-sm text-black/50 leading-relaxed px-4">
+              A secure magic link has been sent to <span className="font-bold text-black">{email}</span>. Click it to verify your identity and login.
+            </p>
+          </div>
+          
+          <div className="mt-8 space-y-3">
+             <button onClick={() => setMfaSent(false)} className="text-xs font-black uppercase tracking-widest text-black/40 hover:text-black transition-colors">
+                Back to Login
+             </button>
+          </div>
+          
+          <div className="mt-8 rounded-2xl bg-black/5 p-4 text-xs text-black/50">
+             <p>This link will expire in 10 minutes. Please check your junk/spam folder if you don't see it.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

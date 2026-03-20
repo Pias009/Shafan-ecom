@@ -51,14 +51,30 @@ model User {
   country       String?
   isVerified    Boolean   @default(false)
   
+  // MFA and Lockout
+  loginAttempts Int       @default(0)
+  lockUntil     DateTime?
+  mfaEnabled    Boolean   @default(true) // Required per user request for admin
+
   accounts      Account[]
   sessions      Session[]
   orders        Order[]
   address       Address?
   resetTokens   PasswordResetToken[]
+  mfaTokens     MfaToken[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
+
+model MfaToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  token     String   @unique
+  expires   DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
 
 model Account {
   id                String  @id @default(auto()) @map("_id") @db.ObjectId

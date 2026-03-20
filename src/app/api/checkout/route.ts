@@ -26,6 +26,11 @@ export async function POST(req: Request) {
     const orderItems = [];
 
     for (const item of items) {
+      if (!/^[0-9a-fA-F]{24}$/.test(item.productId)) {
+        console.warn(`Skipping invalid product ID in checkout: ${item.productId}`);
+        continue;
+      }
+
       const product = await prisma.product.findUnique({
         where: { id: item.productId }
       });

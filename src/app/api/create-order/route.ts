@@ -18,8 +18,17 @@ export async function POST(req: Request) {
     const orderItemsData = [];
 
     for (const item of items) {
+      const productId = item.productId;
+      
+      // Sanity check: Ensure productId is a valid MongoDB ObjectId (24 chars hex)
+      // Old WooCommerce IDs like "34263" will trigger Malformed ObjectID in Prisma
+      if (!/^[0-9a-fA-F]{24}$/.test(productId)) {
+        console.warn(`Skipping invalid product ID: ${productId}`);
+        continue; // Or throw a specific error
+      }
+
       const product = await prisma.product.findUnique({
-        where: { id: item.productId }
+        where: { id: productId }
       });
 
       if (!product) {
@@ -40,6 +49,10 @@ export async function POST(req: Request) {
         nameSnapshot: product.name,
         imageSnapshot: product.mainImage,
       });
+    }
+
+    if (orderItemsData.length === 0) {
+      return NextResponse.json({ error: "No valid items found in cart. Your cart may contain outdated product data." }, { status: 400 });
     }
 
     const totalCents = subtotalCents; // For now, no shipping/tax logic here, but could be added
