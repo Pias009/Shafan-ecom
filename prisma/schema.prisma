@@ -40,9 +40,9 @@ model Store {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders          Order[]          @relation("StoreOrders")
-  courierServices CourierService[] @relation("StoreCouriers")
-  products        Product[]        @relation("StoreProducts")
+  orders           Order[]          @relation("StoreOrders")
+  courierServices  CourierService[] @relation("StoreCouriers")
+  products         Product[]        @relation("StoreProducts")
   storeInventories StoreInventory[] @relation("StoreInventories")
 }
 
@@ -56,20 +56,21 @@ model User {
   passwordHash  String?
   country       String?
   isVerified    Boolean   @default(false)
-  
+
   // MFA and Lockout
   loginAttempts Int       @default(0)
   lockUntil     DateTime?
   mfaEnabled    Boolean   @default(true) // Required per user request for admin
 
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]
-  address       Address?
-  resetTokens   PasswordResetToken[]
-  mfaTokens     MfaToken[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  accounts       Account[]
+  sessions       Session[]
+  orders         Order[]
+  address        Address?
+  resetTokens    PasswordResetToken[]
+  mfaTokens      MfaToken[]
+  discountUsages DiscountUsage[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 }
 
 model MfaToken {
@@ -81,7 +82,6 @@ model MfaToken {
   createdAt DateTime @default(now())
 }
 
-
 model Account {
   id                String  @id @default(auto()) @map("_id") @db.ObjectId
   userId            String  @db.ObjectId
@@ -91,7 +91,8 @@ model Account {
   refresh_token     String?
   access_token      String?
   expires_at        Int?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([provider, providerAccountId])
 }
 
@@ -104,109 +105,110 @@ model Session {
 }
 
 model Product {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  name          String    @unique
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String   @unique
   description   String?
   features      String[]
   images        String[]
   mainImage     String?
-  stockQuantity Int       @default(0)
+  stockQuantity Int      @default(0)
   priceCents    Int
   discountCents Int?
-  active        Boolean   @default(true)
-  hot           Boolean   @default(false)
-  trending      Boolean   @default(false)
+  active        Boolean  @default(true)
+  hot           Boolean  @default(false)
+  trending      Boolean  @default(false)
   sku           String?
-  currency      String    @default("USD")
-  averageRating Float     @default(0)
-  ratingCount   Int       @default(0)
-  totalSales    Int       @default(0)
+  currency      String   @default("USD")
+  averageRating Float    @default(0)
+  ratingCount   Int      @default(0)
+  totalSales    Int      @default(0)
 
-  storeId       String?   @db.ObjectId
-  store         Store?    @relation(fields: [storeId], references: [id], name: "StoreProducts")
-  
-  brandId       String?   @db.ObjectId
-  categoryId    String?   @db.ObjectId
-  brand         Brand?    @relation(fields: [brandId], references: [id])
-  category      Category? @relation(fields: [categoryId], references: [id])
-  orderItems    OrderItem[]
+  storeId String? @db.ObjectId
+  store   Store?  @relation(fields: [storeId], references: [id], name: "StoreProducts")
+
+  brandId          String?           @db.ObjectId
+  categoryId       String?           @db.ObjectId
+  brand            Brand?            @relation(fields: [brandId], references: [id])
+  category         Category?         @relation(fields: [categoryId], references: [id])
+  orderItems       OrderItem[]
   storeInventories StoreInventory[]
-  discounts     Discount[] @relation("DiscountProducts")
+  productDiscounts ProductDiscount[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Brand {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String    @unique
-  image     String?   // Brand logo/image URL
+  image     String? // Brand logo/image URL
   products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
 
 model Category {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String    @unique
-  products  Product[]
-  discounts Discount[] @relation("DiscountCategories")
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  name              String             @unique
+  products          Product[]
+  categoryDiscounts CategoryDiscount[]
 }
 
 model Order {
-  id                 String      @id @default(auto()) @map("_id") @db.ObjectId
-  storeId            String?     @db.ObjectId
-  store              Store?      @relation(fields: [storeId], references: [id], name: "StoreOrders")
-  userId             String?     @db.ObjectId
-  user               User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  email              String?
-  status             OrderStatus @default(PENDING_PAYMENT)
-  currency           String      @default("usd")
-  subtotalCents      Int
-  totalCents         Int
-  paymentMethod      String?
-  paymentMethodTitle String?
-  billingAddress     Json?
-  shippingAddress    Json?
+  id                    String          @id @default(auto()) @map("_id") @db.ObjectId
+  storeId               String?         @db.ObjectId
+  store                 Store?          @relation(fields: [storeId], references: [id], name: "StoreOrders")
+  userId                String?         @db.ObjectId
+  user                  User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email                 String?
+  status                OrderStatus     @default(PENDING_PAYMENT)
+  currency              String          @default("usd")
+  subtotalCents         Int
+  totalCents            Int
+  paymentMethod         String?
+  paymentMethodTitle    String?
+  billingAddress        Json?
+  shippingAddress       Json?
   stripePaymentIntentId String?
-  discountId        String?   @db.ObjectId  // Applied discount
-  discount          Discount? @relation(fields: [discountId], references: [id])
-  discountAmountCents Int?    // Amount saved from discount in cents
-  items              OrderItem[]
-  shipment           Shipment?
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  discountId            String?         @db.ObjectId // Applied discount
+  discount              Discount?       @relation(fields: [discountId], references: [id])
+  discountAmountCents   Int? // Amount saved from discount in cents
+  items                 OrderItem[]
+  shipment              Shipment?
+  discountUsages        DiscountUsage[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 }
 
 model OrderItem {
-  id           String  @id @default(auto()) @map("_id") @db.ObjectId
-  orderId      String  @db.ObjectId
-  productId    String  @db.ObjectId
-  quantity     Int
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId        String  @db.ObjectId
+  productId      String  @db.ObjectId
+  quantity       Int
   unitPriceCents Int
-  nameSnapshot String
-  imageSnapshot String?
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  nameSnapshot   String
+  imageSnapshot  String?
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product @relation(fields: [productId], references: [id])
 }
 
 model CourierService {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  storeId   String @db.ObjectId
-  store     Store  @relation(fields: [storeId], references: [id], name: "StoreCouriers")
-  enabled   Boolean @default(false)
+  storeId   String   @db.ObjectId
+  store     Store    @relation(fields: [storeId], references: [id], name: "StoreCouriers")
+  enabled   Boolean  @default(false)
   config    Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model StoreInventory {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  store     Store   @relation(fields: [storeId], references: [id], name: "StoreInventories")
-  storeId   String  @db.ObjectId
-  product   Product @relation(fields: [productId], references: [id])
-  productId String  @db.ObjectId
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  store     Store    @relation(fields: [storeId], references: [id], name: "StoreInventories")
+  storeId   String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String   @db.ObjectId
   quantity  Int
   price     Float
   createdAt DateTime @default(now())
@@ -216,112 +218,113 @@ model StoreInventory {
 }
 
 model OfferBanner {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  imageUrl    String   @unique
-  title       String?
-  subtitle    String?
-  link        String?
-  sortOrder   Int      @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl  String   @unique
+  title     String?
+  subtitle  String?
+  link      String?
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model EnhancedOfferBanner {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
   // Core content
-  imageUrl          String   @unique
-  title             String?
-  subtitle          String?
-  offerText         String?  // e.g., "70% OFF" or "$50 OFF"
-  ctaText           String?  // Custom CTA button text
-  
+  imageUrl  String  @unique
+  title     String?
+  subtitle  String?
+  offerText String? // e.g., "70% OFF" or "$50 OFF"
+  ctaText   String? // Custom CTA button text
+
   // Visual customization
-  backgroundColor   String?  // Hex color for background
-  textColor         String?  // Hex color for text
-  backgroundImage   String?  // Alternative to imageUrl for full background
-  
+  backgroundColor String? // Hex color for background
+  textColor       String? // Hex color for text
+  backgroundImage String? // Alternative to imageUrl for full background
+
   // Scheduling
-  startDate         DateTime?
-  endDate           DateTime?
-  active            Boolean  @default(true)
-  
+  startDate DateTime?
+  endDate   DateTime?
+  active    Boolean   @default(true)
+
   // Behavior
-  link              String?  // Product page URL or discount code
-  discountId        String?  @db.ObjectId  // Associated discount
-  discount          Discount? @relation(fields: [discountId], references: [id])
-  
+  link       String? // Product page URL or discount code
+  discountId String?   @db.ObjectId // Associated discount
+  discount   Discount? @relation(fields: [discountId], references: [id])
+
   // Display
-  sortOrder         Int      @default(0)
-  priority          Int      @default(1)  // 1=Low, 2=Medium, 3=High
-  
+  sortOrder Int @default(0)
+  priority  Int @default(1) // 1=Low, 2=Medium, 3=High
+
   // Tracking
-  clicks            Int      @default(0)
-  conversions       Int      @default(0)
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  clicks      Int @default(0)
+  conversions Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([active, startDate, endDate])
   @@index([sortOrder])
 }
 
 model Discount {
-  id                String   @id @default(auto()) @map("_id") @db.ObjectId
-  code              String?  @unique  // Optional discount code
-  name              String   // Display name
-  description       String?
-  
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  code        String? @unique // Optional discount code
+  name        String // Display name
+  description String?
+
   // Discount type and value
-  discountType      DiscountType  @default(PERCENTAGE)
-  value             Float         // e.g., 20 for 20% or 15.50 for $15.50
-  
+  discountType DiscountType @default(PERCENTAGE)
+  value        Float // e.g., 20 for 20% or 15.50 for $15.50
+
   // Application scope
-  applyToAll        Boolean  @default(false)
-  minimumOrderValue Int?     // Minimum order amount in cents
-  
+  applyToAll        Boolean @default(false)
+  minimumOrderValue Int? // Minimum order amount in cents
+
   // Validity
-  startDate         DateTime?
-  endDate           DateTime?
-  maxUses           Int?     // Maximum number of uses
-  uses              Int      @default(0)  // Current usage count
-  
+  startDate DateTime?
+  endDate   DateTime?
+  maxUses   Int? // Maximum number of uses
+  uses      Int       @default(0) // Current usage count
+
   // Status
-  active            Boolean  @default(true)
-  autoApply         Boolean  @default(false)  // Auto-apply to eligible products
-  
+  active    Boolean @default(true)
+  autoApply Boolean @default(false) // Auto-apply to eligible products
+
   // Relationships
-  products          Product[]  @relation("DiscountProducts")
-  categories        Category[] @relation("DiscountCategories")
-  banners           EnhancedOfferBanner[]  // Banners that use this discount
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  productDiscounts  ProductDiscount[]
+  categoryDiscounts CategoryDiscount[]
+  banners           EnhancedOfferBanner[] // Banners that use this discount
+  orders            Order[] // Orders that used this discount
+  discountUsages    DiscountUsage[] // Usage tracking
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([active, startDate, endDate])
-  @@index([code])
 }
 
 model ProductDiscount {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  productId   String   @db.ObjectId
-  discountId  String   @db.ObjectId
-  product     Product  @relation(fields: [productId], references: [id])
-  discount    Discount @relation(fields: [discountId], references: [id])
-  createdAt   DateTime @default(now())
-  
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId  String   @db.ObjectId
+  discountId String   @db.ObjectId
+  product    Product  @relation(fields: [productId], references: [id])
+  discount   Discount @relation(fields: [discountId], references: [id])
+  createdAt  DateTime @default(now())
+
   @@unique([productId, discountId])
   @@index([discountId])
 }
 
 model CategoryDiscount {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  categoryId  String   @db.ObjectId
-  discountId  String   @db.ObjectId
-  category    Category @relation(fields: [categoryId], references: [id])
-  discount    Discount @relation(fields: [discountId], references: [id])
-  createdAt   DateTime @default(now())
-  
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId String   @db.ObjectId
+  discountId String   @db.ObjectId
+  category   Category @relation(fields: [categoryId], references: [id])
+  discount   Discount @relation(fields: [discountId], references: [id])
+  createdAt  DateTime @default(now())
+
   @@unique([categoryId, discountId])
   @@index([discountId])
 }
@@ -331,39 +334,39 @@ model DiscountUsage {
   discountId  String   @db.ObjectId
   userId      String?  @db.ObjectId
   orderId     String?  @db.ObjectId
-  email       String?  // For guest users
-  amountSaved Int      // Amount saved in cents
+  email       String? // For guest users
+  amountSaved Int // Amount saved in cents
   usedAt      DateTime @default(now())
-  
-  discount    Discount @relation(fields: [discountId], references: [id])
-  user        User?    @relation(fields: [userId], references: [id])
-  order       Order?   @relation(fields: [orderId], references: [id])
-  
+
+  discount Discount @relation(fields: [discountId], references: [id])
+  user     User?    @relation(fields: [userId], references: [id])
+  order    Order?   @relation(fields: [orderId], references: [id])
+
   @@index([discountId])
   @@index([userId])
   @@index([orderId])
 }
 
 model Address {
-  id           String @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String @unique @db.ObjectId
-  fullName     String
-  phone        String
-  email        String
-  country      String
-  city         String
-  address1     String
-  address2     String?
-  postalCode   String
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String  @unique @db.ObjectId
+  fullName   String
+  phone      String
+  email      String
+  country    String
+  city       String
+  address1   String
+  address2   String?
+  postalCode String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
-  token     String   @unique
-  expires   DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String   @db.ObjectId
+  token   String   @unique
+  expires DateTime
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
@@ -376,26 +379,26 @@ model AuditLog {
 }
 
 model Banner {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  imageUrl    String   @unique
-  title       String?
-  link        String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl  String   @unique
+  title     String?
+  link      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model BlogPost {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  slug        String   @unique
-  excerpt     String?
-  content     String?
-  coverImage  String?
-  tags        String[]
-  published   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  slug       String   @unique
+  excerpt    String?
+  content    String?
+  coverImage String?
+  tags       String[]
+  published  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Shipment {

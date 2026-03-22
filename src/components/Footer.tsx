@@ -64,15 +64,15 @@ export function Footer() {
     <footer className="w-full bg-black text-white font-body selection:bg-white selection:text-black mt-auto">
 
       {/* Newsletter Section */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-24">
-        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-10 md:gap-20">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-12 md:py-20 lg:py-24">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-8 lg:gap-16 xl:gap-20">
           
           {/* Left text */}
-          <div className="text-center md:text-left max-w-lg">
+          <div className="text-center lg:text-left max-w-lg w-full">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-white/40 mb-3">
               {t.footer.joinNewsletter}
             </p>
-            <h2 className="font-display text-4xl md:text-6xl font-black text-white mb-4 leading-none italic tracking-tighter">
+            <h2 className="font-display text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-none italic tracking-tighter">
               {t.footer.wantOff}
             </h2>
             <p className="text-sm font-medium text-white/50 leading-relaxed">
@@ -81,7 +81,7 @@ export function Footer() {
           </div>
 
           {/* Newsletter Form */}
-          <div className="w-full max-w-md">
+          <div className="w-full max-w-md lg:max-w-lg">
             <form
               onSubmit={(e) => e.preventDefault()}
               className="relative flex items-center"

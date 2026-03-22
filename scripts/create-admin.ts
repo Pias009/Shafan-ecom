@@ -4,8 +4,9 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = "admin@shafan.com";
-  const password = "Admin@Shafan2024";
+  // Create default development admin user
+  const email = "pvs178380@gmail.com";
+  const password = "pias900";
   const hash = await bcrypt.hash(password, 12);
 
   const user = await prisma.user.upsert({
@@ -13,21 +14,26 @@ async function main() {
     update: {
       passwordHash: hash,
       role: "SUPERADMIN",
-      name: "Shafan Admin",
+      name: "Development Admin",
+      isVerified: true,
+      emailVerified: new Date(),
     },
     create: {
       email,
-      name: "Shafan Admin",
+      name: "Development Admin",
       passwordHash: hash,
       role: "SUPERADMIN",
+      isVerified: true,
+      emailVerified: new Date(),
     },
   });
 
-  console.log("✅ Admin user created/updated:");
+  console.log("✅ Development admin user created/updated:");
   console.log("   Email   :", user.email);
-  console.log("   Password: Admin@Shafan2024");
+  console.log("   Password: pias900 (development only)");
   console.log("   Role    :", user.role);
   console.log("   ID      :", user.id);
+  console.log("   Verified:", user.isVerified);
 }
 
 main()

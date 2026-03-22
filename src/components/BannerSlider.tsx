@@ -135,7 +135,7 @@ export function BannerSlider() {
                 />
               ))}
             </div>
-            <div className="font-body text-xs text-black/60 font-medium">Auto-rotates • click dots to jump</div>
+
           </div>
         </div>
       </div>

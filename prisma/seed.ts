@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
-
-const prisma = new PrismaClient();
+import { prisma } from "../src/lib/prisma";
+import * as bcrypt from "bcryptjs";
+import * as crypto from "crypto";
 
 async function main() {
   console.log("Seeding database...");
@@ -82,14 +80,14 @@ async function main() {
   const banners = [
     {
       imageUrl:
-        "https://images.unsplash.com/photo-1551288049-3f9d1bdb3e6f?auto=format&fit=crop&w=1200&q=80",
+        "https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=1200",
       title: "Spring Sale",
       link: "/brands",
       active: true,
     },
     {
       imageUrl:
-        "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1200&q=80",
+        "https://images.pexels.com/photos/3735641/pexels-photo-3735641.jpeg?auto=compress&cs=tinysrgb&w=1200",
       title: "New Arrivals",
       link: "/products",
       active: true,
@@ -97,7 +95,7 @@ async function main() {
   ];
 
   for (const b of banners) {
-    await prisma.offerBanner.upsert({
+    await prisma.enhancedOfferBanner.upsert({
       where: { imageUrl: b.imageUrl },
       update: { title: b.title, link: b.link, active: b.active },
       create: { ...b },

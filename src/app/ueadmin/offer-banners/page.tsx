@@ -24,9 +24,36 @@ interface OfferBanner {
   active: boolean;
   sortOrder: number;
   createdAt: string;
+  offerText: string | null;
+  ctaText: string | null;
+  backgroundColor: string | null;
+  textColor: string | null;
+  backgroundImage: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  priority: number;
+  clicks: number;
+  conversions: number;
+  discountId: string | null;
 }
 
-const emptyForm = { imageUrl: "", title: "", subtitle: "", link: "", active: true, sortOrder: 0 };
+const emptyForm = {
+  imageUrl: "",
+  title: "",
+  subtitle: "",
+  link: "",
+  active: true,
+  sortOrder: 0,
+  offerText: "",
+  ctaText: "",
+  backgroundColor: "",
+  textColor: "",
+  backgroundImage: "",
+  startDate: "",
+  endDate: "",
+  priority: 1,
+  discountId: ""
+};
 
 export default function AdminOfferBannersPage() {
   const [banners, setBanners] = useState<OfferBanner[]>([]);
@@ -70,14 +97,25 @@ export default function AdminOfferBannersPage() {
   async function save() {
     if (!form.imageUrl.trim()) { toast.error("Image URL is required"); return; }
     setSaving(true);
-    const payload = { ...form, sortOrder: Number(form.sortOrder) };
+    const payload = {
+      ...form,
+      sortOrder: Number(form.sortOrder),
+      priority: Number(form.priority) || 1,
+      startDate: form.startDate || null,
+      endDate: form.endDate || null,
+      discountId: form.discountId || null,
+    };
     const method = editing ? "PUT" : "POST";
     const url = editing ? `/api/admin/offer-banners/${editing}` : "/api/admin/offer-banners";
     const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     if (r.ok) {
       toast.success(editing ? "Banner updated!" : "Banner created!");
       setForm(emptyForm); setEditing(null); setShowForm(false); load();
-    } else toast.error("Failed to save");
+    } else {
+      const error = await r.text();
+      console.error("Save error:", error);
+      toast.error("Failed to save");
+    }
     setSaving(false);
   }
 
@@ -89,9 +127,21 @@ export default function AdminOfferBannersPage() {
 
   function edit(banner: OfferBanner) {
     setForm({
-      imageUrl: banner.imageUrl, title: banner.title || "",
-      subtitle: banner.subtitle || "", link: banner.link || "",
-      active: banner.active, sortOrder: banner.sortOrder,
+      imageUrl: banner.imageUrl,
+      title: banner.title || "",
+      subtitle: banner.subtitle || "",
+      link: banner.link || "",
+      active: banner.active,
+      sortOrder: banner.sortOrder,
+      offerText: banner.offerText || "",
+      ctaText: banner.ctaText || "",
+      backgroundColor: banner.backgroundColor || "",
+      textColor: banner.textColor || "",
+      backgroundImage: banner.backgroundImage || "",
+      startDate: banner.startDate || "",
+      endDate: banner.endDate || "",
+      priority: banner.priority || 1,
+      discountId: banner.discountId || "",
     });
     setEditing(banner.id); setShowForm(true); setImageTab("url");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -199,6 +249,69 @@ export default function AdminOfferBannersPage() {
               <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Sort Order (lower = first)</label>
               <input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
                 className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" />
+            </div>
+          </div>
+
+          {/* Enhanced fields - second row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Offer Text</label>
+              <input value={form.offerText} onChange={(e) => setForm({ ...form, offerText: e.target.value })}
+                className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="70% OFF or $50 OFF" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">CTA Button Text</label>
+              <input value={form.ctaText} onChange={(e) => setForm({ ...form, ctaText: e.target.value })}
+                className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="Shop Now or Learn More" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Background Color</label>
+              <div className="flex gap-2">
+                <input value={form.backgroundColor} onChange={(e) => setForm({ ...form, backgroundColor: e.target.value })}
+                  className="flex-1 border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="#FFFFFF" />
+                <div className="w-12 h-12 rounded-xl border border-black/10" style={{ backgroundColor: form.backgroundColor || '#FFFFFF' }} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Text Color</label>
+              <div className="flex gap-2">
+                <input value={form.textColor} onChange={(e) => setForm({ ...form, textColor: e.target.value })}
+                  className="flex-1 border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="#000000" />
+                <div className="w-12 h-12 rounded-xl border border-black/10" style={{ backgroundColor: form.textColor || '#000000' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced fields - third row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Background Image URL</label>
+              <input value={form.backgroundImage} onChange={(e) => setForm({ ...form, backgroundImage: e.target.value })}
+                className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="Alternative background image" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Priority (1-3)</label>
+              <select value={form.priority} onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })}
+                className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20">
+                <option value="1">Low (1)</option>
+                <option value="2">Medium (2)</option>
+                <option value="3">High (3)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Start Date (optional)</label>
+              <input type="datetime-local" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">End Date (optional)</label>
+              <input type="datetime-local" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Discount ID (optional)</label>
+              <input value={form.discountId} onChange={(e) => setForm({ ...form, discountId: e.target.value })}
+                className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="Discount ID for tracking" />
             </div>
           </div>
 

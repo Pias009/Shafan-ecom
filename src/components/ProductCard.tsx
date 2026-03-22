@@ -56,7 +56,7 @@ export function ProductCard({
       <button
         type="button"
         onClick={() => onQuickView(product)}
-        className="block w-full text-left relative aspect-[5/4] md:aspect-[4/3] overflow-hidden bg-black/[0.02]"
+        className="block w-full text-left relative aspect-square md:aspect-[4/3] overflow-hidden bg-black/[0.02]"
       >
         <Image
           src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}

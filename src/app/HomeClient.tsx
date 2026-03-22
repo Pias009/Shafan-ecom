@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { BannerSlider } from "@/components/BannerSlider";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { BrandMarquee } from "@/components/BrandMarquee";
 import { CategorySection } from "@/components/CategorySection";
 import { Hero } from "@/components/Hero";
@@ -13,7 +12,7 @@ import { Footer } from "@/components/Footer";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Loader2, Filter, X, ArrowRight } from "lucide-react";
+import { Loader2, Filter, X, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import { useSession } from "next-auth/react";
 import { Price } from "@/components/Price";
@@ -23,7 +22,6 @@ import { BlogShowcase } from "@/components/BlogShowcase";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
-import { useEffect } from "react";
 
 export default function HomeClient({ initialProducts }: { initialProducts: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
@@ -34,6 +32,10 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   const [quickView, setQuickView] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [hotSliderIndex, setHotSliderIndex] = useState(0);
+  const [newArrivalsSliderIndex, setNewArrivalsSliderIndex] = useState(0);
+  const hotSliderRef = useRef<HTMLDivElement>(null);
+  const newArrivalsSliderRef = useRef<HTMLDivElement>(null);
   const { status } = useSession();
 
   const { addItem, hasAddress } = useCartStore();
@@ -159,13 +161,11 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   return (
-    <div className="min-h-screen relative z-0 flex flex-col">
+    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden">
       <NoticeBoard />
       <Navbar />
 
       <Hero />
-
-      <BannerSlider />
 
       <CategorySection
         onPick={(c) => {
@@ -177,11 +177,8 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
       {/* Offer Banners Section */}
       <OfferBannersSection />
 
-      {/* Brand Slider Section */}
-      <BrandMarquee />
-
       <main className="mx-auto max-w-7xl px-6 pb-20 flex-1">
-            {/* Hot Products */}
+            {/* Hot Products Slider */}
             {hot.length > 0 && (
               <section id="hot" className="pt-20">
                 <div className="text-center mb-12">
@@ -192,25 +189,85 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                   <p className="font-body text-black/70 mt-3 text-lg max-w-2xl mx-auto">{t.home.mostLoved}</p>
                 </div>
 
-                <div className="grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-3">
-                  {hot.map((p) => (
-                    <ProductCard
-                      key={p.id}
-                      product={{
-                        ...p,
-                        price: p.priceCents / 100,
-                        imageUrl: p.mainImage,
-                        brand: p.brand?.name,
-                        averageRating: p.averageRating,
-                        ratingCount: p.ratingCount,
-                        stockQuantity: p.stockQuantity,
-                        totalSales: p.totalSales,
+                <div className="relative">
+                  <div className="relative overflow-hidden py-8">
+                    <motion.div
+                      ref={hotSliderRef}
+                      className="flex gap-6 md:gap-8"
+                      animate={{ x: `-${hotSliderIndex * 100}%` }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    >
+                      {hot.map((p, index) => {
+                        const isCenter = index === hotSliderIndex;
+                        const distance = Math.abs(index - hotSliderIndex);
+                        
+                        return (
+                          <motion.div
+                            key={p.id}
+                            className="flex-shrink-0 w-[80%] md:w-[45%] lg:w-[30%]"
+                            animate={{
+                              scale: isCenter ? 1 : 0.9,
+                              opacity: isCenter ? 1 : 0.7 - (distance * 0.2),
+                              y: isCenter ? 0 : 10,
+                            }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                          >
+                            <div className={isCenter ? "ring-2 ring-black/20 shadow-2xl rounded-2xl" : ""}>
+                              <ProductCard
+                                product={{
+                                  ...p,
+                                  price: p.priceCents / 100,
+                                  imageUrl: p.mainImage,
+                                  brand: p.brand?.name,
+                                  averageRating: p.averageRating,
+                                  ratingCount: p.ratingCount,
+                                  stockQuantity: p.stockQuantity,
+                                  totalSales: p.totalSales,
+                                }}
+                                onQuickView={(pp) => setQuickView(pp)}
+                                onAddToCart={(pp) => addToCart(pp)}
+                                onOrderNow={(pp) => orderNow(pp)}
+                              />
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </motion.div>
+                  </div>
+                  
+                  {/* Navigation Buttons */}
+                  <div className="flex justify-center items-center gap-6 mt-12">
+                    <button
+                      onClick={() => {
+                        setHotSliderIndex(Math.max(0, hotSliderIndex - 1));
                       }}
-                      onQuickView={(pp) => setQuickView(pp)}
-                      onAddToCart={(pp) => addToCart(pp)}
-                      onOrderNow={(pp) => orderNow(pp)}
-                    />
-                  ))}
+                      className="glass-panel p-4 rounded-full hover:bg-black hover:text-white transition-all shadow-lg hover:shadow-xl"
+                      aria-label="Previous slide"
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+                    <div className="flex gap-3">
+                      {Array.from({ length: Math.min(hot.length, 5) }).map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setHotSliderIndex(i)}
+                          className={`w-3 h-3 rounded-full transition-all ${
+                            i === hotSliderIndex ? 'bg-black scale-125' : 'bg-black/20 hover:bg-black/40'
+                          }`}
+                          aria-label={`Go to slide ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setHotSliderIndex(Math.min(hot.length - 1, hotSliderIndex + 1));
+                      }}
+                      className="glass-panel p-4 rounded-full hover:bg-black hover:text-white transition-all shadow-lg hover:shadow-xl"
+                      aria-label="Next slide"
+                    >
+                      <ChevronRight size={24} />
+                    </button>
+                  </div>
                 </div>
               </section>
             )}
@@ -344,6 +401,9 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
 
       {/* Blog Showcase Section */}
       <BlogShowcase />
+
+      {/* Brand Slider Section - Moved above footer */}
+      <BrandMarquee />
 
       <Footer />
 

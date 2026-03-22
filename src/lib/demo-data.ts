@@ -33,6 +33,11 @@ export const demoCategories = [
   },
   {
     id: "c3",
+    label: "Body Care",
+    description: "Nourish & refresh.",
+  },
+  {
+    id: "c4",
     label: "Fragrance",
     description: "Cool, modern notes.",
   },

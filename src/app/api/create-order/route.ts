@@ -88,6 +88,7 @@ export async function POST(req: Request) {
     const order = await prisma.order.create({
       data: {
         userId: session?.user?.id || null,
+        email: session?.user?.email || billing?.email || null,
         status: OrderStatus.PENDING_PAYMENT,
         currency: "usd", // Default to usd, or get from products
         subtotalCents,

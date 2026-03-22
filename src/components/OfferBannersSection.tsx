@@ -32,18 +32,73 @@ interface EnhancedOfferBanner {
 }
 
 export function OfferBannersSection() {
+  console.log("DEBUG: OfferBannersSection component rendering");
   const [banners, setBanners] = useState<EnhancedOfferBanner[]>([]);
   const [active, setActive] = useState(0);
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
+  
+  console.log("DEBUG: Current banners state:", banners);
 
   useEffect(() => {
-    fetch("/api/promotional/banners?limit=5")
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) setBanners(data);
+    console.log("DEBUG: OfferBannersSection useEffect running");
+    console.log("DEBUG: Fetching banners from /api/promotional/banners?limit=5");
+    
+    // Add timeout to detect stalled requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.error("DEBUG: Fetch timeout - request taking too long");
+      controller.abort();
+    }, 10000);
+    
+    fetch("/api/promotional/banners?limit=5", {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      credentials: 'same-origin'
+    })
+      .then((r) => {
+        clearTimeout(timeoutId);
+        console.log("DEBUG: Fetch response status:", r.status);
+        console.log("DEBUG: Response ok?", r.ok);
+        console.log("DEBUG: Response headers:", Object.fromEntries(r.headers.entries()));
+        if (!r.ok) {
+          throw new Error(`HTTP error! status: ${r.status} ${r.statusText}`);
+        }
+        return r.json();
       })
-      .catch(() => {});
+      .then((data) => {
+        console.log("DEBUG: Banners data received:", data);
+        console.log("DEBUG: Data type:", typeof data);
+        console.log("DEBUG: Is array?", Array.isArray(data));
+        
+        if (Array.isArray(data)) {
+          console.log(`DEBUG: Setting ${data.length} banners`);
+          console.log("DEBUG: Banner IDs:", data.map(b => b.id));
+          console.log("DEBUG: Banner titles:", data.map(b => b.title));
+          setBanners(data);
+        } else {
+          console.log("DEBUG: Data is not an array:", data);
+          setBanners([]);
+        }
+      })
+      .catch((err) => {
+        clearTimeout(timeoutId);
+        console.error("DEBUG: Error fetching banners:", err);
+        console.error("DEBUG: Error name:", err.name);
+        console.error("DEBUG: Error message:", err.message);
+        if (err.name === 'AbortError') {
+          console.error("DEBUG: Request was aborted due to timeout");
+        }
+        setBanners([]);
+      });
+      
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -61,27 +116,27 @@ export function OfferBannersSection() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-center mb-8 md:mb-12"
+        className="text-center mb-6 md:mb-12"
       >
         <motion.div
-          className="inline-flex items-center gap-3 glass-panel rounded-full px-6 py-3 md:px-8 md:py-4 mb-6"
+          className="inline-flex items-center gap-2 glass-panel rounded-full px-4 py-2 md:px-8 md:py-4 mb-4"
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 300 }}
         >
-          <Tag size={24} className="text-black/50" />
-          <span className="text-base md:text-lg font-bold uppercase tracking-wider text-black/70">
+          <Tag size={18} className="text-black/50 md:size-6" />
+          <span className="text-xs md:text-lg font-bold uppercase tracking-wider text-black/70">
             {t.home.specialOffers}
           </span>
         </motion.div>
-        <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-black text-black mb-4 md:mb-6">
+        <h2 className="font-display text-2xl md:text-5xl lg:text-6xl font-black text-black mb-2 md:mb-6">
           {t.home.featuredDeals}
         </h2>
-        <p className="font-body text-black/70 text-lg md:text-xl max-w-3xl mx-auto">
+        <p className="font-body text-black/70 text-sm md:text-xl max-w-3xl mx-auto">
           Exclusive limited-time offers on premium products
         </p>
       </motion.div>
 
-      {/* Banner container with constrained width */}
+      {/* Banner container with larger width on desktop */}
       <div className="relative w-full px-2 md:px-0">
         <AnimatePresence mode="wait">
           {banners.map((banner, index) => (
@@ -128,10 +183,10 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   return (
-    <div className="glass-panel rounded-xl md:rounded-2xl w-full max-w-3xl mx-auto flex flex-row items-stretch overflow-hidden relative shadow-lg border border-black/5 min-h-[160px] md:min-h-[260px] lg:min-h-[280px] group">
-      {/* Left side - Compact promotional content */}
+    <div className="glass-panel rounded-xl md:rounded-3xl w-full max-w-4xl xl:max-w-6xl mx-auto flex flex-col md:flex-row items-stretch overflow-hidden relative shadow-xl border border-black/5 min-h-[200px] md:min-h-[320px] lg:min-h-[380px] xl:min-h-[420px] group">
+      {/* Left side - Promotional content with responsive sizing */}
       <div
-        className="flex-shrink-0 flex flex-col justify-center items-center p-2 md:p-4 lg:p-5 w-[120px] md:w-[200px] lg:w-[240px] z-10"
+        className="flex-shrink-0 flex flex-col justify-center items-center p-4 md:p-6 lg:p-8 xl:p-10 w-full md:w-[200px] lg:w-[250px] xl:w-[300px] z-10"
         style={{
           background: banner.backgroundColor || 'linear-gradient(to bottom, rgba(239, 246, 255, 0.5), rgba(233, 213, 255, 0.5))',
           color: banner.textColor || 'inherit'
@@ -144,9 +199,9 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
           className="text-center w-full"
         >
           {/* Priority indicator */}
-          <div className="inline-flex items-center gap-1 mb-1.5 md:mb-2.5">
-            <Tag size={14} className={banner.priority === 3 ? "text-red-600" : banner.priority === 2 ? "text-orange-600" : "text-blue-600"} />
-            <span className={`text-[9px] md:text-xs font-bold uppercase tracking-wide ${
+          <div className="inline-flex items-center gap-1 mb-2 md:mb-4 lg:mb-5">
+            <Tag size={12} className={`md:size-5 lg:size-6 ${banner.priority === 3 ? "text-red-600" : banner.priority === 2 ? "text-orange-600" : "text-blue-600"}`} />
+            <span className={`text-[9px] md:text-sm lg:text-base font-bold uppercase tracking-wide ${
               banner.priority === 3 ? "text-red-700" :
               banner.priority === 2 ? "text-orange-700" :
               "text-blue-700"
@@ -157,33 +212,33 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
           
           {/* Offer text (main highlight) */}
           {banner.offerText ? (
-            <h3 className="font-display text-xs md:text-lg lg:text-xl font-black leading-tight tracking-tight mb-0.5">
+            <h3 className="font-display text-lg md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-1 md:mb-2 text-balance">
               {banner.offerText}
             </h3>
           ) : banner.title ? (
-            <h3 className="font-display text-xs md:text-lg lg:text-xl font-black leading-tight tracking-tight mb-0.5">
+            <h3 className="font-display text-lg md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-1 md:mb-2 text-balance">
               {banner.title}
             </h3>
           ) : (
-            <h3 className="font-display text-xs md:text-lg lg:text-xl font-black leading-tight tracking-tight mb-0.5">
+            <h3 className="font-display text-lg md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-1 md:mb-2">
               SPECIAL OFFER
             </h3>
           )}
           
           {/* Subtitle or description */}
           {banner.subtitle ? (
-            <p className="font-body text-[9px] md:text-xs mt-0.5 italic line-clamp-2 opacity-90">
+            <p className="font-body text-[10px] md:text-base lg:text-lg mt-1 md:mt-2 italic line-clamp-2 opacity-90 text-pretty">
               {banner.subtitle}
             </p>
           ) : (
-            <p className="font-body text-[9px] md:text-xs mt-0.5 italic opacity-90">
+            <p className="font-body text-[10px] md:text-base lg:text-lg mt-1 md:mt-2 italic opacity-90">
               Limited time offer
             </p>
           )}
           
           {/* CTA Button or discount indicator */}
-          <div className="mt-1.5 md:mt-2.5">
-            <div className={`inline-flex items-center justify-center w-8 h-8 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-full font-black text-sm md:text-xl lg:text-2xl shadow-md ${
+          <div className="mt-3 md:mt-4 lg:mt-5">
+            <div className={`inline-flex items-center justify-center w-10 h-10 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 rounded-full font-black text-sm md:text-3xl lg:text-4xl xl:text-5xl shadow-lg ${
               banner.priority === 3 ? "bg-gradient-to-br from-red-500 to-pink-600" :
               banner.priority === 2 ? "bg-gradient-to-br from-orange-500 to-red-600" :
               "bg-gradient-to-br from-blue-500 to-purple-600"
@@ -193,14 +248,14 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
           </div>
           
           {/* Click tracking indicator */}
-          <p className="mt-1 md:mt-1.5 text-[9px] opacity-75 max-w-[100px] md:max-w-[130px] mx-auto">
+          <p className="mt-2 md:mt-3 text-[10px] md:text-sm opacity-75 max-w-[100px] md:max-w-[180px] lg:max-w-[200px] mx-auto">
             {banner.clicks > 0 ? `${banner.clicks} clicks` : "Act fast!"}
           </p>
         </motion.div>
       </div>
 
-      {/* Right side - Banner image covering full area */}
-      <div className="flex-1 relative overflow-hidden">
+      {/* Image side - Banner image occupying remaining space */}
+      <div className="flex-1 min-h-[160px] md:min-h-0 relative overflow-hidden">
         <motion.div
           initial={{ scale: 1.05, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -216,32 +271,32 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
             priority={true}
           />
           {/* Minimal gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/40 to-transparent" />
         </motion.div>
         
-        {/* Compact promotional badge */}
+        {/* Promotional badge */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
-          className="absolute bottom-1 right-1 md:bottom-2 md:right-2 bg-gradient-to-r from-red-500 to-orange-500 text-white px-1 py-0.5 md:px-2 md:py-1 rounded-full font-bold text-[8px] md:text-[10px] uppercase tracking-wide shadow z-20"
+          className="absolute bottom-2 right-2 md:bottom-4 md:right-4 lg:bottom-6 lg:right-6 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 md:px-3 md:py-1.5 lg:px-4 lg:py-2 rounded-full font-bold text-[10px] md:text-sm lg:text-base uppercase tracking-wide shadow-lg z-20"
         >
           ⚡ SALE
         </motion.div>
       </div>
 
-      {/* CTA Button inside image area */}
-      <div className="absolute bottom-2 left-2 md:bottom-4 md:left-4 z-20">
+      {/* CTA Button inside image area - larger on desktop */}
+      <div className="absolute bottom-3 left-3 md:bottom-6 md:left-6 lg:bottom-8 lg:left-8 z-20">
         {banner.link ? (
           <Link
             href={banner.link}
-            className="inline-flex items-center gap-1 px-2 py-1 md:px-4 md:py-2 rounded-full bg-white text-black font-bold text-[9px] md:text-sm uppercase tracking-wide hover:bg-gray-100 transition-all shadow hover:shadow-md active:scale-95 border border-white/30"
+            className="inline-flex items-center gap-1 px-3 py-1.5 md:px-5 md:py-2.5 lg:px-6 lg:py-3 rounded-full bg-white text-black font-bold text-xs md:text-base lg:text-lg uppercase tracking-wide hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl active:scale-95 border border-white/30"
           >
-            {t.common.shopNow} <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
+            {t.common.shopNow} <ArrowRight className="w-3 h-3 md:w-5 md:h-5 lg:w-6 lg:h-6" />
           </Link>
         ) : (
-          <button className="inline-flex items-center gap-1 px-2 py-1 md:px-4 md:py-2 rounded-full bg-white/90 text-black font-bold text-[9px] md:text-sm uppercase tracking-wide hover:bg-white transition-all shadow hover:shadow-md active:scale-95">
-            VIEW DETAILS <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
+          <button className="inline-flex items-center gap-1 px-3 py-1.5 md:px-5 md:py-2.5 lg:px-6 lg:py-3 rounded-full bg-white/90 text-black font-bold text-xs md:text-base lg:text-lg uppercase tracking-wide hover:bg-white transition-all shadow-lg hover:shadow-xl active:scale-95">
+            VIEW DETAILS <ArrowRight className="w-3 h-3 md:w-5 md:h-5 lg:w-6 lg:h-6" />
           </button>
         )}
       </div>

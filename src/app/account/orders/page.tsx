@@ -11,9 +11,15 @@ export default async function OrdersPage() {
 
   let orders: any[] = [];
   try {
+    // First, get the user ID from the session email
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
+    
     const dbOrders = await (prisma as any).order.findMany({
       where: {
         OR: [
+          { userId: user?.id },
           { user: { email: session.user.email } },
           { email: session.user.email }
         ]
@@ -33,7 +39,10 @@ export default async function OrdersPage() {
       createdAt: o.createdAt,
       itemCount: o.items.reduce((acc: number, item: any) => acc + item.quantity, 0),
       paymentMethod: o.paymentMethodTitle,
-      items: o.items.map((it: any) => ({ name: it.name, id: it.productId })),
+      items: o.items.map((it: any) => ({
+        name: it.nameSnapshot || it.name || 'Unknown Product',
+        id: it.productId
+      })),
     }));
   } catch (error) {
     console.error("Prisma Orders Page Error:", error);
@@ -89,15 +98,19 @@ export default async function OrdersPage() {
 
                     {/* Product Names as Links */}
                     <div className="flex flex-wrap gap-2">
-                       {order.items.slice(0, 3).map((item: any, i: number) => (
-                         <Link 
-                           key={i} 
-                           href={`/products/${item.id}`}
-                           className="text-[10px] font-bold text-black/50 bg-black/5 px-3 py-1 rounded-lg hover:bg-black hover:text-white transition-colors"
-                         >
-                           {item.name}
-                         </Link>
-                       ))}
+                       {order.items.slice(0, 3).map((item: any, i: number) => {
+                         const productId = item.id || item.productId;
+                         const productName = item.name || item.nameSnapshot || 'Unknown Product';
+                         return (
+                           <Link
+                             key={i}
+                             href={productId ? `/products/${productId}` : '#'}
+                             className="text-[10px] font-bold text-black/50 bg-black/5 px-3 py-1 rounded-lg hover:bg-black hover:text-white transition-colors"
+                           >
+                             {productName}
+                           </Link>
+                         );
+                       })}
                        {order.items.length > 3 && (
                          <span className="text-[10px] font-bold text-black/30 px-2 py-1">+{order.items.length - 3} more</span>
                        )}
