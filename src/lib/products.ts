@@ -1,5 +1,4 @@
 import { prisma } from "./prisma";
-import { RedisCache, CacheKeys, CacheTTL } from "./redis";
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -10,14 +9,6 @@ function isValidImageUrl(url: any): boolean {
 
 export async function getProducts(storeCode?: string, page: number = 1, limit: number = 20) {
   try {
-    // Try to get from cache first
-    const cacheKey = CacheKeys.productList(storeCode || 'global', page, limit);
-    const cached = await RedisCache.get<any[]>(cacheKey);
-    
-    if (cached !== null) {
-      return cached;
-    }
-
     let dbProducts: any[] = [];
     
     if (storeCode) {
@@ -89,9 +80,6 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
       };
     });
 
-    // Cache the results
-    await RedisCache.set(cacheKey, products, CacheTTL.PRODUCT);
-    
     return products;
   } catch (error) {
     console.error("Prisma Products Fetch Error:", error);
@@ -101,14 +89,6 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
 
 export async function getProduct(id: string) {
   try {
-    // Try to get from cache first
-    const cacheKey = CacheKeys.product(id);
-    const cached = await RedisCache.get<any>(cacheKey);
-    
-    if (cached !== null) {
-      return cached;
-    }
-
     const p = await (prisma as any).product.findUnique({
       where: { id },
       include: {
@@ -145,9 +125,6 @@ export async function getProduct(id: string) {
       related_ids: [],
     };
 
-    // Cache the product
-    await RedisCache.set(cacheKey, product, CacheTTL.PRODUCT);
-    
     return product;
   } catch (error) {
     console.error("Prisma Product Fetch Error:", error);
@@ -155,14 +132,12 @@ export async function getProduct(id: string) {
   }
 }
 
-// Function to invalidate product cache (call when product is updated)
+// Function to invalidate product cache (stubbed out)
 export async function invalidateProductCache(productId: string): Promise<void> {
-  await RedisCache.del(CacheKeys.product(productId));
-  await RedisCache.delPattern('products:*');
+  // Redis removed
 }
 
-// Function to invalidate all product caches
+// Function to invalidate all product caches (stubbed out)
 export async function invalidateAllProductCaches(): Promise<void> {
-  await RedisCache.invalidateProducts();
+  // Redis removed
 }
-

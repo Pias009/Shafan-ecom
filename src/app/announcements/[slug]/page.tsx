@@ -49,7 +49,7 @@ export default function BlogPostPage() {
 
   return (
     <div className="min-h-screen relative z-0">
-      <Navbar />
+      {/* Navbar handled globally */}
 
       <main className="max-w-4xl mx-auto px-6 pt-32 pb-24">
         {/* Back */}

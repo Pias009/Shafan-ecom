@@ -38,7 +38,7 @@ export function ProductsSlider() {
   const slide = slides[index];
 
   return (
-    <div className="relative w-full h-[500px] overflow-hidden rounded-3xl glass-panel">
+    <div className="relative w-full h-[400px] overflow-hidden rounded-3xl glass-panel">
       <AnimatePresence mode="wait">
         <motion.div
           key={slide.id}
@@ -79,7 +79,7 @@ export function ProductsSlider() {
         </motion.div>
       </AnimatePresence>
       
-      <div className="absolute bottom-8 left-12 flex gap-3 z-10">
+      <div className="absolute bottom-6 left-12 flex gap-3 z-10">
         {slides.map((_, i) => (
           <button
             key={i}

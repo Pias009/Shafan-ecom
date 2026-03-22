@@ -4,11 +4,8 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { BrandMarquee } from "@/components/BrandMarquee";
 import { CategorySection } from "@/components/CategorySection";
 import { Hero } from "@/components/Hero";
-import { Navbar } from "@/components/Navbar";
-import { NoticeBoard } from "@/components/NoticeBoard";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
-import { Footer } from "@/components/Footer";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -108,6 +105,28 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
 
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
 
+  const [avgHotIndex, setAvgHotIndex] = useState(0);
+  const [slideDirection, setSlideDirection] = useState(1); // 1 = right, -1 = left
+
+  // Auto-slide for Trending Now
+  useEffect(() => {
+    if (hot.length <= 1) return;
+    const interval = setInterval(() => {
+      setHotSliderIndex((prev) => {
+        if (prev === hot.length - 1) {
+          setSlideDirection(-1);
+          return prev - 1;
+        }
+        if (prev === 0 && slideDirection === -1) {
+          setSlideDirection(1);
+          return prev + 1;
+        }
+        return prev + slideDirection;
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [hot.length, slideDirection]);
+
   function addToCart(product: any) {
     const cartItem = {
       id: product.id,
@@ -162,9 +181,7 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
 
   return (
     <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden">
-      <NoticeBoard />
-      <Navbar />
-
+      {/* NoticeBoard and Navbar handled globally */}
       <Hero />
 
       <CategorySection
@@ -177,11 +194,11 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
       {/* Offer Banners Section */}
       <OfferBannersSection />
 
-      <main className="mx-auto max-w-7xl px-6 pb-20 flex-1">
+      <main className="mx-auto max-w-7xl px-0 md:px-6 pb-20 flex-1">
             {/* Hot Products Slider */}
             {hot.length > 0 && (
-              <section id="hot" className="pt-20">
-                <div className="text-center mb-12">
+              <section id="hot" className="pt-10 md:pt-20">
+                <div className="text-center mb-6 md:mb-12">
                   <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
                     <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🔥 HOT</span>
                   </div>
@@ -193,9 +210,12 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                   <div className="relative overflow-hidden py-8">
                     <motion.div
                       ref={hotSliderRef}
-                      className="flex gap-6 md:gap-8"
-                      animate={{ x: `-${hotSliderIndex * 100}%` }}
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      className="flex gap-0 cursor-grab active:cursor-grabbing"
+                      animate={{ x: typeof window !== 'undefined' && window.innerWidth < 768 
+                        ? `calc(15% - ${hotSliderIndex * 70}%)` 
+                        : `-${hotSliderIndex * 33.33}%` 
+                      }}
+                      transition={{ type: "spring", stiffness: 150, damping: 20 }}
                     >
                       {hot.map((p, index) => {
                         const isCenter = index === hotSliderIndex;
@@ -204,13 +224,13 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                         return (
                           <motion.div
                             key={p.id}
-                            className="flex-shrink-0 w-[80%] md:w-[45%] lg:w-[30%]"
+                            className="flex-shrink-0 w-[70%] md:w-[33.33%]"
                             animate={{
-                              scale: isCenter ? 1 : 0.9,
-                              opacity: isCenter ? 1 : 0.7 - (distance * 0.2),
-                              y: isCenter ? 0 : 10,
+                              scale: isCenter ? 1 : 0.85,
+                              opacity: isCenter ? 1 : 0.5,
+                              filter: isCenter ? "blur(0px)" : "blur(1.5px)",
                             }}
-                            transition={{ type: "spring", stiffness: 300 }}
+                            transition={{ duration: 0.8, ease: "easeInOut" }}
                           >
                             <div className={isCenter ? "ring-2 ring-black/20 shadow-2xl rounded-2xl" : ""}>
                               <ProductCard
@@ -246,7 +266,7 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                     >
                       <ChevronLeft size={24} />
                     </button>
-                    <div className="flex gap-3">
+                    <div className="hidden md:flex gap-3">
                       {Array.from({ length: Math.min(hot.length, 5) }).map((_, i) => (
                         <button
                           key={i}
@@ -273,8 +293,8 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
             )}
 
             {/* All Products + Filters */}
-            <section id="products" className="pt-24">
-              <div className="text-center mb-12">
+            <section id="products" className="pt-12 md:pt-24">
+              <div className="text-center mb-8 md:mb-12">
                 <div className="relative z-10">
                   <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
                     <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW</span>
@@ -353,26 +373,28 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                 )}
               </AnimatePresence>
 
-              <div className="grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filtered.slice(0, 15).map((p) => (
-                  <ProductCard
-                    key={p.id}
-                    product={{
-                      ...p,
-                      price: p.regularPriceCents / 100,
-                      discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
-                      imageUrl: p.mainImage,
-                      brand: p.brand?.name,
-                      averageRating: p.averageRating,
-                      ratingCount: p.ratingCount,
-                      stockQuantity: p.stockQuantity,
-                      totalSales: p.totalSales,
-                    }}
-                    onQuickView={(pp) => setQuickView(pp)}
-                    onAddToCart={(pp) => addToCart(pp)}
-                    onOrderNow={(pp) => orderNow(pp)}
-                  />
-                ))}
+              <div className="w-full flex justify-center px-4 md:px-0">
+                <div className="grid grid-cols-2 gap-3 md:gap-6 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-lg md:max-w-none">
+                  {filtered.slice(0, 15).map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={{
+                        ...p,
+                        price: p.regularPriceCents / 100,
+                        discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
+                        imageUrl: p.mainImage,
+                        brand: p.brand?.name,
+                        averageRating: p.averageRating,
+                        ratingCount: p.ratingCount,
+                        stockQuantity: p.stockQuantity,
+                        totalSales: p.totalSales,
+                      }}
+                      onQuickView={(pp) => setQuickView(pp)}
+                      onAddToCart={(pp) => addToCart(pp)}
+                      onOrderNow={(pp) => orderNow(pp)}
+                    />
+                  ))}
+                </div>
               </div>
 
               {filtered.length > 15 && (
@@ -404,8 +426,6 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
 
       {/* Brand Slider Section - Moved above footer */}
       <BrandMarquee />
-
-      <Footer />
 
       <ProductQuickViewModal
         product={quickView ? {

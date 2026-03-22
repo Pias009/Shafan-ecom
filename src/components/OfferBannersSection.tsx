@@ -162,7 +162,7 @@ export function OfferBannersSection() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex justify-center items-center gap-3 mt-8"
+          className="hidden md:flex justify-center items-center gap-3 mt-8"
         >
           {banners.map((_, i) => (
             <button

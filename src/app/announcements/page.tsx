@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
 import { Calendar, Tag, ArrowRight, BookOpen, Search } from "lucide-react";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -53,7 +52,7 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="min-h-screen relative z-0">
-      <Navbar />
+      {/* Navbar handled globally */}
 
       {/* Hero Header */}
       <section className="relative pt-32 pb-20 px-6 overflow-hidden">
@@ -223,8 +222,6 @@ export default function AnnouncementsPage() {
           </div>
         )}
       </main>
-
-      <Footer />
     </div>
   );
 }

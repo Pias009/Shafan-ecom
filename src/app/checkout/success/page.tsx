@@ -71,12 +71,8 @@ function SuccessContent() {
 
 export default function CheckoutSuccessPage() {
   return (
-    <>
-      <Navbar />
-      <Suspense fallback={<div className="pt-40 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-black/20" /></div>}>
-        <SuccessContent />
-      </Suspense>
-      <Footer />
-    </>
+    <Suspense fallback={<div className="pt-40 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-black/20" /></div>}>
+      <SuccessContent />
+    </Suspense>
   );
 }

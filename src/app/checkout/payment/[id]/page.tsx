@@ -65,7 +65,7 @@ export default function CustomPaymentPage() {
 
   return (
     <div className="min-h-screen bg-cream text-black">
-      <Navbar />
+      {/* Navbar handled globally */}
 
       <main className="max-w-6xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
   <div className="grid gap-8 lg:grid-cols-12">

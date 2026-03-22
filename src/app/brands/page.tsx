@@ -43,7 +43,7 @@ export default function BrandsPage() {
 
   return (
     <div className="min-h-screen relative z-0 flex flex-col">
-      <Navbar />
+      {/* Navbar handled globally */}
       
       <main className="pt-32 pb-20 px-6 max-w-5xl mx-auto flex-1">
         <div className="text-center mb-16">

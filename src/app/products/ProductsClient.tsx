@@ -105,8 +105,6 @@ export default function ProductsClient({ initialProducts, category, brand: initi
 
   return (
     <div className="min-h-screen bg-cream text-black flex flex-col">
-      <Navbar />
-
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 flex-1">
         <ProductsSlider />
 
@@ -233,8 +231,6 @@ export default function ProductsClient({ initialProducts, category, brand: initi
           </div>
         )}
       </main>
-
-      <Footer />
 
       <ProductQuickViewModal
         product={quickView}

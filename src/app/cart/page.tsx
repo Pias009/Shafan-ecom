@@ -210,29 +210,23 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <>
-        <Navbar />
-        <div className="pt-28 pb-20 px-6 max-w-4xl mx-auto text-center">
-          <div className="glass-panel mx-auto flex max-w-md flex-col items-center justify-center rounded-3xl p-10 border border-black/5 shadow-xl">
-            <div className="mb-4 text-6xl">🛒</div>
-            <h1 className="font-display text-3xl text-black font-black">{t.cart.title}</h1>
-            <p className="font-body mt-3 text-black/40 font-bold uppercase tracking-widest text-xs">{t.cart.emptyCart}</p>
-            <Link
-              href="/"
-              className="mt-8 inline-block bg-black text-white rounded-full px-8 py-3 font-body text-sm font-bold tracking-widest transition hover:scale-105 shadow-lg shadow-black/20"
-            >
-              {t.cart.shopNow}
-            </Link>
-          </div>
+      <div className="pt-28 pb-20 px-6 max-w-4xl mx-auto text-center">
+        <div className="glass-panel mx-auto flex max-w-md flex-col items-center justify-center rounded-3xl p-10 border border-black/5 shadow-xl">
+          <div className="mb-4 text-6xl">🛒</div>
+          <h1 className="font-display text-3xl text-black font-black">{t.cart.title}</h1>
+          <p className="font-body mt-3 text-black/40 font-bold uppercase tracking-widest text-xs">{t.cart.emptyCart}</p>
+          <Link
+            href="/"
+            className="mt-8 inline-block bg-black text-white rounded-full px-8 py-3 font-body text-sm font-bold tracking-widest transition hover:scale-105 shadow-lg shadow-black/20"
+          >
+            {t.cart.shopNow}
+          </Link>
         </div>
-        <Footer />
-      </>
+      </div>
     );
   }
 
-  return (
-    <>
-      <Navbar />
+    return (
       <CartContent 
         items={items}
         removeItem={removeItem}
@@ -246,7 +240,5 @@ export default function CartPage() {
         applyCoupon={() => {}}
         t={t}
       />
-      <Footer />
-    </>
-  );
+    );
 }

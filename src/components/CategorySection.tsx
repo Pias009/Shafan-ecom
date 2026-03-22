@@ -23,7 +23,7 @@ export function CategorySection({
         </h2>
       </div>
 
-      <div className="flex items-center justify-start md:justify-center gap-1.5 md:gap-4 overflow-x-auto pb-4 md:pb-0 md:flex-wrap md:overflow-visible px-1 no-scrollbar">
+      <div className="flex items-center justify-start md:justify-center gap-2 md:gap-4 overflow-x-auto pb-4 md:pb-0 md:flex-wrap md:overflow-visible px-4 md:px-0 no-scrollbar">
         {demoCategories.map((c) => (
           <button
             key={c.id}

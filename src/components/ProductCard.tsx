@@ -100,7 +100,7 @@ export function ProductCard({
               {brandName}
             </Link>
             <Link href={`/products/${product.id}`} className="block">
-              <h3 className="font-display text-base md:text-lg font-bold text-black leading-tight line-clamp-1 group-hover:text-black/70 transition-colors">
+              <h3 className="font-display text-[13px] md:text-lg font-bold text-black leading-tight line-clamp-1 group-hover:text-black/70 transition-colors">
                 {product.name}
               </h3>
             </Link>
@@ -146,7 +146,7 @@ export function ProductCard({
               <ShoppingBag size={16} />
             </button>
             {onOrderNow && (
-              <div className="flex-1 relative group/btn-container h-10 md:h-12 flex items-center justify-center">
+              <div className="flex-1 relative group/btn-container h-9 md:h-12 flex items-center justify-center">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -174,7 +174,7 @@ export function ProductCard({
                     transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
                   />
 
-                  <span className="relative z-20 text-white text-[11px] md:text-[13px] font-black uppercase tracking-[0.25em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] flex items-center justify-center h-full">
+                  <span className="relative z-20 text-white text-[9px] md:text-[13px] font-black uppercase tracking-[0.2em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] flex items-center justify-center h-full">
                     {t.product.orderNow}
                   </span>
                 </button>

@@ -13,130 +13,16 @@ import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 
-// Logo Animation Component - Updated with rolling word effect
-function LogoAnimation() {
-  const [phase, setPhase] = useState(0); // 0: word rolling, 1: logo display, 2: different styles
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [showLogo, setShowLogo] = useState(false);
-  const [animationStyle, setAnimationStyle] = useState(0);
-  
-  const words = ["We", "do", "care", "for", "your", "skin", "health"];
-  const wordColors = [
-    "text-blue-600",
-    "text-purple-600",
-    "text-green-600",
-    "text-yellow-600",
-    "text-pink-600",
-    "text-indigo-600",
-    "text-red-600"
-  ];
-  const logoText = "SHANFA";
-  const animationStyles = [
-    "flip", "bounce", "rotate", "scale", "fade", "shimmer"
-  ];
-
-  useEffect(() => {
-    // Phase 0: One word at a time with rolling effect
-    if (phase === 0) {
-      const wordTimer = setInterval(() => {
-        setCurrentWordIndex(prev => {
-          if (prev >= words.length - 1) {
-            clearInterval(wordTimer);
-            setTimeout(() => {
-              setPhase(1);
-              setShowLogo(true);
-            }, 500); // Wait 0.5s after last word
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 500); // Each word stays for 0.5 seconds
-
-      return () => clearInterval(wordTimer);
-    }
-
-    // Phase 1: Show logo for 2 seconds with style
-    if (phase === 1) {
-      const logoTimer = setTimeout(() => {
-        setShowLogo(false);
-        setPhase(2);
-        setCurrentWordIndex(0);
-      }, 2000); // Logo shows for 2 seconds
-
-      return () => clearTimeout(logoTimer);
-    }
-
-    // Phase 2: Different animation styles for logo
-    if (phase === 2) {
-      const styleTimer = setInterval(() => {
-        setAnimationStyle(prev => (prev + 1) % animationStyles.length);
-      }, 800); // Change style every 0.8 seconds
-
-      const resetTimer = setTimeout(() => {
-        clearInterval(styleTimer);
-        setPhase(0);
-        setAnimationStyle(0);
-        setCurrentWordIndex(0);
-      }, 4800); // Show different styles for 4.8 seconds (6 styles × 0.8s)
-
-      return () => {
-        clearInterval(styleTimer);
-        clearTimeout(resetTimer);
-      };
-    }
-  }, [phase, words.length]);
-
-// Render based on current phase
-if (showLogo) {
-  // Phase 1: Show logo for 2 seconds with enhanced styling
+// Simple static logo component
+function Logo() {
   return (
     <>
       <span className="bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 bg-clip-text text-transparent font-extrabold tracking-tighter drop-shadow-lg">
-        {logoText}
+        SHANFA
       </span>
       <span className="ml-1 text-xs font-normal text-gray-500 align-super">®</span>
     </>
   );
-}
-
-if (phase === 2) {
-  // Phase 2: Different animation styles for logo with enhanced visuals
-  const styleKey = animationStyles[animationStyle];
-  const styleConfigs = {
-    flip: { class: "animate-flip", gradient: "from-blue-800 to-purple-800" },
-    bounce: { class: "animate-bounce", gradient: "from-green-700 to-teal-700" },
-    rotate: { class: "animate-spin", gradient: "from-red-700 to-orange-700" },
-    scale: { class: "animate-scale", gradient: "from-indigo-700 to-purple-700" },
-    fade: { class: "opacity-90", gradient: "from-gray-800 to-black" },
-    shimmer: { class: "animate-shimmer", gradient: "from-blue-400 via-purple-400 to-pink-400", isShimmer: true }
-  };
-  
-  const styleConfig = styleConfigs[styleKey as keyof typeof styleConfigs] || styleConfigs.flip;
-  
-  return (
-    <>
-      <span className={`bg-gradient-to-r ${styleConfig.gradient} bg-clip-text text-transparent font-extrabold tracking-tighter ${styleConfig.class}`}>
-        {logoText}
-      </span>
-      <span className="ml-1 text-xs font-normal text-gray-500 align-super">®</span>
-    </>
-  );
-}
-
-// Phase 0: One word at a time with rolling flip animation
-const currentWord = words[currentWordIndex];
-const currentColor = wordColors[currentWordIndex];
-
-return (
-  <>
-    <span className={`${currentColor} font-black italic`}>
-      <span className="inline-block animate-flip">
-        {currentWord}
-      </span>
-    </span>
-    <span className="ml-1 text-xs font-normal text-gray-500 align-super">®</span>
-  </>
-);
 }
 
 export function Navbar() {
@@ -232,15 +118,15 @@ export function Navbar() {
   return (
     <>
       <header
-      className={`fixed ${isHomePage ? 'top-[48px]' : 'top-0'} left-0 right-0 z-50 transition-all duration-300 transform ${
-        scrolled ? "glass-nav shadow-sm" : "bg-transparent"
-      } ${visible ? "translate-y-0" : (isHomePage ? "-translate-y-[calc(100%+48px)]" : "-translate-y-full")}`}
+      className={`fixed ${isHomePage && !scrolled ? 'top-[48px]' : 'top-0'} left-0 right-0 z-50 transition-all duration-300 transform ${
+        scrolled ? "glass-nav shadow-md" : "bg-transparent"
+      } ${visible ? "translate-y-0" : (isHomePage && !scrolled ? "-translate-y-[calc(100%+48px)]" : "-translate-y-full")}`}
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
         {/* Logo on LEFT */}
         <div className="flex-shrink-0">
           <Link href="/" className="text-xl md:text-2xl lg:text-3xl font-black italic tracking-tight text-black hover:opacity-80 transition-opacity">
-            <LogoAnimation />
+            <Logo />
           </Link>
         </div>
 
