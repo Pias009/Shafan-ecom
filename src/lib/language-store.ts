@@ -11,7 +11,7 @@ interface Language {
 
 export const SUPPORTED_LANGUAGES: Language[] = [
   { code: "en", name: "English", flag: "🇬🇧" },
-  { code: "ar", name: "العربية", flag: "🇰🇼" },
+  { code: "ar", name: "العربية", flag: "🇸🇦" },
 ];
 
 interface LanguageState {

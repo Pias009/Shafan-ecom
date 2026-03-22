@@ -15,10 +15,10 @@ import { useRouter } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 
-export default function ProductsClient({ initialProducts }: { initialProducts: any[] }) {
+export default function ProductsClient({ initialProducts, category, brand: initialBrand }: { initialProducts: any[], category?: string, brand?: string }) {
   const [products] = useState<any[]>(initialProducts || []);
   const [q, setQ] = useState("");
-  const [brand, setBrand] = useState("All");
+  const [brand, setBrand] = useState(initialBrand || "All");
   const [maxPrice, setMaxPrice] = useState(5000);
   const [quickView, setQuickView] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -35,8 +35,19 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
 
   const categories = useMemo(() => {
     const set = new Set(products.map(p => p.categoryName).filter(Boolean));
-    return Array.from(set).sort();
-  }, [products]);
+    const allCategories = Array.from(set).sort();
+    
+    // If a specific category is provided, filter to only that category
+    if (category) {
+      // Decode URL-encoded category (e.g., "Skin+Care" -> "Skin Care")
+      const decodedCategory = decodeURIComponent(category).replace(/\+/g, ' ');
+      return allCategories.filter(cat =>
+        cat.toLowerCase() === decodedCategory.toLowerCase()
+      );
+    }
+    
+    return allCategories;
+  }, [products, category]);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -93,10 +104,10 @@ export default function ProductsClient({ initialProducts }: { initialProducts: a
   }
 
   return (
-    <div className="min-h-screen bg-cream text-black">
+    <div className="min-h-screen bg-cream text-black flex flex-col">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
+      <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 flex-1">
         <ProductsSlider />
 
         <div className="flex justify-center mt-12 mb-8">

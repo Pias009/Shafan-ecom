@@ -1,0 +1,310 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+// Helper function to check admin authorization
+async function checkAdminAuth() {
+  const session = await getServerSession(authOptions);
+  if (!session || !["ADMIN", "SUPERADMIN"].includes((session.user as any)?.role)) {
+    return null;
+  }
+  return session;
+}
+
+// Helper function to validate discount ID
+function validateDiscountId(id: string) {
+  if (!id || id.length !== 24) {
+    return false;
+  }
+  return true;
+}
+
+// GET /api/admin/promotional/discounts/[id] - Get a single discount by ID
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await checkAdminAuth();
+  if (!session) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { id } = params;
+
+  if (!validateDiscountId(id)) {
+    return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
+  }
+
+  try {
+    const discount = await prisma.discount.findUnique({
+      where: { id },
+      include: {
+        products: {
+          select: {
+            id: true,
+            name: true,
+            priceCents: true,
+            discountCents: true,
+            mainImage: true,
+          },
+        },
+        categories: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        banners: {
+          select: {
+            id: true,
+            title: true,
+            imageUrl: true,
+            active: true,
+          },
+        },
+        _count: {
+          select: {
+            products: true,
+            categories: true,
+            banners: true,
+          },
+        },
+      },
+    });
+
+    if (!discount) {
+      return NextResponse.json({ error: "Discount not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(discount);
+  } catch (error) {
+    console.error("Error fetching discount:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch discount" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/admin/promotional/discounts/[id] - Update a discount
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await checkAdminAuth();
+  if (!session) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { id } = params;
+
+  if (!validateDiscountId(id)) {
+    return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
+  }
+
+  try {
+    const body = await req.json();
+    const {
+      code,
+      name,
+      description,
+      discountType,
+      value,
+      applyToAll,
+      minimumOrderValue,
+      startDate,
+      endDate,
+      maxUses,
+      active,
+      autoApply,
+      uses,
+      productIds,
+      categoryIds,
+    } = body;
+
+    // Check if discount exists
+    const existingDiscount = await prisma.discount.findUnique({
+      where: { id },
+    });
+
+    if (!existingDiscount) {
+      return NextResponse.json({ error: "Discount not found" }, { status: 404 });
+    }
+
+    // Validate value if provided
+    if (value !== undefined) {
+      const discountTypeToUse = discountType || existingDiscount.discountType;
+      if (discountTypeToUse === "PERCENTAGE" && (value < 0 || value > 100)) {
+        return NextResponse.json(
+          { error: "Percentage value must be between 0 and 100" },
+          { status: 400 }
+        );
+      }
+      if (discountTypeToUse === "FIXED_AMOUNT" && value < 0) {
+        return NextResponse.json(
+          { error: "Fixed amount must be positive" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check if code is unique (if changing code)
+    if (code && code !== existingDiscount.code) {
+      const existingWithCode = await prisma.discount.findUnique({
+        where: { code },
+      });
+      if (existingWithCode) {
+        return NextResponse.json(
+          { error: "Discount code already exists" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Parse dates if provided
+    const startDateObj = startDate ? new Date(startDate) : undefined;
+    const endDateObj = endDate ? new Date(endDate) : undefined;
+
+    // Validate date logic if both dates are provided
+    if (startDateObj && endDateObj && startDateObj >= endDateObj) {
+      return NextResponse.json(
+        { error: "Start date must be before end date" },
+        { status: 400 }
+      );
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    if (code !== undefined) updateData.code = code;
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (discountType !== undefined) updateData.discountType = discountType;
+    if (value !== undefined) updateData.value = value;
+    if (applyToAll !== undefined) updateData.applyToAll = applyToAll;
+    if (minimumOrderValue !== undefined) updateData.minimumOrderValue = minimumOrderValue;
+    if (startDateObj !== undefined) updateData.startDate = startDateObj;
+    if (endDateObj !== undefined) updateData.endDate = endDateObj;
+    if (maxUses !== undefined) updateData.maxUses = maxUses;
+    if (active !== undefined) updateData.active = active;
+    if (autoApply !== undefined) updateData.autoApply = autoApply;
+    if (uses !== undefined) updateData.uses = uses;
+
+    // Handle product connections if provided
+    let productConnectDisconnect: any = undefined;
+    if (productIds !== undefined) {
+      // First disconnect all existing products
+      productConnectDisconnect = {
+        products: {
+          set: [], // Disconnect all
+          connect: productIds.map((productId: string) => ({ id: productId })),
+        },
+      };
+    }
+
+    // Handle category connections if provided
+    let categoryConnectDisconnect: any = undefined;
+    if (categoryIds !== undefined) {
+      categoryConnectDisconnect = {
+        categories: {
+          set: [], // Disconnect all
+          connect: categoryIds.map((categoryId: string) => ({ id: categoryId })),
+        },
+      };
+    }
+
+    // Update the discount
+    const updatedDiscount = await prisma.discount.update({
+      where: { id },
+      data: {
+        ...updateData,
+        ...productConnectDisconnect,
+        ...categoryConnectDisconnect,
+      },
+      include: {
+        products: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        categories: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(updatedDiscount);
+  } catch (error) {
+    console.error("Error updating discount:", error);
+    return NextResponse.json(
+      { error: "Failed to update discount" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/admin/promotional/discounts/[id] - Delete a discount
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const session = await checkAdminAuth();
+  if (!session) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { id } = params;
+
+  if (!validateDiscountId(id)) {
+    return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
+  }
+
+  try {
+    // Check if discount exists
+    const existingDiscount = await prisma.discount.findUnique({
+      where: { id },
+    });
+
+    if (!existingDiscount) {
+      return NextResponse.json({ error: "Discount not found" }, { status: 404 });
+    }
+
+    // Check if discount is used in any banners
+    const bannersUsingDiscount = await prisma.enhancedOfferBanner.count({
+      where: { discountId: id },
+    });
+
+    if (bannersUsingDiscount > 0) {
+      return NextResponse.json(
+        { 
+          error: "Cannot delete discount that is used in banners",
+          bannersCount: bannersUsingDiscount,
+          suggestion: "Deactivate the discount instead or update the banners first"
+        },
+        { status: 400 }
+      );
+    }
+
+    // Delete the discount (this will cascade to ProductDiscount and CategoryDiscount due to relations)
+    await prisma.discount.delete({
+      where: { id },
+    });
+
+    return NextResponse.json(
+      { message: "Discount deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting discount:", error);
+    return NextResponse.json(
+      { error: "Failed to delete discount" },
+      { status: 500 }
+    );
+  }
+}

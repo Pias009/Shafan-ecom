@@ -1,10 +1,18 @@
 import ProductsClient from "./ProductsClient";
 import { getProducts } from "@/lib/products";
+import { Suspense } from "react";
 
 export const revalidate = 60; // ISR cache for native server rendering
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; brand?: string }>;
+}) {
   const products = await getProducts();
+  const params = await searchParams;
+  const category = params.category;
+  const brand = params.brand;
   
   // Transform data for UI compatibility on the server
   const transformed = products.map((p: any) => ({
@@ -17,5 +25,5 @@ export default async function ProductsPage() {
     images: p.images || []
   }));
 
-  return <ProductsClient initialProducts={transformed} />;
+  return <ProductsClient initialProducts={transformed} category={category} brand={brand} />;
 }

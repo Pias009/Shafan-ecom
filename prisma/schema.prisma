@@ -23,6 +23,12 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
+
 model Store {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   code      String   @unique
@@ -125,6 +131,7 @@ model Product {
   category      Category? @relation(fields: [categoryId], references: [id])
   orderItems    OrderItem[]
   storeInventories StoreInventory[]
+  discounts     Discount[] @relation("DiscountProducts")
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -133,13 +140,17 @@ model Product {
 model Brand {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String    @unique
+  image     String?   // Brand logo/image URL
   products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Category {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   name      String    @unique
   products  Product[]
+  discounts Discount[] @relation("DiscountCategories")
 }
 
 model Order {
@@ -158,6 +169,9 @@ model Order {
   billingAddress     Json?
   shippingAddress    Json?
   stripePaymentIntentId String?
+  discountId        String?   @db.ObjectId  // Applied discount
+  discount          Discount? @relation(fields: [discountId], references: [id])
+  discountAmountCents Int?    // Amount saved from discount in cents
   items              OrderItem[]
   shipment           Shipment?
   createdAt          DateTime    @default(now())
@@ -211,6 +225,123 @@ model OfferBanner {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model EnhancedOfferBanner {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  // Core content
+  imageUrl          String   @unique
+  title             String?
+  subtitle          String?
+  offerText         String?  // e.g., "70% OFF" or "$50 OFF"
+  ctaText           String?  // Custom CTA button text
+  
+  // Visual customization
+  backgroundColor   String?  // Hex color for background
+  textColor         String?  // Hex color for text
+  backgroundImage   String?  // Alternative to imageUrl for full background
+  
+  // Scheduling
+  startDate         DateTime?
+  endDate           DateTime?
+  active            Boolean  @default(true)
+  
+  // Behavior
+  link              String?  // Product page URL or discount code
+  discountId        String?  @db.ObjectId  // Associated discount
+  discount          Discount? @relation(fields: [discountId], references: [id])
+  
+  // Display
+  sortOrder         Int      @default(0)
+  priority          Int      @default(1)  // 1=Low, 2=Medium, 3=High
+  
+  // Tracking
+  clicks            Int      @default(0)
+  conversions       Int      @default(0)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([active, startDate, endDate])
+  @@index([sortOrder])
+}
+
+model Discount {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  code              String?  @unique  // Optional discount code
+  name              String   // Display name
+  description       String?
+  
+  // Discount type and value
+  discountType      DiscountType  @default(PERCENTAGE)
+  value             Float         // e.g., 20 for 20% or 15.50 for $15.50
+  
+  // Application scope
+  applyToAll        Boolean  @default(false)
+  minimumOrderValue Int?     // Minimum order amount in cents
+  
+  // Validity
+  startDate         DateTime?
+  endDate           DateTime?
+  maxUses           Int?     // Maximum number of uses
+  uses              Int      @default(0)  // Current usage count
+  
+  // Status
+  active            Boolean  @default(true)
+  autoApply         Boolean  @default(false)  // Auto-apply to eligible products
+  
+  // Relationships
+  products          Product[]  @relation("DiscountProducts")
+  categories        Category[] @relation("DiscountCategories")
+  banners           EnhancedOfferBanner[]  // Banners that use this discount
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([active, startDate, endDate])
+  @@index([code])
+}
+
+model ProductDiscount {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String   @db.ObjectId
+  discountId  String   @db.ObjectId
+  product     Product  @relation(fields: [productId], references: [id])
+  discount    Discount @relation(fields: [discountId], references: [id])
+  createdAt   DateTime @default(now())
+  
+  @@unique([productId, discountId])
+  @@index([discountId])
+}
+
+model CategoryDiscount {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  categoryId  String   @db.ObjectId
+  discountId  String   @db.ObjectId
+  category    Category @relation(fields: [categoryId], references: [id])
+  discount    Discount @relation(fields: [discountId], references: [id])
+  createdAt   DateTime @default(now())
+  
+  @@unique([categoryId, discountId])
+  @@index([discountId])
+}
+
+model DiscountUsage {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  discountId  String   @db.ObjectId
+  userId      String?  @db.ObjectId
+  orderId     String?  @db.ObjectId
+  email       String?  // For guest users
+  amountSaved Int      // Amount saved in cents
+  usedAt      DateTime @default(now())
+  
+  discount    Discount @relation(fields: [discountId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id])
+  
+  @@index([discountId])
+  @@index([userId])
+  @@index([orderId])
 }
 
 model Address {

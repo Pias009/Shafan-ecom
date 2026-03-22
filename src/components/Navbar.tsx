@@ -89,48 +89,63 @@ export function Navbar() {
     }
   }
 
+  const isHomePage = pathname === "/";
+  
   return (
     <>
       <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 transform ${
+      className={`fixed ${isHomePage ? 'top-[48px]' : 'top-0'} left-0 right-0 z-50 transition-all duration-500 transform ${
         scrolled ? "glass-nav shadow-sm" : "bg-transparent"
       } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between relative">
-        {/* Centered Desktop Nav */}
-        <div className="hidden md:flex items-center gap-6 glass-panel rounded-full pl-8 pr-2 py-1.5 absolute left-1/2 -translate-x-1/2 transition-all duration-300">
-          <div className="flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`px-5 py-2 text-[10px] font-black tracking-[0.15em] transition-all duration-300 rounded-full ${
-                  pathname === link.href
-                    ? "text-black bg-black/5"
-                    : "text-black/60 hover:text-black hover:bg-black/5"
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 border-l border-black/5 pl-4 ml-1">
-            <LanguageSelector />
-            <CurrencySelector />
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center">
+        {/* Logo on LEFT - Part 1 */}
+        <div className="flex-1 flex items-center">
+          <Link href="/" className="text-3xl font-black italic tracking-tight text-black hover:opacity-80 transition-opacity">
+            <span className="bg-gradient-to-r from-black to-gray-800 bg-clip-text text-transparent">
+              SHANFA
+            </span>
+            <span className="ml-1 text-xs font-normal text-gray-500 align-super">®</span>
+          </Link>
+        </div>
+
+        {/* Navigation in CENTER - Part 2 */}
+        <div className="hidden md:flex flex-1 items-center justify-center">
+          <div className="glass-panel rounded-full px-8 py-1.5">
+            <div className="flex items-center gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`px-5 py-2 text-[10px] font-black tracking-[0.15em] transition-all duration-300 rounded-full ${
+                    pathname === link.href
+                      ? "text-black bg-black/5"
+                      : "text-black/60 hover:text-black hover:bg-black/5"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 text-black"
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Right side - Part 3: Currency/Language + User Actions */}
+        <div className="flex-1 flex items-center justify-end gap-3">
+          {/* Currency/Language selectors (desktop) */}
+          <div className="hidden md:flex items-center gap-2">
+            <LanguageSelector />
+            <CurrencySelector />
+          </div>
 
-        {/* Right side Actions */}
-        <div className="flex items-center gap-3">
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 text-black"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
 
           {/* Cart - only visible if signed in */}
           {status === "authenticated" && (

@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { BannerSlider } from "@/components/BannerSlider";
+import { BrandMarquee } from "@/components/BrandMarquee";
 import { CategorySection } from "@/components/CategorySection";
 import { Hero } from "@/components/Hero";
 import { Navbar } from "@/components/Navbar";
+import { NoticeBoard } from "@/components/NoticeBoard";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { Footer } from "@/components/Footer";
@@ -157,7 +159,8 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   return (
-    <div className="min-h-screen relative z-0">
+    <div className="min-h-screen relative z-0 flex flex-col">
+      <NoticeBoard />
       <Navbar />
 
       <Hero />
@@ -174,16 +177,19 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
       {/* Offer Banners Section */}
       <OfferBannersSection />
 
-      <main className="mx-auto max-w-7xl px-6 pb-20">
+      {/* Brand Slider Section */}
+      <BrandMarquee />
+
+      <main className="mx-auto max-w-7xl px-6 pb-20 flex-1">
             {/* Hot Products */}
             {hot.length > 0 && (
-              <section id="hot" className="pt-16">
-                <div className="text-center mb-10">
-                  <p className="font-body text-xs font-bold uppercase tracking-[0.25em] text-black/60">
-                    {t.home.hotProducts}
-                  </p>
-                  <h2 className="font-display text-4xl text-black mt-2 font-bold">{t.home.trendingNow}</h2>
-                  <p className="font-body text-black/70 mt-2 font-medium">{t.home.mostLoved}</p>
+              <section id="hot" className="pt-20">
+                <div className="text-center mb-12">
+                  <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🔥 HOT</span>
+                  </div>
+                  <h2 className="font-display text-4xl md:text-5xl text-black mt-2 font-black">{t.home.trendingNow}</h2>
+                  <p className="font-body text-black/70 mt-3 text-lg max-w-2xl mx-auto">{t.home.mostLoved}</p>
                 </div>
 
                 <div className="grid gap-3 md:gap-6 grid-cols-2 md:grid-cols-3">
@@ -210,26 +216,26 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
             )}
 
             {/* All Products + Filters */}
-            <section id="products" className="pt-20">
-              <div className="text-center mb-10">
+            <section id="products" className="pt-24">
+              <div className="text-center mb-12">
                 <div className="relative z-10">
-                  <p className="font-body text-xs font-bold uppercase tracking-[0.25em] text-black/60">
-                    All products
-                  </p>
-                  <h2 className="font-display text-4xl text-black mt-2 font-bold">New Arrivals</h2>
-                  <p className="font-body text-black/70 mt-2 font-medium">Fresh additions to our collection</p>
+                  <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW</span>
+                  </div>
+                  <h2 className="font-display text-4xl md:text-5xl text-black mt-2 font-black">New Arrivals</h2>
+                  <p className="font-body text-black/70 mt-3 text-lg max-w-2xl mx-auto">Fresh additions to our collection</p>
                 </div>
               </div>
 
               {/* Filter Row */}
-              <div className="flex justify-center mb-8">
+              <div className="flex justify-center mb-10">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
+                  className={`flex items-center gap-3 px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 shadow-xl hover:shadow-2xl active:scale-95 ${
                     showFilters ? "bg-black text-white" : "glass-panel text-black hover:bg-black hover:text-white"
                   }`}
                 >
-                  {showFilters ? <X size={14} /> : <Filter size={14} />}
+                  {showFilters ? <X size={16} /> : <Filter size={16} />}
                   {showFilters ? "Hide Filters" : "Show Filters"}
                 </button>
               </div>
@@ -243,18 +249,18 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                     exit={{ opacity: 0, y: -20, height: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="glass-panel-heavy rounded-[2rem] p-3 md:p-5 mb-10 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 border border-black/5">
+                    <div className="glass-panel-heavy rounded-3xl p-5 md:p-6 mb-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 border border-black/10 shadow-lg">
                       <input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Search…"
-                        className="col-span-2 md:col-span-1 h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold"
+                        placeholder="Search products…"
+                        className="col-span-2 md:col-span-1 h-12 md:h-13 w-full rounded-2xl bg-black/5 px-5 text-sm md:text-base text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-black/30 font-bold transition-all"
                       />
 
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+                        className="h-12 md:h-13 w-full rounded-2xl bg-black/5 px-5 text-sm md:text-base text-black ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-black/30 font-bold appearance-none cursor-pointer transition-all"
                       >
                         <option value="All">All Categories</option>
                         {categories.filter(c => c !== "All").map((c) => (
@@ -265,7 +271,7 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                       <select
                         value={brand}
                         onChange={(e) => setBrand(e.target.value)}
-                        className="h-10 md:h-11 w-full rounded-2xl bg-black/5 px-4 text-xs md:text-sm text-black ring-1 ring-black/10 outline-none focus:ring-black/25 font-bold appearance-none cursor-pointer"
+                        className="h-12 md:h-13 w-full rounded-2xl bg-black/5 px-5 text-sm md:text-base text-black ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-black/30 font-bold appearance-none cursor-pointer transition-all"
                       >
                         <option value="All">All Brands</option>
                         {brands.filter(b => b !== "All").map((b) => (
@@ -273,8 +279,8 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                         ))}
                       </select>
 
-                      <div className="flex items-center gap-4 px-2 h-10 md:h-11">
-                        <div className="font-bold text-[10px] md:text-xs text-black/70 min-w-[60px] md:min-w-[70px]">Max <Price amount={maxPrice} /></div>
+                      <div className="flex items-center gap-5 px-3 h-12 md:h-13">
+                        <div className="font-bold text-xs md:text-sm text-black/70 min-w-[70px] md:min-w-[80px]">Max <Price amount={maxPrice} /></div>
                         <input
                           type="range"
                           min={0}
@@ -282,7 +288,7 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                           step={10}
                           value={maxPrice}
                           onChange={(e) => setMaxPrice(Number(e.target.value))}
-                          className="w-full accent-black cursor-pointer h-1.5"
+                          className="w-full accent-black cursor-pointer h-2 rounded-full"
                         />
                       </div>
                     </div>
@@ -313,15 +319,15 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
               </div>
 
               {filtered.length > 15 && (
-                <div className="mt-12 flex justify-center">
+                <div className="mt-16 flex justify-center">
                   <button
                     onClick={() => router.push("/products")}
-                    className="group flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.05]"
+                    className="group flex flex-col items-center gap-4 transition-all duration-300 hover:scale-[1.05]"
                   >
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-black/5 border border-black/10 group-hover:bg-black group-hover:text-white transition-colors">
-                      <ArrowRight className="w-6 h-6" />
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 border-2 border-black/10 group-hover:bg-black group-hover:text-white group-hover:border-black transition-all duration-300">
+                      <ArrowRight className="w-8 h-8" />
                     </div>
-                    <span className="font-bold text-xs uppercase tracking-widest text-black/60 group-hover:text-black">
+                    <span className="font-bold text-sm uppercase tracking-widest text-black/60 group-hover:text-black transition-colors">
                       See All Products
                     </span>
                   </button>

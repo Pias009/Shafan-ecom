@@ -2,7 +2,7 @@
 
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { ArrowRight, ChevronDown, Facebook, Instagram, Mail, Phone, Clock } from "lucide-react";
+import { ArrowRight, ChevronDown, Facebook, Instagram, Mail, Phone, Clock, MessageCircle, Music, Linkedin } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -61,7 +61,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="w-full bg-black text-white font-body selection:bg-white selection:text-black">
+    <footer className="w-full bg-black text-white font-body selection:bg-white selection:text-black mt-auto">
 
       {/* Newsletter Section */}
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 md:py-24">
@@ -174,37 +174,39 @@ export function Footer() {
       {/* Divider */}
       <div className="border-t border-white/10" />
 
-      {/* Bottom Bar */}
+      {/* Bottom Bar - Updated according to feedback */}
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-4">
 
-        {/* Contact Info */}
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-10 text-center md:text-left">
-          <div className="flex items-center gap-2 text-white">
-            <Phone size={14} className="text-white/50" />
-            <span className="text-base font-black italic tracking-tight text-white">+971 4 543 4800</span>
-          </div>
-          <div className="flex items-center gap-2 text-white/50">
-            <Clock size={14} />
-            <span className="text-xs font-bold uppercase tracking-wider">{t.footer.workingHours}</span>
-          </div>
-        </div>
-
-        {/* Social + Copyright */}
-        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
-          <div className="flex items-center gap-5">
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{t.footer.followUs}</span>
+        {/* Social Media on LEFT side */}
+        <div className="flex items-center gap-5 order-2 md:order-1">
+          <span className="text-[10px] font-black uppercase tracking-widest text-white/60">{t.footer.followUs || "FOLLOW US"}</span>
+          <div className="flex items-center gap-4">
+            <Link href="https://wa.me/" target="_blank" className="flex items-center gap-1.5 group">
+              <MessageCircle size={16} className="text-white/60 group-hover:text-green-400 transition-colors" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">WhatsApp</span>
+            </Link>
             <Link href="#" className="flex items-center gap-1.5 group">
-              <Facebook size={16} className="text-white/60 group-hover:text-white transition-colors" />
+              <Facebook size={16} className="text-white/60 group-hover:text-blue-400 transition-colors" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">Facebook</span>
             </Link>
             <Link href="#" className="flex items-center gap-1.5 group">
-              <Instagram size={16} className="text-white/60 group-hover:text-white transition-colors" />
+              <Instagram size={16} className="text-white/60 group-hover:text-pink-400 transition-colors" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">Instagram</span>
             </Link>
+            <Link href="#" className="flex items-center gap-1.5 group">
+              <Music size={16} className="text-white/60 group-hover:text-black transition-colors" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">TikTok</span>
+            </Link>
+            <Link href="#" className="flex items-center gap-1.5 group">
+              <Linkedin size={16} className="text-white/60 group-hover:text-blue-300 transition-colors" />
+              <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">LinkedIn</span>
+            </Link>
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 md:border-l md:border-white/10 md:pl-10">
-            © 2026 Shafan. {t.footer.rights}
-          </div>
+        </div>
+
+        {/* Copyright on RIGHT side */}
+        <div className="order-1 md:order-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 text-center md:text-right">
+          copyright© AL SHANFA GENERAL TRADING CO. L.L.C. All rights reserved
         </div>
       </div>
 
