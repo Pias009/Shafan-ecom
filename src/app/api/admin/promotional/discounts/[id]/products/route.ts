@@ -25,14 +25,14 @@ function validateDiscountId(id: string) {
 // GET /api/admin/promotional/discounts/[id]/products - Get products associated with a discount
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
@@ -59,23 +59,25 @@ export async function GET(
     }
 
     // Get products associated with this discount
-    const products = await prisma.product.findMany({
-      where: {
-        discounts: {
-          some: { id },
+    const productsData = await prisma.productDiscount.findMany({
+      where: { discountId: id },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            priceCents: true,
+            discountCents: true,
+            mainImage: true,
+            active: true,
+            stockQuantity: true,
+          },
         },
       },
-      select: {
-        id: true,
-        name: true,
-        priceCents: true,
-        discountCents: true,
-        mainImage: true,
-        active: true,
-        stockQuantity: true,
-      },
-      orderBy: { name: "asc" },
+      orderBy: { product: { name: "asc" } },
     });
+
+    const products = productsData.map(pd => pd.product);
 
     return NextResponse.json({
       products,
@@ -94,14 +96,14 @@ export async function GET(
 // POST /api/admin/promotional/discounts/[id]/products - Add products to a discount
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
@@ -160,25 +162,29 @@ export async function POST(
       );
     }
 
-    // Connect products to discount
+    // Connect products to discount using ProductDiscount join table
     const updatedDiscount = await prisma.discount.update({
       where: { id },
       data: {
-        products: {
-          connect: productIds.map(productId => ({ id: productId })),
+        productDiscounts: {
+          create: productIds.map((productId: string) => ({ productId })),
         },
       },
       include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
+        productDiscounts: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
           take: 10,
         },
         _count: {
           select: {
-            products: true,
+            productDiscounts: true,
           },
         },
       },
@@ -201,14 +207,14 @@ export async function POST(
 // DELETE /api/admin/promotional/discounts/[id]/products - Remove products from a discount
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
@@ -230,13 +236,8 @@ export async function DELETE(
 
     if (removeAll) {
       // Remove all products from discount
-      await prisma.discount.update({
-        where: { id },
-        data: {
-          products: {
-            set: [],
-          },
-        },
+      await prisma.productDiscount.deleteMany({
+        where: { discountId: id },
       });
 
       return NextResponse.json({
@@ -252,12 +253,12 @@ export async function DELETE(
       );
     }
 
-    // Remove specific product from discount
-    await prisma.discount.update({
-      where: { id },
-      data: {
-        products: {
-          disconnect: { id: productId },
+    // Remove specific product from discount using composite key
+    await prisma.productDiscount.delete({
+      where: {
+        productId_discountId: {
+          productId,
+          discountId: id,
         },
       },
     });

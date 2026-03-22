@@ -81,18 +81,26 @@ export async function GET(req: NextRequest) {
       skip,
       take: limit,
       include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
-            priceCents: true,
+        productDiscounts: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                priceCents: true,
+              },
+            },
           },
           take: 3, // Limit to 3 products for preview
         },
-        categories: {
-          select: {
-            id: true,
-            name: true,
+        categoryDiscounts: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
           take: 3, // Limit to 3 categories for preview
         },
@@ -106,8 +114,8 @@ export async function GET(req: NextRequest) {
         },
         _count: {
           select: {
-            products: true,
-            categories: true,
+            productDiscounts: true,
+            categoryDiscounts: true,
             banners: true,
           },
         },
@@ -229,30 +237,34 @@ export async function POST(req: NextRequest) {
         active,
         autoApply,
         uses: 0,
-        // Connect products if provided
-        ...(productIds.length > 0 && {
-          products: {
-            connect: productIds.map((id: string) => ({ id })),
-          },
-        }),
-        // Connect categories if provided
-        ...(categoryIds.length > 0 && {
-          categories: {
-            connect: categoryIds.map((id: string) => ({ id })),
-          },
-        }),
+        // Connect products using join table if provided
+        productDiscounts: {
+          create: productIds.map((id: string) => ({ productId: id })),
+        },
+        // Connect categories using join table if provided
+        categoryDiscounts: {
+          create: categoryIds.map((id: string) => ({ categoryId: id })),
+        },
       },
       include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
+        productDiscounts: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
-        categories: {
-          select: {
-            id: true,
-            name: true,
+        categoryDiscounts: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },

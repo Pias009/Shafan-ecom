@@ -25,14 +25,14 @@ function validateDiscountId(id: string) {
 // GET /api/admin/promotional/discounts/[id] - Get a single discount by ID
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
@@ -42,19 +42,27 @@ export async function GET(
     const discount = await prisma.discount.findUnique({
       where: { id },
       include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
-            priceCents: true,
-            discountCents: true,
-            mainImage: true,
+        productDiscounts: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                priceCents: true,
+                discountCents: true,
+                mainImage: true,
+              },
+            },
           },
         },
-        categories: {
-          select: {
-            id: true,
-            name: true,
+        categoryDiscounts: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         banners: {
@@ -67,8 +75,8 @@ export async function GET(
         },
         _count: {
           select: {
-            products: true,
-            categories: true,
+            productDiscounts: true,
+            categoryDiscounts: true,
             banners: true,
           },
         },
@@ -92,14 +100,14 @@ export async function GET(
 // PUT /api/admin/promotional/discounts/[id] - Update a discount
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
@@ -195,11 +203,10 @@ export async function PUT(
     // Handle product connections if provided
     let productConnectDisconnect: any = undefined;
     if (productIds !== undefined) {
-      // First disconnect all existing products
       productConnectDisconnect = {
-        products: {
-          set: [], // Disconnect all
-          connect: productIds.map((productId: string) => ({ id: productId })),
+        productDiscounts: {
+          deleteMany: {}, // Remove all existing connections
+          create: productIds.map((productId: string) => ({ productId })),
         },
       };
     }
@@ -208,9 +215,9 @@ export async function PUT(
     let categoryConnectDisconnect: any = undefined;
     if (categoryIds !== undefined) {
       categoryConnectDisconnect = {
-        categories: {
-          set: [], // Disconnect all
-          connect: categoryIds.map((categoryId: string) => ({ id: categoryId })),
+        categoryDiscounts: {
+          deleteMany: {}, // Remove all existing connections
+          create: categoryIds.map((categoryId: string) => ({ categoryId })),
         },
       };
     }
@@ -224,16 +231,24 @@ export async function PUT(
         ...categoryConnectDisconnect,
       },
       include: {
-        products: {
-          select: {
-            id: true,
-            name: true,
+        productDiscounts: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
-        categories: {
-          select: {
-            id: true,
-            name: true,
+        categoryDiscounts: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
@@ -252,14 +267,14 @@ export async function PUT(
 // DELETE /api/admin/promotional/discounts/[id] - Delete a discount
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });

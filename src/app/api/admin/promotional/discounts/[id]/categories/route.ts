@@ -25,14 +25,14 @@ function validateDiscountId(id: string) {
 // GET /api/admin/promotional/discounts/[id]/categories - Get categories associated with a discount
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
@@ -50,23 +50,25 @@ export async function GET(
     }
 
     // Get categories associated with this discount
-    const categories = await prisma.category.findMany({
-      where: {
-        discounts: {
-          some: { id },
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        _count: {
+    const categoriesData = await prisma.categoryDiscount.findMany({
+      where: { discountId: id },
+      include: {
+        category: {
           select: {
-            products: true,
+            id: true,
+            name: true,
+            _count: {
+              select: {
+                products: true,
+              },
+            },
           },
         },
       },
-      orderBy: { name: "asc" },
+      orderBy: { category: { name: "asc" } },
     });
+
+    const categories = categoriesData.map(cd => cd.category);
 
     return NextResponse.json({
       categories,
@@ -84,14 +86,14 @@ export async function GET(
 // POST /api/admin/promotional/discounts/[id]/categories - Add categories to a discount
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
@@ -139,25 +141,29 @@ export async function POST(
       );
     }
 
-    // Connect categories to discount
+    // Connect categories to discount using CategoryDiscount join table
     const updatedDiscount = await prisma.discount.update({
       where: { id },
       data: {
-        categories: {
-          connect: categoryIds.map(categoryId => ({ id: categoryId })),
+        categoryDiscounts: {
+          create: categoryIds.map((categoryId: string) => ({ categoryId })),
         },
       },
       include: {
-        categories: {
-          select: {
-            id: true,
-            name: true,
+        categoryDiscounts: {
+          include: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
           take: 10,
         },
         _count: {
           select: {
-            categories: true,
+            categoryDiscounts: true,
           },
         },
       },
@@ -180,14 +186,14 @@ export async function POST(
 // DELETE /api/admin/promotional/discounts/[id]/categories - Remove categories from a discount
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateDiscountId(id)) {
     return NextResponse.json({ error: "Invalid discount ID" }, { status: 400 });
@@ -209,13 +215,8 @@ export async function DELETE(
 
     if (removeAll) {
       // Remove all categories from discount
-      await prisma.discount.update({
-        where: { id },
-        data: {
-          categories: {
-            set: [],
-          },
-        },
+      await prisma.categoryDiscount.deleteMany({
+        where: { discountId: id },
       });
 
       return NextResponse.json({
@@ -231,12 +232,12 @@ export async function DELETE(
       );
     }
 
-    // Remove specific category from discount
-    await prisma.discount.update({
-      where: { id },
-      data: {
-        categories: {
-          disconnect: { id: categoryId },
+    // Remove specific category from discount using composite key
+    await prisma.categoryDiscount.delete({
+      where: {
+        categoryId_discountId: {
+          categoryId,
+          discountId: id,
         },
       },
     });

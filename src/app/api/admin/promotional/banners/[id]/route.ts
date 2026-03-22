@@ -27,14 +27,14 @@ function validateBannerId(id: string) {
 // GET /api/admin/promotional/banners/[id] - Get a single banner by ID
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateBannerId(id)) {
     return NextResponse.json({ error: "Invalid banner ID" }, { status: 400 });
@@ -77,14 +77,14 @@ export async function GET(
 // PUT /api/admin/promotional/banners/[id] - Update a banner
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateBannerId(id)) {
     return NextResponse.json({ error: "Invalid banner ID" }, { status: 400 });
@@ -189,14 +189,14 @@ export async function PUT(
 // DELETE /api/admin/promotional/banners/[id] - Delete a banner
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await checkAdminAuth();
   if (!session) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   if (!validateBannerId(id)) {
     return NextResponse.json({ error: "Invalid banner ID" }, { status: 400 });
