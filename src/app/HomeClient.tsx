@@ -10,7 +10,7 @@ import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { Footer } from "@/components/Footer";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Loader2, Filter, X, ArrowRight } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import { useSession } from "next-auth/react";
@@ -32,7 +32,6 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   const [quickView, setQuickView] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const searchParams = useSearchParams();
   const { status } = useSession();
 
   const { addItem, hasAddress } = useCartStore();

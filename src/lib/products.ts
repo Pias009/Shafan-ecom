@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { RedisCache, CacheKeys, CacheTTL } from "./redis";
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -7,8 +8,16 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
-export async function getProducts(storeCode?: string) {
+export async function getProducts(storeCode?: string, page: number = 1, limit: number = 20) {
   try {
+    // Try to get from cache first
+    const cacheKey = CacheKeys.productList(storeCode || 'global', page, limit);
+    const cached = await RedisCache.get<any[]>(cacheKey);
+    
+    if (cached !== null) {
+      return cached;
+    }
+
     let dbProducts: any[] = [];
     
     if (storeCode) {
@@ -23,7 +32,9 @@ export async function getProducts(storeCode?: string) {
               category: true,
             }
           }
-        }
+        },
+        skip: (page - 1) * limit,
+        take: limit,
       });
       dbProducts = inventories.map((inv: any) => ({
         ...inv.product,
@@ -43,6 +54,8 @@ export async function getProducts(storeCode?: string) {
         orderBy: {
           createdAt: 'desc',
         },
+        skip: (page - 1) * limit,
+        take: limit,
       });
     }
 
@@ -76,6 +89,9 @@ export async function getProducts(storeCode?: string) {
       };
     });
 
+    // Cache the results
+    await RedisCache.set(cacheKey, products, CacheTTL.PRODUCT);
+    
     return products;
   } catch (error) {
     console.error("Prisma Products Fetch Error:", error);
@@ -85,6 +101,14 @@ export async function getProducts(storeCode?: string) {
 
 export async function getProduct(id: string) {
   try {
+    // Try to get from cache first
+    const cacheKey = CacheKeys.product(id);
+    const cached = await RedisCache.get<any>(cacheKey);
+    
+    if (cached !== null) {
+      return cached;
+    }
+
     const p = await (prisma as any).product.findUnique({
       where: { id },
       include: {
@@ -98,7 +122,7 @@ export async function getProduct(id: string) {
     const mainImage = isValidImageUrl(p.mainImage) ? (p.mainImage as string) : null;
     const galleryImages = (p.images || []).filter(isValidImageUrl) as string[];
 
-    return {
+    const product = {
       id: p.id,
       name: p.name,
       description: p.description || "",
@@ -120,9 +144,25 @@ export async function getProduct(id: string) {
       category: p.category ? { name: p.category.name } : null,
       related_ids: [],
     };
+
+    // Cache the product
+    await RedisCache.set(cacheKey, product, CacheTTL.PRODUCT);
+    
+    return product;
   } catch (error) {
     console.error("Prisma Product Fetch Error:", error);
     return null;
   }
+}
+
+// Function to invalidate product cache (call when product is updated)
+export async function invalidateProductCache(productId: string): Promise<void> {
+  await RedisCache.del(CacheKeys.product(productId));
+  await RedisCache.delPattern('products:*');
+}
+
+// Function to invalidate all product caches
+export async function invalidateAllProductCaches(): Promise<void> {
+  await RedisCache.invalidateProducts();
 }
 

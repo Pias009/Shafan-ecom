@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { getServerAuthSession } from '@/lib/auth';
 import { uploadFromUrl } from '@/lib/cloudinary';
+import { getAccessibleStoreIds, requireAdminStoreAccess } from '@/lib/admin-auth';
 
 const ProductCreateSchema = z.object({
   name: z.string(),
@@ -15,37 +16,66 @@ const ProductCreateSchema = z.object({
   stockQuantity: z.number().optional(),
   brandName: z.string().optional(),
   categoryName: z.string().optional(),
-  hot: z.boolean().optional()
+  hot: z.boolean().optional(),
+  storeId: z.string().optional(), // Store code for product assignment
 });
 
 export async function GET() {
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
-    return new Response('Unauthorized', { status: 401 });
+  try {
+    const { storeAccess } = await requireAdminStoreAccess();
+    const accessibleStoreIds = storeAccess.storeIds;
+    
+    // Build where clause based on store access
+    let whereClause: any = {};
+    
+    if (accessibleStoreIds.length > 0) {
+      // Show products that are either:
+      // 1. In stores the admin can access (via storeInventories)
+      // 2. Global products (storeId is null)
+      whereClause = {
+        OR: [
+          { storeId: { in: accessibleStoreIds } },
+          { storeId: null },
+          { storeInventories: { some: { storeId: { in: accessibleStoreIds } } } }
+        ]
+      };
+    } else {
+      // Admin with no store access - only show global products
+      whereClause = { storeId: null };
+    }
+
+    const products = await prisma.product.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        priceCents: true,
+        discountCents: true,
+        hot: true,
+        active: true,
+        brand: { select: { name: true } },
+        category: { select: { name: true } },
+        store: { select: { code: true, name: true } },
+        storeInventories: {
+          where: accessibleStoreIds.length > 0 ? { storeId: { in: accessibleStoreIds } } : undefined,
+          select: { storeId: true, quantity: true, store: { select: { code: true } } }
+        },
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    return new Response(JSON.stringify(products), { headers: { 'Content-Type': 'application/json' } });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 401 });
   }
-  const products = await prisma.product.findMany({
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      priceCents: true,
-      discountCents: true,
-      hot: true,
-      active: true,
-      brand: { select: { name: true } },
-      category: { select: { name: true } },
-      createdAt: true,
-    },
-  });
-  return new Response(JSON.stringify(products), { headers: { 'Content-Type': 'application/json' } });
 }
 
 export async function POST(req: Request) {
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
-    return new Response('Unauthorized', { status: 401 });
-  }
   try {
+    const { user, storeAccess } = await requireAdminStoreAccess();
+    
     const body = await req.json();
     const parsed = ProductCreateSchema.safeParse(body);
     if (!parsed.success) {
@@ -53,6 +83,14 @@ export async function POST(req: Request) {
       return new Response(JSON.stringify({ error: 'Invalid payload', details: parsed.error }), { status: 400 });
     }
     const data = parsed.data;
+
+    // Check store access if storeId is provided
+    if (data.storeId) {
+      const canAccess = storeAccess.allowedStores.includes(data.storeId);
+      if (!canAccess && !storeAccess.isSuperAdmin) {
+        return new Response(JSON.stringify({ error: 'No access to specified store' }), { status: 403 });
+      }
+    }
 
     // Cloudinary: handle mainImage upload and images processing
     let mainImageUrl: string | null = null;
@@ -91,7 +129,15 @@ export async function POST(req: Request) {
     // Check for existing product by name to avoid non-unique upsert error
     const existingProduct = await prisma.product.findFirst({ where: { name: data.name } });
     
+    // Resolve store if storeId (code) is provided
+    let storeId: string | null = null;
+    if (data.storeId) {
+      const store = await prisma.store.findFirst({ where: { code: data.storeId } });
+      storeId = store?.id || null;
+    }
+
     const productData = {
+      name: data.name,
       description: data.description || '',
       features: data.features ?? [],
       images: (data.images as string[]) ?? [],
@@ -102,28 +148,22 @@ export async function POST(req: Request) {
       trending: data.trending ?? false,
       brandId,
       categoryId,
-      mainImage: mainImageUrl,
+      storeId,
     };
 
-    let product;
-    if (existingProduct) {
-      product = await prisma.product.update({
-        where: { id: existingProduct.id },
-        data: productData,
-      });
-    } else {
-      product = await prisma.product.create({
-        data: {
-          name: data.name,
-          ...productData,
-        },
-      });
-    }
+    const product = existingProduct
+      ? await prisma.product.update({
+          where: { id: existingProduct.id },
+          data: productData,
+        })
+      : await prisma.product.create({
+          data: productData,
+        });
 
     // Handle initial store inventory if storeId provided
-    if (body.storeId) {
+    if (data.storeId && storeId) {
       const store = await prisma.store.findFirst({
-        where: { code: body.storeId }
+        where: { code: data.storeId }
       });
       
       if (store) {
@@ -135,22 +175,32 @@ export async function POST(req: Request) {
             }
           },
           update: {
-            quantity: data.stockQuantity || 0,
-            price: data.priceCents / 100
+            quantity: data.stockQuantity ?? 0,
+            price: (data.priceCents - (data.discountCents || 0)) / 100
           },
           create: {
             storeId: store.id,
             productId: product.id,
-            quantity: data.stockQuantity || 0,
-            price: data.priceCents / 100
+            quantity: data.stockQuantity ?? 0,
+            price: (data.priceCents - (data.discountCents || 0)) / 100
           }
         });
       }
     }
 
-    return new Response(JSON.stringify(product), { status: 201, headers: { 'Content-Type': 'application/json' } });
-  } catch (e: any) {
-    console.error("PRODUCT_POST_FATAL_ERROR:", e);
-    return new Response(JSON.stringify({ error: e.message || 'Server error' }), { status: 500 });
+    // Log the activity
+    await prisma.auditLog.create({
+      data: {
+        action: 'PRODUCT_CREATED',
+        actorId: user.id,
+        subjectId: product.id,
+        details: `Product "${data.name}" created by ${user.email}`,
+      }
+    });
+
+    return new Response(JSON.stringify(product), { headers: { 'Content-Type': 'application/json' } });
+  } catch (error: any) {
+    console.error('PRODUCT_CREATE_ERROR:', error);
+    return new Response(JSON.stringify({ error: 'Server error', details: error.message }), { status: 500 });
   }
 }

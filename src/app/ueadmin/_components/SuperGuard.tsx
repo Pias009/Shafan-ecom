@@ -8,13 +8,11 @@ export default function SuperGuard({ children }: { children: React.ReactNode }) 
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const SUPER_ADMIN_EMAIL = "pvs178380@gmail.com";
-
   useEffect(() => {
     if (status === "loading") return;
     
-    // Strict email check
-    const isSuper = session?.user?.email === SUPER_ADMIN_EMAIL;
+    // Strict role and email check for super admin
+    const isSuper = session?.user?.role === "SUPERADMIN";
     
     if (!isSuper) {
       router.push("/ueadmin/dashboard"); // Send to regular admin if not super
@@ -32,7 +30,7 @@ export default function SuperGuard({ children }: { children: React.ReactNode }) 
     );
   }
 
-  const isSuper = session?.user?.email === SUPER_ADMIN_EMAIL;
+  const isSuper = session?.user?.role === "SUPERADMIN";
   if (!isSuper) return null;
 
   return <>{children}</>;

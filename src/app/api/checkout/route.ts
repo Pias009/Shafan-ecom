@@ -3,6 +3,29 @@ import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 
+// Helper function to determine courier based on shipping address
+function determineCourier(shippingAddress: any): string {
+  if (!shippingAddress || !shippingAddress.country) {
+    return "GLOBAL_COURIER"; // Default to global courier
+  }
+
+  const country = shippingAddress.country.toString().toLowerCase().trim();
+  
+  // Check if the order is from Kuwait
+  if (country === "kuwait" || country === "kw") {
+    return "KUWAIT_COURIER";
+  }
+  
+  return "GLOBAL_COURIER";
+}
+
+// Helper function to generate tracking code
+function generateTrackingCode(courier: string): string {
+  const prefix = courier === "KUWAIT_COURIER" ? "KW" : "GL";
+  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+  return `${prefix}-${random}-${Date.now().toString().slice(-6)}`;
+}
+
 export async function POST(req: Request) {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
@@ -48,7 +71,14 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3. Create Order
+    // Determine courier based on shipping address
+    const shippingAddress = {
+      country: address.country || "BD"
+    };
+    const courier = determineCourier(shippingAddress);
+    const trackingCode = generateTrackingCode(courier);
+
+    // 3. Create Order with shipment
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
@@ -81,13 +111,29 @@ export async function POST(req: Request) {
         paymentMethodTitle: "Stripe Online",
         items: {
           create: orderItems
+        },
+        // Create shipment record with selected courier
+        shipment: {
+          create: {
+            courier,
+            trackingCode,
+            trackingUrl: courier === "KUWAIT_COURIER"
+              ? `https://kuwait-courier.com/track/${trackingCode}`
+              : `https://global-courier.com/track/${trackingCode}`,
+            status: "Created"
+          }
         }
+      },
+      include: {
+        shipment: true
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       orderId: order.id,
-      url: `/checkout/payment/${order.id}`
+      url: `/checkout/payment/${order.id}`,
+      courier: order.shipment?.courier,
+      trackingCode: order.shipment?.trackingCode
     });
   } catch (error: any) {
     console.error("Prisma Checkout Error:", error.message);

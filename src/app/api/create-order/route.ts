@@ -3,6 +3,29 @@ import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 
+// Helper function to determine courier based on shipping address
+function determineCourier(shippingAddress: any): string {
+  if (!shippingAddress || !shippingAddress.country) {
+    return "GLOBAL"; // Default to global courier
+  }
+
+  const country = shippingAddress.country.toString().toLowerCase().trim();
+  
+  // Check if the order is from Kuwait
+  if (country === "kuwait" || country === "kw") {
+    return "KUWAIT_COURIER";
+  }
+  
+  return "GLOBAL_COURIER";
+}
+
+// Helper function to generate tracking code
+function generateTrackingCode(courier: string): string {
+  const prefix = courier === "KUWAIT_COURIER" ? "KW" : "GL";
+  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+  return `${prefix}-${random}-${Date.now().toString().slice(-6)}`;
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerAuthSession();
@@ -35,8 +58,8 @@ export async function POST(req: Request) {
         throw new Error(`Product not found: ${item.productId}`);
       }
 
-      const unitPriceCents = product.discountCents 
-        ? (product.priceCents - product.discountCents) 
+      const unitPriceCents = product.discountCents
+        ? (product.priceCents - product.discountCents)
         : product.priceCents;
       
       const itemTotal = unitPriceCents * item.quantity;
@@ -57,6 +80,10 @@ export async function POST(req: Request) {
 
     const totalCents = subtotalCents; // For now, no shipping/tax logic here, but could be added
 
+    // Determine courier based on shipping address
+    const courier = determineCourier(shipping);
+    const trackingCode = generateTrackingCode(courier);
+
     // Create the order in Prisma
     const order = await prisma.order.create({
       data: {
@@ -71,18 +98,32 @@ export async function POST(req: Request) {
         paymentMethodTitle: payment_method_title || "Credit Card (Stripe)",
         items: {
           create: orderItemsData
+        },
+        // Create shipment record with selected courier
+        shipment: {
+          create: {
+            courier,
+            trackingCode,
+            trackingUrl: courier === "KUWAIT_COURIER"
+              ? `https://kuwait-courier.com/track/${trackingCode}`
+              : `https://global-courier.com/track/${trackingCode}`,
+            status: "Created"
+          }
         }
       },
       include: {
-        items: true
+        items: true,
+        shipment: true
       }
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       orderId: order.id,
       total: order.totalCents / 100,
       currency: order.currency,
-      status: order.status
+      status: order.status,
+      courier: order.shipment?.courier,
+      trackingCode: order.shipment?.trackingCode
     });
   } catch (error: any) {
     console.error("Create Order Route Error:", error.message);
