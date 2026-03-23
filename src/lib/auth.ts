@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { sendAdminLoginAlertEmail } from "@/lib/email/service";
 
 const CredentialsSchema = z.object({
   email: z.string().email(),
@@ -70,6 +71,29 @@ export const authOptions: NextAuthOptions = {
         await (prisma as any).mfaToken.delete({
           where: { id: mfaToken.id },
         });
+
+        // Send admin login alert email (fire and forget)
+        if (user.role === "ADMIN" || user.role === "SUPERADMIN") {
+          try {
+            const loginTime = new Date().toLocaleString();
+            const ipAddress = "Unknown"; // In production, you would extract this from request headers
+            const userAgent = "Unknown"; // In production, you would extract this from request headers
+            
+            // Send admin login alert email asynchronously
+            sendAdminLoginAlertEmail(
+              user.email!,
+              user.name || "Admin",
+              loginTime,
+              ipAddress,
+              userAgent
+            ).catch(error => {
+              console.error("Failed to send admin login alert email:", error);
+              // Don't throw - email failure shouldn't block login
+            });
+          } catch (emailError) {
+            console.error("Error preparing admin login alert email:", emailError);
+          }
+        }
 
         return {
           id: user.id,

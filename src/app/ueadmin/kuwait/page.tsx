@@ -1,23 +1,26 @@
-
 import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
 import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock, Store, Edit2, Plus } from 'lucide-react';
 import { OrderStatus } from "@prisma/client";
 import { StockUpdateBtn } from "./_components/StockUpdateBtn";
+import { requireKuwaitAccess, getAccessibleStore } from "@/lib/admin-store-guard";
 
 export const dynamic = 'force-dynamic';
 
 export default async function KuwaitDashboard() {
+  // Enforce strict access control - only Kuwait admins can access this page
+  await requireKuwaitAccess();
+
   const storeCode = 'KUW';
 
-  // Fetch store first to get ID for reliable filtering
-  const store = await prisma.store.findUnique({ where: { code: storeCode } });
+  // Fetch store with access verification
+  const store = await getAccessibleStore(storeCode);
   
   if (!store) {
     return (
       <div className="p-10 text-center">
         <h1 className="text-2xl font-bold text-red-500">Store Not Found</h1>
-        <p className="text-black/50">Please ensure the store with code &apos;{storeCode}&apos; exists in the database.</p>
+        <p className="text-black/50">Please ensure the store with code '{storeCode}' exists in the database.</p>
       </div>
     );
   }

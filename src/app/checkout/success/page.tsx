@@ -3,10 +3,11 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
-import { CheckCircle2, Package, ArrowRight, Loader2, Home } from "lucide-react";
+import { CheckCircle2, Package, ArrowRight, Home } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { Loader } from "@/components/Loader";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -71,7 +72,11 @@ function SuccessContent() {
 
 export default function CheckoutSuccessPage() {
   return (
-    <Suspense fallback={<div className="pt-40 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-black/20" /></div>}>
+    <Suspense fallback={
+      <div className="pt-40 text-center">
+        <Loader />
+      </div>
+    }>
       <SuccessContent />
     </Suspense>
   );

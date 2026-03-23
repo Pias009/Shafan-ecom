@@ -3,7 +3,7 @@ import { getServerAuthSession } from "@/lib/auth";
 import { AccountNav } from "./_components/AccountNav";
 import { AccountDashboardHeader } from "./_components/AccountDashboardHeader";
 import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader } from "@/components/Loader";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
@@ -24,7 +24,7 @@ export default async function AccountLayout({
       <div className="grid gap-8 md:grid-cols-[260px_1fr]">
         <AccountNav />
         <main className="min-w-0">
-          <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-black/10" /></div>}>
+          <Suspense fallback={<div className="flex justify-center py-20"><Loader /></div>}>
               {children}
           </Suspense>
         </main>

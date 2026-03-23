@@ -22,7 +22,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
 
-  function handleCheckout() {
+  async function handleCheckout() {
     if (!hasAddress) {
       toast.error(t.cart.addressRequired, {
         duration: 4000,
@@ -33,26 +33,46 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
     }
     
     toast.loading(t.cart.creatingOrder, { id: "checkout" });
-    fetch("/api/create-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        items: items.map((i: any) => ({ productId: i.id, quantity: i.quantity })),
-        couponCode 
-      }),
-    })
-    .then(r => r.json())
-    .then(data => {
+    
+    try {
+      // Fetch user's saved address
+      const addressRes = await fetch("/api/account/address");
+      let billing = null;
+      let shipping = null;
+      
+      if (addressRes.ok) {
+        const addressData = await addressRes.json();
+        if (addressData) {
+          // Use the same address for both billing and shipping
+          billing = addressData;
+          shipping = addressData;
+        }
+      }
+      
+      const orderRes = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i: any) => ({ productId: i.id, quantity: i.quantity })),
+          couponCode,
+          billing,
+          shipping,
+          payment_method: "stripe",
+          payment_method_title: "Credit Card (Stripe)"
+        }),
+      });
+      
+      const data = await orderRes.json();
       if (data.orderId) {
         toast.success("Order created!", { id: "checkout" });
         router.push(`/checkout/payment/${data.orderId}`);
       } else {
         toast.error(data.error || "Checkout failed", { id: "checkout" });
       }
-    })
-    .catch(() => {
+    } catch (error) {
+      console.error("Checkout error:", error);
       toast.error("Checkout failed", { id: "checkout" });
-    });
+    }
   }
 
   return (

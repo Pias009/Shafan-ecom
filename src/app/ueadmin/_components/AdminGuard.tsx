@@ -13,11 +13,24 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     if (status === "loading") return;
     // Allow login page to render without guard
-    const isAuthPage = pathname?.startsWith("/ueadmin/login") || pathname?.startsWith("/ueadmin/setup");
+    const isAuthPage = pathname?.startsWith("/ueadmin/login") ||
+                       pathname?.startsWith("/ueadmin/setup") ||
+                       pathname?.startsWith("/ueadmin/verify");
     if (isAuthPage) return;
+    
+    // Check if user has admin role
     const ok = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
     if (!ok) {
       router.push("/ueadmin/login");
+      return;
+    }
+    
+    // CRITICAL: ALL ADMINISTRATORS MUST HAVE MFA VERIFIED
+    // This is a client-side check; middleware enforces server-side
+    const mfaVerified = (session?.user as any)?.mfaVerified;
+    if (!mfaVerified) {
+      router.push("/ueadmin/login");
+      return;
     }
   }, [session, status, router, pathname]);
 
@@ -33,10 +46,15 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     );
   }
 
-  // While not authenticated, render nothing (redirect happening)
-  const isAuthPage = pathname?.startsWith("/ueadmin/login");
+  // While not authenticated or MFA not verified, render nothing (redirect happening)
+  const isAuthPage = pathname?.startsWith("/ueadmin/login") ||
+                     pathname?.startsWith("/ueadmin/setup") ||
+                     pathname?.startsWith("/ueadmin/verify");
   const ok = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
-  if (!ok && !isAuthPage) return null;
+  const mfaVerified = (session?.user as any)?.mfaVerified;
+  if (!ok || !mfaVerified) {
+    if (!isAuthPage) return null;
+  }
 
   return <>{children}</>;
 }

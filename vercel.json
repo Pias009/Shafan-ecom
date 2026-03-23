@@ -1,12 +1,18 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/$1",
       "headers": {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
         "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
       }
     },
@@ -16,7 +22,8 @@
       "headers": {
         "X-Frame-Options": "DENY",
         "X-Content-Type-Options": "nosniff",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
       }
     }
   ],
@@ -32,13 +39,25 @@
     "src/app/api/**/*.ts": {
       "memory": 1024,
       "maxDuration": 30
+    },
+    "src/app/api/auth/[...nextauth]/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "src/app/api/payments/stripe/webhook/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "src/app/api/create-order/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
     }
   },
   "regions": ["dub1"],
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "preview": true
+      "develop": true
     }
   }
 }

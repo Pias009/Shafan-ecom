@@ -264,12 +264,17 @@ export default function ProductPageClient({ product, recommendations }: ProductP
             <div className="pt-8 border-t border-black/5 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={orderNow}
-                className="flex-[2] h-20 rounded-3xl bg-black text-white text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-black/20"
+                className="btn-53 flex-[2] h-20"
               >
-                Order Now
+                <span className="original">Order Now</span>
+                <div className="letters">
+                  {Array.from("FAST").map((letter, index) => (
+                    <span key={index}>{letter}</span>
+                  ))}
+                </div>
               </button>
               <button
-                onClick={addToCart} 
+                onClick={addToCart}
                 className="flex-1 h-20 rounded-3xl bg-white border-2 border-black text-black text-xs font-black uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-all"
               >
                 Add to Cart
@@ -344,9 +349,14 @@ export default function ProductPageClient({ product, recommendations }: ProductP
           </button>
           <button
             onClick={orderNow}
-            className="flex-1 h-14 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-xl"
+            className="btn-53 flex-1 h-14"
           >
-             Order Now — <Price amount={displayPrice} />
+            <span className="original">Order Now</span>
+            <div className="letters">
+              {Array.from("FAST").map((letter, index) => (
+                <span key={index}>{letter}</span>
+              ))}
+            </div>
           </button>
         </div>
       </div>

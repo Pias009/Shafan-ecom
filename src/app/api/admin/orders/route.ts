@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getServerAuthSession } from '@/lib/auth';
-import { getAccessibleStoreIds, withStoreFilter } from '@/lib/admin-auth';
+import { getAccessibleStoreIds } from '@/lib/admin-store-guard';
 
 export async function GET() {
   const session = await getServerAuthSession();
@@ -8,7 +8,7 @@ export async function GET() {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  // Get store IDs the admin can access
+  // Get store IDs the admin can access - enforces strict data segregation
   const accessibleStoreIds = await getAccessibleStoreIds();
   
   // If admin has no store access, return empty array
@@ -29,7 +29,7 @@ export async function GET() {
       shippingCents: true,
       user: { select: { id: true, email: true, name: true } },
       items: { select: { id: true, quantity: true, unitPriceCents: true } },
-      store: { select: { code: true, name: true } },
+      store: { select: { code: true, name: true, country: true } },
       shipment: { select: { courier: true, trackingCode: true, status: true } }
     },
     orderBy: { createdAt: 'desc' },

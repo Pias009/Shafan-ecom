@@ -107,6 +107,7 @@ model Session {
 model Product {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name          String   @unique
+  slug          String?  @unique
   description   String?
   features      String[]
   images        String[]
@@ -122,6 +123,11 @@ model Product {
   averageRating Float    @default(0)
   ratingCount   Int      @default(0)
   totalSales    Int      @default(0)
+  
+  // SEO fields
+  tags            String[]
+  metaTitle       String?
+  metaDescription String?
 
   storeId String? @db.ObjectId
   store   Store?  @relation(fields: [storeId], references: [id], name: "StoreProducts")
@@ -411,4 +417,22 @@ model Shipment {
   order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model PerformanceMetric {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  value          Float
+  unit           String   @default("ms")
+  metadata       Json
+  sessionId      String
+  userAgent      String
+  connectionType String?
+  timestamp      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([name])
+  @@index([timestamp])
 }

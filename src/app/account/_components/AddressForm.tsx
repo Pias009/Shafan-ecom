@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import { MapPin, Phone, Mail, Globe, Home, Send, Loader2, Save } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCartStore } from "@/lib/cart-store";
 
 export default function AddressForm() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const setHasAddress = useCartStore(state => state.setHasAddress);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -54,6 +56,9 @@ export default function AddressForm() {
         throw new Error(err.error || "Update failed");
       }
       toast.success("Address saved successfully!");
+      
+      // Update cart store to reflect that user now has an address
+      setHasAddress(true);
       
       const red = searchParams?.get("redirect");
       if (red === "order") {

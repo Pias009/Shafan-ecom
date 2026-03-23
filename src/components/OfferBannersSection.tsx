@@ -46,13 +46,29 @@ export function OfferBannersSection() {
     
     // Add timeout to detect stalled requests
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
+    const signal = controller.signal;
+    let timeoutId: NodeJS.Timeout | null = null;
+    let aborted = false;
+    
+    const safeAbort = () => {
+      if (!aborted) {
+        try {
+          controller.abort();
+          aborted = true;
+        } catch (err) {
+          // Ignore errors from aborting already-aborted controller
+          console.debug("DEBUG: Error during abort (likely already aborted):", err);
+        }
+      }
+    };
+    
+    timeoutId = setTimeout(() => {
       console.error("DEBUG: Fetch timeout - request taking too long");
-      controller.abort();
+      safeAbort();
     }, 10000);
     
     fetch("/api/promotional/banners?limit=5", {
-      signal: controller.signal,
+      signal,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -60,10 +76,12 @@ export function OfferBannersSection() {
       credentials: 'same-origin'
     })
       .then((r) => {
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         console.log("DEBUG: Fetch response status:", r.status);
         console.log("DEBUG: Response ok?", r.ok);
-        console.log("DEBUG: Response headers:", Object.fromEntries(r.headers.entries()));
         if (!r.ok) {
           throw new Error(`HTTP error! status: ${r.status} ${r.statusText}`);
         }
@@ -76,8 +94,6 @@ export function OfferBannersSection() {
         
         if (Array.isArray(data)) {
           console.log(`DEBUG: Setting ${data.length} banners`);
-          console.log("DEBUG: Banner IDs:", data.map(b => b.id));
-          console.log("DEBUG: Banner titles:", data.map(b => b.title));
           setBanners(data);
         } else {
           console.log("DEBUG: Data is not an array:", data);
@@ -85,19 +101,30 @@ export function OfferBannersSection() {
         }
       })
       .catch((err) => {
-        clearTimeout(timeoutId);
-        console.error("DEBUG: Error fetching banners:", err);
-        console.error("DEBUG: Error name:", err.name);
-        console.error("DEBUG: Error message:", err.message);
-        if (err.name === 'AbortError') {
-          console.error("DEBUG: Request was aborted due to timeout");
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
         }
-        setBanners([]);
+        // Don't log AbortError as an error - it's expected during unmount
+        if (err.name !== 'AbortError') {
+          console.error("DEBUG: Error fetching banners:", err);
+          console.error("DEBUG: Error name:", err.name);
+          console.error("DEBUG: Error message:", err.message);
+        } else {
+          console.debug("DEBUG: Request was aborted (expected during unmount)");
+        }
+        // Only set empty banners if not aborted (abort is normal during navigation)
+        if (err.name !== 'AbortError') {
+          setBanners([]);
+        }
       });
       
     return () => {
-      clearTimeout(timeoutId);
-      controller.abort();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      safeAbort();
     };
   }, []);
 

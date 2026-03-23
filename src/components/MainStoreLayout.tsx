@@ -8,6 +8,20 @@ import { NoticeBoard } from "./NoticeBoard";
 export function MainStoreLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
+  // During SSR/static generation, pathname may be null
+  // In that case, render a default layout without path-based logic
+  if (!pathname) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <main className="flex-1 pt-16 md:pt-0">
+          {children}
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+  
   // Define paths where the store layout (Navbar/Footer) should NOT appear
   const isAdmin = pathname?.startsWith("/ueadmin");
   const isAuth = pathname?.startsWith("/auth");
@@ -22,9 +36,9 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {showNoticeBoard && <NoticeBoard />}
       <Navbar />
-      <main className="flex-1">
+      {showNoticeBoard && <NoticeBoard />}
+      <main className="flex-1 pt-16 md:pt-0">
         {children}
       </main>
       <Footer />

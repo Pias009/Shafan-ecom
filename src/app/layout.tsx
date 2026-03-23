@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { MainStoreLayout } from "@/components/MainStoreLayout";
+import { Suspense } from "react";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -24,6 +25,8 @@ export const metadata: Metadata = {
   description: "Premium skincare crafted with nature's finest ingredients.",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,9 +38,11 @@ export default function RootLayout({
         className={`${playfairDisplay.variable} ${dmSans.variable} antialiased`}
       >
         <Providers>
-          <MainStoreLayout>
-            {children}
-          </MainStoreLayout>
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <MainStoreLayout>
+              {children}
+            </MainStoreLayout>
+          </Suspense>
         </Providers>
       </body>
     </html>

@@ -29,7 +29,7 @@ export function NoticeBoard() {
   if (!isVisible) return null;
 
   return (
-    <div className="w-full bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 py-2 px-3 md:px-4 relative overflow-hidden">
+    <div className="w-full bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 py-2 px-3 md:px-4 sticky top-16 z-30 md:top-0">
       {/* Animated background dots */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-amber-400 rounded-full"></div>
@@ -54,18 +54,6 @@ export function NoticeBoard() {
           <p className="text-[10px] md:text-sm font-bold text-amber-900 tracking-tight md:tracking-wide truncate md:whitespace-normal">
             {notices[currentNoticeIndex].text}
           </p>
-          <div className="flex justify-center gap-1 mt-0.5 md:mt-1">
-            {notices.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentNoticeIndex(idx)}
-                className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full transition-all ${
-                  idx === currentNoticeIndex ? 'bg-amber-600 w-2 md:w-3' : 'bg-amber-300'
-                }`}
-                aria-label={`Go to notice ${idx + 1}`}
-              />
-            ))}
-          </div>
         </div>
 
         {/* Right arrow - Hidden on mobile */}

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { getServerAuthSession } from '@/lib/auth';
 import { uploadFromUrl } from '@/lib/cloudinary';
-import { getAccessibleStoreIds, requireAdminStoreAccess } from '@/lib/admin-auth';
+import { getAdminStoreAccess } from '@/lib/admin-store-guard';
 
 const ProductCreateSchema = z.object({
   name: z.string(),
@@ -22,7 +22,16 @@ const ProductCreateSchema = z.object({
 
 export async function GET() {
   try {
-    const { storeAccess } = await requireAdminStoreAccess();
+    const session = await getServerAuthSession();
+    if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    const storeAccess = await getAdminStoreAccess();
+    if (!storeAccess) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
     const accessibleStoreIds = storeAccess.storeIds;
     
     // Build where clause based on store access
@@ -30,18 +39,28 @@ export async function GET() {
     
     if (accessibleStoreIds.length > 0) {
       // Show products that are either:
-      // 1. In stores the admin can access (via storeInventories)
-      // 2. Global products (storeId is null)
-      whereClause = {
-        OR: [
-          { storeId: { in: accessibleStoreIds } },
-          { storeId: null },
-          { storeInventories: { some: { storeId: { in: accessibleStoreIds } } } }
-        ]
-      };
+      // 1. In stores admin can access (via storeInventories)
+      // 2. Global products (storeId is null) - only for UAE admins (global admins)
+      if (storeAccess.isGlobalAdmin) {
+        whereClause = {
+          OR: [
+            { storeId: { in: accessibleStoreIds } },
+            { storeId: null },
+            { storeInventories: { some: { storeId: { in: accessibleStoreIds } } } }
+          ]
+        };
+      } else {
+        // Kuwait admins can only see products in their stores
+        whereClause = {
+          OR: [
+            { storeId: { in: accessibleStoreIds } },
+            { storeInventories: { some: { storeId: { in: accessibleStoreIds } } } }
+          ]
+        };
+      }
     } else {
-      // Admin with no store access - only show global products
-      whereClause = { storeId: null };
+      // Admin with no store access - return empty
+      return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
     }
 
     const products = await prisma.product.findMany({
@@ -74,7 +93,20 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { user, storeAccess } = await requireAdminStoreAccess();
+    const session = await getServerAuthSession();
+    if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    const storeAccess = await getAdminStoreAccess();
+    if (!storeAccess) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+    
+    const user = session.user;
+    if (!user) {
+      return new Response('Unauthorized', { status: 401 });
+    }
     
     const body = await req.json();
     const parsed = ProductCreateSchema.safeParse(body);
@@ -188,7 +220,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // Log the activity
+    // Log activity
     await prisma.auditLog.create({
       data: {
         action: 'PRODUCT_CREATED',

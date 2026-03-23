@@ -13,15 +13,58 @@ import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 
-// Simple static logo component
+// Flower button logo component
 function Logo() {
   return (
-    <>
-      <span className="bg-gradient-to-r from-blue-700 via-purple-700 to-pink-700 bg-clip-text text-transparent font-extrabold tracking-tighter drop-shadow-lg">
-        SHANFA
-      </span>
-      <span className="ml-1 text-xs font-normal text-gray-500 align-super">®</span>
-    </>
+    <div className="logo-btn">
+      <div className="wrapper">
+        <div className="text text-black font-extrabold tracking-tighter drop-shadow-lg">
+          SHANFA
+        </div>
+        {/* Flower 1 */}
+        <div className="flower flower1">
+          <div className="petal"></div>
+          <div className="petal two"></div>
+          <div className="petal three"></div>
+          <div className="petal four"></div>
+        </div>
+        {/* Flower 2 */}
+        <div className="flower flower2">
+          <div className="petal"></div>
+          <div className="petal two"></div>
+          <div className="petal three"></div>
+          <div className="petal four"></div>
+        </div>
+        {/* Flower 3 */}
+        <div className="flower flower3">
+          <div className="petal"></div>
+          <div className="petal two"></div>
+          <div className="petal three"></div>
+          <div className="petal four"></div>
+        </div>
+        {/* Flower 4 */}
+        <div className="flower flower4">
+          <div className="petal"></div>
+          <div className="petal two"></div>
+          <div className="petal three"></div>
+          <div className="petal four"></div>
+        </div>
+        {/* Flower 5 */}
+        <div className="flower flower5">
+          <div className="petal"></div>
+          <div className="petal two"></div>
+          <div className="petal three"></div>
+          <div className="petal four"></div>
+        </div>
+        {/* Flower 6 */}
+        <div className="flower flower6">
+          <div className="petal"></div>
+          <div className="petal two"></div>
+          <div className="petal three"></div>
+          <div className="petal four"></div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -29,6 +72,9 @@ export function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const [authOpen, setAuthOpen] = useState(false);
+  
+  // Safe pathname for SSR - use empty string if null
+  const safePathname = pathname || "";
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -95,7 +141,7 @@ export function Navbar() {
   useEffect(() => {
     setUserMenuOpen(false);
     setMobileOpen(false);
-  }, [pathname]);
+  }, [safePathname]);
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -113,97 +159,100 @@ export function Navbar() {
     }
   }
 
-  const isHomePage = pathname === "/";
+  const isHomePage = safePathname === "/";
   
   return (
     <>
       <header
-      className={`fixed ${isHomePage && !scrolled ? 'top-[48px]' : 'top-0'} left-0 right-0 z-50 transition-all duration-300 transform ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform ${
         scrolled ? "glass-nav shadow-md" : "bg-transparent"
-      } ${visible ? "translate-y-0" : (isHomePage && !scrolled ? "-translate-y-[calc(100%+48px)]" : "-translate-y-full")}`}
+      } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
-        {/* Logo on LEFT */}
-        <div className="flex-shrink-0">
-          <Link href="/" className="text-xl md:text-2xl lg:text-3xl font-black italic tracking-tight text-black hover:opacity-80 transition-opacity">
-            <Logo />
-          </Link>
-        </div>
+      <div className="max-w-7xl mx-auto px-6 md:px-8 py-2 flex items-center justify-center">
+        {/* All navbar elements grouped together in a centered container */}
+        <div className="flex items-center justify-center w-full gap-3 md:gap-6 lg:gap-8">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="text-xl md:text-2xl lg:text-3xl font-black italic tracking-tight text-black hover:opacity-80 transition-opacity">
+              <Logo />
+            </Link>
+          </div>
 
-        {/* Navigation in CENTER - Desktop only */}
-        <div className="hidden lg:flex flex-1 items-center justify-center mx-4">
-          <div className="glass-panel rounded-full px-6 py-2 max-w-3xl">
-            <div className="flex items-center gap-1 md:gap-2">
-              {navLinks.map((link) => {
-                const isOffers = link.href === "/announcements";
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`px-3 md:px-4 py-2 text-xs md:text-sm font-semibold tracking-wide transition-all duration-300 rounded-full relative overflow-hidden group whitespace-nowrap ${
-                      pathname === link.href
-                        ? "text-black bg-black/10"
-                        : "text-black/70 hover:text-black hover:bg-black/5"
-                    } ${isOffers ? "animate-pulse" : ""}`}
-                  >
-                    {isOffers && (
-                      <>
-                        <span className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 animate-shimmer bg-[length:200%_100%] group-hover:bg-[length:400%_100%] transition-all duration-1000"></span>
-                        <Sparkles className="inline-block w-3 h-3 mr-1.5 animate-spin-slow" />
-                      </>
-                    )}
-                    {link.label}
-                    {isOffers && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-                    )}
-                  </Link>
-                );
-              })}
+          {/* Navigation - Desktop only */}
+          <div className="hidden lg:flex items-center justify-center flex-1">
+            <div className="glass-panel rounded-full px-6 py-2 max-w-3xl">
+              <div className="flex items-center gap-1 md:gap-2">
+                {navLinks.map((link) => {
+                  const isOffers = link.href === "/announcements";
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`px-3 md:px-4 py-2 text-xs md:text-sm font-semibold tracking-wide transition-all duration-300 rounded-full relative overflow-hidden group whitespace-nowrap ${
+                        safePathname === link.href
+                          ? "text-black bg-black/10"
+                          : "text-black/70 hover:text-black hover:bg-black/5"
+                      } ${isOffers ? "animate-pulse" : ""}`}
+                    >
+                      {isOffers && (
+                        <>
+                          <span className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 animate-shimmer bg-[length:200%_100%] group-hover:bg-[length:400%_100%] transition-all duration-1000"></span>
+                          <Sparkles className="inline-block w-3 h-3 mr-1.5 animate-spin-slow" />
+                        </>
+                      )}
+                      {link.label}
+                      {isOffers && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right side - Actions */}
-        <div className="flex items-center gap-2 md:gap-4">
-          {/* Currency/Language selectors (desktop) */}
-          <div className="hidden md:flex items-center gap-3">
-            <LanguageSelector />
-            <CurrencySelector />
-          </div>
+          {/* Actions (Currency, Language, Cart, User) */}
+          <div className="flex items-center gap-2 md:gap-4">
+            {/* Currency/Language selectors (desktop) */}
+            <div className="hidden md:flex items-center gap-3">
+              <LanguageSelector />
+              <CurrencySelector />
+            </div>
 
-          {/* Cart - visible to all users on desktop */}
-          <Link href="/cart" className="hidden md:flex relative p-2 text-black hover:text-black/70 transition-colors items-center">
-            <ShoppingBag size={22} />
-            {mounted && cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black text-white text-xs flex items-center justify-center font-bold">
-                {cartCount}
-              </span>
-            )}
-            <span className="ml-1 text-sm font-medium hidden lg:inline">Cart</span>
-          </Link>
+            {/* Cart - visible to all users on desktop */}
+            <Link href="/cart" className="hidden md:flex relative p-2 text-black hover:text-black/70 transition-colors items-center">
+              <ShoppingBag size={22} />
+              {mounted && cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black text-white text-xs flex items-center justify-center font-bold">
+                  {cartCount}
+                </span>
+              )}
+              <span className="ml-1 text-sm font-medium hidden lg:inline">Cart</span>
+            </Link>
 
-          {/* User (desktop) */}
-          <div className="hidden md:block relative">
+            {/* User (desktop) */}
+            <div className="hidden md:block relative">
+              <button
+                type="button"
+                onClick={onUserButtonClick}
+                className="glass-panel inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-black transition hover:bg-black/5"
+                aria-label={userLabel ? "Open user menu" : t.nav.signIn}
+              >
+                <UserRound size={18} />
+                <span className="uppercase tracking-wide">{userLabel ?? t.nav.signIn}</span>
+              </button>
+              <UserDropdown open={userMenuOpen} onClose={() => setUserMenuOpen(false)} />
+            </div>
+
+            {/* Mobile hamburger */}
             <button
-              type="button"
-              onClick={onUserButtonClick}
-              className="glass-panel inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-black transition hover:bg-black/5"
-              aria-label={userLabel ? "Open user menu" : t.nav.signIn}
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="p-2 text-black md:hidden"
+              aria-label="Toggle menu"
             >
-              <UserRound size={18} />
-              <span className="uppercase tracking-wide">{userLabel ?? t.nav.signIn}</span>
+              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <UserDropdown open={userMenuOpen} onClose={() => setUserMenuOpen(false)} />
           </div>
-
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 text-black md:hidden"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
       </div>
 
@@ -273,7 +322,7 @@ export function Navbar() {
       </header>
       
       {/* Floating Cart Button for Mobile (Home and Products pages only) */}
-      {pathname && (pathname === "/" || pathname.startsWith("/products")) && (
+      {safePathname && (safePathname === "/" || safePathname.startsWith("/products")) && (
         <Link
           href="/cart"
           className="md:hidden fixed bottom-6 left-6 z-40 w-14 h-14 rounded-full bg-black text-white flex items-center justify-center shadow-2xl shadow-black/30 animate-bounce-subtle"

@@ -2,10 +2,17 @@ import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
 import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock } from 'lucide-react';
 import { OrderStatus } from "@prisma/client";
+import { requireUAEAccess, getAccessibleStoreIds } from "@/lib/admin-store-guard";
 
 export const dynamic = 'force-dynamic';
 
 export default async function Dashboard() {
+  // Enforce strict access control - only UAE admins can access this page
+  await requireUAEAccess();
+
+  // Get only UAE store IDs for data filtering
+  const accessibleStoreIds = await getAccessibleStoreIds();
+
   const [
     totalOrdersCount,
     totalProductsCount,
@@ -13,17 +20,27 @@ export default async function Dashboard() {
     recentOrders,
     revenueData
   ] = await Promise.all([
-    prisma.order.count(),
-    prisma.product.count(),
-    prisma.user.count(),
+    prisma.order.count({
+      where: { storeId: { in: accessibleStoreIds } }
+    }),
+    prisma.product.count({
+      where: { storeInventories: { some: { storeId: { in: accessibleStoreIds } } } }
+    }),
+    prisma.user.count({
+      where: { orders: { some: { storeId: { in: accessibleStoreIds } } } }
+    }),
     (prisma as any).order.findMany({
+      where: { storeId: { in: accessibleStoreIds } },
       take: 10,
       orderBy: { createdAt: 'desc' },
-      include: { user: true }
+      include: { user: true, store: true }
     }),
     prisma.order.aggregate({
       _sum: { totalCents: true },
-      where: { NOT: { status: OrderStatus.CANCELLED } }
+      where: { 
+        storeId: { in: accessibleStoreIds },
+        NOT: { status: OrderStatus.CANCELLED } 
+      }
     })
   ]);
 
@@ -44,8 +61,8 @@ export default async function Dashboard() {
     <div className="space-y-10 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-black">Dashboard</h1>
-          <p className="text-sm font-medium text-black/30 mt-1 uppercase tracking-[0.2em]">Real-time store overview (MongoDB)</p>
+          <h1 className="text-4xl font-black tracking-tight text-black">UAE Dashboard</h1>
+          <p className="text-sm font-medium text-black/30 mt-1 uppercase tracking-[0.2em]">Real-time UAE store overview (MongoDB)</p>
         </div>
       </div>
 
@@ -54,7 +71,7 @@ export default async function Dashboard() {
         <div className="glass-panel-heavy p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-center gap-6">
           <div className="p-4 bg-black/5 rounded-2xl text-black"><ShoppingBag size={24} /></div>
           <div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Total Orders</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-black/20">UAE Orders</div>
             <div className="text-3xl font-black text-black">{totalOrdersCount}</div>
           </div>
         </div>
@@ -98,45 +115,37 @@ export default async function Dashboard() {
                 <tr className="bg-black text-white">
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Customer</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-center">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Store</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Status</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">Amount</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
-                {recentOrders.map((o: any) => {
-                  const billing = o.billingAddress as any;
-                  const customerName = o.user?.name || (billing ? `${billing.first_name || ''} ${billing.last_name || ''}` : 'Guest');
-                  const customerEmail = o.user?.email || billing?.email || 'No Email';
-                  
-                  return (
-                    <tr key={o.id} className="hover:bg-black/[0.01] transition-colors">
-                      <td className="px-8 py-5">
-                        <div className="font-black">#{o.id.substring(0, 8)}</div>
-                        <div className="text-[10px] font-bold text-black/20 uppercase tracking-tighter">{new Date(o.createdAt).toLocaleDateString()}</div>
-                      </td>
-                      <td className="px-8 py-5">
-                        <div className="font-bold text-sm">{customerName}</div>
-                        <div className="text-[10px] font-bold text-black/20 uppercase tracking-tighter">{customerEmail}</div>
-                      </td>
-                      <td className="px-8 py-5">
-                        <div className="flex justify-center">
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${getStatusColor(o.status)}`}>
-                            {o.status}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5 text-right font-black text-sm">
-                        ${(o.totalCents / 100).toFixed(2)}
-                      </td>
-                      <td className="px-8 py-5 text-right">
-                        <Link href={`/ueadmin/orders/${o.id}`} className="inline-block p-2 bg-black/5 hover:bg-black hover:text-white rounded-xl transition-all">
-                          <ArrowRight size={16} />
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {recentOrders.map((o: any) => (
+                  <tr key={o.id} className="hover:bg-black/[0.01] transition-colors">
+                    <td className="px-8 py-5">
+                      <div className="font-black text-sm">#{o.id.substring(0, 8)}</div>
+                      <div className="text-[9px] font-bold text-black/20 uppercase">{new Date(o.createdAt).toLocaleDateString()}</div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="font-bold text-sm">{o.user?.name || 'Guest'}</div>
+                      <div className="text-[9px] font-bold text-black/30">{o.user?.email || 'No email'}</div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className="px-2 py-1 rounded-full text-[9px] font-black uppercase bg-black/5 text-black/60">
+                        {o.store?.code || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5">
+                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${getStatusColor(o.status)}`}>
+                        {o.status}
+                      </span>
+                    </td>
+                    <td className="px-8 py-5 text-right font-black text-sm">
+                      ${(o.totalCents / 100).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
            </table>
         </div>

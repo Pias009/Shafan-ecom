@@ -30,10 +30,39 @@ export async function POST(req: Request) {
   try {
     const session = await getServerAuthSession();
     const body = await req.json();
-    const { items, billing, shipping, payment_method, payment_method_title } = body;
+    const { items, billing, shipping, payment_method, payment_method_title, couponCode } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+    }
+
+    // Fetch user's address if not provided in request
+    let finalBilling = billing;
+    let finalShipping = shipping;
+    
+    if (!finalBilling || !finalShipping) {
+      if (session?.user?.id) {
+        const userAddress = await prisma.address.findUnique({
+          where: { userId: session.user.id }
+        });
+        
+        if (userAddress) {
+          // Convert Prisma address to JSON object
+          const addressJson = {
+            fullName: userAddress.fullName,
+            phone: userAddress.phone,
+            email: userAddress.email,
+            country: userAddress.country,
+            city: userAddress.city,
+            address1: userAddress.address1,
+            address2: userAddress.address2 || "",
+            postalCode: userAddress.postalCode
+          };
+          
+          if (!finalBilling) finalBilling = addressJson;
+          if (!finalShipping) finalShipping = addressJson;
+        }
+      }
     }
 
     // Calculate totals

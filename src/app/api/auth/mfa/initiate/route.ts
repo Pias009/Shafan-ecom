@@ -58,6 +58,7 @@ export async function POST(req: Request) {
       data: { loginAttempts: 0, lockUntil: null },
     });
 
+    // ALL ADMINISTRATORS MUST COMPLETE MFA - NO EXCEPTIONS
     if (isAdmin) {
       // Generate MFA Token
       const token = crypto.randomBytes(32).toString("hex");
@@ -90,7 +91,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ mfaRequired: true });
     }
 
-    // If regular user, just return OK (they will proceed with standard signIn)
+    // Regular users can proceed without MFA
     return NextResponse.json({ mfaRequired: false });
   } catch (err) {
     console.error("MFA_INITIATE_ERROR:", err);

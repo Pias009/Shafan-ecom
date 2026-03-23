@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { BrandMarquee } from "@/components/BrandMarquee";
 import { CategorySection } from "@/components/CategorySection";
 import { Hero } from "@/components/Hero";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
+import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Loader2, Filter, X, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Filter, X, ArrowRight, Flame } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import { useSession } from "next-auth/react";
 import { Price } from "@/components/Price";
@@ -29,10 +30,6 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   const [quickView, setQuickView] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [hotSliderIndex, setHotSliderIndex] = useState(0);
-  const [newArrivalsSliderIndex, setNewArrivalsSliderIndex] = useState(0);
-  const hotSliderRef = useRef<HTMLDivElement>(null);
-  const newArrivalsSliderRef = useRef<HTMLDivElement>(null);
   const { status } = useSession();
 
   const { addItem, hasAddress } = useCartStore();
@@ -105,28 +102,6 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
 
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
 
-  const [avgHotIndex, setAvgHotIndex] = useState(0);
-  const [slideDirection, setSlideDirection] = useState(1); // 1 = right, -1 = left
-
-  // Auto-slide for Trending Now
-  useEffect(() => {
-    if (hot.length <= 1) return;
-    const interval = setInterval(() => {
-      setHotSliderIndex((prev) => {
-        if (prev === hot.length - 1) {
-          setSlideDirection(-1);
-          return prev - 1;
-        }
-        if (prev === 0 && slideDirection === -1) {
-          setSlideDirection(1);
-          return prev + 1;
-        }
-        return prev + slideDirection;
-      });
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [hot.length, slideDirection]);
-
   function addToCart(product: any) {
     const cartItem = {
       id: product.id,
@@ -194,103 +169,18 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
       {/* Offer Banners Section */}
       <OfferBannersSection />
 
-      <main className="mx-auto max-w-7xl px-0 md:px-6 pb-20 flex-1">
-            {/* Hot Products Slider */}
-            {hot.length > 0 && (
-              <section id="hot" className="pt-10 md:pt-20">
-                <div className="text-center mb-6 md:mb-12">
-                  <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🔥 HOT</span>
-                  </div>
-                  <h2 className="font-display text-4xl md:text-5xl text-black mt-2 font-black">{t.home.trendingNow}</h2>
-                  <p className="font-body text-black/70 mt-3 text-lg max-w-2xl mx-auto">{t.home.mostLoved}</p>
-                </div>
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 pb-20 flex-1">
 
-                <div className="relative">
-                  <div className="relative overflow-hidden py-8">
-                    <motion.div
-                      ref={hotSliderRef}
-                      className="flex gap-0 cursor-grab active:cursor-grabbing"
-                      animate={{ x: typeof window !== 'undefined' && window.innerWidth < 768 
-                        ? `calc(15% - ${hotSliderIndex * 70}%)` 
-                        : `-${hotSliderIndex * 33.33}%` 
-                      }}
-                      transition={{ type: "spring", stiffness: 150, damping: 20 }}
-                    >
-                      {hot.map((p, index) => {
-                        const isCenter = index === hotSliderIndex;
-                        const distance = Math.abs(index - hotSliderIndex);
-                        
-                        return (
-                          <motion.div
-                            key={p.id}
-                            className="flex-shrink-0 w-[70%] md:w-[33.33%]"
-                            animate={{
-                              scale: isCenter ? 1 : 0.85,
-                              opacity: isCenter ? 1 : 0.5,
-                              filter: isCenter ? "blur(0px)" : "blur(1.5px)",
-                            }}
-                            transition={{ duration: 0.8, ease: "easeInOut" }}
-                          >
-                            <div className={isCenter ? "ring-2 ring-black/20 shadow-2xl rounded-2xl" : ""}>
-                              <ProductCard
-                                product={{
-                                  ...p,
-                                  price: p.priceCents / 100,
-                                  imageUrl: p.mainImage,
-                                  brand: p.brand?.name,
-                                  averageRating: p.averageRating,
-                                  ratingCount: p.ratingCount,
-                                  stockQuantity: p.stockQuantity,
-                                  totalSales: p.totalSales,
-                                }}
-                                onQuickView={(pp) => setQuickView(pp)}
-                                onAddToCart={(pp) => addToCart(pp)}
-                                onOrderNow={(pp) => orderNow(pp)}
-                              />
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </motion.div>
-                  </div>
-                  
-                  {/* Navigation Buttons */}
-                  <div className="flex justify-center items-center gap-6 mt-12">
-                    <button
-                      onClick={() => {
-                        setHotSliderIndex(Math.max(0, hotSliderIndex - 1));
-                      }}
-                      className="glass-panel p-4 rounded-full hover:bg-black hover:text-white transition-all shadow-lg hover:shadow-xl"
-                      aria-label="Previous slide"
-                    >
-                      <ChevronLeft size={24} />
-                    </button>
-                    <div className="hidden md:flex gap-3">
-                      {Array.from({ length: Math.min(hot.length, 5) }).map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setHotSliderIndex(i)}
-                          className={`w-3 h-3 rounded-full transition-all ${
-                            i === hotSliderIndex ? 'bg-black scale-125' : 'bg-black/20 hover:bg-black/40'
-                          }`}
-                          aria-label={`Go to slide ${i + 1}`}
-                        />
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => {
-                        setHotSliderIndex(Math.min(hot.length - 1, hotSliderIndex + 1));
-                      }}
-                      className="glass-panel p-4 rounded-full hover:bg-black hover:text-white transition-all shadow-lg hover:shadow-xl"
-                      aria-label="Next slide"
-                    >
-                      <ChevronRight size={24} />
-                    </button>
-                  </div>
-                </div>
-              </section>
+            {hot.length > 0 && (
+              <TrendingNowSlider
+                products={hot}
+                onQuickView={(pp) => setQuickView(pp)}
+                onAddToCart={(pp) => addToCart(pp)}
+                onOrderNow={(pp) => orderNow(pp)}
+              />
             )}
+
+
 
             {/* All Products + Filters */}
             <section id="products" className="pt-12 md:pt-24">
@@ -299,20 +189,20 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                   <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
                     <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW</span>
                   </div>
-                  <h2 className="font-display text-4xl md:text-5xl text-black mt-2 font-black">New Arrivals</h2>
-                  <p className="font-body text-black/70 mt-3 text-lg max-w-2xl mx-auto">Fresh additions to our collection</p>
+                  <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black mt-2 font-black">New Arrivals</h2>
+                  <p className="font-body text-black/70 mt-3 text-base sm:text-lg max-w-2xl mx-auto px-4">Fresh additions to our collection</p>
                 </div>
               </div>
 
               {/* Filter Row */}
-              <div className="flex justify-center mb-10">
+              <div className="flex justify-center mb-8 md:mb-10">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-3 px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 shadow-xl hover:shadow-2xl active:scale-95 ${
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
                     showFilters ? "bg-black text-white" : "glass-panel text-black hover:bg-black hover:text-white"
                   }`}
                 >
-                  {showFilters ? <X size={16} /> : <Filter size={16} />}
+                  {showFilters ? <X size={14} /> : <Filter size={14} />}
                   {showFilters ? "Hide Filters" : "Show Filters"}
                 </button>
               </div>
@@ -324,80 +214,107 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                     initial={{ opacity: 0, y: -20, height: 0 }}
                     animate={{ opacity: 1, y: 0, height: "auto" }}
                     exit={{ opacity: 0, y: -20, height: 0 }}
-                    className="overflow-hidden"
+                    className="overflow-hidden mb-12"
                   >
-                    <div className="glass-panel-heavy rounded-3xl p-5 md:p-6 mb-12 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 border border-black/10 shadow-lg">
-                      <input
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        placeholder="Search products…"
-                        className="col-span-2 md:col-span-1 h-12 md:h-13 w-full rounded-2xl bg-black/5 px-5 text-sm md:text-base text-black placeholder:text-black/40 ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-black/30 font-bold transition-all"
-                      />
-
-                      <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="h-12 md:h-13 w-full rounded-2xl bg-black/5 px-5 text-sm md:text-base text-black ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-black/30 font-bold appearance-none cursor-pointer transition-all"
-                      >
-                        <option value="All">All Categories</option>
-                        {categories.filter(c => c !== "All").map((c) => (
-                          <option key={c} value={c}>{c}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={brand}
-                        onChange={(e) => setBrand(e.target.value)}
-                        className="h-12 md:h-13 w-full rounded-2xl bg-black/5 px-5 text-sm md:text-base text-black ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-black/30 font-bold appearance-none cursor-pointer transition-all"
-                      >
-                        <option value="All">All Brands</option>
-                        {brands.filter(b => b !== "All").map((b) => (
-                          <option key={b} value={b}>{b}</option>
-                        ))}
-                      </select>
-
-                      <div className="flex items-center gap-5 px-3 h-12 md:h-13">
-                        <div className="font-bold text-xs md:text-sm text-black/70 min-w-[70px] md:min-w-[80px]">Max <Price amount={maxPrice} /></div>
+                    <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 items-stretch md:items-end shadow-lg border border-black/5">
+                      <div className="col-span-2 md:col-span-1">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                          Search
+                        </label>
                         <input
-                          type="range"
-                          min={0}
-                          max={5000}
-                          step={10}
-                          value={maxPrice}
-                          onChange={(e) => setMaxPrice(Number(e.target.value))}
-                          className="w-full accent-black cursor-pointer h-2 rounded-full"
+                          type="text"
+                          value={q}
+                          onChange={(e) => setQ(e.target.value)}
+                          placeholder="Search products…"
+                          className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none placeholder:text-black/20"
                         />
+                      </div>
+
+                      <div className="w-full md:w-[150px]">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                          Category
+                        </label>
+                        <select
+                          value={category}
+                          onChange={(e) => setCategory(e.target.value)}
+                          className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                        >
+                          <option value="All">All Categories</option>
+                          {categories.filter(c => c !== "All").map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="w-full md:w-[150px]">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                          Brand
+                        </label>
+                        <select
+                          value={brand}
+                          onChange={(e) => setBrand(e.target.value)}
+                          className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                        >
+                          <option value="All">All Brands</option>
+                          {brands.filter(b => b !== "All").map((b) => (
+                            <option key={b} value={b}>{b}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="w-full md:w-[220px]">
+                        <div className="flex justify-between items-center mb-1.5 px-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-black/30">
+                            Max Price
+                          </label>
+                          <Price amount={maxPrice} className="text-[10px] font-black" />
+                        </div>
+                        <div className="px-2 h-10 md:h-12 flex items-center">
+                          <input
+                            type="range"
+                            min="0"
+                            max="5000"
+                            step="10"
+                            value={maxPrice}
+                            onChange={(e) => setMaxPrice(Number(e.target.value))}
+                            className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
+                          />
+                        </div>
                       </div>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              <div className="w-full flex justify-center px-4 md:px-0">
-                <div className="grid grid-cols-2 gap-3 md:gap-6 lg:grid-cols-3 xl:grid-cols-4 w-full max-w-lg md:max-w-none">
-                  {filtered.slice(0, 15).map((p) => (
-                    <ProductCard
+              <div className="w-full flex justify-center">
+                <div className="grid gap-x-2 md:gap-x-8 gap-y-3 md:gap-y-12 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-items-center w-full max-w-6xl">
+                  {filtered.slice(0, 10).map((p, idx) => (
+                    <div
                       key={p.id}
-                      product={{
-                        ...p,
-                        price: p.regularPriceCents / 100,
-                        discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
-                        imageUrl: p.mainImage,
-                        brand: p.brand?.name,
-                        averageRating: p.averageRating,
-                        ratingCount: p.ratingCount,
-                        stockQuantity: p.stockQuantity,
-                        totalSales: p.totalSales,
-                      }}
-                      onQuickView={(pp) => setQuickView(pp)}
-                      onAddToCart={(pp) => addToCart(pp)}
-                      onOrderNow={(pp) => orderNow(pp)}
-                    />
+                      className="w-full"
+                    >
+                      <ProductCard
+                        product={{
+                          ...p,
+                          price: p.regularPriceCents / 100,
+                          discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
+                          imageUrl: p.mainImage,
+                          brand: p.brand?.name,
+                          averageRating: p.averageRating,
+                          ratingCount: p.ratingCount,
+                          stockQuantity: p.stockQuantity,
+                          totalSales: p.totalSales,
+                        }}
+                        onQuickView={(pp) => setQuickView(pp)}
+                        onAddToCart={(pp) => addToCart(pp)}
+                        onOrderNow={(pp) => orderNow(pp)}
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
 
-              {filtered.length > 15 && (
+              {filtered.length > 10 && (
                 <div className="mt-16 flex justify-center">
                   <button
                     onClick={() => router.push("/products")}

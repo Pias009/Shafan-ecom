@@ -4,7 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader } from "@/components/Loader";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 
@@ -55,7 +55,7 @@ export default function BrandsPage() {
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-black/20" />
+            <Loader size="lg" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">

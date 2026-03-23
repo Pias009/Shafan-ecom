@@ -221,9 +221,14 @@ export function ProductQuickViewModal({
                 <button
                   type="button"
                   onClick={() => onOrderNow(product)}
-                  className="flex-1 h-14 md:h-16 rounded-xl md:rounded-2xl bg-black px-6 md:px-8 text-[11px] md:text-sm font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-black/30 hover:scale-[1.02] active:scale-95 transition-all text-center flex items-center justify-center whitespace-nowrap"
+                  className="btn-53 flex-1 h-14 md:h-16"
                 >
-                  {t.product.orderNow}
+                  <span className="original">{t.product.orderNow}</span>
+                  <div className="letters">
+                    {Array.from("FAST").map((letter, index) => (
+                      <span key={index}>{letter}</span>
+                    ))}
+                  </div>
                 </button>
               </div>
             </div>

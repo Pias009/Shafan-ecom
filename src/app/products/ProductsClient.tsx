@@ -194,7 +194,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                     </span>
                   </div>
 
-                  <div className="grid gap-x-2.5 md:gap-x-8 gap-y-4 md:gap-y-12 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  <div className="grid gap-x-2 md:gap-x-8 gap-y-3 md:gap-y-12 grid-cols-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-items-center">
                     {productsInCat.map((product, idx) => (
                       <motion.div
                         key={product.id}

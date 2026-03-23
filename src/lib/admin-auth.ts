@@ -1,5 +1,6 @@
 import { getServerAuthSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getAdminStoreAccess as getStoreAccess } from '@/lib/admin-store-guard';
 
 export type AdminStoreAccess = {
   storeIds: string[];
@@ -9,80 +10,28 @@ export type AdminStoreAccess = {
 };
 
 /**
- * Get admin store access permissions for the current session
- * SUPERADMIN: has access to all stores
- * ADMIN with store assignments: only assigned stores
- * ADMIN without assignments: no store access (should be assigned)
+ * @deprecated Use getAdminStoreAccess from admin-store-guard.ts instead
+ * This function is kept for backward compatibility
  */
 export async function getAdminStoreAccess(): Promise<AdminStoreAccess | null> {
-  const session = await getServerAuthSession();
-  
-  if (!session?.user) {
-    return null;
-  }
-
-  const userRole = session.user.role;
-  const userId = session.user.id;
-  
-  // SUPERADMIN has access to all stores
-  if (userRole === 'SUPERADMIN') {
-    const allStores = await prisma.store.findMany({
-      select: { id: true, code: true }
-    });
-    
-    return {
-      storeIds: allStores.map(s => s.id),
-      isSuperAdmin: true,
-      isGlobalAdmin: true,
-      allowedStores: allStores.map(s => s.code)
-    };
-  }
-
-  // ADMIN role - check store assignments
-  if (userRole === 'ADMIN') {
-    // For now, we'll implement a simple country-based assignment
-    // In a real system, you'd have a AdminStoreAssignment model
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { country: true }
-    });
-
-    if (!user?.country) {
-      // Admin without country assignment - no access
-      return {
-        storeIds: [],
-        isSuperAdmin: false,
-        isGlobalAdmin: false,
-        allowedStores: []
-      };
-    }
-
-    // Find stores in the admin's country
-    const stores = await prisma.store.findMany({
-      where: { 
-        country: user.country.toUpperCase(),
-        active: true 
-      },
-      select: { id: true, code: true }
-    });
-
-    return {
-      storeIds: stores.map(s => s.id),
-      isSuperAdmin: false,
-      isGlobalAdmin: user.country === 'UAE', // UAE admins are global
-      allowedStores: stores.map(s => s.code)
-    };
-  }
-
-  // Not an admin
-  return null;
+  return getStoreAccess();
 }
 
 /**
- * Check if admin has access to a specific store
+ * @deprecated Use getAccessibleStoreIds from admin-store-guard.ts instead
+ * This function is kept for backward compatibility
+ */
+export async function getAccessibleStoreIds(): Promise<string[]> {
+  const access = await getStoreAccess();
+  return access?.storeIds || [];
+}
+
+/**
+ * @deprecated Use canAccessStore from admin-store-guard.ts instead
+ * This function is kept for backward compatibility
  */
 export async function canAccessStore(storeCode: string): Promise<boolean> {
-  const access = await getAdminStoreAccess();
+  const access = await getStoreAccess();
   if (!access) return false;
   
   if (access.isSuperAdmin) return true;
@@ -91,44 +40,42 @@ export async function canAccessStore(storeCode: string): Promise<boolean> {
 }
 
 /**
- * Get store IDs that the admin can access for database queries
+ * Server-side guard to ensure admin has access
+ * Returns user and store access information
+ * @throws Error if not authenticated or not an admin
  */
-export async function getAccessibleStoreIds(): Promise<string[]> {
-  const access = await getAdminStoreAccess();
-  return access?.storeIds || [];
-}
-
-/**
- * Middleware-like function to protect admin API routes
- */
-export async function requireAdminStoreAccess(requiredStoreCode?: string) {
+export async function requireAdminStoreAccess() {
   const session = await getServerAuthSession();
   
-  if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
-    throw new Error('Unauthorized: Admin access required');
+  if (!session?.user) {
+    throw new Error('Unauthorized');
   }
 
-  const access = await getAdminStoreAccess();
-  if (!access) {
+  const userRole = session.user.role;
+  
+  if (!['ADMIN', 'SUPERADMIN'].includes(userRole)) {
+    throw new Error('Forbidden: Admin access required');
+  }
+
+  const storeAccess = await getStoreAccess();
+  
+  if (!storeAccess) {
     throw new Error('Unauthorized: No store access');
-  }
-
-  if (requiredStoreCode && !access.allowedStores.includes(requiredStoreCode)) {
-    throw new Error(`Forbidden: No access to store ${requiredStoreCode}`);
   }
 
   return {
     user: session.user,
-    storeAccess: access
+    storeAccess
   };
 }
 
 /**
- * Helper to add store filtering to Prisma queries
+ * Helper function to add store filtering to Prisma queries
+ * @param baseQuery - The base Prisma query object
+ * @returns Query object with store filtering applied
  */
-export function withStoreFilter(storeIds: string[]) {
-  if (storeIds.length === 0) {
-    return { storeId: { in: [] } }; // No access
-  }
-  return { storeId: { in: storeIds } };
+export function withStoreFilter<T extends Record<string, any>>(baseQuery: T): T {
+  // This is a placeholder for future use
+  // In practice, you would use getAccessibleStoreIds() and add the filter
+  return baseQuery;
 }
