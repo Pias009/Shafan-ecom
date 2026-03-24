@@ -3,6 +3,17 @@ import { z } from 'zod';
 import { getServerAuthSession } from '@/lib/auth';
 import { uploadFromUrl } from '@/lib/cloudinary';
 import { getAdminStoreAccess } from '@/lib/admin-store-guard';
+import { SUPPORTED_COUNTRIES, isValidCountryCode, getCurrencyForCountry } from '@/lib/countries';
+
+const CountryPriceSchema = z.object({
+  country: z.string().refine(
+    (code) => isValidCountryCode(code),
+    { message: `Country must be one of: ${SUPPORTED_COUNTRIES.map(c => c.code).join(', ')}` }
+  ),
+  priceCents: z.number().int().min(0),
+  currency: z.string().optional(),
+  active: z.boolean().optional().default(true),
+});
 
 const ProductCreateSchema = z.object({
   name: z.string(),
@@ -11,13 +22,31 @@ const ProductCreateSchema = z.object({
   images: z.array(z.string()).optional(),
   mainImage: z.string().optional(),
   trending: z.boolean().optional(),
-  priceCents: z.number(),
-  discountCents: z.number().optional(),
-  stockQuantity: z.number().optional(),
+  priceCents: z.number().int().min(0),
+  discountCents: z.number().int().min(0).optional(),
+  stockQuantity: z.number().int().min(0).optional(),
   brandName: z.string().optional(),
   categoryName: z.string().optional(),
   hot: z.boolean().optional(),
   storeId: z.string().optional(), // Store code for product assignment
+  countryPrices: z.array(CountryPriceSchema)
+    .optional()
+    .default([])
+    .refine(
+      (prices) => {
+        // Validate that all countries are unique
+        const countries = prices.map(p => p.country);
+        return new Set(countries).size === countries.length;
+      },
+      { message: "Duplicate country entries are not allowed" }
+    )
+    .refine(
+      (prices) => {
+        // Validate that all country codes are valid
+        return prices.every(p => isValidCountryCode(p.country));
+      },
+      { message: "Invalid country code detected" }
+    ),
 });
 
 export async function GET() {
@@ -80,6 +109,15 @@ export async function GET() {
           where: accessibleStoreIds.length > 0 ? { storeId: { in: accessibleStoreIds } } : undefined,
           select: { storeId: true, quantity: true, store: { select: { code: true } } }
         },
+        countryPrices: {
+          select: {
+            id: true,
+            country: true,
+            priceCents: true,
+            currency: true,
+            active: true
+          }
+        },
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -109,12 +147,20 @@ export async function POST(req: Request) {
     }
     
     const body = await req.json();
+    console.log("API Request Body:", JSON.stringify(body, null, 2));
+    
     const parsed = ProductCreateSchema.safeParse(body);
     if (!parsed.success) {
-      console.error("Validation Error:", parsed.error);
-      return new Response(JSON.stringify({ error: 'Invalid payload', details: parsed.error }), { status: 400 });
+      console.error("Validation Error Details:", JSON.stringify(parsed.error.issues, null, 2));
+      console.error("Raw body that failed:", body);
+      return new Response(JSON.stringify({
+        error: 'Invalid payload',
+        details: parsed.error.issues,
+        message: 'Validation failed. Check that all numeric fields are numbers, not strings.'
+      }), { status: 400 });
     }
     const data = parsed.data;
+    console.log("Parsed data (validated):", JSON.stringify(data, null, 2));
 
     // Check store access if storeId is provided
     if (data.storeId) {
@@ -218,6 +264,42 @@ export async function POST(req: Request) {
           }
         });
       }
+    }
+
+    // Create country-specific prices if provided
+    if (data.countryPrices && data.countryPrices.length > 0) {
+      // First, delete existing country prices for this product (if updating)
+      if (existingProduct) {
+        await prisma.countryPrice.deleteMany({
+          where: { productId: product.id }
+        });
+      }
+      
+      // Auto-detect currency for each country price if not provided
+      const countryPricesWithCurrency = data.countryPrices.map(countryPrice => {
+        const countryCode = countryPrice.country.toUpperCase();
+        return {
+          ...countryPrice,
+          currency: countryPrice.currency || getCurrencyForCountry(countryCode) || 'USD',
+          country: countryCode,
+          active: countryPrice.active !== false, // Default to true if not specified
+        };
+      });
+      
+      // Create new country prices
+      await Promise.all(
+        countryPricesWithCurrency.map(countryPrice =>
+          prisma.countryPrice.create({
+            data: {
+              productId: product.id,
+              country: countryPrice.country,
+              priceCents: countryPrice.priceCents,
+              currency: countryPrice.currency,
+              active: countryPrice.active
+            }
+          })
+        )
+      );
     }
 
     // Log activity

@@ -5,20 +5,42 @@ import * as crypto from "crypto";
 async function main() {
   console.log("Seeding database...");
 
-  // 1. Create Admin User
+  // 1. Create Master Admin User (pvs178380@gmail.com)
+  const masterAdminEmail = "pvs178380@gmail.com";
+  const masterAdminPassword = "pias900";
+  const masterAdminHashedPassword = await bcrypt.hash(masterAdminPassword, 10);
+
+  const masterAdmin = await prisma.user.upsert({
+    where: { email: masterAdminEmail },
+    update: {
+      passwordHash: masterAdminHashedPassword,
+      role: "SUPERADMIN",
+      name: "Master Admin",
+    },
+    create: {
+      email: masterAdminEmail,
+      name: "Master Admin",
+      passwordHash: masterAdminHashedPassword,
+      role: "SUPERADMIN",
+    },
+  });
+  console.log(`Master admin user created/updated: ${masterAdmin.email}`);
+
+  // 2. Create Regular Admin User
   const adminEmail = "admin@shafan.com";
-  const hashedPassword = await bcrypt.hash("password123", 10);
+  const adminPassword = "Admin@Shafan2024";
+  const adminHashedPassword = await bcrypt.hash(adminPassword, 10);
 
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
     update: {
-      passwordHash: hashedPassword,
+      passwordHash: adminHashedPassword,
       role: "ADMIN",
     },
     create: {
       email: adminEmail,
       name: "Demo Admin",
-      passwordHash: hashedPassword,
+      passwordHash: adminHashedPassword,
       role: "ADMIN",
     },
   });
@@ -26,16 +48,18 @@ async function main() {
 
   // Create Normal User
   const userEmail = "user@shafan.com";
+  const userPassword = "User@Shafan2024";
+  const userHashedPassword = await bcrypt.hash(userPassword, 10);
   const user = await prisma.user.upsert({
     where: { email: userEmail },
     update: {
-      passwordHash: hashedPassword,
+      passwordHash: userHashedPassword,
       role: "USER",
     },
     create: {
       email: userEmail,
       name: "Demo User",
-      passwordHash: hashedPassword,
+      passwordHash: userHashedPassword,
       role: "USER",
     },
   });

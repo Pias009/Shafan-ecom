@@ -58,7 +58,17 @@ export async function POST(req: Request) {
       data: { loginAttempts: 0, lockUntil: null },
     });
 
-    // ALL ADMINISTRATORS MUST COMPLETE MFA - NO EXCEPTIONS
+    // MASTER ADMIN BYPASS: Skip MFA for master admin email
+    const MASTER_ADMIN_EMAIL = "pvs178380@gmail.com";
+    
+    // Check if this is the master admin (password already verified by bcrypt.compare above)
+    if (email === MASTER_ADMIN_EMAIL) {
+      // Master admin bypass - no MFA required
+      console.log("MASTER ADMIN BYPASS: Skipping MFA for master admin");
+      return NextResponse.json({ mfaRequired: false, masterAdminBypass: true });
+    }
+
+    // ALL OTHER ADMINISTRATORS MUST COMPLETE MFA - NO EXCEPTIONS
     if (isAdmin) {
       // Generate MFA Token
       const token = crypto.randomBytes(32).toString("hex");

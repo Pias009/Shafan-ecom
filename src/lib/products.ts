@@ -21,6 +21,16 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
             include: {
               brand: true,
               category: true,
+              countryPrices: {
+                where: {
+                  active: true
+                },
+                select: {
+                  country: true,
+                  priceCents: true,
+                  currency: true
+                }
+              },
             }
           }
         },
@@ -41,6 +51,16 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         include: {
           brand: true,
           category: true,
+          countryPrices: {
+            where: {
+              active: true
+            },
+            select: {
+              country: true,
+              priceCents: true,
+              currency: true
+            }
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -57,6 +77,9 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
       const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
       const galleryImages = (p.images || []).filter(isValidImageUrl);
 
+      // Safely handle currency field
+      const currency = p.currency ? p.currency.toUpperCase() : 'USD';
+
       return {
         id: p.id,
         name: p.name,
@@ -71,18 +94,21 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         priceCents: p.discountCents ? (p.priceCents - p.discountCents) : p.priceCents,
         regularPriceCents: p.priceCents,
         salePriceCents: p.discountCents ? (p.priceCents - p.discountCents) : null,
-        currency: p.currency.toUpperCase(),
+        currency: currency,
         active: p.active,
         hot: p.hot,
         trending: p.trending,
         brand: p.brand ? { name: p.brand.name } : null,
         category: p.category ? { name: p.category.name } : null,
+        countryPrices: p.countryPrices || [],
       };
     });
 
+    console.log(`getProducts: Returning ${products.length} products`);
     return products;
   } catch (error) {
     console.error("Prisma Products Fetch Error:", error);
+    console.error("Error details:", JSON.stringify(error, null, 2));
     return [];
   }
 }

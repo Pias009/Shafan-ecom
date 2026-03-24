@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { SUPPORTED_COUNTRIES, getCurrencyForCountry, type CountryCode } from '@/lib/countries';
+import { autoCompleteCountryPrices } from '@/lib/country-pricing';
 
 interface AddProductFormProps {
   brands: { name: string }[];
@@ -17,6 +19,15 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
   const initialStoreId = searchParams?.get('storeId') || "GLOBAL";
 
   const [loading, setLoading] = useState(false);
+  
+  // Initialize country prices for all 6 supported countries
+  const initialCountryPrices = SUPPORTED_COUNTRIES.map(country => ({
+    country: country.code as CountryCode,
+    priceCents: 0,
+    currency: country.currency,
+    active: true
+  }));
+
   const [formData, setFormData] = useState({
     name: '',
     brandName: brands[0]?.name || '',
@@ -31,16 +42,48 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
     hot: false,
     trending: false,
     storeId: 'GLOBAL', // Default to global
+    countryPrices: initialCountryPrices,
   });
+
+  // Update country prices when base price changes
+  useEffect(() => {
+    if (formData.priceCents > 0) {
+      const hasManualEdits = formData.countryPrices.some(cp => cp.priceCents !== 0);
+      if (!hasManualEdits) {
+        // Auto-fill country prices with base price
+        setFormData(prev => ({
+          ...prev,
+          countryPrices: prev.countryPrices.map(cp => ({
+            ...cp,
+            priceCents: prev.priceCents
+          }))
+        }));
+      }
+    }
+  }, [formData.priceCents]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? Number(value) : val
-    }));
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({
+        ...prev,
+        [name]: checked
+      }));
+    } else if (type === 'number') {
+      // Convert to number, but handle empty string as 0
+      const numValue = value === '' ? 0 : Number(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: isNaN(numValue) ? 0 : numValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,16 +91,29 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
     setLoading(true);
 
     try {
+      // Prepare country prices data with auto-completed currencies
+      const countryPrices = formData.countryPrices.map(cp => ({
+        country: cp.country,
+        priceCents: cp.priceCents,
+        currency: cp.currency, // Already auto-detected from initialization
+        active: cp.active
+      }));
+
+      const payload = {
+        ...formData,
+        countryPrices
+      };
+
       const res = await fetch('/api/admin/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        toast.success('Product created successfully!');
+        toast.success('Product created successfully with country pricing!');
         router.push('/ueadmin/products');
         router.refresh();
       } else {
@@ -174,7 +230,7 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Price (Cents)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Base Price (Cents)</label>
                 <input
                   type="number"
                   name="priceCents"
@@ -182,6 +238,7 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
                   onChange={handleChange}
                   className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                 />
+                <p className="text-[10px] text-black/30 px-2">Default price for all countries</p>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Sale Price (Cents)</label>
@@ -202,6 +259,125 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
                   onChange={handleChange}
                   className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                 />
+              </div>
+            </div>
+          </section>
+
+          {/* Country-Specific Pricing - All 6 Countries */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+              <Globe size={14} /> Country-Specific Pricing (All 6 Countries)
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs font-bold text-black/60">Define prices for all supported countries</p>
+                  <p className="text-[10px] text-black/40 mt-1">Currencies are automatically detected and cannot be changed</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Reset all country prices to base price
+                    setFormData(prev => ({
+                      ...prev,
+                      countryPrices: prev.countryPrices.map(cp => ({
+                        ...cp,
+                        priceCents: prev.priceCents
+                      }))
+                    }));
+                    toast.success('All country prices reset to base price');
+                  }}
+                  className="bg-black text-white px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
+                >
+                  Reset All to Base Price
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {formData.countryPrices.map((cp, index) => {
+                  const countryConfig = SUPPORTED_COUNTRIES.find(c => c.code === cp.country);
+                  return (
+                    <div key={cp.country} className="grid grid-cols-12 gap-3 items-center p-4 bg-black/5 rounded-2xl border border-black/10">
+                      <div className="col-span-3 space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Country</label>
+                        <div className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold">{countryConfig?.name}</span>
+                            <span className="text-[10px] bg-black/10 px-2 py-1 rounded-full font-black">
+                              {cp.country}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-span-5 space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Price (Cents)</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            value={cp.priceCents}
+                            onChange={(e) => {
+                              const newPrices = [...formData.countryPrices];
+                              const numValue = parseInt(e.target.value);
+                              newPrices[index].priceCents = isNaN(numValue) ? 0 : numValue;
+                              setFormData(prev => ({ ...prev, countryPrices: newPrices }));
+                            }}
+                            className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                            min="0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newPrices = [...formData.countryPrices];
+                              newPrices[index].priceCents = formData.priceCents;
+                              setFormData(prev => ({ ...prev, countryPrices: newPrices }));
+                            }}
+                            className="text-[10px] font-black uppercase tracking-widest bg-black/10 hover:bg-black/20 px-3 py-2 rounded-xl transition-colors whitespace-nowrap"
+                          >
+                            Use Base
+                          </button>
+                        </div>
+                      </div>
+                      <div className="col-span-3 space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Currency (Auto)</label>
+                        <div className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold flex items-center justify-between">
+                          <span>{cp.currency}</span>
+                          <span className="text-[10px] text-black/40">{countryConfig?.currencySymbol}</span>
+                        </div>
+                      </div>
+                      <div className="col-span-1 flex justify-center">
+                        <div className={`w-3 h-3 rounded-full ${cp.priceCents === formData.priceCents ? 'bg-gray-300' : 'bg-green-500'}`}
+                             title={cp.priceCents === formData.priceCents ? 'Using base price' : 'Custom price set'}>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p className="text-xs text-blue-700">
+                  <strong>System Configuration:</strong> All 6 countries are required. Prices are in cents.
+                  Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
+                  If a country price equals the base price, it will use the base price logic.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="p-3 bg-green-50 rounded-xl border border-green-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="font-bold text-green-700">Custom Price Set</span>
+                  </div>
+                  <p className="text-green-600 mt-1">Country has a specific price different from base</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                    <span className="font-bold text-gray-700">Using Base Price</span>
+                  </div>
+                  <p className="text-gray-600 mt-1">Country uses the base price (shown above)</p>
+                </div>
               </div>
             </div>
           </section>

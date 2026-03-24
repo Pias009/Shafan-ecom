@@ -139,6 +139,7 @@ model Product {
   orderItems       OrderItem[]
   storeInventories StoreInventory[]
   productDiscounts ProductDiscount[]
+  countryPrices    CountryPrice[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -417,6 +418,24 @@ model Shipment {
   order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model CountryPrice {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String   @db.ObjectId
+  country     String   // Country code like "US", "BD", "KW", etc.
+  priceCents  Int      // Price in cents for this country
+  currency    String   @default("USD") // Currency code for this country
+  active      Boolean  @default(true)
+  
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([productId, country])
+  @@index([country])
+  @@index([productId])
 }
 
 model PerformanceMetric {
