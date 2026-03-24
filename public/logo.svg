@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" fill="none">
+  <!-- Background (optional, remove for transparent) -->
+  <!-- <rect width="400" height="120" fill="#ffffff"/> -->
+  
+  <!-- Decorative Flower Background -->
+  <g opacity="0.15">
+    <!-- Outer petals - Rose -->
+    <path d="M60 10 C65 25, 80 30, 95 35 C80 40, 65 45, 60 60 C55 45, 40 40, 25 35 C40 30, 55 25, 60 10Z" fill="#FDA4AF"/>
+    <path d="M60 110 C55 95, 40 90, 25 85 C40 80, 55 75, 60 60 C65 75, 80 80, 95 85 C80 90, 65 95, 60 110Z" fill="#FDA4AF"/>
+    <path d="M20 60 C35 55, 40 40, 45 25 C50 40, 55 55, 70 60 C55 65, 50 80, 45 95 C40 80, 35 65, 20 60Z" fill="#FDA4AF"/>
+    <path d="M100 60 C85 65, 80 80, 75 95 C70 80, 65 65, 50 60 C65 55, 70 40, 75 25 C80 40, 85 55, 100 60Z" fill="#FDA4AF"/>
+    
+    <!-- Inner petals - Emerald -->
+    <path d="M60 20 C63 32, 72 37, 82 40 C72 43, 63 48, 60 60 C57 48, 48 43, 38 40 C48 37, 57 32, 60 20Z" fill="#6EE7B7"/>
+    <path d="M60 100 C57 88, 48 83, 38 80 C48 77, 57 72, 60 60 C63 72, 72 77, 82 80 C72 83, 63 88, 60 100Z" fill="#6EE7B7"/>
+    <path d="M30 60 C42 57, 47 48, 50 38 C53 48, 58 57, 70 60 C58 63, 53 72, 50 82 C47 72, 42 63, 30 60Z" fill="#6EE7B7"/>
+    <path d="M90 60 C78 63, 73 72, 70 82 C67 72, 62 63, 50 60 C62 57, 67 48, 70 38 C73 48, 78 57, 90 60Z" fill="#6EE7B7"/>
+    
+    <!-- Center -->
+    <circle cx="60" cy="60" r="8" fill="#FEF3C7"/>
+  </g>
+  
+  <!-- Main Logo Text -->
+  <text x="130" y="75" font-family="'Playfair Display', Georgia, serif" font-size="52" font-weight="700" fill="#047857">
+    SHANFA
+  </text>
+  
+  <!-- Tagline -->
+  <text x="132" y="95" font-family="'DM Sans', system-ui, sans-serif" font-size="10" font-weight="500" letter-spacing="0.3em" fill="#047857" opacity="0.7">
+    NATURAL SKINCARE
+  </text>
+  
+  <!-- Decorative Leaf -->
+  <path d="M345 50 C355 45, 360 35, 365 25 C370 35, 375 45, 385 50 C375 55, 370 65, 365 75 C360 65, 355 55, 345 50Z" fill="#10B981" opacity="0.4"/>
+</svg>

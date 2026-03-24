@@ -1,4 +1,4 @@
-import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,11 +29,13 @@ export function ProductQuickViewModal({
   onClose,
   onAddToCart,
   onOrderNow,
+  onMoreDetails,
 }: {
   product: QuickViewProduct | null;
   onClose: () => void;
   onAddToCart: (product: any) => void;
   onOrderNow: (product: any) => void;
+  onMoreDetails: (productId: string) => void;
 }) {
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
@@ -74,7 +76,7 @@ export function ProductQuickViewModal({
     <AnimatePresence>
       {product ? (
         <motion.div
-          className="fixed inset-0 z-[60] grid place-items-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-[100] grid place-items-center p-4 overflow-y-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -208,27 +210,39 @@ export function ProductQuickViewModal({
                 )}
               </div>
 
-              <div className="mt-8 md:mt-10 flex gap-3 md:gap-4 items-center">
+              <div className="mt-8 md:mt-10 space-y-3">
+                <div className="flex gap-3 md:gap-4 items-center">
+                  <button
+                    type="button"
+                    onClick={() => onAddToCart(product)}
+                    className="w-14 h-14 md:w-auto md:h-16 md:flex-1 rounded-xl md:rounded-2xl bg-white border-2 border-black flex items-center justify-center md:px-8 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-black transition-all hover:bg-black hover:text-white active:scale-95 shrink-0"
+                    title={t.product.addToCart}
+                  >
+                    <ShoppingBag size={20} className="md:hidden" />
+                    <span className="hidden md:inline">{t.product.addToCart}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onOrderNow(product)}
+                    className="btn-53 flex-1 h-14 md:h-16"
+                  >
+                    <span className="original">{t.product.orderNow}</span>
+                    <div className="letters">
+                      {Array.from("FAST").map((letter, index) => (
+                        <span key={index}>{letter}</span>
+                      ))}
+                    </div>
+                  </button>
+                </div>
+                
+                {/* More Details Button */}
                 <button
                   type="button"
-                  onClick={() => onAddToCart(product)}
-                  className="w-14 h-14 md:w-auto md:h-16 md:flex-1 rounded-xl md:rounded-2xl bg-white border-2 border-black flex items-center justify-center md:px-8 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-black transition-all hover:bg-black hover:text-white active:scale-95 shrink-0"
-                  title={t.product.addToCart}
+                  onClick={() => onMoreDetails(product.id)}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-black text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all hover:bg-gray-200 active:scale-95"
                 >
-                  <ShoppingBag size={20} className="md:hidden" />
-                  <span className="hidden md:inline">{t.product.addToCart}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onOrderNow(product)}
-                  className="btn-53 flex-1 h-14 md:h-16"
-                >
-                  <span className="original">{t.product.orderNow}</span>
-                  <div className="letters">
-                    {Array.from("FAST").map((letter, index) => (
-                      <span key={index}>{letter}</span>
-                    ))}
-                  </div>
+                  <span>More Details</span>
+                  <ArrowRight size={14} />
                 </button>
               </div>
             </div>

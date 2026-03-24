@@ -5,6 +5,7 @@ import { BrandMarquee } from "@/components/BrandMarquee";
 import { CategorySection } from "@/components/CategorySection";
 import { Hero } from "@/components/Hero";
 import { ProductCard } from "@/components/ProductCard";
+import { HomeProductCard } from "@/components/HomeProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { useCartStore } from "@/lib/cart-store";
@@ -21,7 +22,7 @@ import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
 
-export default function HomeClient({ initialProducts }: { initialProducts: any[] }) {
+export default function HomeClient({ initialProducts, newArrivals = [] }: { initialProducts: any[], newArrivals?: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<string>("All");
@@ -155,7 +156,7 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   return (
-    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden">
+    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full">
       {/* NoticeBoard and Navbar handled globally */}
       <Hero />
 
@@ -169,7 +170,45 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
       {/* Offer Banners Section */}
       <OfferBannersSection />
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 pb-20 flex-1">
+      <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 pb-20 flex-1 overflow-x-hidden">
+
+            {/* New Arrivals Section */}
+            {newArrivals.length > 0 && (
+              <section className="py-12 md:py-20 w-full overflow-hidden">
+                <div className="text-center mb-8 md:mb-12 px-4 sm:px-6 md:px-0">
+                  <div className="relative z-10 w-full">
+                    <div className="inline-flex items-center gap-2 glass-panel rounded-full px-3 sm:px-5 py-2 mb-4">
+                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW ARRIVALS</span>
+                    </div>
+                    <h2 className="font-display text-lg sm:text-xl md:text-4xl lg:text-5xl text-black mt-2 font-black leading-tight break-words">Fresh From The Shelf</h2>
+                    <p className="font-body text-black/70 mt-3 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-4 sm:px-0">Discover our latest additions, just arrived</p>
+                  </div>
+                </div>
+
+                {/* 4 Products in Column Layout */}
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 px-4 sm:px-6 md:px-0 w-full">
+                  {newArrivals.slice(0, 4).map((product, index) => (
+                    <HomeProductCard
+                      key={product.id}
+                      product={{
+                        ...product,
+                        price: product.regularPriceCents / 100,
+                        discountPrice: product.salePriceCents ? product.salePriceCents / 100 : undefined,
+                        imageUrl: product.mainImage,
+                        brand: product.brand?.name,
+                        averageRating: product.averageRating,
+                        ratingCount: product.ratingCount,
+                        stockQuantity: product.stockQuantity,
+                        totalSales: product.totalSales,
+                      }}
+                      onQuickView={(pp) => setQuickView(pp)}
+                      onAddToCart={(pp) => addToCart(pp)}
+                      onOrderNow={(pp) => orderNow(pp)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
 
             {hot.length > 0 && (
               <TrendingNowSlider
@@ -286,30 +325,26 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
                 )}
               </AnimatePresence>
 
-              <div className="w-full flex justify-center">
-                <div className="grid gap-x-2 md:gap-x-8 gap-y-3 md:gap-y-12 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-items-center w-full max-w-6xl">
+              <div className="w-full flex justify-center overflow-x-hidden">
+                <div className="grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 w-full max-w-7xl px-3 sm:px-4">
                   {filtered.slice(0, 10).map((p, idx) => (
-                    <div
+                    <HomeProductCard
                       key={p.id}
-                      className="w-full"
-                    >
-                      <ProductCard
-                        product={{
-                          ...p,
-                          price: p.regularPriceCents / 100,
-                          discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
-                          imageUrl: p.mainImage,
-                          brand: p.brand?.name,
-                          averageRating: p.averageRating,
-                          ratingCount: p.ratingCount,
-                          stockQuantity: p.stockQuantity,
-                          totalSales: p.totalSales,
-                        }}
-                        onQuickView={(pp) => setQuickView(pp)}
-                        onAddToCart={(pp) => addToCart(pp)}
-                        onOrderNow={(pp) => orderNow(pp)}
-                      />
-                    </div>
+                      product={{
+                        ...p,
+                        price: p.regularPriceCents / 100,
+                        discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
+                        imageUrl: p.mainImage,
+                        brand: p.brand?.name,
+                        averageRating: p.averageRating,
+                        ratingCount: p.ratingCount,
+                        stockQuantity: p.stockQuantity,
+                        totalSales: p.totalSales,
+                      }}
+                      onQuickView={(pp) => setQuickView(pp)}
+                      onAddToCart={(pp) => addToCart(pp)}
+                      onOrderNow={(pp) => orderNow(pp)}
+                    />
                   ))}
                 </div>
               </div>
@@ -354,6 +389,7 @@ export default function HomeClient({ initialProducts }: { initialProducts: any[]
         onClose={() => setQuickView(null)}
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
+        onMoreDetails={(productId) => router.push(`/products/${productId}`)}
       />
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />

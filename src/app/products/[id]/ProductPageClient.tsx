@@ -9,6 +9,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Price } from "@/components/Price";
 import { ProductCard } from "@/components/ProductCard";
+import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -29,6 +30,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
+  const [quickView, setQuickView] = useState<any>(null);
 
   // Combine images
   const allImages = [
@@ -45,19 +47,21 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     return () => clearInterval(timer);
   }, [allImages.length, isEnlarged]);
 
-  function addToCart() {
+  function addToCart(productToAdd?: any) {
+    const p = productToAdd || product;
     addItem({
-      id: product.id,
-      name: product.name,
-      brand: product.brand?.name,
-      category: product.category?.name,
-      price: (product.salePriceCents || product.priceCents) / 100,
-      imageUrl: product.mainImage,
+      id: p.id,
+      name: p.name,
+      brand: p.brand?.name,
+      category: p.category?.name,
+      price: (p.salePriceCents || p.priceCents) / 100,
+      imageUrl: p.mainImage,
     }, 1);
-    toast.success(`${product.name} added to cart`);
+    toast.success(`${p.name} added to cart`);
   }
 
-  async function orderNow() {
+  async function orderNow(productToOrder?: any) {
+    const p = productToOrder || product;
     if (!hasAddress) {
       toast.error(t.cart.addressRequired, { duration: 3000 });
       router.push("/account/address");
@@ -69,8 +73,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          items: [{ productId: product.id, quantity: 1 }] 
+        body: JSON.stringify({
+          items: [{ productId: p.id, quantity: 1 }]
         }),
       });
       const data = await res.json();
@@ -82,7 +86,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       }
     } catch (err: any) {
       toast.error(err.message, { id: tid });
-      addToCart();
+      addToCart(p);
       router.push("/cart");
     }
   }
@@ -307,29 +311,25 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               <div className="h-[1px] flex-1 bg-black/5" />
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
               {recommendations.map((rec, idx) => (rec &&
-                <motion.div
+                <ProductCard
                   key={rec.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  viewport={{ once: true }}
-                >
-                   {/* Simplified Product Card for recommendations - actual ProductCard needs props we might not want to drill deep */}
-                  <div className="group relative">
-                    <div className="aspect-[4/5] rounded-[2rem] overflow-hidden bg-black/5 transition-transform duration-500 group-hover:scale-[1.02]">
-                       <Link href={`/products/${rec.id}`}>
-                        <Image src={rec.mainImage || "/placeholder-product.png"} alt={rec.name} fill className="object-cover" />
-                       </Link>
-                    </div>
-                    <div className="mt-6 space-y-2">
-                      <div className="text-[9px] font-black uppercase tracking-[0.2em] text-black/30">{rec.brand?.name}</div>
-                      <Link href={`/products/${rec.id}`} className="text-lg font-bold block hover:underline leading-tight">{rec.name}</Link>
-                      <Price amount={(rec.salePriceCents || rec.priceCents) / 100} className="text-sm font-black" />
-                    </div>
-                  </div>
-                </motion.div>
+                  product={{
+                    ...rec,
+                    price: rec.priceCents / 100,
+                    discountPrice: rec.salePriceCents ? rec.salePriceCents / 100 : undefined,
+                    imageUrl: rec.mainImage,
+                    brand: rec.brand?.name,
+                    averageRating: rec.averageRating,
+                    ratingCount: rec.ratingCount,
+                    stockQuantity: rec.stockQuantity,
+                    totalSales: rec.totalSales,
+                  }}
+                  onQuickView={(p) => setQuickView(p)}
+                  onAddToCart={(p) => addToCart(p)}
+                  onOrderNow={(p) => orderNow(p)}
+                />
               ))}
             </div>
           </section>
@@ -405,6 +405,14 @@ export default function ProductPageClient({ product, recommendations }: ProductP
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ProductQuickViewModal
+        product={quickView}
+        onClose={() => setQuickView(null)}
+        onAddToCart={(p) => addToCart(p)}
+        onOrderNow={(p) => orderNow(p)}
+        onMoreDetails={(productId) => router.push(`/products/${productId}`)}
+      />
     </div>
   );
 }

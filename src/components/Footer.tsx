@@ -6,6 +6,7 @@ import { ArrowRight, ChevronDown, Facebook, Instagram, Mail, Phone, Clock, Messa
 import Link from "next/link";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Logo } from "./Logo";
 
 export function Footer() {
   const { currentLanguage } = useLanguageStore();
@@ -67,6 +68,14 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-12 md:py-20 lg:py-24">
         <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-8 lg:gap-16 xl:gap-20">
           
+          {/* Logo Section */}
+          <div className="flex flex-col items-center lg:items-start">
+            <Logo className="mb-4" />
+            <p className="text-xs font-medium text-white/50 text-center lg:text-left max-w-[200px]">
+              Discover the essence of natural beauty with our premium skincare collection.
+            </p>
+          </div>
+
           {/* Left text */}
           <div className="text-center lg:text-left max-w-lg w-full">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-white/40 mb-3">

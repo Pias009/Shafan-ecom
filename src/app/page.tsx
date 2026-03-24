@@ -1,5 +1,5 @@
 import HomeClient from "./HomeClient";
-import { getProducts } from "@/lib/products";
+import { getProducts, getNewArrivals } from "@/lib/products";
 import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
 
@@ -7,7 +7,10 @@ export const dynamic = 'force-dynamic'; // Force dynamic rendering due to useSea
 export const revalidate = 0; // No ISR when dynamic
 
 export default async function HomePage() {
-  const products = await getProducts();
+  const [products, newArrivals] = await Promise.all([
+    getProducts(),
+    getNewArrivals()
+  ]);
   
   return (
     <Suspense fallback={
@@ -15,7 +18,7 @@ export default async function HomePage() {
         <Loader size="lg" />
       </div>
     }>
-      <HomeClient initialProducts={products} />
+      <HomeClient initialProducts={products} newArrivals={newArrivals} />
     </Suspense>
   );
 }

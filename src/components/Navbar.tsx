@@ -12,61 +12,7 @@ import { LanguageSelector } from "./LanguageSelector";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-
-// Flower button logo component
-function Logo() {
-  return (
-    <div className="logo-btn">
-      <div className="wrapper">
-        <div className="text text-black font-extrabold tracking-tighter drop-shadow-lg">
-          SHANFA
-        </div>
-        {/* Flower 1 */}
-        <div className="flower flower1">
-          <div className="petal"></div>
-          <div className="petal two"></div>
-          <div className="petal three"></div>
-          <div className="petal four"></div>
-        </div>
-        {/* Flower 2 */}
-        <div className="flower flower2">
-          <div className="petal"></div>
-          <div className="petal two"></div>
-          <div className="petal three"></div>
-          <div className="petal four"></div>
-        </div>
-        {/* Flower 3 */}
-        <div className="flower flower3">
-          <div className="petal"></div>
-          <div className="petal two"></div>
-          <div className="petal three"></div>
-          <div className="petal four"></div>
-        </div>
-        {/* Flower 4 */}
-        <div className="flower flower4">
-          <div className="petal"></div>
-          <div className="petal two"></div>
-          <div className="petal three"></div>
-          <div className="petal four"></div>
-        </div>
-        {/* Flower 5 */}
-        <div className="flower flower5">
-          <div className="petal"></div>
-          <div className="petal two"></div>
-          <div className="petal three"></div>
-          <div className="petal four"></div>
-        </div>
-        {/* Flower 6 */}
-        <div className="flower flower6">
-          <div className="petal"></div>
-          <div className="petal two"></div>
-          <div className="petal three"></div>
-          <div className="petal four"></div>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Logo } from "./Logo";
 
 export function Navbar() {
   const { data: session, status } = useSession();
@@ -168,18 +114,36 @@ export function Navbar() {
         scrolled ? "glass-nav shadow-md" : "bg-transparent"
       } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-2 flex items-center justify-center">
-        {/* All navbar elements grouped together in a centered container */}
-        <div className="flex items-center justify-center w-full gap-3 md:gap-6 lg:gap-8">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 py-2 flex items-center">
+        {/* Mobile layout: Logo centered, hamburger on right */}
+        <div className="flex items-center justify-between w-full lg:hidden">
+          {/* Empty div for spacing to center logo */}
+          <div className="w-6"></div>
+          
+          {/* Logo centered */}
+          <div className="flex-shrink-0">
+            <Logo />
+          </div>
+          
+          {/* Mobile hamburger on right */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2 text-black"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Desktop layout */}
+        <div className="hidden lg:flex items-center justify-center w-full gap-3 md:gap-6 lg:gap-8">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-xl md:text-2xl lg:text-3xl font-black italic tracking-tight text-black hover:opacity-80 transition-opacity">
-              <Logo />
-            </Link>
+            <Logo />
           </div>
 
           {/* Navigation - Desktop only */}
-          <div className="hidden lg:flex items-center justify-center flex-1">
+          <div className="flex items-center justify-center flex-1">
             <div className="glass-panel rounded-full px-6 py-2 max-w-3xl">
               <div className="flex items-center gap-1 md:gap-2">
                 {navLinks.map((link) => {
@@ -211,7 +175,7 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Actions (Currency, Language, Cart, User) */}
+          {/* Actions (Currency, Language, Cart, User) - Desktop only */}
           <div className="flex items-center gap-2 md:gap-4">
             {/* Currency/Language selectors (desktop) */}
             <div className="hidden md:flex items-center gap-3">
@@ -243,15 +207,6 @@ export function Navbar() {
               </button>
               <UserDropdown open={userMenuOpen} onClose={() => setUserMenuOpen(false)} />
             </div>
-
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 text-black md:hidden"
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
           </div>
         </div>
       </div>

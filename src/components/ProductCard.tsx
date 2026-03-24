@@ -1,9 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { ShoppingBag, Star, Package, TrendingUp } from "lucide-react";
-import { motion } from "framer-motion";
+import { ShoppingBag, Star, Package, ShoppingCart } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -52,121 +50,153 @@ export function ProductCard({
     ? product.brand
     : product.brand?.name || "Shafan Global";
 
+  // Generate star rating display
+  const renderStars = (rating: number = 0) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<Star key={i} size={12} className="text-yellow-400 fill-yellow-400" />);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<Star key={i} size={12} className="text-yellow-400 fill-yellow-400 opacity-50" />);
+      } else {
+        stars.push(<Star key={i} size={12} className="text-gray-300" />);
+      }
+    }
+    return stars;
+  };
+
   return (
-    <div className={`glass-panel-heavy ${compact ? 'rounded-lg md:rounded-xl' : 'rounded-[1.5rem] md:rounded-[2rem]'} overflow-hidden transition-all duration-500 hover:scale-[1.02] group border border-black/5 shadow-sm hover:shadow-xl relative z-10`}>
-      {/* Image Container */}
-      <button
-        type="button"
-        onClick={() => onQuickView(product)}
-        className="block w-full text-left relative aspect-square overflow-hidden bg-black/[0.02]"
-      >
-        <Image
-          src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}
-          alt={product.name}
-          fill
-          sizes={compact ? "(max-width: 768px) 50vw, 200px" : "(max-width: 768px) 100vw, 400px"}
-          className="object-cover transition-transform duration-1000 group-hover:scale-110"
-          priority={false}
-        />
+    <div className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden ${compact ? 'w-[160px]' : 'w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]'} mx-auto flex flex-col`}>
+      {/* Image Section */}
+      <div className="relative overflow-hidden h-[150px] sm:h-[170px] md:h-[190px] w-full bg-gray-50 flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => onQuickView(product)}
+          className="w-full h-full relative block"
+        >
+          <Image
+            src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 200px, (max-width: 768px) 290px, 360px"
+            className="object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
+            priority={false}
+          />
 
-        {/* Badges */}
-        <div className={`absolute ${compact ? 'top-1 left-1' : 'top-2 md:top-4 left-2 md:left-4'} flex flex-col gap-1`}>
-          {product.hot && (
-            <span className={`bg-black text-white ${compact ? 'text-[6px] px-1 py-0.5' : 'text-[7px] md:text-[10px] px-1.5 md:px-3 py-0.5 md:py-1.5'} font-black uppercase tracking-widest rounded-full shadow-lg`}>
-              {t.home.trendingNow}
-            </span>
-          )}
-          {hasDiscount && (
-            <span className={`bg-white/90 backdrop-blur-md text-black ${compact ? 'text-[6px] px-1 py-0.5' : 'text-[7px] md:text-[10px] px-1.5 md:px-3 py-0.5 md:py-1.5'} font-black uppercase tracking-widest rounded-full shadow-lg border border-black/5`}>
-              Sale
-            </span>
-          )}
-        </div>
-
-        {/* Price Tag on Image */}
-        <div className={`absolute ${compact ? 'bottom-0.5 right-0.5' : 'bottom-1 md:bottom-2 right-1 md:right-2'}`}>
-          <div className={`bg-white/90 backdrop-blur-xl ${compact ? 'px-1.5 py-1 rounded-lg' : 'px-2.5 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl'} shadow-2xl border border-black/5 flex flex-col items-end`}>
-            {hasDiscount && (
-              <Price amount={product.price} className={`${compact ? 'text-[6px]' : 'text-[8px] md:text-[10px]'} text-red-500 line-through font-black leading-none mb-0.5`} showSymbolSmall />
+          {/* Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
+            {product.hot && (
+              <span className="bg-black text-white text-[8px] px-2 py-1 font-black uppercase tracking-widest rounded-full shadow-lg">
+                {t.home.trendingNow}
+              </span>
             )}
-            <Price amount={price} className={`${compact ? 'text-xs' : 'text-base md:text-xl'} font-black text-black leading-none block`} showSymbolSmall />
+            {hasDiscount && (
+              <span className="bg-white/90 backdrop-blur-md text-black text-[8px] px-2 py-1 font-black uppercase tracking-widest rounded-full shadow-lg border border-black/5">
+                Sale
+              </span>
+            )}
           </div>
-        </div>
-      </button>
+        </button>
 
-      {/* Product Info */}
-      <div className={`${compact ? 'p-1.5 space-y-0.5' : 'p-2.5 md:p-4 space-y-1 md:space-y-2'}`}>
-        <div className="flex justify-between items-start">
-          <div className="space-y-0 w-full">
-            <Link href={`/products/${product.id}`} className={`${compact ? 'hidden' : 'hidden md:block'} text-[10px] font-black font-body text-black/30 uppercase tracking-[0.2em] hover:text-black transition-colors`}>
-              {brandName}
-            </Link>
-            <Link href={`/products/${product.id}`} className="block">
-              <h3 className={`font-display ${compact ? 'text-[10px] font-semibold' : 'text-[13px] md:text-lg font-bold'} text-black leading-tight line-clamp-1 group-hover:text-black/70 transition-colors`}>
-                {product.name}
-              </h3>
-            </Link>
+        {/* Hover Background */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
 
-            {/* Rating, Sales & Stock Info - Hidden on mobile to save height */}
-            <div className={`${compact ? 'hidden' : 'hidden md:flex'} flex-wrap items-center gap-3 text-xs text-black/60 pt-1`}>
-              {product.averageRating !== undefined && product.ratingCount !== undefined && (
-                <div className="flex items-center gap-1">
-                  <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                  <span className="font-bold">{product.averageRating.toFixed(1)}</span>
-                  <span className="opacity-50">({product.ratingCount})</span>
-                </div>
-              )}
-              {product.totalSales ? (
-                <div className="flex items-center gap-1">
-                  <TrendingUp size={12} className="text-blue-500" />
-                  <span className="font-medium">{product.totalSales} {t.product.sold}</span>
-                </div>
-              ) : null}
-              {product.stockQuantity !== undefined && (
-                <div className="flex items-center gap-1">
-                  <Package size={12} className={product.stockQuantity > 0 ? "text-emerald-500" : "text-red-500"} />
-                  <span className="font-medium text-xs">
-                    {product.stockQuantity > 0 ? `${product.stockQuantity} ${t.product.inStock}` : t.product.outOfStock}
-                  </span>
-                </div>
-              )}
-            </div>
+        {/* Cart Overlay - Shows on Hover */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col items-center justify-center">
+          {/* Price - Shows on Hover */}
+          <div className="mb-4 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
+            <Price amount={price} showSymbolSmall />
           </div>
-        </div>
-
-        <div className={`${compact ? 'pt-0.5' : 'pt-1 md:pt-2'}`}>
-          <div className="flex gap-1 w-full items-center">
+          
+          {/* Action Buttons - Vertical View */}
+          <div className="flex flex-col gap-2 sm:gap-3 transition-all duration-600 ease-out delay-200 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onAddToCart(product);
+                onOrderNow?.(product);
               }}
-              className={`${compact ? 'w-7 h-7 rounded-md' : 'w-9 h-9 md:w-10 md:h-10 rounded-lg md:rounded-xl'} bg-white text-black border border-black/10 transition-all duration-300 hover:scale-110 active:scale-90 shadow-lg shadow-black/10 flex items-center justify-center shrink-0`}
-              title={t.product.addToCart}
+              className="bg-white text-emerald-600 px-3 sm:px-4 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 pointer-events-auto whitespace-nowrap"
             >
-              <ShoppingBag size={compact ? 12 : 16} />
+              {t.product.orderNow || "Order NOW"}
             </button>
-            {onOrderNow && (
-              <div className={`flex-1 relative ${compact ? 'h-7' : 'h-9 md:h-12'} flex items-center justify-center`}>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOrderNow(product);
-                  }}
-                  className="btn-53 w-full h-full"
-                >
-                  <span className="original">{t.product.orderNow}</span>
-                  <div className="letters">
-                    {Array.from("FAST").map((letter, index) => (
-                      <span key={index}>{letter}</span>
-                    ))}
-                  </div>
-                </button>
-              </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickView(product);
+              }}
+              className="bg-white text-black px-3 sm:px-4 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-100 active:scale-95 pointer-events-auto whitespace-nowrap"
+            >
+              {t.product.quickView || "Quick View"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Info Section */}
+      <div className="p-3 sm:p-4 bg-white flex flex-col flex-1 min-h-0">
+        {/* Price and Stock Info Row */}
+        <div className="flex items-center justify-between mb-2 flex-shrink-0">
+          <div className="flex items-baseline gap-2">
+            <Price amount={price} className="text-sm sm:text-base font-black text-black" />
+            {hasDiscount && (
+              <Price amount={product.price} className="text-xs text-red-500 line-through font-bold" />
             )}
           </div>
+          
+          {/* Stock Status - Moved to top right */}
+          {product.stockQuantity !== undefined && (
+            <div className="flex items-center gap-1.5 bg-gray-50/50 px-2 py-1 rounded-lg">
+              <Package size={10} className={product.stockQuantity > 0 ? "text-emerald-500" : "text-red-500"} />
+              <span className={`text-[9px] sm:text-[10px] font-semibold ${product.stockQuantity > 0 ? "text-emerald-700" : "text-red-600"}`}>
+                {product.stockQuantity > 0 ? `${product.stockQuantity}` : t.product.outOfStock}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Product Name */}
+        <h3 className="font-display text-xs sm:text-sm font-bold text-black leading-tight line-clamp-2 mb-1 overflow-hidden">
+          {product.name}
+        </h3>
+        
+        {/* Brand Name */}
+        <p className="font-body text-[8px] sm:text-[9px] uppercase text-gray-500 tracking-wider mb-2 flex-shrink-0">
+          {brandName}
+        </p>
+
+        {/* Star Rating */}
+        <div className="flex items-center gap-1.5 mb-2 flex-shrink-0">
+          <div className="flex">
+            {renderStars(product.averageRating || 0)}
+          </div>
+          {product.ratingCount !== undefined && (
+            <span className="text-[10px] text-gray-500 font-medium">
+              ({product.ratingCount})
+            </span>
+          )}
+        </div>
+
+        {/* Action Buttons - Always Visible (Horizontal Row) */}
+        <div className="flex justify-center flex-shrink-0">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart(product);
+            }}
+            className="add-to-cart-btn w-full max-w-full"
+            title={t.product.addToCart || "Add to Cart"}
+          >
+            <span className="text">{t.product.addToCart || "Add to Cart"}</span>
+            <span className="icon">
+              <ShoppingCart size={14} />
+            </span>
+          </button>
         </div>
       </div>
     </div>

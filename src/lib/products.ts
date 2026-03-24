@@ -137,6 +137,88 @@ export async function invalidateProductCache(productId: string): Promise<void> {
   // Redis removed
 }
 
+// Function to fetch new arrival products (latest 4 products)
+export async function getNewArrivals(storeCode?: string, limit: number = 4) {
+  try {
+    let dbProducts: any[] = [];
+    
+    if (storeCode) {
+      const inventories = await (prisma as any).storeInventory.findMany({
+        where: {
+          store: { code: storeCode }
+        },
+        include: {
+          product: {
+            include: {
+              brand: true,
+              category: true,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          }
+        },
+        take: limit,
+      });
+      dbProducts = inventories.map((inv: any) => ({
+        ...inv.product,
+        priceCents: Math.round(inv.price * 100),
+        discountCents: null,
+        stockQuantity: inv.quantity
+      })).filter((p: any) => p.active);
+    } else {
+      dbProducts = await prisma.product.findMany({
+        where: {
+          active: true,
+        },
+        include: {
+          brand: true,
+          category: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+      });
+    }
+
+    const products = dbProducts.map((p: any) => {
+      const regularPrice = p.priceCents / 100;
+      const salePrice = p.discountCents ? (p.priceCents - p.discountCents) / 100 : null;
+      
+      const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
+      const galleryImages = (p.images || []).filter(isValidImageUrl);
+
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description || "",
+        features: p.features || [],
+        images: galleryImages,
+        mainImage: mainImage,
+        stockQuantity: p.stockQuantity || 0,
+        averageRating: p.averageRating || 0,
+        ratingCount: p.ratingCount || 0,
+        totalSales: p.totalSales || 0,
+        priceCents: p.discountCents ? (p.priceCents - p.discountCents) : p.priceCents,
+        regularPriceCents: p.priceCents,
+        salePriceCents: p.discountCents ? (p.priceCents - p.discountCents) : null,
+        currency: p.currency.toUpperCase(),
+        active: p.active,
+        hot: p.hot,
+        trending: p.trending,
+        brand: p.brand ? { name: p.brand.name } : null,
+        category: p.category ? { name: p.category.name } : null,
+      };
+    });
+
+    return products;
+  } catch (error) {
+    console.error("Prisma New Arrivals Fetch Error:", error);
+    return [];
+  }
+}
+
 // Function to invalidate all product caches (stubbed out)
 export async function invalidateAllProductCaches(): Promise<void> {
   // Redis removed
