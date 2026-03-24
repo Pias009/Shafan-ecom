@@ -326,7 +326,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
               </AnimatePresence>
 
               <div className="w-full flex justify-center overflow-x-hidden">
-                <div className="grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 w-full max-w-7xl px-3 sm:px-4">
+                <div className="grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 w-full max-w-7xl px-3 sm:px-4">
                   {filtered.slice(0, 10).map((p, idx) => (
                     <HomeProductCard
                       key={p.id}

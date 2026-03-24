@@ -51,7 +51,7 @@ export function HomeProductCard({
     : product.brand?.name || "Shafan Global";
 
   return (
-    <div className={`el-wrapper group ${compact ? 'w-full max-w-[140px]' : 'w-full max-w-[160px] sm:max-w-[180px] md:max-w-[200px] lg:max-w-[220px]'} mx-auto bg-white shadow-lg hover:shadow-2xl active:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-[280px] sm:h-auto`}>
+    <div className={`el-wrapper group ${compact ? 'w-[140px]' : 'w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px]'} mx-auto bg-white shadow-lg hover:shadow-2xl active:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-[280px] sm:h-[300px] md:h-[320px] lg:h-[340px]`}>
       {/* Box Up - Image Section */}
       <div className="box-up relative overflow-hidden h-[140px] sm:h-[160px] md:h-[180px] lg:h-[200px] w-full bg-gray-50 flex-shrink-0">
         <button
