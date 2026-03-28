@@ -177,6 +177,9 @@ model Order {
   billingAddress        Json?
   shippingAddress       Json?
   stripePaymentIntentId String?
+  tabbyPaymentId        String?
+  tabbySessionId        String?
+  tamaraCheckoutId      String?
   discountId            String?         @db.ObjectId // Applied discount
   discount              Discount?       @relation(fields: [discountId], references: [id])
   discountAmountCents   Int? // Amount saved from discount in cents
@@ -454,4 +457,69 @@ model PerformanceMetric {
   @@index([sessionId])
   @@index([name])
   @@index([timestamp])
+}
+
+// ==================== SUPER SECRET DEVELOPER PANEL ====================
+// Master lock state for the entire website
+model WebsiteLock {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  isLocked    Boolean  @default(false)
+  lockedAt    DateTime?
+  lockedBy    String?  // User ID or system identifier
+  lockReason  String?
+  unlockToken String   @unique // Cryptographic token required for unlock
+  
+  // Emergency bypass (only for extreme cases)
+  emergencyBypassCode String? @unique
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([isLocked])
+}
+
+// Master authentication for the secret panel
+model MasterAuth {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  masterId     String   @unique // Cryptographic master ID
+  tokenHash    String   // Hashed authentication token
+  salt         String   // Salt for token hashing
+  lastUsed     DateTime?
+  lastIp       String?
+  isActive     Boolean  @default(true)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// Audit logs for all lock/unlock actions
+model LockAuditLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  action      String   // "LOCK", "UNLOCK", "LOGIN", "LOGOUT", "ACCESS_DENIED"
+  masterId    String?  // Reference to MasterAuth
+  ipAddress   String
+  userAgent   String?
+  metadata    Json?    // Additional context (userId, path, etc.)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([action])
+  @@index([masterId])
+  @@index([createdAt])
+}
+
+// Secret URL access tracking
+model SecretAccessLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  path        String   // The secret path accessed
+  ipAddress   String
+  userAgent   String?
+  success     Boolean  @default(false) // Whether access was granted
+  reason      String?  // Reason for denial if success=false
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([path])
+  @@index([success])
+  @@index([createdAt])
 }

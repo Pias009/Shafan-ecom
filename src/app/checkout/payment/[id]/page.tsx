@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, CreditCard, Landmark, Smartphone, Loader2, ArrowRight } from "lucide-react";
+import { CheckCircle2, CreditCard, Smartphone, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// Stripe Imports
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm from "@/components/StripePaymentForm";
@@ -15,18 +14,32 @@ import { Price } from "@/components/Price";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
+type PaymentMethod = "card" | "bkash" | "tabby" | "tamara";
+
+interface TabbyProduct {
+  type: string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
 export default function CustomPaymentPage() {
   const { id } = useParams() as { id: string };
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [method, setMethod] = useState("card");
+  const [method, setMethod] = useState<PaymentMethod>("card");
+  const [tabbyProducts, setTabbyProducts] = useState<TabbyProduct[]>([]);
+  const [tabbyLoading, setTabbyLoading] = useState(false);
+  const [tamaraLoading, setTamaraLoading] = useState(false);
+
+  const isMENA = order?.shippingAddress?.country?.toUpperCase() in {
+    AE: true, SA: true, KW: true
+  };
 
   useEffect(() => {
     async function fetchOrderAndStripe() {
       try {
-        // Parallelize fetching Prisma order and Stripe intent
         const [orderRes, stripeRes] = await Promise.all([
           fetch(`/api/orders/${id}`),
           fetch("/api/payments/stripe/create-intent", {
@@ -53,23 +66,59 @@ export default function CustomPaymentPage() {
     fetchOrderAndStripe();
   }, [id, router]);
 
+  const handleTabbyPayment = async () => {
+    setTabbyLoading(true);
+    try {
+      const res = await fetch("/api/payments/tabby/create-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: id }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.webUrl) {
+        window.location.href = data.webUrl;
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initialize Tabby payment");
+      setTabbyLoading(false);
+    }
+  };
+
+  const handleTamaraPayment = async () => {
+    setTamaraLoading(true);
+    try {
+      const res = await fetch("/api/payments/tamara/create-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: id }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initialize Tamara payment");
+      setTamaraLoading(false);
+    }
+  };
+
   if (loading || !order) return (
     <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-4 p-6 text-center">
       <Loader2 className="w-10 h-10 animate-spin text-black/20" />
-      <p className="font-body text-[10px] md:text-xs font-bold uppercase tracking-widest text-black/40">Securely loading your order (Prisma)...</p>
+      <p className="font-body text-[10px] md:text-xs font-bold uppercase tracking-widest text-black/40">Securely loading your order...</p>
     </div>
   );
 
   const billing = order.billingAddress || {};
   const shipping = order.shippingAddress || {};
+  const currency = order.currency?.toUpperCase() || "USD";
 
   return (
     <div className="min-h-screen bg-cream text-black">
-      {/* Navbar handled globally */}
-
       <main className="max-w-6xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
-  <div className="grid gap-8 lg:grid-cols-12">
-          {/* Main Payment UI */}
+        <div className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-12 xl:col-span-8 space-y-6 md:space-y-8 order-1 w-full overflow-x-hidden">
             <div className="text-center xl:text-left">
               <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-black">Secure Payment</h1>
@@ -88,11 +137,43 @@ export default function CustomPaymentPage() {
                     <CreditCard size={20} className="md:w-6 md:h-6" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-base md:text-lg">Stripe Pay</div>
-                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Credit / Debit Card</div>
+                    <div className="font-bold text-base md:text-lg">Credit Card</div>
+                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Visa, Mastercard</div>
                   </div>
                   {method === "card" && <CheckCircle2 className="text-black" size={18} />}
                 </div>
+
+                {isMENA && (
+                  <>
+                    <div 
+                      onClick={() => setMethod("tabby")}
+                      className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                    >
+                      <div className={`p-2.5 md:p-3 rounded-2xl ${method === "tabby" ? "bg-black text-white" : "bg-black/5"}`}>
+                        <span className="text-sm font-black">T</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-base md:text-lg">Tabby</div>
+                        <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay in 4 installments</div>
+                      </div>
+                      {method === "tabby" && <CheckCircle2 className="text-black" size={18} />}
+                    </div>
+
+                    <div 
+                      onClick={() => setMethod("tamara")}
+                      className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                    >
+                      <div className={`p-2.5 md:p-3 rounded-2xl ${method === "tamara" ? "bg-black text-white" : "bg-black/5"}`}>
+                        <span className="text-sm font-black">TM</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-base md:text-lg">Tamara</div>
+                        <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay later in installments</div>
+                      </div>
+                      {method === "tamara" && <CheckCircle2 className="text-black" size={18} />}
+                    </div>
+                  </>
+                )}
 
                 <div 
                   onClick={() => setMethod("bkash")}
@@ -110,15 +191,8 @@ export default function CustomPaymentPage() {
               </div>
             </div>
 
-            {/* Dynamic Payment Forms */}
             <div className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-black/5 bg-white shadow-xl">
-              {!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
-                <div className="p-4 bg-red-50 text-red-500 rounded-xl text-xs font-bold uppercase tracking-widest text-center border border-red-100">
-                  CRITICAL: Stripe Publishable Key is missing in environment variables.
-                </div>
-              )}
-              
-              {method === "card" && clientSecret ? (
+              {method === "card" && clientSecret && (
                 <Elements 
                   key={clientSecret} 
                   stripe={stripePromise} 
@@ -134,12 +208,78 @@ export default function CustomPaymentPage() {
                 >
                   <StripePaymentForm orderId={id} />
                 </Elements>
-              ) : method === "card" ? (
+              )}
+
+              {method === "card" && !clientSecret && (
                 <div className="py-12 text-center flex flex-col items-center">
                   <Loader2 className="w-8 h-8 animate-spin text-black/20 mb-3" />
                   <p className="text-[10px] font-bold uppercase tracking-widest text-black/30 text-center">Initializing Stripe Elements...</p>
                 </div>
-              ) : (
+              )}
+
+              {method === "tabby" && (
+                <div className="py-8 text-center space-y-6 max-w-md mx-auto">
+                  <div className="space-y-2">
+                    <p className="font-bold text-lg">Pay with Tabby</p>
+                    <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
+                      Split your payment into 4 interest-free installments. No hidden fees.
+                    </p>
+                  </div>
+                  <div className="bg-black/5 rounded-2xl p-4 space-y-2">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Order Total</div>
+                    <div className="font-black text-2xl">
+                      <Price amount={order.totalCents / 100} />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleTabbyPayment}
+                    disabled={tabbyLoading}
+                    className="w-full h-14 md:h-16 rounded-full bg-[#10b982] hover:bg-[#059669] text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-black/20 disabled:opacity-50 flex items-center justify-center gap-3"
+                  >
+                    {tabbyLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Redirecting to Tabby...
+                      </>
+                    ) : (
+                      "Continue with Tabby"
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {method === "tamara" && (
+                <div className="py-8 text-center space-y-6 max-w-md mx-auto">
+                  <div className="space-y-2">
+                    <p className="font-bold text-lg">Pay with Tamara</p>
+                    <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
+                      Buy now, pay later with 0% interest. Easy monthly payments.
+                    </p>
+                  </div>
+                  <div className="bg-black/5 rounded-2xl p-4 space-y-2">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Order Total</div>
+                    <div className="font-black text-2xl">
+                      <Price amount={order.totalCents / 100} />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleTamaraPayment}
+                    disabled={tamaraLoading}
+                    className="w-full h-14 md:h-16 rounded-full bg-[#f59e0b] hover:bg-[#d97706] text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-black/20 disabled:opacity-50 flex items-center justify-center gap-3"
+                  >
+                    {tamaraLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Redirecting to Tamara...
+                      </>
+                    ) : (
+                      "Continue with Tamara"
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {method === "bkash" && (
                 <div className="py-8 text-center space-y-6 max-w-md mx-auto">
                   <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
                     Please send the total amount to our bKash/Nagad number <strong className="text-black font-black">+880123456789</strong> and include your order ID <strong className="text-black font-black">#{id.substring(0,8)}</strong> in the reference.
@@ -155,7 +295,6 @@ export default function CustomPaymentPage() {
             </div>
           </div>
 
-          {/* Order Summary Sidebar */}
           <div className="lg:col-span-12 xl:col-span-4 order-2 xl:order-2 w-full md:w-auto overflow-x-hidden">
             <div className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 border border-black/5 md:sticky top-24 xl:top-32 shadow-2xl space-y-6 md:space-y-8 bg-white/50 backdrop-blur-sm">
               <h3 className="font-bold text-lg md:text-xl">Order Summary</h3>
