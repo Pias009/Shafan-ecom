@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 
 export type AuditAction =
   | "SUPERADMIN_LOGIN"
+  | "MASTER_ADMIN_LOGIN"
   | "ADMIN_INVITE"
   | "ROLE_CHANGE"
   | "ADMIN_REMOVAL"
@@ -50,16 +51,24 @@ export async function logSecurityAudit(entry: AuditLogEntry) {
 
 /**
  * Check if user has MFA enabled (for super admin enforcement)
+ * Master admin is exempt from MFA requirement
  */
 export async function requireMFAForSuperAdmin(userId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { mfaEnabled: true, role: true }
+    select: { mfaEnabled: true, role: true, email: true }
   });
 
   if (!user) return false;
   
-  // Super admins must have MFA enabled
+  // Check if this is the master admin (exempt from MFA)
+  const MASTER_ADMIN_EMAIL = process.env.MASTER_ADMIN_EMAIL;
+  if (MASTER_ADMIN_EMAIL && user.email === MASTER_ADMIN_EMAIL) {
+    console.log("Master admin detected - MFA requirement bypassed");
+    return true; // Master admin is exempt
+  }
+  
+  // Regular super admins must have MFA enabled
   if (user.role === "SUPERADMIN" && !user.mfaEnabled) {
     throw new Error("MFA required for super admin access");
   }

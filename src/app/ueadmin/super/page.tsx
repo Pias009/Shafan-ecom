@@ -1,7 +1,7 @@
 
 import { prisma } from "@/lib/prisma";
 import SuperGuard from "../_components/SuperGuard";
-import { Users, Truck, Package, ShieldCheck, Mail, ArrowRight, UserPlus, Info } from "lucide-react";
+import { Users, Truck, Package, ShieldCheck, Mail, ArrowRight, UserPlus, Info, AlertCircle, Clock } from "lucide-react";
 import Link from "next/link";
 import { OrderStatus } from "@prisma/client";
 import { inviteAdmin } from "./actions";
@@ -13,10 +13,11 @@ export default async function SuperAdminConsole() {
     admins,
     ordersCount,
     inventoryCount,
-    recentInvites
+    recentInvites,
+    pendingApprovals
   ] = await Promise.all([
-    prisma.user.findMany({ 
-      where: { role: { in: ['ADMIN', 'SUPERADMIN'] } } 
+    prisma.user.findMany({
+      where: { role: { in: ['ADMIN', 'SUPERADMIN'] } }
     }),
     prisma.order.count(),
     prisma.product.count(),
@@ -24,6 +25,9 @@ export default async function SuperAdminConsole() {
       where: { role: 'ADMIN', passwordHash: null }, // Simple invite flag
       take: 5,
       orderBy: { createdAt: 'desc' }
+    }),
+    prisma.loginApproval.count({
+      where: { status: "PENDING" }
     })
   ]);
 
@@ -82,6 +86,32 @@ export default async function SuperAdminConsole() {
            </div>
         </div>
 
+        {/* Pending Approvals Alert */}
+        {pendingApprovals > 0 && (
+          <div className="glass-panel-heavy p-8 rounded-[2.5rem] border border-orange-200 bg-orange-50 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-500 rounded-2xl text-white">
+                  <AlertCircle size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-orange-900">Pending Login Approvals</h3>
+                  <p className="text-sm text-orange-700/70">
+                    {pendingApprovals} admin login request{pendingApprovals !== 1 ? 's' : ''} waiting for your review
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/ueadmin/super/approvals"
+                className="px-6 py-3 bg-orange-500 text-white rounded-2xl font-bold text-sm hover:bg-orange-600 transition-all flex items-center gap-2"
+              >
+                <Clock size={16} />
+                Review Now
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-12 gap-10">
            {/* Section 1: Admin Controls */}
            <section className="lg:col-span-12 space-y-6">
@@ -89,7 +119,15 @@ export default async function SuperAdminConsole() {
                  <h3 className="text-xl font-bold flex items-center gap-3">
                     <Users size={20} className="text-black/30" /> Admin Controls
                  </h3>
-                 <Link href="/ueadmin/super/admins" className="text-[10px] font-black uppercase tracking-widest text-black/30 hover:text-black transition">Manage Permissions</Link>
+                 <div className="flex gap-4">
+                   <Link href="/ueadmin/super/admins" className="text-[10px] font-black uppercase tracking-widest text-black/30 hover:text-black transition">Manage Permissions</Link>
+                   {pendingApprovals > 0 && (
+                     <Link href="/ueadmin/super/approvals" className="text-[10px] font-black uppercase tracking-widest text-orange-500 hover:text-orange-600 transition flex items-center gap-1">
+                       <AlertCircle size={12} />
+                       {pendingApprovals} Pending
+                     </Link>
+                   )}
+                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-8">

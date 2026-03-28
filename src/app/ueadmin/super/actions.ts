@@ -4,13 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
-const SUPER_ADMIN_EMAIL = "pvs178380@gmail.com";
-
 export async function inviteAdmin(formData: FormData) {
   const session = await getServerAuthSession();
   
-  if (session?.user?.email !== SUPER_ADMIN_EMAIL) {
-    throw new Error("Unauthorized");
+  // Check if user is SUPERADMIN (not based on hardcoded email)
+  if (session?.user?.role !== "SUPERADMIN") {
+    throw new Error("Unauthorized: Only SUPERADMIN can invite admins");
   }
 
   const email = formData.get("email") as string;
@@ -44,8 +43,9 @@ export async function inviteAdmin(formData: FormData) {
 export async function updateAdminRole(formData: FormData) {
   const session = await getServerAuthSession();
   
-  if (session?.user?.email !== SUPER_ADMIN_EMAIL) {
-    throw new Error("Unauthorized");
+  // Check if user is SUPERADMIN (not based on hardcoded email)
+  if (session?.user?.role !== "SUPERADMIN") {
+    throw new Error("Unauthorized: Only SUPERADMIN can update admin roles");
   }
 
   const userId = formData.get("userId") as string;
@@ -53,9 +53,9 @@ export async function updateAdminRole(formData: FormData) {
 
   if (!userId || !role) throw new Error("Missing parameters");
 
-  // Prevent modifying the super admin themselves
+  // Prevent modifying super admin users (users with SUPERADMIN role)
   const targetUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (targetUser?.email === SUPER_ADMIN_EMAIL) {
+  if (targetUser?.role === "SUPERADMIN") {
     throw new Error("Cannot modify super admin role");
   }
 
@@ -70,16 +70,17 @@ export async function updateAdminRole(formData: FormData) {
 export async function deleteAdmin(formData: FormData) {
   const session = await getServerAuthSession();
   
-  if (session?.user?.email !== SUPER_ADMIN_EMAIL) {
-    throw new Error("Unauthorized");
+  // Check if user is SUPERADMIN (not based on hardcoded email)
+  if (session?.user?.role !== "SUPERADMIN") {
+    throw new Error("Unauthorized: Only SUPERADMIN can delete admins");
   }
 
   const userId = formData.get("userId") as string;
   if (!userId) throw new Error("Missing user ID");
 
-  // Prevent deleting the super admin
+  // Prevent deleting super admin users
   const targetUser = await prisma.user.findUnique({ where: { id: userId } });
-  if (targetUser?.email === SUPER_ADMIN_EMAIL) {
+  if (targetUser?.role === "SUPERADMIN") {
     throw new Error("Cannot delete super admin");
   }
 
@@ -95,8 +96,9 @@ export async function deleteAdmin(formData: FormData) {
 export async function resendInvite(formData: FormData) {
   const session = await getServerAuthSession();
   
-  if (session?.user?.email !== SUPER_ADMIN_EMAIL) {
-    throw new Error("Unauthorized");
+  // Check if user is SUPERADMIN (not based on hardcoded email)
+  if (session?.user?.role !== "SUPERADMIN") {
+    throw new Error("Unauthorized: Only SUPERADMIN can resend invites");
   }
 
   const email = formData.get("email") as string;

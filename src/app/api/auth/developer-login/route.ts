@@ -6,12 +6,28 @@ import { logSecurityAudit } from "@/lib/security-audit";
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if developer login is enabled (for safety, could be environment variable)
-    const DEV_MODE = process.env.NODE_ENV === "development" || process.env.ALLOW_DEVELOPER_LOGIN === "true";
+    // Enhanced security checks for developer login
+    const IS_DEVELOPMENT = process.env.NODE_ENV === "development";
+    const ALLOW_DEVELOPER_LOGIN = process.env.ALLOW_DEVELOPER_LOGIN === "true";
+    const IS_LOCALHOST = request.headers.get("host")?.includes("localhost") ||
+                         request.headers.get("host")?.includes("127.0.0.1") ||
+                         request.headers.get("x-forwarded-host")?.includes("localhost");
     
-    if (!DEV_MODE) {
+    // Only allow developer login in specific conditions
+    const ALLOW_ACCESS = (IS_DEVELOPMENT && IS_LOCALHOST) || ALLOW_DEVELOPER_LOGIN;
+    
+    if (!ALLOW_ACCESS) {
+      // Log attempted unauthorized developer login
+      const ipAddress = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+      console.error("UNAUTHORIZED DEVELOPER LOGIN ATTEMPT:", {
+        ip: ipAddress,
+        host: request.headers.get("host"),
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+      });
+      
       return NextResponse.json(
-        { error: "Developer login is only available in development mode" },
+        { error: "Developer login is disabled in production environment" },
         { status: 403 }
       );
     }

@@ -6,7 +6,7 @@
 Set these in Vercel Project Settings → Environment Variables:
 
 #### Core Authentication
-- `NEXTAUTH_URL` = Your production URL (e.g., https://shafan-store.vercel.app)
+- `NEXTAUTH_URL` = Your production URL (e.g., https://shanfaecom-al153sa4b-shanfaglobalit-7766s-projects.vercel.app)
 - `NEXTAUTH_SECRET` = Strong random string (min 32 chars)
 
 #### Database

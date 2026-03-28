@@ -4,9 +4,15 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create default development admin user
-  const email = "pvs178380@gmail.com";
-  const password = "pias900";
+  // Use environment variables for admin credentials
+  const email = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
+  const password = process.env.DEMO_SUPERADMIN_PASSWORD || "superadmin123";
+  
+  if (!email || !password) {
+    console.error("❌ Error: DEMO_SUPERADMIN_EMAIL and DEMO_SUPERADMIN_PASSWORD environment variables are required");
+    process.exit(1);
+  }
+  
   const hash = await bcrypt.hash(password, 12);
 
   const user = await prisma.user.upsert({
@@ -14,26 +20,29 @@ async function main() {
     update: {
       passwordHash: hash,
       role: "SUPERADMIN",
-      name: "Development Admin",
+      name: "Super Admin",
       isVerified: true,
       emailVerified: new Date(),
+      approvedBySuperAdmin: true, // Super admin is auto-approved
     },
     create: {
       email,
-      name: "Development Admin",
+      name: "Super Admin",
       passwordHash: hash,
       role: "SUPERADMIN",
       isVerified: true,
       emailVerified: new Date(),
+      approvedBySuperAdmin: true, // Super admin is auto-approved
     },
   });
 
-  console.log("✅ Development admin user created/updated:");
+  console.log("✅ Super admin user created/updated:");
   console.log("   Email   :", user.email);
-  console.log("   Password: pias900 (development only)");
+  console.log("   Password:", password.replace(/./g, '•'), "(from environment)");
   console.log("   Role    :", user.role);
   console.log("   ID      :", user.id);
   console.log("   Verified:", user.isVerified);
+  console.log("   Approved:", user.approvedBySuperAdmin);
 }
 
 main()

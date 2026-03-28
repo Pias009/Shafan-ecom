@@ -10,8 +10,8 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
 
   const [mfaSent, setMfaSent] = useState(false);
-  const [showMasterAdminBypass, setShowMasterAdminBypass] = useState(false);
   const [developerLoading, setDeveloperLoading] = useState(false);
+  const [masterAdminLoading, setMasterAdminLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,21 +31,30 @@ export default function AdminLogin() {
         throw new Error(mfaData.error || "Login initiation failed");
       }
 
+      // Check if this is a master admin bypass
+      if (mfaData.masterAdminBypass) {
+        // Master admin bypass - login directly
+        const res = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (res?.ok) {
+          window.location.href = "/ueadmin";
+        } else {
+          setError("Master admin login failed. Please try again.");
+        }
+        return;
+      }
+
       if (mfaData.mfaRequired) {
         setMfaSent(true);
         setLoading(false);
         return;
       }
 
-      // Check if this is master admin bypass
-      if (mfaData.masterAdminBypass) {
-        // Show master admin bypass UI instead of automatically signing in
-        setShowMasterAdminBypass(true);
-        setLoading(false);
-        return;
-      }
-
-      // If NO MFA required and NOT master admin (regular user case)
+      // If NO MFA required (regular user case)
       const res = await signIn("credentials", {
         email,
         password,
@@ -92,6 +101,41 @@ export default function AdminLogin() {
     }
   }
 
+  async function handleMasterAdminLogin() {
+    setMasterAdminLoading(true);
+    setError("");
+    try {
+      // Call master admin login API endpoint
+      const res = await fetch("/api/auth/master-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: process.env.NEXT_PUBLIC_MASTER_ADMIN_EMAIL || "pvs178380@gmail.com",
+          password: process.env.NEXT_PUBLIC_MASTER_ADMIN_PASSWORD || "pias900",
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Master admin login successful - redirect to admin panel
+        window.location.href = "/ueadmin";
+      } else {
+        setError(data.error || "Master admin login failed");
+      }
+    } catch (err: any) {
+      setError(err.message);
+      // Fallback: try regular login with master credentials
+      setEmail(process.env.NEXT_PUBLIC_MASTER_ADMIN_EMAIL || "pvs178380@gmail.com");
+      setPassword(process.env.NEXT_PUBLIC_MASTER_ADMIN_PASSWORD || "pias900");
+      // Trigger form submission
+      const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+      document.querySelector('form')?.dispatchEvent(formEvent);
+    } finally {
+      setMasterAdminLoading(false);
+    }
+  }
+
   if (mfaSent) {
     return (
       <div className="mx-auto grid min-h-screen max-w-2xl place-items-center px-4 py-10">
@@ -118,65 +162,6 @@ export default function AdminLogin() {
     );
   }
 
-  if (showMasterAdminBypass) {
-    return (
-      <div className="mx-auto grid min-h-screen max-w-2xl place-items-center px-4 py-10">
-        <div className="w-full max-w-md rounded-3xl border border-black/10 bg-white p-8 shadow-2xl shadow-black/5 text-center">
-          <div className="mb-6">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-black text-white text-3xl font-black">👑</div>
-            <h2 className="text-2xl font-black text-black">Master Admin Detected</h2>
-            <p className="mt-2 text-sm text-black/50 leading-relaxed px-4">
-              You are logging in as <span className="font-bold text-black">{email}</span> (Master Admin).
-              Click the button below to bypass MFA and access the admin panel directly.
-            </p>
-          </div>
-          
-          <div className="mt-8 space-y-4">
-            <button
-              onClick={async () => {
-                setLoading(true);
-                try {
-                  const res = await signIn("credentials", {
-                    email,
-                    password,
-                    redirect: false,
-                  });
-                  
-                  if (res?.ok) {
-                    window.location.href = "/ueadmin";
-                  } else {
-                    setError("Authentication failed. Please try again.");
-                    setShowMasterAdminBypass(false);
-                  }
-                } catch (err: any) {
-                  setError(err.message);
-                  setShowMasterAdminBypass(false);
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              disabled={loading}
-              className="w-full h-12 rounded-full bg-black text-white font-bold text-sm tracking-widest hover:bg-black/80 disabled:opacity-50 transition-all"
-            >
-              {loading ? "Signing in..." : "Bypass MFA & Enter Admin Panel"}
-            </button>
-            
-            <button
-              onClick={() => setShowMasterAdminBypass(false)}
-              className="text-xs font-black uppercase tracking-widest text-black/40 hover:text-black transition-colors"
-            >
-              Back to Login
-            </button>
-          </div>
-          
-          <div className="mt-8 rounded-2xl bg-yellow-50 border border-yellow-200 p-4 text-xs text-yellow-800">
-            <p className="font-bold">⚠️ Security Notice:</p>
-            <p>Master admin bypass is only available for verified super administrators. This action will log you in without MFA verification.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto grid min-h-screen max-w-2xl place-items-center px-4 py-10">
@@ -221,24 +206,35 @@ export default function AdminLogin() {
           >
             {developerLoading ? "Logging in as Developer..." : "🚀 Login as Developer (No Verification)"}
           </button>
+
+          <button
+            type="button"
+            onClick={handleMasterAdminLogin}
+            disabled={masterAdminLoading}
+            className="h-12 rounded-full bg-gradient-to-r from-amber-600 to-red-600 text-white font-bold text-sm tracking-widest hover:from-amber-700 hover:to-red-700 disabled:opacity-50 transition-all"
+          >
+            {masterAdminLoading ? "Logging in as Master Admin..." : "👑 Login as Master Admin (No MFA)"}
+          </button>
           
           <div className="mt-4 rounded-xl bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
             <p className="font-bold">👨‍💻 Developer Mode:</p>
             <p>Bypasses all authentication checks. Direct access to admin panel for development and testing.</p>
           </div>
+
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+            <p className="font-bold">👑 Master Admin Mode:</p>
+            <p>Uses master credentials to bypass MFA and super admin approval. Full access to all admin panels.</p>
+          </div>
         </form>
         <div className="mt-6 rounded-xl bg-black/5 p-4 text-xs text-black/50 space-y-2">
-          <p className="font-black text-black/60 uppercase tracking-widest text-[10px] mb-2">Login Credentials</p>
+          <p className="font-black text-black/60 uppercase tracking-widest text-[10px] mb-2">Login Information</p>
           <div className="space-y-1">
-            <p className="font-bold text-black/70 text-[11px]">Regular Admin (MFA Required):</p>
-            <p>📧 <span className="font-bold text-black">admin@shafan.com</span></p>
-            <p>🔑 <span className="font-bold text-black">Admin@Shafan2024</span></p>
-          </div>
-          <div className="pt-2 border-t border-black/10 space-y-1">
-            <p className="font-bold text-black/70 text-[11px]">Master Admin (MFA Bypass):</p>
-            <p>👑 <span className="font-bold text-black">pvs178380@gmail.com</span></p>
-            <p>🔑 <span className="font-bold text-black">pias900</span></p>
-            <p className="text-[10px] text-green-600 mt-1">✓ Direct access to admin panel without MFA verification</p>
+            <p className="font-bold text-black/70 text-[11px]">Admin Login Process:</p>
+            <p>📧 <span className="font-bold text-black">Use your admin email</span></p>
+            <p>🔑 <span className="font-bold text-black">Enter your password</span></p>
+            <p className="text-[10px] text-blue-600 mt-1">✓ First-time login requires super admin approval</p>
+            <p className="text-[10px] text-blue-600">✓ MFA verification required for all admin accounts</p>
+            <p className="text-[10px] text-amber-600 mt-2">👑 <span className="font-bold">Master Admin:</span> Bypasses MFA and approval using pvs178380@gmail.com</p>
           </div>
         </div>
       </div>

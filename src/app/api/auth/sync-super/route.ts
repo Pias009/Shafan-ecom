@@ -4,8 +4,17 @@ import bcrypt from 'bcryptjs';
 
 export async function GET() {
   try {
-    const email = "pvs178380@gmail.com";
-    const password = "superadmin123";
+    // Use environment variables for super admin credentials
+    const email = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
+    const password = process.env.DEMO_SUPERADMIN_PASSWORD || "superadmin123";
+    
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Super admin credentials not configured" },
+        { status: 500 }
+      );
+    }
+    
     const hashed = await bcrypt.hash(password, 12);
     
     const user = await prisma.user.upsert({
@@ -13,14 +22,16 @@ export async function GET() {
       update: {
         passwordHash: hashed,
         role: "SUPERADMIN",
-        isVerified: true
+        isVerified: true,
+        approvedBySuperAdmin: true
       },
       create: {
         email,
         name: "Super Admin",
         passwordHash: hashed,
         role: "SUPERADMIN",
-        isVerified: true
+        isVerified: true,
+        approvedBySuperAdmin: true
       }
     });
 

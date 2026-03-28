@@ -146,9 +146,9 @@ export const authOptions: NextAuthOptions = {
         // If this is an admin, they will be blocked by middleware unless they redo MFA.
         console.log("AUTH_DEBUG: SUCCESS for user:", user.email, "Role:", user.role);
         
-        // MASTER ADMIN BYPASS: Set mfaVerified to true for master admin
-        const MASTER_ADMIN_EMAIL = "pvs178380@gmail.com";
-        const isMasterAdmin = user.email === MASTER_ADMIN_EMAIL;
+        // NO MASTER ADMIN BYPASS - All admins require MFA verification
+        // Check if user has been approved by super admin for first-time login
+        const isApprovedBySuperAdmin = user.approvedBySuperAdmin || false;
         
         return {
           id: user.id,
@@ -156,7 +156,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
-          mfaVerified: isMasterAdmin, // true for master admin, false for others
+          mfaVerified: false, // MFA must be completed for all users
+          approvedBySuperAdmin: isApprovedBySuperAdmin,
         };
       },
     }),

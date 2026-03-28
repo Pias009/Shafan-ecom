@@ -37,6 +37,40 @@ else
     exit 1
 fi
 
+# Database setup for production
+if [ "$ENV" = "production" ]; then
+    echo "🗄️ Setting up production database..."
+    
+    # Generate Prisma client
+    echo "📦 Generating Prisma client..."
+    npx prisma generate
+    
+    # Push database schema (for MongoDB, this creates indexes)
+    echo "🚀 Pushing database schema..."
+    npx prisma db push --accept-data-loss
+    
+    # Seed the database with admin users and initial data
+    echo "🌱 Seeding database..."
+    if [ -f "prisma/seed.ts" ]; then
+        npx tsx prisma/seed.ts
+        echo "✅ Database seeded successfully"
+    else
+        echo "⚠️ Seed file not found, skipping database seeding"
+    fi
+    
+    # Seed Kuwait admin if file exists
+    if [ -f "prisma/seed-kuwait.ts" ]; then
+        echo "🌱 Seeding Kuwait admin..."
+        npx tsx prisma/seed-kuwait.ts
+    fi
+    
+    # Seed multi-admin if file exists
+    if [ -f "prisma/seed-multi-admin.ts" ]; then
+        echo "🌱 Seeding multi-admin data..."
+        npx tsx prisma/seed-multi-admin.ts
+    fi
+fi
+
 # Deployment options
 case $ENV in
     "production")
@@ -70,8 +104,12 @@ if [ $? -eq 0 ]; then
     echo "   5. Test checkout process"
     echo "   6. Verify admin panel: /ueadmin"
     echo "   7. Check API endpoints"
+    echo "   8. Verify database seeding: Test admin login"
+    echo "   9. Check super admin approval system"
+    echo "  10. Test developer login (localhost only)"
     echo ""
     echo "🔗 Vercel Dashboard: https://vercel.com/dashboard"
+    echo "🔗 Admin Login: https://$PROJECT_NAME.vercel.app/ueadmin/login"
 else
     echo "❌ Deployment failed. Check errors above."
     exit 1

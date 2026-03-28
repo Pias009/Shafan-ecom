@@ -5,9 +5,9 @@ import * as crypto from "crypto";
 async function main() {
   console.log("Seeding database...");
 
-  // 1. Create Master Admin User (pvs178380@gmail.com)
-  const masterAdminEmail = "pvs178380@gmail.com";
-  const masterAdminPassword = "pias900";
+  // 1. Create Master Admin User (from environment variables or defaults)
+  const masterAdminEmail = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
+  const masterAdminPassword = process.env.DEMO_SUPERADMIN_PASSWORD || "superadmin123";
   const masterAdminHashedPassword = await bcrypt.hash(masterAdminPassword, 10);
 
   const masterAdmin = await prisma.user.upsert({
@@ -16,19 +16,21 @@ async function main() {
       passwordHash: masterAdminHashedPassword,
       role: "SUPERADMIN",
       name: "Master Admin",
+      approvedBySuperAdmin: true, // Master admin is pre-approved
     },
     create: {
       email: masterAdminEmail,
       name: "Master Admin",
       passwordHash: masterAdminHashedPassword,
       role: "SUPERADMIN",
+      approvedBySuperAdmin: true,
     },
   });
   console.log(`Master admin user created/updated: ${masterAdmin.email}`);
 
-  // 2. Create Regular Admin User
-  const adminEmail = "admin@shafan.com";
-  const adminPassword = "Admin@Shafan2024";
+  // 2. Create Regular Admin User (from environment variables or defaults)
+  const adminEmail = process.env.DEMO_ADMIN_EMAIL || "admin@example.com";
+  const adminPassword = process.env.DEMO_ADMIN_PASSWORD || "admin123";
   const adminHashedPassword = await bcrypt.hash(adminPassword, 10);
 
   const admin = await prisma.user.upsert({
@@ -36,15 +38,41 @@ async function main() {
     update: {
       passwordHash: adminHashedPassword,
       role: "ADMIN",
+      approvedBySuperAdmin: true, // Demo admin is pre-approved
     },
     create: {
       email: adminEmail,
       name: "Demo Admin",
       passwordHash: adminHashedPassword,
       role: "ADMIN",
+      approvedBySuperAdmin: true,
     },
   });
   console.log(`Admin user created/updated: ${admin.email}`);
+
+  // 3. Create Kuwait Admin User (store-based admin)
+  const kuwaitAdminEmail = process.env.KUWAIT_ADMIN_EMAIL || "kuwait-admin@example.com";
+  const kuwaitAdminPassword = process.env.KUWAIT_ADMIN_PASSWORD || "demoadmin";
+  const kuwaitAdminHashedPassword = await bcrypt.hash(kuwaitAdminPassword, 10);
+
+  const kuwaitAdmin = await prisma.user.upsert({
+    where: { email: kuwaitAdminEmail },
+    update: {
+      passwordHash: kuwaitAdminHashedPassword,
+      role: "ADMIN",
+      country: "Kuwait",
+      approvedBySuperAdmin: true,
+    },
+    create: {
+      email: kuwaitAdminEmail,
+      name: "Kuwait Admin",
+      passwordHash: kuwaitAdminHashedPassword,
+      role: "ADMIN",
+      country: "Kuwait",
+      approvedBySuperAdmin: true,
+    },
+  });
+  console.log(`Kuwait admin user created/updated: ${kuwaitAdmin.email}`);
 
   // Create Normal User
   const userEmail = "user@shafan.com";
@@ -127,8 +155,8 @@ async function main() {
   }
   console.log("Banners seeded.");
   // 6. Create SUPERADMIN (verification flow starts here)
-  const superAdminEmail = "pvs178380@gmail.com";
-  const rawSuperPwd = "superadmin123";
+  const superAdminEmail = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
+  const rawSuperPwd = process.env.DEMO_SUPERADMIN_PASSWORD || "superadmin123";
   const verificationToken = crypto.randomBytes(32).toString("hex");
   const verificationExpires = new Date(Date.now() + 24*60*60*1000);
   const hashedSuper = await bcrypt.hash(rawSuperPwd, 10);

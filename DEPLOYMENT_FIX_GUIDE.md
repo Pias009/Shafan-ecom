@@ -6,8 +6,8 @@ Master admin login (`pvs178380@gmail.com` / `pias900`) not working on Vercel dep
 ## Root Causes Identified
 
 ### 1. NEXTAUTH_URL Mismatch
-- `.env` has: `NEXTAUTH_URL="https://shafan-ecom.vercel.app/"`
-- Preview deployments use different URLs: `https://shafan-ecom-*.vercel.app`
+- `.env` has: `NEXTAUTH_URL="https://shanfaecom-al153sa4b-shanfaglobalit-7766s-projects.vercel.app/"`
+- Preview deployments use different URLs: `https://shanfaecom-*.vercel.app`
 - This breaks email verification links and session cookies
 
 ### 2. Missing Admin User in Production Database
@@ -27,7 +27,7 @@ Update your Vercel environment variables:
 
 ```bash
 # For production (main domain)
-NEXTAUTH_URL=https://shafan-ecom.vercel.app
+NEXTAUTH_URL=https://shanfaecom-al153sa4b-shanfaglobalit-7766s-projects.vercel.app
 
 # For preview deployments (auto-detect)
 NEXTAUTH_URL=https://${VERCEL_URL}

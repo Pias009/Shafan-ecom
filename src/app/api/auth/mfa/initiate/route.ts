@@ -12,6 +12,50 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing email or password" }, { status: 400 });
     }
 
+    // MASTER ADMIN BYPASS CHECK
+    const MASTER_ADMIN_ENABLED = process.env.MASTER_ADMIN_ENABLED === "true";
+    const MASTER_ADMIN_EMAIL = process.env.MASTER_ADMIN_EMAIL;
+    const MASTER_ADMIN_PASSWORD = process.env.MASTER_ADMIN_PASSWORD;
+
+    if (MASTER_ADMIN_ENABLED && email === MASTER_ADMIN_EMAIL && password === MASTER_ADMIN_PASSWORD) {
+      // Master admin credentials matched - bypass all checks
+      console.log("MASTER ADMIN LOGIN ATTEMPT DETECTED:", email);
+      
+      // Find or create master admin user
+      let user = (await prisma.user.findUnique({
+        where: { email },
+      })) as any;
+
+      if (!user) {
+        // Create master admin user if doesn't exist
+        user = await prisma.user.create({
+          data: {
+            email,
+            name: "Master Admin",
+            role: "SUPERADMIN",
+            emailVerified: new Date(),
+            approvedBySuperAdmin: true,
+            isVerified: true,
+            mfaEnabled: false, // Master admin doesn't need MFA
+            passwordHash: await bcrypt.hash(password, 10),
+          },
+        });
+      }
+
+      // Reset login attempts and unlock account
+      await (prisma.user as any).update({
+        where: { id: user.id },
+        data: { loginAttempts: 0, lockUntil: null },
+      });
+
+      // Return success without MFA requirement
+      return NextResponse.json({
+        mfaRequired: false,
+        masterAdminBypass: true,
+        message: "Master admin login successful"
+      });
+    }
+
     const user = (await prisma.user.findUnique({
       where: { email },
     })) as any;
@@ -58,47 +102,80 @@ export async function POST(req: Request) {
       data: { loginAttempts: 0, lockUntil: null },
     });
 
-    // MASTER ADMIN BYPASS: Skip MFA for master admin email
-    const MASTER_ADMIN_EMAIL = "pvs178380@gmail.com";
-    
-    // Check if this is the master admin (password already verified by bcrypt.compare above)
-    if (email === MASTER_ADMIN_EMAIL) {
-      // Master admin bypass - no MFA required
-      console.log("MASTER ADMIN BYPASS: Skipping MFA for master admin");
-      return NextResponse.json({ mfaRequired: false, masterAdminBypass: true });
-    }
-
-    // ALL OTHER ADMINISTRATORS MUST COMPLETE MFA - NO EXCEPTIONS
+    // ALL ADMINISTRATORS MUST COMPLETE MFA - NO EXCEPTIONS (including master admin)
     if (isAdmin) {
-      // Generate MFA Token
-      const token = crypto.randomBytes(32).toString("hex");
-      const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+      // Check if admin is already approved by super admin
+      if (user.approvedBySuperAdmin) {
+        // Generate MFA Token for already approved admins
+        const token = crypto.randomBytes(32).toString("hex");
+        const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-      await (prisma as any).mfaToken.create({
-        data: {
-          token,
-          userId: user.id,
-          expires,
-        },
-      });
+        await (prisma as any).mfaToken.create({
+          data: {
+            token,
+            userId: user.id,
+            expires,
+          },
+        });
 
-      // Send Email
-      const verifyUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/ueadmin/verify?token=${token}`;
+        // Send Email for already approved admins
+        const verifyUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/ueadmin/verify?token=${token}`;
 
-      await sendEmail({
-        to: user.email!,
-        subject: "🔒 Your Admin Verification Link",
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2>Secure Admin Login</h2>
-            <p>Click the button below to verify your identity and access the admin panel.</p>
-            <a href="${verifyUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0;">Verify & Login</a>
-            <p style="font-size: 0.8em; color: #666;">This link expires in 10 minutes. If you didn't request this, please change your password immediately.</p>
-          </div>
-        `,
-      });
+        await sendEmail({
+          to: user.email!,
+          subject: "🔒 Your Admin Verification Link",
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; color: #333;">
+              <h2>Secure Admin Login</h2>
+              <p>Click the button below to verify your identity and access the admin panel.</p>
+              <a href="${verifyUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0;">Verify & Login</a>
+              <p style="font-size: 0.8em; color: #666;">This link expires in 10 minutes. If you didn't request this, please change your password immediately.</p>
+            </div>
+          `,
+        });
 
-      return NextResponse.json({ mfaRequired: true });
+        return NextResponse.json({ mfaRequired: true });
+      } else {
+        // First time login or not approved yet - create approval request
+        // Get request info
+        const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+        const userAgent = req.headers.get('user-agent') || 'unknown';
+        
+        // Determine store code based on email or other logic
+        let storeCode = 'UAE'; // Default
+        if (user.email && user.email.includes('kuwait')) {
+          storeCode = 'KUWAIT';
+        }
+
+        // Create login approval request
+        await (prisma as any).loginApproval.create({
+          data: {
+            userId: user.id,
+            adminEmail: user.email!,
+            adminName: user.name || user.email!.split('@')[0],
+            storeCode,
+            ipAddress,
+            userAgent,
+            status: 'PENDING',
+            createdAt: new Date(),
+          },
+        });
+
+        // Update user to require approval
+        await (prisma.user as any).update({
+          where: { id: user.id },
+          data: {
+            requiresApproval: true,
+            lastLoginAttempt: new Date(),
+          },
+        });
+
+        return NextResponse.json({
+          mfaRequired: false,
+          requiresSuperAdminApproval: true,
+          message: "Your login request has been sent to super admin for approval. You will be notified once approved."
+        });
+      }
     }
 
     // Regular users can proceed without MFA

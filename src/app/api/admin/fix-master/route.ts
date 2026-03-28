@@ -15,10 +15,18 @@ export async function POST(req: Request) {
       );
     }
 
-    const MASTER_ADMIN_EMAIL = "pvs178380@gmail.com";
-    const MASTER_ADMIN_PASSWORD = "pias900";
+    // Use environment variables for emergency admin credentials
+    const MASTER_ADMIN_EMAIL = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
+    const MASTER_ADMIN_PASSWORD = process.env.DEMO_SUPERADMIN_PASSWORD || "superadmin123";
     
-    console.log("🛠️ Fixing master admin account...");
+    if (!MASTER_ADMIN_EMAIL || !MASTER_ADMIN_PASSWORD) {
+      return NextResponse.json(
+        { error: "Emergency admin credentials not configured" },
+        { status: 500 }
+      );
+    }
+    
+    console.log("🛠️ Fixing super admin account...");
     
     // Check if user exists
     let user = await prisma.user.findUnique({
