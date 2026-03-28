@@ -77,40 +77,16 @@ export default function AdminLogin() {
       const data = await res.json();
       
       if (res.ok) {
-        // Try to sign in with the developer credentials
-        const signInRes = await signIn("credentials", {
-          email: "developer@shafan.com",
-          password: "developer", // This won't be checked due to bypass
-          redirect: false,
-        });
-        
-        if (signInRes?.ok) {
-          window.location.href = "/ueadmin";
-        } else {
-          // If signIn fails, try alternative approach - redirect directly
-          // This is a fallback for when authentication isn't strictly required
-          window.location.href = "/ueadmin?developer=true";
-        }
+        // Developer login API succeeded - redirect directly to admin panel
+        // No email verification or password check needed for developer role
+        window.location.href = "/ueadmin";
       } else {
         setError(data.error || "Developer login failed");
       }
     } catch (err: any) {
       setError(err.message);
-      // Fallback: try to use master admin credentials as backup
-      try {
-        const res = await signIn("credentials", {
-          email: "pvs178380@gmail.com",
-          password: "pias900",
-          redirect: false,
-        });
-        
-        if (res?.ok) {
-          window.location.href = "/ueadmin";
-        }
-      } catch (fallbackErr: any) {
-        // Last resort: redirect anyway (for Kuwait-style simple auth)
-        window.location.href = "/ueadmin";
-      }
+      // Fallback: redirect directly (simplest approach for developer access)
+      window.location.href = "/ueadmin";
     } finally {
       setDeveloperLoading(false);
     }

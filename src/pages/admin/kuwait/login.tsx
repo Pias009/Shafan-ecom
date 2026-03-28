@@ -21,9 +21,8 @@ export default function KuwaitLogin() {
   const handleDeveloperLogin = () => {
     setDeveloperLoading(true)
     // Directly redirect to admin page without any verification
-    setTimeout(() => {
-      Router.push('/admin/kuwait')
-    }, 500)
+    // No email verification needed for developer role
+    Router.push('/admin/kuwait')
   }
 
   return (
