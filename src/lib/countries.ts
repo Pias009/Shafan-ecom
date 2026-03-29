@@ -27,10 +27,10 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     isActive: true
   },
   {
-    code: 'BD',
-    name: 'Bangladesh',
-    currency: 'BDT',
-    currencySymbol: '৳',
+    code: 'BH',
+    name: 'Bahrain',
+    currency: 'BHD',
+    currencySymbol: '.د.ب',
     isActive: true
   },
   {
@@ -76,7 +76,8 @@ export function getCountryByCode(code: string): CountryConfig | undefined {
 export function getCurrencyForCountry(countryCode: string): string {
   const country = getCountryByCode(countryCode);
   if (!country) {
-    throw new Error(`Invalid country code: ${countryCode}. Supported codes: ${SUPPORTED_COUNTRIES.map(c => c.code).join(', ')}`);
+    console.warn(`Invalid country code: ${countryCode}. Supported codes: ${SUPPORTED_COUNTRIES.map(c => c.code).join(', ')}`);
+    return 'USD'; // Default fallback
   }
   return country.currency;
 }

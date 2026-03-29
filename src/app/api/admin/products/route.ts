@@ -10,19 +10,19 @@ const CountryPriceSchema = z.object({
     (code) => isValidCountryCode(code),
     { message: `Country must be one of: ${SUPPORTED_COUNTRIES.map(c => c.code).join(', ')}` }
   ),
-  priceCents: z.number().int().min(0),
+  priceCents: z.number().int().min(1, { message: "Country price must be at least 1 cent" }),
   currency: z.string().optional(),
   active: z.boolean().optional().default(true),
 });
 
 const ProductCreateSchema = z.object({
-  name: z.string(),
+  name: z.string().min(1, { message: "Product name is required" }),
   description: z.string().optional(),
   features: z.array(z.string()).optional(),
   images: z.array(z.string()).optional(),
   mainImage: z.string().optional(),
   trending: z.boolean().optional(),
-  priceCents: z.number().int().min(0),
+  priceCents: z.number().int().min(1, { message: "Product price must be at least 1 cent" }),
   discountCents: z.number().int().min(0).optional(),
   stockQuantity: z.number().int().min(0).optional(),
   brandName: z.string().optional(),
@@ -47,7 +47,19 @@ const ProductCreateSchema = z.object({
       },
       { message: "Invalid country code detected" }
     ),
-});
+}).refine(
+  (data) => {
+    // Validate that discount doesn't exceed price
+    if (data.discountCents && data.discountCents > data.priceCents) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Discount cannot exceed product price",
+    path: ["discountCents"],
+  }
+);
 
 export async function GET() {
   try {
@@ -132,17 +144,26 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getServerAuthSession();
+    console.log('POST /api/admin/products - Session:', session ? 'present' : 'missing');
+    if (session) {
+      console.log('Session user:', session.user);
+      console.log('Session user role:', (session.user as any)?.role);
+    }
     if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+      console.log('Unauthorized: no session or invalid role');
       return new Response('Unauthorized', { status: 401 });
     }
 
     const storeAccess = await getAdminStoreAccess();
+    console.log('Store access:', storeAccess);
     if (!storeAccess) {
+      console.log('Unauthorized: no store access');
       return new Response('Unauthorized', { status: 401 });
     }
     
     const user = session.user;
     if (!user) {
+      console.log('Unauthorized: no user in session');
       return new Response('Unauthorized', { status: 401 });
     }
     
@@ -161,10 +182,13 @@ export async function POST(req: Request) {
     }
     const data = parsed.data;
     console.log("Parsed data (validated):", JSON.stringify(data, null, 2));
+    
+    // Create a copy of data to avoid modifying the validated object
+    const productData = { ...data };
 
     // Check store access if storeId is provided
-    if (data.storeId) {
-      const canAccess = storeAccess.allowedStores.includes(data.storeId);
+    if (productData.storeId) {
+      const canAccess = storeAccess.allowedStores.includes(productData.storeId);
       if (!canAccess && !storeAccess.isSuperAdmin) {
         return new Response(JSON.stringify({ error: 'No access to specified store' }), { status: 403 });
       }
@@ -172,8 +196,8 @@ export async function POST(req: Request) {
 
     // Cloudinary: handle mainImage upload and images processing
     let mainImageUrl: string | null = null;
-    if (data.mainImage) {
-      mainImageUrl = await uploadFromUrl(data.mainImage).catch(() => data.mainImage || null);
+    if (productData.mainImage && productData.mainImage.trim() !== '') {
+      mainImageUrl = await uploadFromUrl(productData.mainImage).catch(() => productData.mainImage || null);
     }
 
     // Combine mainImage and gallery images
@@ -182,66 +206,123 @@ export async function POST(req: Request) {
       finalImages.push(mainImageUrl);
     }
     
-    if (Array.isArray(data.images)) {
+    if (Array.isArray(productData.images)) {
       const uploadedGallery = await Promise.all(
-        data.images
+        productData.images
           .filter(img => img !== mainImageUrl)
           .map(img => uploadFromUrl(img).catch(() => img))
       );
       finalImages = [...finalImages, ...uploadedGallery];
     }
-    data.images = finalImages;
+    productData.images = finalImages;
 
     // Resolve brand/category by name if provided
     let brandId: string | null = null;
     let categoryId: string | null = null;
-    if (data.brandName && data.brandName !== 'All') {
-      const b = await prisma.brand.findFirst({ where: { name: data.brandName } });
+    if (productData.brandName && productData.brandName !== 'All') {
+      const b = await prisma.brand.findFirst({ where: { name: productData.brandName } });
       brandId = b?.id || null;
     }
-    if (data.categoryName && data.categoryName !== 'All') {
-      const c = await prisma.category.findFirst({ where: { name: data.categoryName } });
+    if (productData.categoryName && productData.categoryName !== 'All') {
+      const c = await prisma.category.findFirst({ where: { name: productData.categoryName } });
       categoryId = c?.id || null;
     }
 
     // Check for existing product by name to avoid non-unique upsert error
-    const existingProduct = await prisma.product.findFirst({ where: { name: data.name } });
+    const existingProduct = await prisma.product.findFirst({ where: { name: productData.name } });
     
-    // Resolve store if storeId (code) is provided
+    // Resolve store assignment
+    // All products must be assigned to a store for proper store-specific rendering
+    // Default: auto-assign to admin's primary store based on their country
     let storeId: string | null = null;
-    if (data.storeId) {
-      const store = await prisma.store.findFirst({ where: { code: data.storeId } });
-      storeId = store?.id || null;
+    let storeCodeForInventory: string | null = null;
+    
+    if (productData.storeId && productData.storeId !== 'GLOBAL') {
+      // If storeId is explicitly provided (and not GLOBAL)
+      // Validate that admin has access to the specified store
+      const canAccess = storeAccess.allowedStores.includes(productData.storeId);
+      if (!canAccess && !storeAccess.isSuperAdmin) {
+        return new Response(JSON.stringify({
+          error: 'No access to specified store'
+        }), { status: 403 });
+      }
+      
+      const store = await prisma.store.findFirst({ where: { code: productData.storeId } });
+      if (!store) {
+        return new Response(JSON.stringify({
+          error: 'Specified store not found'
+        }), { status: 404 });
+      }
+      storeId = store.id;
+      storeCodeForInventory = productData.storeId;
+    } else {
+      // No storeId provided or GLOBAL specified - auto-assign to admin's primary store
+      if (storeAccess.allowedStores.length > 0) {
+        // Use the first store from allowedStores (admin's primary store)
+        const primaryStoreCode = storeAccess.allowedStores[0];
+        const store = await prisma.store.findFirst({ where: { code: primaryStoreCode } });
+        if (store) {
+          storeId = store.id;
+          storeCodeForInventory = primaryStoreCode;
+          console.log(`Auto-assigning product to admin's store: ${primaryStoreCode}`);
+          
+          // If GLOBAL was specified, log that we're overriding it
+          if (productData.storeId === 'GLOBAL') {
+            console.log(`Note: GLOBAL product request overridden - assigning to ${primaryStoreCode} instead`);
+          }
+        }
+      } else if (storeAccess.isSuperAdmin) {
+        // SUPERADMIN with no store access - assign to UAE as default
+        const uaeStore = await prisma.store.findFirst({ where: { code: 'UAE' } });
+        if (uaeStore) {
+          storeId = uaeStore.id;
+          storeCodeForInventory = 'UAE';
+          console.log(`SUPERADMIN product assigned to UAE store as default`);
+        }
+      } else {
+        // Regular admin with no store access cannot create products
+        return new Response(JSON.stringify({
+          error: 'Admin has no store access. Cannot create products.'
+        }), { status: 403 });
+      }
+    }
+    
+    // Ensure storeId is always set (no more global products)
+    if (!storeId) {
+      return new Response(JSON.stringify({
+        error: 'Could not determine store assignment for product'
+      }), { status: 400 });
     }
 
-    const productData = {
-      name: data.name,
-      description: data.description || '',
-      features: data.features ?? [],
-      images: (data.images as string[]) ?? [],
-      priceCents: data.priceCents,
-      discountCents: data.discountCents || 0,
-      stockQuantity: data.stockQuantity ?? 0,
-      hot: data.hot ?? false,
-      trending: data.trending ?? false,
+    const dbProductData = {
+      name: productData.name,
+      description: productData.description || '',
+      features: productData.features ?? [],
+      images: (productData.images as string[]) ?? [],
+      priceCents: productData.priceCents,
+      discountCents: productData.discountCents || 0,
+      stockQuantity: productData.stockQuantity ?? 0,
+      hot: productData.hot ?? false,
+      trending: productData.trending ?? false,
       brandId,
       categoryId,
       storeId,
+      currency: 'USD', // Default currency as per schema
     };
 
     const product = existingProduct
       ? await prisma.product.update({
           where: { id: existingProduct.id },
-          data: productData,
+          data: dbProductData,
         })
       : await prisma.product.create({
-          data: productData,
+          data: dbProductData,
         });
 
-    // Handle initial store inventory if storeId provided
-    if (data.storeId && storeId) {
+    // Handle initial store inventory if storeId provided (and not GLOBAL)
+    if (storeCodeForInventory && storeId) {
       const store = await prisma.store.findFirst({
-        where: { code: data.storeId }
+        where: { code: storeCodeForInventory }
       });
       
       if (store) {
@@ -253,21 +334,21 @@ export async function POST(req: Request) {
             }
           },
           update: {
-            quantity: data.stockQuantity ?? 0,
-            price: (data.priceCents - (data.discountCents || 0)) / 100
+            quantity: productData.stockQuantity ?? 0,
+            price: (productData.priceCents - (productData.discountCents || 0)) / 100
           },
           create: {
             storeId: store.id,
             productId: product.id,
-            quantity: data.stockQuantity ?? 0,
-            price: (data.priceCents - (data.discountCents || 0)) / 100
+            quantity: productData.stockQuantity ?? 0,
+            price: (productData.priceCents - (productData.discountCents || 0)) / 100
           }
         });
       }
     }
 
     // Create country-specific prices if provided
-    if (data.countryPrices && data.countryPrices.length > 0) {
+    if (productData.countryPrices && productData.countryPrices.length > 0) {
       // First, delete existing country prices for this product (if updating)
       if (existingProduct) {
         await prisma.countryPrice.deleteMany({
@@ -276,7 +357,7 @@ export async function POST(req: Request) {
       }
       
       // Auto-detect currency for each country price if not provided
-      const countryPricesWithCurrency = data.countryPrices.map(countryPrice => {
+      const countryPricesWithCurrency = productData.countryPrices.map(countryPrice => {
         const countryCode = countryPrice.country.toUpperCase();
         return {
           ...countryPrice,
@@ -308,13 +389,41 @@ export async function POST(req: Request) {
         action: 'PRODUCT_CREATED',
         actorId: user.id,
         subjectId: product.id,
-        details: `Product "${data.name}" created by ${user.email}`,
+        details: `Product "${productData.name}" created by ${user.email}`,
       }
     });
 
     return new Response(JSON.stringify(product), { headers: { 'Content-Type': 'application/json' } });
   } catch (error: any) {
     console.error('PRODUCT_CREATE_ERROR:', error);
-    return new Response(JSON.stringify({ error: 'Server error', details: error.message }), { status: 500 });
+    
+    // Provide more detailed error information
+    const errorResponse: any = {
+      error: 'Server error',
+      message: error.message,
+    };
+    
+    // Include stack trace in development
+    if (process.env.NODE_ENV === 'development') {
+      errorResponse.stack = error.stack;
+    }
+    
+    // Check for specific Prisma errors
+    if (error.code && error.code.startsWith('P')) {
+      errorResponse.type = 'database_error';
+      errorResponse.code = error.code;
+      
+      // Handle specific Prisma errors
+      if (error.code === 'P2002') {
+        errorResponse.message = 'A product with this name already exists';
+      } else if (error.code === 'P2003') {
+        errorResponse.message = 'Foreign key constraint failed. Check brand, category, or store references.';
+      }
+    }
+    
+    return new Response(JSON.stringify(errorResponse), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

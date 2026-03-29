@@ -174,6 +174,7 @@ async function main() {
   const globalProducts = [
     {
       name: 'Premium Giloy Ayurvedic Supplement',
+      slug: 'premium-giloy-ayurvedic-supplement',
       description: 'High-quality Giloy supplement for immune support',
       features: ['Natural', 'Ayurvedic', 'Immune Support'],
       priceCents: 2999,
@@ -183,6 +184,7 @@ async function main() {
     },
     {
       name: 'Organic Ashwagandha Root',
+      slug: 'organic-ashwagandha-root',
       description: 'Premium organic Ashwagandha for stress relief',
       features: ['Organic', 'Stress Relief', 'Energy Boost'],
       priceCents: 2499,
@@ -207,6 +209,7 @@ async function main() {
   const kuwaitProducts = [
     {
       name: 'Kuwait Exclusive Herbal Tea',
+      slug: 'kuwait-exclusive-herbal-tea',
       description: 'Special blend of herbs popular in Kuwait',
       features: ['Local Favorite', 'Herbal', 'Refreshing'],
       priceCents: 1500,
@@ -230,6 +233,7 @@ async function main() {
   const uaeProducts = [
     {
       name: 'UAE Premium Dates Collection',
+      slug: 'uae-premium-dates-collection',
       description: 'Premium dates sourced from UAE farms',
       features: ['Premium Quality', 'Local Sourcing', 'Natural'],
       priceCents: 3999,
@@ -254,43 +258,43 @@ async function main() {
   // ============================================
   console.log('\n📋 Creating Store Inventory...');
 
-  // Add global products to both stores
-  for (const product of createdProducts.slice(0, 2)) {
-    // UAE Inventory
-    await prisma.storeInventory.upsert({
-      where: {
-        storeId_productId: {
-          storeId: uaeStore.id,
-          productId: product.id,
-        },
-      },
-      update: {},
-      create: {
+  // Add first product to UAE store only (UAE-exclusive)
+  const uaeExclusiveProduct1 = createdProducts[0];
+  await prisma.storeInventory.upsert({
+    where: {
+      storeId_productId: {
         storeId: uaeStore.id,
-        productId: product.id,
-        quantity: 100,
-        price: product.priceCents / 100,
+        productId: uaeExclusiveProduct1.id,
       },
-    });
+    },
+    update: {},
+    create: {
+      storeId: uaeStore.id,
+      productId: uaeExclusiveProduct1.id,
+      quantity: 100,
+      price: uaeExclusiveProduct1.priceCents / 100,
+    },
+  });
+  console.log(`  ✅ Added ${uaeExclusiveProduct1.name} to UAE store only`);
 
-    // Kuwait Inventory
-    await prisma.storeInventory.upsert({
-      where: {
-        storeId_productId: {
-          storeId: kuwaitStore.id,
-          productId: product.id,
-        },
-      },
-      update: {},
-      create: {
+  // Add second product to Kuwait store only (Kuwait-exclusive)
+  const kuwaitExclusiveProduct1 = createdProducts[1];
+  await prisma.storeInventory.upsert({
+    where: {
+      storeId_productId: {
         storeId: kuwaitStore.id,
-        productId: product.id,
-        quantity: 50,
-        price: product.priceCents / 100,
+        productId: kuwaitExclusiveProduct1.id,
       },
-    });
-    console.log(`  ✅ Added ${product.name} to both stores`);
-  }
+    },
+    update: {},
+    create: {
+      storeId: kuwaitStore.id,
+      productId: kuwaitExclusiveProduct1.id,
+      quantity: 50,
+      price: kuwaitExclusiveProduct1.priceCents / 100,
+    },
+  });
+  console.log(`  ✅ Added ${kuwaitExclusiveProduct1.name} to Kuwait store only`);
 
   // Add Kuwait-exclusive products to Kuwait store only
   for (const product of createdProducts.slice(2, 3)) {

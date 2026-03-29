@@ -1,5 +1,9 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
   "routes": [
     {
       "src": "/api/(.*)",
@@ -43,6 +47,14 @@
       "maxDuration": 60
     },
     "src/app/api/create-order/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "src/app/api/payments/tabby/webhook/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "src/app/api/payments/tamara/webhook/route.ts": {
       "memory": 1024,
       "maxDuration": 30
     }

@@ -68,6 +68,8 @@ export async function POST(req: Request) {
     // Calculate totals
     let subtotalCents = 0;
     const orderItemsData = [];
+    let orderStoreId: string | null = null;
+    let orderStoreCode: string | null | undefined = null;
 
     for (const item of items) {
       const productId = item.productId;
@@ -80,11 +82,42 @@ export async function POST(req: Request) {
       }
 
       const product = await prisma.product.findUnique({
-        where: { id: productId }
+        where: { id: productId },
+        include: {
+          store: true,
+          storeInventories: {
+            include: {
+              store: true
+            }
+          }
+        }
       });
 
       if (!product) {
         throw new Error(`Product not found: ${item.productId}`);
+      }
+
+      // Determine which store this product belongs to
+      let productStoreId = product.storeId;
+      let productStoreCode = product.store?.code;
+      
+      // If product doesn't have direct store assignment, check store inventories
+      if (!productStoreId && product.storeInventories.length > 0) {
+        // Use the first store inventory as the product's store
+        productStoreId = product.storeInventories[0].storeId;
+        productStoreCode = product.storeInventories[0].store.code;
+      }
+
+      // Track store for validation
+      if (productStoreId) {
+        // Check if this is a Kuwait store product
+        if (productStoreCode === 'KUW') {
+          // Validate shipping address is Kuwait
+          const shippingCountry = shipping?.country?.toString().toLowerCase().trim();
+          if (!shippingCountry || (shippingCountry !== 'kuwait' && shippingCountry !== 'kw')) {
+            throw new Error('Kuwait products can only be ordered from Kuwait addresses');
+          }
+        }
       }
 
       const unitPriceCents = product.discountCents
@@ -101,6 +134,20 @@ export async function POST(req: Request) {
         nameSnapshot: product.name,
         imageSnapshot: product.mainImage,
       });
+
+      // Track the store for this product (for order assignment)
+      if (productStoreId) {
+        // Store the storeId to assign to order later
+        // For mixed store orders, we need to handle this differently
+        // For now, we'll use the first product's store
+        if (!orderStoreId) {
+          orderStoreId = productStoreId;
+          orderStoreCode = productStoreCode;
+        } else if (orderStoreId !== productStoreId) {
+          // Mixed store order - for now, reject or handle appropriately
+          throw new Error('Cannot mix products from different stores in a single order');
+        }
+      }
     }
 
     if (orderItemsData.length === 0) {
@@ -126,6 +173,8 @@ export async function POST(req: Request) {
         shippingAddress: shipping || {},
         paymentMethod: payment_method || "stripe",
         paymentMethodTitle: payment_method_title || "Credit Card (Stripe)",
+        // Assign store to order if determined from products
+        ...(orderStoreId ? { storeId: orderStoreId } : {}),
         items: {
           create: orderItemsData
         },

@@ -28,7 +28,12 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     // CRITICAL: ALL ADMINISTRATORS MUST HAVE MFA VERIFIED
     // This is a client-side check; middleware enforces server-side
     const mfaVerified = (session?.user as any)?.mfaVerified;
-    if (!mfaVerified) {
+    
+    // Allow SUPERADMIN to bypass MFA in development for easier testing
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isSuperAdmin = session?.user?.role === 'SUPERADMIN';
+    
+    if (!mfaVerified && !(isDevelopment && isSuperAdmin)) {
       router.push("/ueadmin/login");
       return;
     }
@@ -52,7 +57,13 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
                      pathname?.startsWith("/ueadmin/verify");
   const ok = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
   const mfaVerified = (session?.user as any)?.mfaVerified;
-  if (!ok || !mfaVerified) {
+  
+  // Allow SUPERADMIN to bypass MFA in development for easier testing
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isSuperAdmin = session?.user?.role === 'SUPERADMIN';
+  const mfaOk = mfaVerified || (isDevelopment && isSuperAdmin);
+  
+  if (!ok || !mfaOk) {
     if (!isAuthPage) return null;
   }
 

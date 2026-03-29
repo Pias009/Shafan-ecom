@@ -8,7 +8,7 @@ export async function approveLoginRequest(formData: FormData) {
   try {
     const session = await getServerAuthSession();
     
-    if (!session || session.user.role !== "SUPERADMIN") {
+    if (!session || !session.user || session.user.role !== "SUPERADMIN") {
       throw new Error("Unauthorized");
     }
 
@@ -64,7 +64,7 @@ export async function rejectLoginRequest(formData: FormData) {
   try {
     const session = await getServerAuthSession();
     
-    if (!session || session.user.role !== "SUPERADMIN") {
+    if (!session || !session.user || session.user.role !== "SUPERADMIN") {
       throw new Error("Unauthorized");
     }
 

@@ -71,8 +71,9 @@ export async function getAdminStoreAccess(): Promise<AdminStoreAccess | null> {
       select: { id: true, code: true, country: true }
     });
 
-    // UAE admins are global admins (can manage global products)
-    const isGlobalAdmin = normalizedCountry === 'UAE';
+    // All admins (including UAE) are restricted to their own country stores only
+    // UAE admins can only see UAE products, Kuwait admins can only see Kuwait products
+    const isGlobalAdmin = false; // No global admins - each admin restricted to their country
 
     return {
       storeIds: stores.map(s => s.id),
@@ -96,7 +97,9 @@ export async function canAccessStore(storeCode: string): Promise<boolean> {
   
   if (access.isSuperAdmin) return true;
   
-  return access.allowedStores.includes(storeCode);
+  // Case-insensitive comparison
+  const normalizedStoreCode = storeCode.toUpperCase();
+  return access.allowedStores.some(store => store.toUpperCase() === normalizedStoreCode);
 }
 
 /**
@@ -159,7 +162,15 @@ export async function getAccessibleStore(storeCode: string) {
     return null;
   }
   
-  return prisma.store.findUnique({
-    where: { code: storeCode }
+  // Try to find store with case-insensitive match
+  const stores = await prisma.store.findMany({
+    where: {
+      code: {
+        equals: storeCode,
+        mode: 'insensitive' // Case-insensitive search
+      }
+    }
   });
+  
+  return stores[0] || null;
 }

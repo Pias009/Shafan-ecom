@@ -146,7 +146,17 @@ export const authOptions: NextAuthOptions = {
         // If this is an admin, they will be blocked by middleware unless they redo MFA.
         console.log("AUTH_DEBUG: SUCCESS for user:", user.email, "Role:", user.role);
         
-        // NO MASTER ADMIN BYPASS - All admins require MFA verification
+        // Check if this is a developer or master admin login
+        // Developer email is "developer@shafan.com"
+        // Master admin email is from environment variable
+        const isDeveloper = user.email === "developer@shafan.com";
+        const isMasterAdmin = user.email === process.env.MASTER_ADMIN_EMAIL;
+        
+        // For developer/master admin in development, allow MFA bypass
+        const isDevelopment = process.env.NODE_ENV === 'development';
+        const isSuperAdmin = user.role === 'SUPERADMIN';
+        const shouldBypassMFA = (isDeveloper || isMasterAdmin) && isDevelopment && isSuperAdmin;
+        
         // Check if user has been approved by super admin for first-time login
         const isApprovedBySuperAdmin = user.approvedBySuperAdmin || false;
         
@@ -156,7 +166,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
-          mfaVerified: false, // MFA must be completed for all users
+          mfaVerified: shouldBypassMFA, // Allow MFA bypass for developer/master admin in development
           approvedBySuperAdmin: isApprovedBySuperAdmin,
         };
       },

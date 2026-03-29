@@ -40,14 +40,18 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       // Create a developer user if it doesn't exist
+      // Use bcrypt to hash the password "developer"
+      const bcrypt = require('bcryptjs');
+      const passwordHash = await bcrypt.hash("developer", 10);
+      
       user = await prisma.user.create({
         data: {
           email: developerEmail,
           name: "Developer",
           role: "SUPERADMIN",
           emailVerified: new Date(),
-          // Set a dummy password hash
-          passwordHash: "$2a$10$dummyhashfordeveloperloginonly12345678901234567890",
+          // Set a real password hash that matches "developer"
+          passwordHash: passwordHash,
         },
       });
     }

@@ -21,8 +21,11 @@ const nextConfig: NextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion'],
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@stripe/react-stripe-js', '@stripe/stripe-js'],
     optimizeCss: true,
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   compiler: {
@@ -30,11 +33,50 @@ const nextConfig: NextConfig = {
   },
   poweredByHeader: false,
   reactStrictMode: true,
+  compress: true,
   // Vercel optimizations
   output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   // Handle build issues
   typescript: {
     ignoreBuildErrors: false,
+  },
+  // Performance optimizations
+  headers: async () => {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()'
+          }
+        ],
+      },
+    ];
   },
 };
 

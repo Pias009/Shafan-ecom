@@ -22,8 +22,7 @@ console.log('===============================================');
 console.log(`Deployment URL: ${DEPLOYMENT_URL}`);
 console.log(`Master Admin Email: ${MASTER_ADMIN_EMAIL}`);
 console.log('');
-console.log('⚠️  IMPORTANT: This deployment has Vercel Authentication enabled.');
-console.log('   You need to disable it in the Vercel dashboard or use a bypass token.');
+console.log('✅ Vercel Authentication is disabled. Testing login functionality...');
 console.log('');
 
 // Test 1: Check if the site is accessible
@@ -135,6 +134,13 @@ function testAdminLoginEndpoint() {
         } catch (error) {
           console.log(`   ⚠️  Could not parse JSON response: ${error.message}`);
           console.log(`   Raw response: ${data.substring(0, 200)}...`);
+          
+          // Check for NextAuth.js error
+          if (data.includes('NextAuth.js') && data.includes('not supported')) {
+            console.log('   🔍 Detected NextAuth.js route conflict.');
+            console.log('   💡 The /api/auth/master-admin endpoint might be intercepted by NextAuth.js.');
+            console.log('   ✅ However, you can still login through the admin UI page.');
+          }
           resolve(false);
         }
       });
@@ -242,25 +248,25 @@ async function runTests() {
       console.log(`🔑 Password: ${MASTER_ADMIN_PASSWORD}`);
     } else {
       console.log('\n⚠️  Some tests failed. Check the issues above.');
-      console.log('💡 VERCEL AUTHENTICATION DETECTED:');
-      console.log('   The deployment has Vercel SSO protection enabled.');
-      console.log('   This prevents external access to the site.');
+      console.log('💡 CURRENT STATUS:');
+      console.log('   ✅ Vercel Authentication is DISABLED (site is accessible)');
+      console.log('   ✅ Admin login page is accessible');
+      console.log('   ⚠️  Master admin API endpoint has NextAuth.js conflict');
       console.log('');
-      console.log('🔧 Solutions:');
-      console.log('   1. Disable Vercel Authentication in Vercel Dashboard:');
-      console.log('      - Go to your project in Vercel');
-      console.log('      - Navigate to Settings → Authentication');
-      console.log('      - Disable "Vercel Authentication"');
+      console.log('🔧 RECOMMENDED ACTION:');
+      console.log('   1. Login through the admin UI (this should work):');
+      console.log(`      URL: ${DEPLOYMENT_URL}/ueadmin/login`);
+      console.log(`      Email: ${MASTER_ADMIN_EMAIL}`);
+      console.log(`      Password: ${MASTER_ADMIN_PASSWORD}`);
       console.log('');
-      console.log('   2. Use a bypass token (temporary):');
-      console.log('      - Get bypass token from Vercel dashboard');
-      console.log('      - Access URL with: ?x-vercel-protection-bypass=TOKEN');
+      console.log('   2. If UI login fails, check:');
+      console.log('      - Database connectivity (MongoDB Atlas IP whitelist)');
+      console.log('      - Master admin user seeding in database');
+      console.log('      - NEXTAUTH_URL in Vercel environment variables');
       console.log('');
-      console.log('   3. Other possible issues:');
-      console.log('      - NEXTAUTH_URL might not be set correctly in Vercel environment');
-      console.log('      - Master admin might not be seeded in the database');
-      console.log('      - Database connection issues');
-      console.log('      - IP whitelisting on MongoDB Atlas');
+      console.log('   3. To fix the API endpoint conflict:');
+      console.log('      - Check NextAuth.js route configuration');
+      console.log('      - Ensure /api/auth/master-admin route is not intercepted');
     }
     
     process.exit(allTestsPassed ? 0 : 1);

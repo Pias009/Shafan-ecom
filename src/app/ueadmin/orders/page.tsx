@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { OrderStatus } from '@prisma/client';
 import { OrderFilter } from './_components/OrderFilter';
+import { getAdminStoreAccess } from '@/lib/admin-store-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,15 +31,44 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
   const params = await searchParams;
   const status = params?.status || 'ALL';
 
+  // Get admin store access to filter orders by store
+  const storeAccess = await getAdminStoreAccess();
+  if (!storeAccess) {
+    return <div className="p-20 text-center font-black opacity-20 italic text-3xl">Unauthorized Access</div>;
+  }
+
   const where: any = {};
+  
+  // Filter by status if specified
   if (status !== 'ALL') {
     where.status = status as OrderStatus;
+  }
+  
+  // Filter by store access
+  if (storeAccess.storeIds.length > 0) {
+    where.storeId = { in: storeAccess.storeIds };
+  } else if (!storeAccess.isSuperAdmin) {
+    // Regular admin with no store access - return empty
+    return (
+      <div className="space-y-6 px-2 md:px-0">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Orders</h1>
+          <div className="text-[10px] md:text-sm text-black/40 font-medium uppercase tracking-widest bg-black/5 px-4 py-1.5 rounded-full inline-block">
+            0 Orders
+          </div>
+        </div>
+        <div className="glass-panel-heavy overflow-hidden rounded-3xl border border-black/5 shadow-sm bg-white p-20 text-center">
+          <p className="text-black/40 font-medium">No store access. You cannot view any orders.</p>
+        </div>
+      </div>
+    );
   }
 
   const dbOrders = await (prisma as any).order.findMany({
     where,
     include: {
       user: true,
+      store: { select: { code: true, name: true } }
     },
     orderBy: {
       createdAt: 'desc'
@@ -48,9 +78,16 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
   return (
     <div className="space-y-6 px-2 md:px-0">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Orders</h1>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Orders</h1>
+          {storeAccess.userCountry && (
+            <p className="text-sm text-black/40 mt-1">
+              Viewing orders for {storeAccess.userCountry} store{storeAccess.allowedStores.length > 1 ? 's' : ''}: {storeAccess.allowedStores.join(', ')}
+            </p>
+          )}
+        </div>
         <div className="text-[10px] md:text-sm text-black/40 font-medium uppercase tracking-widest bg-black/5 px-4 py-1.5 rounded-full inline-block">
-          {dbOrders.length} Orders
+          {dbOrders.length} Order{dbOrders.length !== 1 ? 's' : ''}
         </div>
       </div>
 
@@ -64,6 +101,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
             <thead className="bg-black text-white">
               <tr>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Order #</th>
+                <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Store</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Date</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Customer</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Payment</th>
@@ -79,9 +117,16 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
                 const email = o.user?.email || billing?.email || 'No email';
                 const date = new Date(o.createdAt).toLocaleDateString();
                 const paid = o.paymentMethodTitle || o.paymentMethod || 'Unknown';
+                const storeCode = o.store?.code || 'N/A';
+                const storeName = o.store?.name || 'Unknown Store';
+                
                 return (
                   <tr key={o.id} className="hover:bg-black/[0.02] transition-colors group">
                     <td className="px-4 md:px-6 py-4 font-black">#{o.id.substring(0, 8)}</td>
+                    <td className="px-4 md:px-6 py-4">
+                      <div className="font-black text-[10px] md:text-xs uppercase tracking-widest">{storeCode}</div>
+                      <div className="text-[9px] text-black/40 truncate max-w-[80px]">{storeName}</div>
+                    </td>
                     <td className="px-4 md:px-6 py-4 text-[10px] md:text-sm font-medium text-black/60">{date}</td>
                     <td className="px-4 md:px-6 py-4">
                       <div className="font-bold text-[11px] md:text-sm">{customer}</div>

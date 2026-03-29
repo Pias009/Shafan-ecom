@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== "SUPERADMIN") {
+    if (!session?.user || (session.user as any).role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== "SUPERADMIN") {
+    if (!session?.user || (session.user as any).role !== "SUPERADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
         where: { id: approvalId },
         data: {
           status: "APPROVED",
-          approvedBy: session.user.id,
+          approvedBy: (session.user as any).id,
           approvedAt: new Date(),
         },
       });

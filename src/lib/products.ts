@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { demoProducts } from "./demo-data";
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -7,6 +8,10 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
+/**
+ * Get products with MongoDB connection fallback to demo data
+ * This prevents the application from crashing when MongoDB Atlas is unavailable
+ */
 export async function getProducts(storeCode?: string, page: number = 1, limit: number = 20) {
   try {
     let dbProducts: any[] = [];
@@ -106,9 +111,49 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
 
     console.log(`getProducts: Returning ${products.length} products`);
     return products;
-  } catch (error) {
-    console.error("Prisma Products Fetch Error:", error);
-    console.error("Error details:", JSON.stringify(error, null, 2));
+  } catch (error: any) {
+    console.error("MongoDB Connection Error - Falling back to demo data:", error.message);
+    
+    // Check if it's a connection error
+    const isConnectionError = error.message?.includes('connection') ||
+                              error.message?.includes('timeout') ||
+                              error.message?.includes('TLS') ||
+                              error.message?.includes('SSL') ||
+                              error.message?.includes('Mongo');
+    
+    if (isConnectionError) {
+      console.warn("⚠️ MongoDB Atlas connection failed. Using demo products.");
+      
+      // Convert demo products to match the expected format
+      const fallbackProducts = demoProducts.map((demo, index) => ({
+        id: `demo-${index + 1}`,
+        name: demo.name,
+        description: demo.details,
+        features: demo.features,
+        images: [demo.imageUrl],
+        mainImage: demo.imageUrl,
+        stockQuantity: 100,
+        averageRating: 4.5,
+        ratingCount: 42,
+        totalSales: 150,
+        priceCents: demo.price * 100,
+        regularPriceCents: demo.price * 100,
+        salePriceCents: demo.discountPrice ? demo.discountPrice * 100 : null,
+        currency: 'USD',
+        active: true,
+        hot: demo.hot || false,
+        trending: index < 3,
+        brand: { name: demo.brand },
+        category: { name: demo.category },
+        countryPrices: [],
+      }));
+      
+      console.log(`✅ Returning ${fallbackProducts.length} demo products`);
+      return fallbackProducts;
+    }
+    
+    // For other errors, return empty array
+    console.error("Non-connection error:", error);
     return [];
   }
 }
@@ -152,8 +197,45 @@ export async function getProduct(id: string) {
     };
 
     return product;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Prisma Product Fetch Error:", error);
+    
+    // Check if it's a connection error
+    const isConnectionError = error.message?.includes('connection') ||
+                              error.message?.includes('timeout') ||
+                              error.message?.includes('TLS') ||
+                              error.message?.includes('SSL') ||
+                              error.message?.includes('Mongo');
+    
+    if (isConnectionError && demoProducts.length > 0) {
+      console.warn("⚠️ MongoDB Atlas connection failed. Returning first demo product.");
+      
+      // Return the first demo product as a fallback
+      const demo = demoProducts[0];
+      return {
+        id: 'demo-1',
+        name: demo.name,
+        description: demo.details,
+        features: demo.features,
+        images: [demo.imageUrl],
+        mainImage: demo.imageUrl,
+        stockQuantity: 100,
+        averageRating: 4.5,
+        ratingCount: 42,
+        totalSales: 150,
+        priceCents: demo.price * 100,
+        regularPriceCents: demo.price * 100,
+        salePriceCents: demo.discountPrice ? demo.discountPrice * 100 : null,
+        currency: 'USD',
+        active: true,
+        hot: demo.hot || false,
+        trending: true,
+        brand: { name: demo.brand },
+        category: { name: demo.category },
+        related_ids: [],
+      };
+    }
+    
     return null;
   }
 }

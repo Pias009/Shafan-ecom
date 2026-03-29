@@ -85,7 +85,11 @@ export async function middleware(req: NextRequest) {
         return new NextResponse("Unauthorized Access", { status: 401 })
       }
 
-      if (!token.mfaVerified) {
+      // Allow SUPERADMIN to bypass MFA in development for easier testing
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      const isSuperAdmin = role === 'SUPERADMIN';
+      
+      if (!token.mfaVerified && !(isDevelopment && isSuperAdmin)) {
          url.pathname = '/ueadmin/login'
          return NextResponse.redirect(url)
       }

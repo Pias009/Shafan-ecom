@@ -11,19 +11,24 @@ import { autoCompleteCountryPrices } from '@/lib/country-pricing';
 interface AddProductFormProps {
   brands: { name: string }[];
   categories: { name: string }[];
+  adminStoreCode: string | null;
+  isSuperAdmin: boolean;
 }
 
-export function AddProductForm({ brands, categories }: AddProductFormProps) {
+export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmin }: AddProductFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialStoreId = searchParams?.get('storeId') || "GLOBAL";
+  
+  // Determine initial storeId based on admin's access
+  // For SUPERADMIN: default to GLOBAL, for regular admin: use their store
+  const initialStoreId = isSuperAdmin ? 'GLOBAL' : (adminStoreCode || '');
 
   const [loading, setLoading] = useState(false);
   
-  // Initialize country prices for all 6 supported countries
+  // Initialize country prices for all 6 supported countries with minimum price
   const initialCountryPrices = SUPPORTED_COUNTRIES.map(country => ({
     country: country.code as CountryCode,
-    priceCents: 0,
+    priceCents: 100, // Minimum 1.00 in local currency
     currency: country.currency,
     active: true
   }));
@@ -34,14 +39,14 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
     categoryName: categories[0]?.name || '',
     description: '',
     features: [] as string[],
-    priceCents: 0,
+    priceCents: 100, // Minimum 1.00 USD
     discountCents: 0,
     stockQuantity: 0,
     mainImage: '',
     images: [] as string[],
     hot: false,
     trending: false,
-    storeId: 'GLOBAL', // Default to global
+    storeId: initialStoreId, // Set based on admin's access
     countryPrices: initialCountryPrices,
   });
 
@@ -88,6 +93,26 @@ export function AddProductForm({ brands, categories }: AddProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Client-side validation
+    if (formData.priceCents < 1) {
+      toast.error('Product price must be at least 1 cent');
+      return;
+    }
+    
+    // Check country prices
+    const invalidCountryPrices = formData.countryPrices.filter(cp => cp.priceCents < 1);
+    if (invalidCountryPrices.length > 0) {
+      toast.error(`Country prices must be at least 1 cent. Check: ${invalidCountryPrices.map(cp => cp.country).join(', ')}`);
+      return;
+    }
+    
+    // Check discount doesn't exceed price
+    if (formData.discountCents > formData.priceCents) {
+      toast.error('Discount cannot exceed product price');
+      return;
+    }
+    
     setLoading(true);
 
     try {

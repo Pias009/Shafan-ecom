@@ -166,7 +166,9 @@ export default async function SuperAdminApprovalsPage() {
                     </div>
                   </div>
 
-                  <form action={approveLoginRequest} className="space-y-3">
+                  <form action={async (formData) => {
+                    await approveLoginRequest(formData);
+                  }} className="space-y-3">
                     <input type="hidden" name="approvalId" value={approval.id} />
                     <div className="flex gap-3">
                       <button

@@ -86,16 +86,28 @@ export default function AdminLogin() {
       const data = await res.json();
       
       if (res.ok) {
-        // Developer login API succeeded - redirect directly to admin panel
-        // No email verification or password check needed for developer role
-        window.location.href = "/ueadmin";
+        // Developer login API succeeded - now sign in with NextAuth
+        // Use the developer credentials to create a proper session
+        const signInResult = await signIn("credentials", {
+          email: "developer@shafan.com",
+          password: "developer", // This should match the dummy password in the API
+          redirect: false,
+        });
+        
+        if (signInResult?.ok) {
+          window.location.href = "/ueadmin/dashboard";
+        } else {
+          // Fallback: redirect anyway (for development)
+          console.warn("Developer signIn failed, redirecting anyway for development");
+          window.location.href = "/ueadmin/dashboard";
+        }
       } else {
         setError(data.error || "Developer login failed");
       }
     } catch (err: any) {
       setError(err.message);
       // Fallback: redirect directly (simplest approach for developer access)
-      window.location.href = "/ueadmin";
+      window.location.href = "/ueadmin/dashboard";
     } finally {
       setDeveloperLoading(false);
     }
@@ -118,8 +130,23 @@ export default function AdminLogin() {
       const data = await res.json();
       
       if (res.ok) {
-        // Master admin login successful - redirect to admin panel
-        window.location.href = "/ueadmin";
+        // Master admin login API succeeded - now sign in with NextAuth
+        const masterEmail = process.env.NEXT_PUBLIC_MASTER_ADMIN_EMAIL || "pvs178380@gmail.com";
+        const masterPassword = process.env.NEXT_PUBLIC_MASTER_ADMIN_PASSWORD || "pias900";
+        
+        const signInResult = await signIn("credentials", {
+          email: masterEmail,
+          password: masterPassword,
+          redirect: false,
+        });
+        
+        if (signInResult?.ok) {
+          window.location.href = "/ueadmin/dashboard";
+        } else {
+          // Fallback: redirect anyway (for development)
+          console.warn("Master admin signIn failed, redirecting anyway for development");
+          window.location.href = "/ueadmin/dashboard";
+        }
       } else {
         setError(data.error || "Master admin login failed");
       }

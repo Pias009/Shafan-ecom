@@ -13,6 +13,15 @@
 # testing
 /coverage
 
+# test scripts
+/scripts/test-*
+/scripts/*test*
+create-test-products.js
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+
 # next.js
 /.next/
 /out/

@@ -2,15 +2,19 @@ import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
 import { Package, Plus, Search, Filter, ArrowRight, Store } from 'lucide-react';
 import { StockUpdateBtn } from "../_components/StockUpdateBtn";
+import { requireKuwaitAccess, getAccessibleStore } from "@/lib/admin-store-guard";
 
 export const dynamic = 'force-dynamic';
 
 export default async function KuwaitInventoryPage() {
+  // Enforce strict access control - only Kuwait admins can access this page
+  await requireKuwaitAccess();
+
   const storeCode = 'KUW';
-  const store = await prisma.store.findUnique({ where: { code: storeCode } });
+  const store = await getAccessibleStore(storeCode);
 
   if (!store) {
-     return <div className="p-20 text-center font-black opacity-20 italic text-3xl">Configuration Missing: KUW</div>;
+     return <div className="p-20 text-center font-black opacity-20 italic text-3xl">Access Denied or Store Not Found: KUW</div>;
   }
 
   const inventory = await prisma.storeInventory.findMany({

@@ -1,19 +1,36 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Plus, Tag } from 'lucide-react';
+import { getAdminStoreAccess, getAccessibleStoreIds } from '@/lib/admin-store-guard';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProductsPage() {
-  const products = await prisma.product.findMany({
-    include: {
-      category: true,
-      brand: true,
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  });
+  // Get admin's accessible store IDs based on their country
+  const accessibleStoreIds = await getAccessibleStoreIds();
+  
+  // If no accessible stores (should not happen for admins), return empty array
+  let products: any[] = [];
+  if (accessibleStoreIds.length > 0) {
+    products = await prisma.product.findMany({
+      where: {
+        OR: [
+          // Products directly assigned to accessible stores
+          { storeId: { in: accessibleStoreIds } },
+          // Products available through store inventory for accessible stores
+          { storeInventories: { some: { storeId: { in: accessibleStoreIds } } } }
+        ]
+      },
+      include: {
+        category: true,
+        brand: true,
+        store: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+  }
 
   return (
     <div className="space-y-8">
