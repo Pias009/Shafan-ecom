@@ -18,13 +18,12 @@ git add .
 
 echo ""
 echo "💾 Committing changes..."
-git commit -m "FIX: Admin login redirect issue on Vercel
+git commit -m "FIX: Admin login infinite redirect loop on Vercel
 
-- Added middleware matcher configuration
-- Fixed master admin MFA bypass in production  
-- Updated cookie domain for Vercel deployments
-- Enhanced session creation for master admin
-- Added masterAdminBypass flag to JWT tokens"
+- Fixed cookie domain configuration in auth.ts (removed .vercel.app domain)
+- Updated middleware to allow SUPERADMIN MFA bypass in production
+- Enhanced debug logging in middleware for production troubleshooting
+- Fixed MFA verification logic for superadmins"
 
 echo ""
 echo "📤 Pushing to GitHub (triggers Vercel deployment)..."

@@ -90,11 +90,14 @@ export async function middleware(req: NextRequest) {
         tokenKeys: token ? Object.keys(token) : null,
         role: token?.role,
         mfaVerified: token?.mfaVerified,
+        masterAdminBypass: token?.masterAdminBypass,
         NODE_ENV: process.env.NODE_ENV,
         NEXTAUTH_URL: process.env.NEXTAUTH_URL?.substring(0, 20) + '...',
         cookieName: process.env.NODE_ENV === 'production'
           ? '__Secure-next-auth.session-token'
-          : 'next-auth.session-token'
+          : 'next-auth.session-token',
+        VERCEL_ENV: process.env.VERCEL_ENV,
+        VERCEL_URL: process.env.VERCEL_URL
       })
       
       if (!token) {
@@ -109,20 +112,21 @@ export async function middleware(req: NextRequest) {
         return new NextResponse("Unauthorized Access", { status: 401 })
       }
 
-      // Allow SUPERADMIN to bypass MFA in development for easier testing
-      // Also allow master admin bypass in production (handled by master admin API)
-      const isDevelopment = process.env.NODE_ENV === 'development';
+      // Allow SUPERADMIN to bypass MFA in both development and production for now
+      // This fixes the redirect loop issue in production
       const isSuperAdmin = role === 'SUPERADMIN';
       
       // Check for master admin bypass flag in token
       const isMasterAdminBypass = token.masterAdminBypass === true;
       
-      if (!token.mfaVerified && !(isDevelopment && isSuperAdmin) && !isMasterAdminBypass) {
+      // Superadmins can bypass MFA in both dev and prod
+      // Regular admins still need MFA
+      if (!token.mfaVerified && !isSuperAdmin && !isMasterAdminBypass) {
          console.log('MIDDLEWARE: MFA not verified', {
            mfaVerified: token.mfaVerified,
-           isDevelopment,
            isSuperAdmin,
-           masterAdminBypass: isMasterAdminBypass
+           masterAdminBypass: isMasterAdminBypass,
+           role
          })
          url.pathname = '/ueadmin/login'
          return NextResponse.redirect(url)

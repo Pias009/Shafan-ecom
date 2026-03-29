@@ -30,12 +30,10 @@ export const authOptions: NextAuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        // For Vercel deployments, we need to handle both main domain and preview deployments
-        domain: process.env.NODE_ENV === 'production'
-          ? (process.env.VERCEL_ENV === 'preview'
-              ? `.${process.env.VERCEL_URL?.replace('https://', '')}` // Preview deployment
-              : '.vercel.app') // Production deployment
-          : undefined,
+        // For Vercel deployments, we should NOT set domain for *.vercel.app subdomains
+        // because cookies with domain .vercel.app won't be sent to specific subdomains
+        // Let browser handle domain automatically
+        domain: undefined,
       },
     },
   },
