@@ -14,6 +14,9 @@ const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
   US: { currency: "USD", lang: "en" },
 };
 
+// Default fallback configuration
+const DEFAULT_CONFIG = { currency: "AED", lang: "en" as const };
+
 export function GlobalInitializer() {
   const { setCurrency, currentCurrency } = useCurrencyStore();
   const { setLanguage, currentLanguage } = useLanguageStore();
@@ -26,9 +29,26 @@ export function GlobalInitializer() {
     
     // Check if we already have users preference, if yes don't overwrite every time
     if (!storage || !langStorage) {
-        fetch("https://ipapi.co/json/")
-        .then(res => res.json())
+        // Use a timeout to prevent hanging on failed requests
+        const timeoutId = setTimeout(() => {
+            setInitialized(true);
+        }, 3000);
+
+        // Use a more reliable method - try ipapi.co but with better error handling
+        fetch("https://ipapi.co/json/", {
+            mode: 'cors',
+            headers: {
+                'Accept': 'application/json',
+            },
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+            return res.json();
+        })
         .then(data => {
+            clearTimeout(timeoutId);
             if (data.country_code) {
                 const config = IP_MAP[data.country_code];
                 if (config) {
@@ -41,9 +61,20 @@ export function GlobalInitializer() {
                     }
                 }
             }
+            setInitialized(true);
         })
-        .catch(() => {})
-        .finally(() => setInitialized(true));
+        .catch(error => {
+            clearTimeout(timeoutId);
+            console.warn('Failed to fetch IP location, using defaults:', error.message);
+            // Use default configuration as fallback
+            if (!storage) {
+                setCurrency(DEFAULT_CONFIG.currency);
+            }
+            if (!langStorage) {
+                setLanguage(DEFAULT_CONFIG.lang);
+            }
+            setInitialized(true);
+        });
     } else {
         setInitialized(true);
     }
