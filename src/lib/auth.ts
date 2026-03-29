@@ -30,8 +30,11 @@ export const authOptions: NextAuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
+        // For Vercel deployments, we need to handle both main domain and preview deployments
         domain: process.env.NODE_ENV === 'production'
-          ? '.vercel.app' // Allow all vercel subdomains
+          ? (process.env.VERCEL_ENV === 'preview'
+              ? `.${process.env.VERCEL_URL?.replace('https://', '')}` // Preview deployment
+              : '.vercel.app') // Production deployment
           : undefined,
       },
     },
@@ -168,10 +171,10 @@ export const authOptions: NextAuthOptions = {
         const isDeveloper = user.email === "developer@shafan.com";
         const isMasterAdmin = user.email === process.env.MASTER_ADMIN_EMAIL;
         
-        // For developer/master admin in development, allow MFA bypass
-        const isDevelopment = process.env.NODE_ENV === 'development';
+        // For developer/master admin, allow MFA bypass in both development and production
+        // Master admin should always bypass MFA
         const isSuperAdmin = user.role === 'SUPERADMIN';
-        const shouldBypassMFA = (isDeveloper || isMasterAdmin) && isDevelopment && isSuperAdmin;
+        const shouldBypassMFA = (isDeveloper || isMasterAdmin) && isSuperAdmin;
         
         // Check if user has been approved by super admin for first-time login
         const isApprovedBySuperAdmin = user.approvedBySuperAdmin || false;
@@ -182,8 +185,9 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
-          mfaVerified: shouldBypassMFA, // Allow MFA bypass for developer/master admin in development
+          mfaVerified: shouldBypassMFA, // Allow MFA bypass for developer/master admin
           approvedBySuperAdmin: isApprovedBySuperAdmin,
+          masterAdminBypass: isMasterAdmin, // Flag for master admin bypass
         };
       },
     }),
@@ -194,6 +198,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as { role?: string }).role;
         token.mfaVerified = (user as any).mfaVerified;
+        token.masterAdminBypass = (user as any).masterAdminBypass;
       }
       return token;
     },
@@ -202,6 +207,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = (token.id as string) ?? session.user.id;
         session.user.role = (token.role as "USER" | "ADMIN" | "SUPERADMIN") ?? session.user.role;
         (session.user as any).mfaVerified = token.mfaVerified;
+        (session.user as any).masterAdminBypass = token.masterAdminBypass;
       }
       return session;
     },

@@ -74,7 +74,14 @@ export async function middleware(req: NextRequest) {
                        pathname.startsWith('/ueadmin/setup')
 
     if (!isAuthPage) {
-      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+      // Try to get token with explicit cookie name for production
+      const token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET,
+        cookieName: process.env.NODE_ENV === 'production'
+          ? '__Secure-next-auth.session-token'
+          : 'next-auth.session-token'
+      })
       
       // Debug logging
       console.log('MIDDLEWARE: Admin route accessed', {
@@ -84,7 +91,10 @@ export async function middleware(req: NextRequest) {
         role: token?.role,
         mfaVerified: token?.mfaVerified,
         NODE_ENV: process.env.NODE_ENV,
-        NEXTAUTH_URL: process.env.NEXTAUTH_URL?.substring(0, 20) + '...'
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL?.substring(0, 20) + '...',
+        cookieName: process.env.NODE_ENV === 'production'
+          ? '__Secure-next-auth.session-token'
+          : 'next-auth.session-token'
       })
       
       if (!token) {
@@ -100,16 +110,25 @@ export async function middleware(req: NextRequest) {
       }
 
       // Allow SUPERADMIN to bypass MFA in development for easier testing
+      // Also allow master admin bypass in production (handled by master admin API)
       const isDevelopment = process.env.NODE_ENV === 'development';
       const isSuperAdmin = role === 'SUPERADMIN';
       
-      if (!token.mfaVerified && !(isDevelopment && isSuperAdmin)) {
-         console.log('MIDDLEWARE: MFA not verified', { mfaVerified: token.mfaVerified, isDevelopment, isSuperAdmin })
+      // Check for master admin bypass flag in token
+      const isMasterAdminBypass = token.masterAdminBypass === true;
+      
+      if (!token.mfaVerified && !(isDevelopment && isSuperAdmin) && !isMasterAdminBypass) {
+         console.log('MIDDLEWARE: MFA not verified', {
+           mfaVerified: token.mfaVerified,
+           isDevelopment,
+           isSuperAdmin,
+           masterAdminBypass: isMasterAdminBypass
+         })
          url.pathname = '/ueadmin/login'
          return NextResponse.redirect(url)
       }
       
-      console.log('MIDDLEWARE: Admin access granted for', role)
+      console.log('MIDDLEWARE: Admin access granted for', role, { masterAdminBypass: isMasterAdminBypass })
     }
   }
 
@@ -279,3 +298,20 @@ function getLockedPage(): string {
 export function getSecretPath(): string {
   return SECRET_PATH;
 }
+
+// Matcher configuration for Next.js middleware
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api/auth (NextAuth.js endpoints)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     */
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)',
+    // Specifically protect admin routes
+    '/ueadmin/:path*',
+  ],
+};

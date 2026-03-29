@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logSecurityAudit } from "@/lib/security-audit";
 import bcrypt from "bcryptjs";
+import { encode } from "next-auth/jwt";
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,8 +91,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Create a session for the user
-    // In a real implementation, you would create a NextAuth session
-    // For now, we'll return success and let the client handle the redirect
+    // We need to create a proper NextAuth session
+    // For master admin, we'll create a session with mfaVerified: true
     
     console.log("MASTER ADMIN LOGIN SUCCESS:", {
       userId: user.id,
@@ -100,7 +101,12 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
 
-    return NextResponse.json({
+    // Instead of returning JSON, we'll redirect to a special endpoint
+    // that creates the session using NextAuth's signIn
+    // But we can't call signIn from server-side API route
+    
+    // Alternative: Set a temporary cookie and redirect to NextAuth callback
+    const response = NextResponse.json({
       success: true,
       message: "Master admin login successful",
       redirectUrl: "/ueadmin",
@@ -111,7 +117,29 @@ export async function POST(request: NextRequest) {
         role: user.role,
       },
       masterAdminBypass: true,
+      // Include a token that can be used to create session
+      sessionToken: `master-admin-${Date.now()}-${user.id}`,
     });
+
+    // Set a cookie that middleware can recognize
+    // This is a temporary workaround until proper session is created
+    response.cookies.set({
+      name: 'master_admin_auth',
+      value: JSON.stringify({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        mfaVerified: true,
+        timestamp: Date.now(),
+      }),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
+
+    return response;
   } catch (error: any) {
     console.error("Master admin login error:", error);
     return NextResponse.json(
