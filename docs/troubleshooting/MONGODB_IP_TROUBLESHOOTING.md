@@ -145,7 +145,7 @@ prisma.\$connect().then(() => {
 npm install -g mongosh
 
 # Test connection
-mongosh "mongodb+srv://Shanfa:Shanfa90@cluster0.4utvsjg.mongodb.net/shafan-ecommerce?retryWrites=true&w=majority"
+mongosh "mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority"
 ```
 
 ### 3. Network Diagnostic Commands

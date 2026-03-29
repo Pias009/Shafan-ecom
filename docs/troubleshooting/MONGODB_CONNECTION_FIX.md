@@ -65,7 +65,7 @@ Cluster might be paused, stopped, or misconfigured.
 ### 1. Updated Connection String
 Modified `.env` file with enhanced parameters:
 ```env
-DATABASE_URL="mongodb+srv://Shanfa:Shanfa90@cluster0.4utvsjg.mongodb.net/shafan-ecommerce?retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=false&serverSelectionTimeoutMS=10000"
+DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=false&serverSelectionTimeoutMS=10000"
 ```
 
 ### 2. Enhanced Prisma Client

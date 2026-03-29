@@ -7,12 +7,12 @@ This guide provides step-by-step instructions for setting up MongoDB Atlas conne
 
 ### Current Connection String (from .env)
 ```
-DATABASE_URL="mongodb+srv://Shanfa:Shanfa90@cluster0.4utvsjg.mongodb.net/shafan-ecommerce?retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=false&serverSelectionTimeoutMS=10000"
+DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority&tls=true&tlsAllowInvalidCertificates=false&serverSelectionTimeoutMS=10000"
 ```
 
 ### Key Components:
-- **Username**: Shanfa
-- **Password**: Shanfa90
+- **Username**: username
+- **Password**: password
 - **Cluster**: cluster0.4utvsjg
 - **Database**: shafan-ecommerce
 - **Connection Type**: SRV (mongodb+srv://)
@@ -88,7 +88,7 @@ Create a test file to verify connection:
 const { MongoClient } = require('mongodb');
 
 async function testConnection() {
-  const uri = process.env.DATABASE_URL || "mongodb+srv://Shanfa:Shanfa90@cluster0.4utvsjg.mongodb.net/shafan-ecommerce?retryWrites=true&w=majority";
+  const uri = process.env.DATABASE_URL || "mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority";
   
   const client = new MongoClient(uri, {
     serverSelectionTimeoutMS: 5000,
@@ -101,7 +101,7 @@ async function testConnection() {
     console.log('✅ Connection successful!');
     
     // Test database access
-    const db = client.db('shafan-ecommerce');
+    const db = client.db('database');
     const collections = await db.listCollections().toArray();
     console.log(`✅ Database accessible. Collections: ${collections.length}`);
     
