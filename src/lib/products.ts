@@ -261,10 +261,12 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
               brand: true,
               category: true,
             },
-            orderBy: {
-              createdAt: 'desc',
-            },
           }
+        },
+        orderBy: {
+          product: {
+            createdAt: 'desc',
+          },
         },
         take: limit,
       });

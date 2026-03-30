@@ -12,12 +12,36 @@ export type DemoProduct = {
 };
 
 export const demoBrands = [
-  { id: "b1", name: "Frost & Co", icon: "❄" },
-  { id: "b2", name: "AquaGlass", icon: "💧" },
-  { id: "b3", name: "NoirMint", icon: "🌿" },
-  { id: "b4", name: "SkyPearl", icon: "☁" },
-  { id: "b5", name: "Violet Lab", icon: "✦" },
-  { id: "b6", name: "Glow Forge", icon: "◈" },
+  { id: "b1", name: "Anua", icon: "🅰" },
+  { id: "b2", name: "Axis-Y", icon: "🅱" },
+  { id: "b3", name: "Beauty of Jason", icon: "💄" },
+  { id: "b4", name: "Celimax", icon: "🌿" },
+  { id: "b5", name: "Cerave", icon: "💧" },
+  { id: "b6", name: "CosRx", icon: "✨" },
+  { id: "b7", name: "Dr.Althea", icon: "👨‍⚕️" },
+  { id: "b8", name: "Eucerin", icon: "🛡️" },
+  { id: "b9", name: "Embryolisse", icon: "🌸" },
+  { id: "b10", name: "I am from", icon: "👤" },
+  { id: "b11", name: "K18", icon: "🔢" },
+  { id: "b12", name: "Kiehl's", icon: "🏢" },
+  { id: "b13", name: "Ksecret- Seoul 1988", icon: "🇰🇷" },
+  { id: "b14", name: "La Roche Posay", icon: "⚕️" },
+  { id: "b15", name: "Millie", icon: "💖" },
+  { id: "b16", name: "Medicube", icon: "💊" },
+  { id: "b17", name: "PanOxyl", icon: "🧴" },
+  { id: "b18", name: "paula's choice", icon: "👩" },
+  { id: "b19", name: "Purito Seoul", icon: "🌱" },
+  { id: "b20", name: "Skin 1004", icon: "🔟" },
+  { id: "b21", name: "Some by mi", icon: "🍯" },
+  { id: "b22", name: "The Ordinary", icon: "⚗️" },
+  { id: "b23", name: "Timeless", icon: "⏳" },
+  // Keep existing demo brands for backward compatibility
+  { id: "b24", name: "Frost & Co", icon: "❄" },
+  { id: "b25", name: "AquaGlass", icon: "💧" },
+  { id: "b26", name: "NoirMint", icon: "🌿" },
+  { id: "b27", name: "SkyPearl", icon: "☁" },
+  { id: "b28", name: "Violet Lab", icon: "✦" },
+  { id: "b29", name: "Glow Forge", icon: "◈" },
 ] as const;
 
 export const demoCategories = [

@@ -10,7 +10,7 @@ const CountryPriceSchema = z.object({
     (code) => isValidCountryCode(code),
     { message: `Country must be one of: ${SUPPORTED_COUNTRIES.map(c => c.code).join(', ')}` }
   ),
-  priceCents: z.number().int().min(1, { message: "Country price must be at least 1 cent" }),
+  priceCents: z.number().int().min(0, { message: "Country price must be 0 or more cents" }),
   currency: z.string().optional(),
   active: z.boolean().optional().default(true),
 });
@@ -22,11 +22,14 @@ const ProductCreateSchema = z.object({
   images: z.array(z.string()).optional(),
   mainImage: z.string().optional(),
   trending: z.boolean().optional(),
-  priceCents: z.number().int().min(1, { message: "Product price must be at least 1 cent" }),
+  priceCents: z.number().int().min(0, { message: "Product price must be 0 or more cents" }),
   discountCents: z.number().int().min(0).optional(),
   stockQuantity: z.number().int().min(0).optional(),
   brandName: z.string().optional(),
   categoryName: z.string().optional(),
+  categoryId: z.string().optional(),
+  subCategoryId: z.string().optional(),
+  skinToneId: z.string().optional(),
   hot: z.boolean().optional(),
   storeId: z.string().optional(), // Store code for product assignment
   countryPrices: z.array(CountryPriceSchema)
@@ -228,6 +231,10 @@ export async function POST(req: Request) {
       categoryId = c?.id || null;
     }
 
+    // Resolve sub-category and skin tone by ID if provided
+    let subCategoryId: string | null = productData.subCategoryId?.trim() || null;
+    let skinToneId: string | null = productData.skinToneId?.trim() || null;
+
     // Check for existing product by name to avoid non-unique upsert error
     const existingProduct = await prisma.product.findFirst({ where: { name: productData.name } });
     
@@ -306,6 +313,8 @@ export async function POST(req: Request) {
       trending: productData.trending ?? false,
       brandId,
       categoryId,
+      subCategoryId,
+      skinToneId,
       storeId,
       currency: 'USD', // Default currency as per schema
     };

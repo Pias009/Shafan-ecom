@@ -20,7 +20,9 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
     let finalValue: any = value;
     
     if (type === 'number') {
-      finalValue = parseFloat(value);
+      // For price fields, we're now entering cents directly
+      const numValue = parseFloat(value);
+      finalValue = isNaN(numValue) ? 0 : Math.round(numValue);
     } else if (type === 'checkbox') {
       finalValue = (e.target as HTMLInputElement).checked;
     }
@@ -45,6 +47,9 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
           images: product.images || [],
           brandName: product.brand?.name,
           categoryName: product.category?.name,
+          categoryId: product.categoryId || product.category?.id,
+          subCategoryId: product.subCategoryId || product.subCategory?.id,
+          skinToneId: product.skinToneId || product.skinTone?.id,
           kuwaitPrice: product.kuwaitPrice,
           kuwaitStock: product.kuwaitStock,
         }),
@@ -104,23 +109,25 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Price (Cents)</label>
-                  <input 
+                  <input
                     name="priceCents"
                     type="number"
                     value={product.priceCents || 0}
                     onChange={handleChange}
                     className="w-full h-14 px-6 rounded-2xl bg-black/5 border-none font-bold text-black focus:ring-2 focus:ring-black transition"
                   />
+                  <p className="text-[8px] text-black/20 ml-4">Enter price in cents (e.g., 1050 for $10.50)</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Discount (Cents)</label>
-                  <input 
+                  <input
                     name="discountCents"
                     type="number"
                     value={product.discountCents || 0}
                     onChange={handleChange}
                     className="w-full h-14 px-6 rounded-2xl bg-black/5 border-none font-bold text-black focus:ring-2 focus:ring-black transition"
                   />
+                  <p className="text-[8px] text-black/20 ml-4">Enter discount in cents</p>
                 </div>
               </div>
 
@@ -187,7 +194,6 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
                   <input 
                     name="kuwaitPrice"
                     type="number"
-                    step="0.01"
                     value={product.kuwaitPrice || 0}
                     onChange={handleChange}
                     className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"

@@ -142,10 +142,11 @@ export async function middleware(req: NextRequest) {
   
   if (hasStore) return NextResponse.next()
 
-  const country = req.headers.get('x-vercel-ip-country') ?? 'GLOB'
+  const country = req.headers.get('x-vercel-ip-country') ?? 'AE' // Default to UAE
   const KUWAIT_CODE = 'KUW'
+  const UAE_CODE = 'UAE'
   const isKuwait = country === 'KW'
-  const storeCode = isKuwait ? KUWAIT_CODE : 'GLOBAL'
+  const storeCode = isKuwait ? KUWAIT_CODE : UAE_CODE
 
   const res = NextResponse.next()
   res.cookies.set('store_code', storeCode, { path: '/' })

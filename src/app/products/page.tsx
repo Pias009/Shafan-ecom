@@ -1,5 +1,6 @@
 import ProductsClient from "./ProductsClient";
 import { getProducts } from "@/lib/products";
+import { getStoreCode } from "@/lib/server/store-utils";
 import { Suspense } from "react";
 
 export const revalidate = 60; // ISR cache for native server rendering
@@ -9,7 +10,8 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<{ category?: string; brand?: string }>;
 }) {
-  const products = await getProducts();
+  const storeCode = await getStoreCode();
+  const products = await getProducts(storeCode);
   const params = await searchParams;
   const category = params.category;
   const brand = params.brand;

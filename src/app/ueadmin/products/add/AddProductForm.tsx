@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2 } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { SUPPORTED_COUNTRIES, getCurrencyForCountry, type CountryCode } from '@/lib/countries';
@@ -10,12 +10,34 @@ import { autoCompleteCountryPrices } from '@/lib/country-pricing';
 
 interface AddProductFormProps {
   brands: { name: string }[];
-  categories: { name: string }[];
+  categories: {
+    id: string;
+    name: string;
+    subCategories: { id: string; name: string }[];
+  }[];
+  subCategories: {
+    id: string;
+    name: string;
+    categoryId: string;
+    category: { name: string };
+  }[];
+  skinTones: {
+    id: string;
+    name: string;
+    hexColor: string | null;
+  }[];
   adminStoreCode: string | null;
   isSuperAdmin: boolean;
 }
 
-export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmin }: AddProductFormProps) {
+export function AddProductForm({
+  brands,
+  categories,
+  subCategories,
+  skinTones,
+  adminStoreCode,
+  isSuperAdmin
+}: AddProductFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -25,10 +47,10 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
 
   const [loading, setLoading] = useState(false);
   
-  // Initialize country prices for all 6 supported countries with minimum price
+  // Initialize country prices for all 6 supported countries with base price 0
   const initialCountryPrices = SUPPORTED_COUNTRIES.map(country => ({
     country: country.code as CountryCode,
-    priceCents: 100, // Minimum 1.00 in local currency
+    priceCents: 0, // Base price 0
     currency: country.currency,
     active: true
   }));
@@ -36,10 +58,13 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
   const [formData, setFormData] = useState({
     name: '',
     brandName: brands[0]?.name || '',
+    categoryId: categories[0]?.id || '',
     categoryName: categories[0]?.name || '',
+    subCategoryId: '',
+    skinToneId: '',
     description: '',
     features: [] as string[],
-    priceCents: 100, // Minimum 1.00 USD
+    priceCents: 0, // Base price 0
     discountCents: 0,
     stockQuantity: 0,
     mainImage: '',
@@ -50,20 +75,23 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
     countryPrices: initialCountryPrices,
   });
 
+  // Filter sub-categories based on selected category
+  const filteredSubCategories = subCategories.filter(
+    sub => sub.categoryId === formData.categoryId
+  );
+
   // Update country prices when base price changes
   useEffect(() => {
-    if (formData.priceCents > 0) {
-      const hasManualEdits = formData.countryPrices.some(cp => cp.priceCents !== 0);
-      if (!hasManualEdits) {
-        // Auto-fill country prices with base price
-        setFormData(prev => ({
-          ...prev,
-          countryPrices: prev.countryPrices.map(cp => ({
-            ...cp,
-            priceCents: prev.priceCents
-          }))
-        }));
-      }
+    const hasManualEdits = formData.countryPrices.some(cp => cp.priceCents !== 0);
+    if (!hasManualEdits) {
+      // Auto-fill country prices with base price
+      setFormData(prev => ({
+        ...prev,
+        countryPrices: prev.countryPrices.map(cp => ({
+          ...cp,
+          priceCents: prev.priceCents
+        }))
+      }));
     }
   }, [formData.priceCents]);
 
@@ -84,28 +112,29 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
         [name]: isNaN(numValue) ? 0 : numValue
       }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      // Special handling for category changes
+      if (name === 'categoryId') {
+        const selectedCategory = categories.find(cat => cat.id === value);
+        setFormData(prev => ({
+          ...prev,
+          categoryId: value,
+          categoryName: selectedCategory?.name || '',
+          subCategoryId: '' // Reset sub-category when category changes
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+      }
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Client-side validation
-    if (formData.priceCents < 1) {
-      toast.error('Product price must be at least 1 cent');
-      return;
-    }
-    
-    // Check country prices
-    const invalidCountryPrices = formData.countryPrices.filter(cp => cp.priceCents < 1);
-    if (invalidCountryPrices.length > 0) {
-      toast.error(`Country prices must be at least 1 cent. Check: ${invalidCountryPrices.map(cp => cp.country).join(', ')}`);
-      return;
-    }
+    // Client-side validation - price can be 0 or any positive value
+    // Check discount doesn't exceed price
     
     // Check discount doesn't exceed price
     if (formData.discountCents > formData.priceCents) {
@@ -231,13 +260,13 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
                   <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Category</label>
                   <div className="relative">
                     <select
-                      name="categoryName"
-                      value={formData.categoryName}
+                      name="categoryId"
+                      value={formData.categoryId}
                       onChange={handleChange}
                       className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
                     >
                       {categories.map(c => (
-                        <option key={c.name} value={c.name}>{c.name}</option>
+                        <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
                     </select>
                     <Hash className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
@@ -247,43 +276,105 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
             </div>
           </section>
 
-          {/* Pricing & Stock */}
+          {/* Category & Skin Tone Selection */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
-              <TrendingUp size={14} /> Pricing & Inventory
+              <Layers size={14} /> Category & Skin Tone
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Base Price (Cents)</label>
-                <input
-                  type="number"
-                  name="priceCents"
-                  value={formData.priceCents}
-                  onChange={handleChange}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                />
-                <p className="text-[10px] text-black/30 px-2">Default price for all countries</p>
+            <div className="space-y-6">
+              {/* Sub-category Selection */}
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-widest text-black/40 mb-3">Sub-category (Optional)</h4>
+                {filteredSubCategories.length === 0 ? (
+                  <div className="text-center py-4 text-black/30 text-sm">
+                    No sub-categories available for this category.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {filteredSubCategories.map((subCat) => (
+                      <label
+                        key={subCat.id}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
+                          formData.subCategoryId === subCat.id
+                            ? 'border-black bg-black/5'
+                            : 'border-black/10 hover:border-black/20'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="subCategoryId"
+                          value={subCat.id}
+                          checked={formData.subCategoryId === subCat.id}
+                          onChange={handleChange}
+                          className="hidden"
+                        />
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                          formData.subCategoryId === subCat.id
+                            ? 'border-black bg-black'
+                            : 'border-black/20'
+                        }`}>
+                          {formData.subCategoryId === subCat.id && (
+                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <span className="font-medium text-sm">{subCat.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-black/30 mt-2">Select a sub-category to further categorize your product</p>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Sale Price (Cents)</label>
-                <input
-                  type="number"
-                  name="discountCents"
-                  value={formData.discountCents}
-                  onChange={handleChange}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Quantity</label>
-                <input
-                  type="number"
-                  name="stockQuantity"
-                  value={formData.stockQuantity}
-                  onChange={handleChange}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                />
+
+              {/* Skin Tone Selection */}
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-widest text-black/40 mb-3">Skin Tone (Optional)</h4>
+                {skinTones.length === 0 ? (
+                  <div className="text-center py-4 text-black/30 text-sm">
+                    No skin tones available. Create skin tones in the admin panel first.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {skinTones.map((tone) => (
+                      <label
+                        key={tone.id}
+                        className={`flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
+                          formData.skinToneId === tone.id
+                            ? 'border-black bg-black/5'
+                            : 'border-black/10 hover:border-black/20'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="skinToneId"
+                          value={tone.id}
+                          checked={formData.skinToneId === tone.id}
+                          onChange={handleChange}
+                          className="hidden"
+                        />
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                          formData.skinToneId === tone.id
+                            ? 'border-black bg-black'
+                            : 'border-black/20'
+                        }`}>
+                          {formData.skinToneId === tone.id && (
+                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {tone.hexColor && (
+                            <div
+                              className="w-4 h-4 rounded-full border border-black/10"
+                              style={{ backgroundColor: tone.hexColor }}
+                            />
+                          )}
+                          <span className="font-medium text-sm">{tone.name}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-black/30 mt-2">Select the skin tone this product is suitable for</p>
               </div>
             </div>
           </section>
@@ -297,13 +388,13 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-xs font-bold text-black/60">Define prices for all supported countries</p>
-                  <p className="text-[10px] text-black/40 mt-1">Currencies are automatically detected and cannot be changed</p>
+                  <p className="text-xs font-bold text-black/60">Define prices for all supported countries in regular currency</p>
+                  <p className="text-[10px] text-black/40 mt-1">Currencies are automatically detected. Enter whole numbers only (e.g., 10 for $10)</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => {
-                    // Reset all country prices to base price
+                    // Reset all country prices to base price (0)
                     setFormData(prev => ({
                       ...prev,
                       countryPrices: prev.countryPrices.map(cp => ({
@@ -315,7 +406,7 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
                   }}
                   className="bg-black text-white px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
                 >
-                  Reset All to Base Price
+                  Reset All to Base
                 </button>
               </div>
 
@@ -336,15 +427,16 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
                         </div>
                       </div>
                       <div className="col-span-5 space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Price (Cents)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Price (Regular Currency)</label>
                         <div className="flex items-center gap-2">
                           <input
                             type="number"
-                            value={cp.priceCents}
+                            step="1"
+                            value={cp.priceCents === 0 ? '' : (cp.priceCents / 100)}
                             onChange={(e) => {
                               const newPrices = [...formData.countryPrices];
-                              const numValue = parseInt(e.target.value);
-                              newPrices[index].priceCents = isNaN(numValue) ? 0 : numValue;
+                              const numValue = parseFloat(e.target.value);
+                              newPrices[index].priceCents = isNaN(numValue) ? 0 : Math.round(numValue * 100);
                               setFormData(prev => ({ ...prev, countryPrices: newPrices }));
                             }}
                             className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
@@ -362,6 +454,7 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
                             Use Base
                           </button>
                         </div>
+                        <p className="text-[8px] text-black/20 px-2">Enter whole number price (e.g., 10 for $10)</p>
                       </div>
                       <div className="col-span-3 space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Currency (Auto)</label>
@@ -372,7 +465,7 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
                       </div>
                       <div className="col-span-1 flex justify-center">
                         <div className={`w-3 h-3 rounded-full ${cp.priceCents === formData.priceCents ? 'bg-gray-300' : 'bg-green-500'}`}
-                             title={cp.priceCents === formData.priceCents ? 'Using base price' : 'Custom price set'}>
+                             title={cp.priceCents === formData.priceCents ? 'Using base price (0)' : 'Custom price set'}>
                         </div>
                       </div>
                     </div>
@@ -382,9 +475,9 @@ export function AddProductForm({ brands, categories, adminStoreCode, isSuperAdmi
               
               <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
                 <p className="text-xs text-blue-700">
-                  <strong>System Configuration:</strong> All 6 countries are required. Prices are in cents.
+                  <strong>System Configuration:</strong> All 6 countries are required. Prices are in whole numbers only (e.g., 10 for $10).
                   Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
-                  If a country price equals the base price, it will use the base price logic.
+                  If a country price equals the base price (0), it will use the base price logic.
                 </p>
               </div>
 

@@ -11,6 +11,9 @@ const UpdateSchema = z.object({
   stockQuantity: z.number().optional(),
   brandName: z.string().optional(),
   categoryName: z.string().optional(),
+  categoryId: z.string().optional(),
+  subCategoryId: z.string().optional(),
+  skinToneId: z.string().optional(),
   images: z.union([z.string(), z.array(z.string())]).optional(),
   mainImage: z.string().optional(),
   variants: z.any().optional(),
@@ -34,7 +37,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       description: true,
       active: true,
       brand: { select: { name: true } },
-      category: { select: { name: true } },
+      category: { select: { name: true, id: true } },
+      subCategory: { select: { name: true, id: true } },
+      skinTone: { select: { name: true, id: true } },
+      categoryId: true,
+      subCategoryId: true,
+      skinToneId: true,
     },
   });
   if (!product) return new Response('Not found', { status: 404 });
@@ -97,6 +105,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (parsed.data.categoryName) {
       const c = await prisma.category.findFirst({ where: { name: parsed.data.categoryName } });
       if (c) updates.categoryId = c.id;
+    }
+    // Handle direct ID assignments
+    if (parsed.data.categoryId !== undefined) {
+      updates.categoryId = parsed.data.categoryId || null;
+    }
+    if (parsed.data.subCategoryId !== undefined) {
+      updates.subCategoryId = parsed.data.subCategoryId || null;
+    }
+    if (parsed.data.skinToneId !== undefined) {
+      updates.skinToneId = parsed.data.skinToneId || null;
     }
     if (Object.keys(updates).length === 0) {
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });

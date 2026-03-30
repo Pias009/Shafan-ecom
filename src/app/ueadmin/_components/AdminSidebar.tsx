@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { 
-  BarChart3, Store, Users, Package, 
-  Settings, ShieldAlert, BookOpen, 
+import {
+  BarChart3, Store, Users, Package,
+  Settings, ShieldAlert, BookOpen,
   Tag, Image as ImageIcon, Briefcase,
-  Terminal, LayoutGrid
+  Terminal, LayoutGrid, Layers, GitBranch, Palette
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -111,6 +111,28 @@ export function AdminSidebar() {
                 className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
              >
                 <Terminal size={18} /> Email Test
+             </Link>
+          </div>
+
+          <div className="pt-4 space-y-4">
+             <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">Product Taxonomy</div>
+             <Link
+                href="/ueadmin/categories"
+                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+             >
+                <Layers size={18} /> Categories
+             </Link>
+             <Link
+                href="/ueadmin/sub-categories"
+                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+             >
+                <GitBranch size={18} /> Sub-categories
+             </Link>
+             <Link
+                href="/ueadmin/skin-tones"
+                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+             >
+                <Palette size={18} /> Skin Tones
              </Link>
           </div>
        </nav>
