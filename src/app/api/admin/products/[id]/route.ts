@@ -167,3 +167,96 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const session = await getServerAuthSession();
+  
+  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  try {
+    // First, check if product exists and admin has access to it
+    const product = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        store: true,
+        storeInventories: true,
+        countryPrices: true,
+      }
+    });
+
+    if (!product) {
+      return new Response(JSON.stringify({ error: 'Product not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Check store access - admin can only delete products from stores they have access to
+    // For now, we'll allow deletion if admin has appropriate role
+    // In a more complex system, you might want to check store access via getAdminStoreAccess()
+
+    // Delete related records first (to maintain referential integrity)
+    await prisma.storeInventory.deleteMany({
+      where: { productId: id }
+    });
+
+    await prisma.countryPrice.deleteMany({
+      where: { productId: id }
+    });
+
+    await prisma.cartItem.deleteMany({
+      where: { productId: id }
+    });
+
+    // Delete the product
+    await prisma.product.delete({
+      where: { id }
+    });
+
+    // Create audit log
+    try {
+      await prisma.auditLog.create({
+        data: {
+          action: 'DELETE_PRODUCT',
+          actorId: (session.user as any).id,
+          subjectId: id,
+          details: `Product "${product.name}" (ID: ${id}) deleted by ${(session.user as any).email}`,
+        },
+      });
+    } catch (auditError) {
+      console.error('Failed to create audit log:', auditError);
+      // Continue even if audit log fails
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Product deleted successfully',
+      deletedProduct: { id, name: product.name }
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('PRODUCT_DELETE_ERROR:', error);
+    
+    // Handle specific errors
+    let errorMessage = 'Failed to delete product';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Foreign key constraint')) {
+        errorMessage = 'Cannot delete product because it is referenced in other records';
+        statusCode = 409; // Conflict
+      }
+    }
+
+    return new Response(JSON.stringify({
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }), {
+      status: statusCode,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}

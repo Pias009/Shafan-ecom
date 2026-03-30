@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Plus, Tag } from 'lucide-react';
 import { getAdminStoreAccess, getAccessibleStoreIds } from '@/lib/admin-store-guard';
+import { DeleteProductButton } from './_components/DeleteProductButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,12 +109,18 @@ export default async function ProductsPage() {
                     </span>
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <Link 
-                      href={`/ueadmin/products/${p.id}`} 
-                      className="inline-block text-[10px] font-black uppercase tracking-widest bg-black/5 hover:bg-black hover:text-white px-4 py-2 rounded-full transition-all"
-                    >
-                      Edit
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/ueadmin/products/${p.id}`}
+                        className="inline-block text-[10px] font-black uppercase tracking-widest bg-black/5 hover:bg-black hover:text-white px-4 py-2 rounded-full transition-all"
+                      >
+                        Edit
+                      </Link>
+                      <DeleteProductButton
+                        productId={p.id}
+                        productName={p.name}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
