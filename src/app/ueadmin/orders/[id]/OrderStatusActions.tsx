@@ -10,10 +10,12 @@ export default function OrderStatusActions({ orderId, currentStatus }: { orderId
   const [loading, setLoading] = useState(false);
 
   const statuses = [
-    { id: OrderStatus.PENDING_PAYMENT, label: 'Pending' },
-    { id: OrderStatus.PAID, label: 'Paid' },
+    { id: OrderStatus.ORDER_RECEIVED, label: 'Order Received' },
+    { id: OrderStatus.ORDER_CONFIRMED, label: 'Order Confirmed' },
     { id: OrderStatus.PROCESSING, label: 'Processing' },
-    { id: OrderStatus.SHIPPED, label: 'Shipped' },
+    { id: OrderStatus.READY_FOR_PICKUP, label: 'Ready for Pickup' },
+    { id: OrderStatus.ORDER_PICKED_UP, label: 'Order Picked Up' },
+    { id: OrderStatus.IN_TRANSIT, label: 'In Transit' },
     { id: OrderStatus.DELIVERED, label: 'Delivered' },
     { id: OrderStatus.CANCELLED, label: 'Cancelled' },
     { id: OrderStatus.REFUNDED, label: 'Refunded' },

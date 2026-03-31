@@ -107,35 +107,13 @@ export function AdminSidebar() {
                 <ImageIcon size={18} /> Hero Banners
              </Link>
              <Link
-                href="/ueadmin/email-test"
+              href="/ueadmin/email-test"
                 className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
              >
                 <Terminal size={18} /> Email Test
              </Link>
-          </div>
-
-          <div className="pt-4 space-y-4">
-             <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">Product Taxonomy</div>
-             <Link
-                href="/ueadmin/categories"
-                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-             >
-                <Layers size={18} /> Categories
-             </Link>
-             <Link
-                href="/ueadmin/sub-categories"
-                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-             >
-                <GitBranch size={18} /> Sub-categories
-             </Link>
-             <Link
-                href="/ueadmin/skin-tones"
-                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-             >
-                <Palette size={18} /> Skin Tones
-             </Link>
-          </div>
-       </nav>
+           </div>
+        </nav>
 
        <div className="p-6 bg-black/[0.02] rounded-[2rem] border border-black/5">
           <div className="flex items-center gap-3">

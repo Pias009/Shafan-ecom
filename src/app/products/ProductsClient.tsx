@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { ProductsSlider } from "@/components/ProductsSlider";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
+import { CountrySelector } from "@/components/CountrySelector";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,11 +15,16 @@ import { Price } from "@/components/Price";
 import { useRouter } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import { useUserCountry } from "@/lib/country-detection";
+import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 
 export default function ProductsClient({ initialProducts, category, brand: initialBrand }: { initialProducts: any[], category?: string, brand?: string }) {
   const [products] = useState<any[]>(initialProducts || []);
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState(initialBrand || "All");
+  const [selectedCategory, setSelectedCategory] = useState(category || "All");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("All");
+  const [selectedSkinTone, setSelectedSkinTone] = useState("All");
   const [maxPrice, setMaxPrice] = useState(5000);
   const [quickView, setQuickView] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -27,6 +33,10 @@ export default function ProductsClient({ initialProducts, category, brand: initi
   const router = useRouter();
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
+  const userCountry = useUserCountry();
+  
+  // Check if user's country is supported
+  const isCountrySupported = SUPPORTED_COUNTRIES.some(c => c.code === userCountry);
 
   const brands = useMemo(() => {
     const set = new Set(products.map(p => p.brandName).filter(Boolean));
@@ -35,30 +45,64 @@ export default function ProductsClient({ initialProducts, category, brand: initi
 
   const categories = useMemo(() => {
     const set = new Set(products.map(p => p.categoryName).filter(Boolean));
-    const allCategories = Array.from(set).sort();
-    
-    // If a specific category is provided, filter to only that category
-    if (category) {
-      // Decode URL-encoded category (e.g., "Skin+Care" -> "Skin Care")
-      const decodedCategory = decodeURIComponent(category).replace(/\+/g, ' ');
-      return allCategories.filter(cat =>
-        cat.toLowerCase() === decodedCategory.toLowerCase()
-      );
-    }
-    
-    return allCategories;
-  }, [products, category]);
+    return [t.product.all, ...Array.from(set).sort()];
+  }, [products, t.product.all]);
+
+  const subCategories = useMemo(() => {
+    const filteredProducts = selectedCategory === t.product.all 
+      ? products 
+      : products.filter(p => p.categoryName === selectedCategory);
+    const set = new Set(filteredProducts.map(p => p.subCategoryName).filter(Boolean));
+    return ['All', ...Array.from(set).sort()];
+  }, [products, selectedCategory, t.product.all]);
+
+  const skinTones = useMemo(() => {
+    const filteredProducts = selectedCategory === t.product.all 
+      ? products 
+      : products.filter(p => p.categoryName === selectedCategory);
+    const skinToneSet = new Set<string>();
+    filteredProducts.forEach(p => {
+      if (p.skinTones && p.skinTones.length > 0) {
+        p.skinTones.forEach((st: any) => {
+          if (st.name) skinToneSet.add(st.name);
+        });
+      }
+    });
+    return ['All', ...Array.from(skinToneSet).sort()];
+  }, [products, selectedCategory, t.product.all]);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
+      // Check if product has a valid price for user's country
+      let hasValidPrice = false;
+      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
+        const countryPrice = p.countryPrices.find((cp: any) =>
+          cp.country.toUpperCase() === userCountry.toUpperCase()
+        );
+        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
+      } else if (!isCountrySupported) {
+        // For unsupported countries, hide products entirely
+        hasValidPrice = false;
+      } else {
+        // For supported countries without country prices, hide the product
+        hasValidPrice = false;
+      }
+      
+      if (!hasValidPrice) return false;
+      
       const price = p.discountPrice ?? p.price;
       const matchesSearch = p.name.toLowerCase().includes(q.toLowerCase()) ||
         p.brandName.toLowerCase().includes(q.toLowerCase());
       const matchesBrand = brand === t.product.all || p.brandName === brand;
       const matchesPrice = price <= maxPrice;
-      return matchesSearch && matchesBrand && matchesPrice;
+      const matchesCategory = selectedCategory === t.product.all || p.categoryName === selectedCategory;
+      const matchesSubCategory = selectedSubCategory === 'All' || p.subCategoryName === selectedSubCategory;
+      const matchesSkinTone = selectedSkinTone === 'All' || 
+        (p.skinTones && p.skinTones.some((st: any) => st.name === selectedSkinTone));
+      
+      return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone;
     });
-  }, [q, brand, maxPrice, products, t.product.all]);
+  }, [q, brand, maxPrice, products, t.product.all, userCountry, isCountrySupported, selectedCategory, selectedSubCategory, selectedSkinTone]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -68,6 +112,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
       category: product.categoryName,
       price: product.price,
       imageUrl: product.imageUrl,
+      countryPrices: product.countryPrices,
     };
     addItem(cartItem, 1);
     toast.success(`${product.name} added`);
@@ -82,11 +127,24 @@ export default function ProductsClient({ initialProducts, category, brand: initi
 
     const tid = toast.loading(t.cart.creatingOrder);
     try {
+      // Calculate unit price matching cart calculation
+      const countryPrice = product.countryPrices?.find((cp: any) =>
+        cp.country.toUpperCase() === userCountry.toUpperCase()
+      );
+      const unitPriceCents = countryPrice && countryPrice.priceCents > 0
+        ? countryPrice.priceCents
+        : (product.discountPrice ?? product.price) * 100;
+
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          items: [{ productId: product.id, quantity: 1 }] 
+          items: [{ 
+            productId: product.id, 
+            quantity: 1,
+            unitPriceCents
+          }],
+          country: userCountry
         }),
       });
       const data = await res.json();
@@ -128,9 +186,9 @@ export default function ProductsClient({ initialProducts, category, brand: initi
               exit={{ opacity: 0, y: -20, height: 0 }}
               className="overflow-hidden mb-12"
             >
-              <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 items-stretch md:items-end shadow-lg border border-black/5">
-                <div className="col-span-2 md:col-span-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2 px-2">
+              <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 items-stretch shadow-lg border border-black/5">
+                <div className="col-span-2 md:col-span-3 lg:col-span-1">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
                     {t.product.search}
                   </label>
                   <input
@@ -142,27 +200,67 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                   />
                 </div>
 
-                <div className="w-full md:w-[150px]">
+                <div>
                   <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
                     {t.product.brand}
                   </label>
                   <select
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
                   >
                     {brands.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </div>
 
-                <div className="w-full md:w-[220px]">
-                  <div className="flex justify-between items-center mb-1.5 px-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-black/30">
-                      {t.product.maxPrice}
-                    </label>
-                    <Price amount={maxPrice} className="text-[10px] font-black" />
-                  </div>
-                  <div className="px-2 h-10 md:h-12 flex items-center">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                    Category
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => {
+                      setSelectedCategory(e.target.value);
+                      setSelectedSubCategory('All');
+                    }}
+                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                  >
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                    Subcategory
+                  </label>
+                  <select
+                    value={selectedSubCategory}
+                    onChange={(e) => setSelectedSubCategory(e.target.value)}
+                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                  >
+                    {subCategories.map(sc => <option key={sc} value={sc}>{sc}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                    Skin Tone
+                  </label>
+                  <select
+                    value={selectedSkinTone}
+                    onChange={(e) => setSelectedSkinTone(e.target.value)}
+                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                  >
+                    {skinTones.map(st => <option key={st} value={st}>{st}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                    Max Price
+                  </label>
+                  <div className="h-10 md:h-12 flex items-center px-2 bg-white/50 rounded-2xl">
+                    <Price amount={maxPrice} className="text-[10px] font-black mr-2" />
                     <input
                       type="range"
                       min="0"
@@ -170,7 +268,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                       step="10"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(Number(e.target.value))}
-                      className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
+                      className="flex-1 h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
                     />
                   </div>
                 </div>
@@ -223,7 +321,14 @@ export default function ProductsClient({ initialProducts, category, brand: initi
             <p className="font-display text-3xl text-black">{t.product.noProducts}</p>
             <p className="text-black/50 mt-2">{t.product.tryAdjusting}</p>
             <button 
-                onClick={() => { setQ(""); setBrand(t.product.all); setMaxPrice(5000); }} 
+                onClick={() => { 
+                  setQ(""); 
+                  setBrand(t.product.all); 
+                  setSelectedCategory(t.product.all);
+                  setSelectedSubCategory('All');
+                  setSelectedSkinTone('All');
+                  setMaxPrice(5000); 
+                }} 
                 className="mt-8 text-black underline font-bold underline-offset-4"
             >
                 {t.product.resetFilters}
@@ -239,6 +344,9 @@ export default function ProductsClient({ initialProducts, category, brand: initi
         onOrderNow={(p) => orderNow(p)}
         onMoreDetails={(productId) => router.push(`/products/${productId}`)}
       />
+      
+      {/* Development Country Selector */}
+      <CountrySelector />
     </div>
   );
 }

@@ -71,6 +71,22 @@ async function getSkinTones() {
   }
 }
 
+async function getSkinConcerns() {
+  try {
+    const { prisma } = await import('@/lib/prisma');
+    return await prisma.skinConcern.findMany({
+      select: {
+        id: true,
+        name: true,
+        description: true,
+      },
+      orderBy: { name: 'asc' }
+    });
+  } catch {
+    return [];
+  }
+}
+
 async function getStoreAccess() {
   try {
     const { getAdminStoreAccess } = await import('@/lib/admin-store-guard');
@@ -82,11 +98,12 @@ async function getStoreAccess() {
 
 export default async function AddProductPage() {
   // Fetch all data in parallel with individual error handling
-  const [brands, categories, subCategories, skinTones, storeAccess] = await Promise.allSettled([
+  const [brands, categories, subCategories, skinTones, skinConcerns, storeAccess] = await Promise.allSettled([
     getBrands(),
     getCategories(),
     getSubCategories(),
     getSkinTones(),
+    getSkinConcerns(),
     getStoreAccess()
   ]);
 
@@ -95,6 +112,7 @@ export default async function AddProductPage() {
   const categoriesData = categories.status === 'fulfilled' ? categories.value : [];
   const subCategoriesData = subCategories.status === 'fulfilled' ? subCategories.value : [];
   const skinTonesData = skinTones.status === 'fulfilled' ? skinTones.value : [];
+  const skinConcernsData = skinConcerns.status === 'fulfilled' ? skinConcerns.value : [];
   const storeAccessData = storeAccess.status === 'fulfilled' ? storeAccess.value : null;
 
   // Determine admin's primary store
@@ -115,6 +133,7 @@ export default async function AddProductPage() {
         categories={categoriesData}
         subCategories={subCategoriesData}
         skinTones={skinTonesData}
+        skinConcerns={skinConcernsData}
         adminStoreCode={adminStoreCode}
         isSuperAdmin={isSuperAdmin}
       />

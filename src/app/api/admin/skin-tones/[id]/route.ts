@@ -6,16 +6,16 @@ import { authOptions } from "@/lib/auth";
 // GET single skin tone by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const skinTone = await prisma.skinTone.findUnique({
       where: { id },
@@ -48,16 +48,16 @@ export async function GET(
 // PUT update skin tone
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, description, hexColor } = body;
 
@@ -114,16 +114,16 @@ export async function PUT(
 // DELETE skin tone
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if skin tone exists
     const skinTone = await prisma.skinTone.findUnique({

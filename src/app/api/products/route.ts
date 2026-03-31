@@ -8,6 +8,8 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const store = searchParams.get('store');
+    
+    // Get all products - filtering happens on client side to avoid hydration mismatches
     const products = await getProducts(store || undefined);
     
     return NextResponse.json(products, {

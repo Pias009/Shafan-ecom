@@ -2,25 +2,34 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Store, ShieldCheck } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 interface EditProductFormProps {
   product: any;
+  categories: { id: string; name: string }[];
+  subCategories: { id: string; name: string; categoryId: string; category: { name: string } }[];
+  skinTones: { id: string; name: string; hexColor: string | null }[];
+  skinConcerns: { id: string; name: string }[];
 }
 
-export function EditProductForm({ product: initialProduct }: EditProductFormProps) {
+export function EditProductForm({ product: initialProduct, categories, subCategories, skinTones, skinConcerns }: EditProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [product, setProduct] = useState(initialProduct);
+  const [product, setProduct] = useState({
+    ...initialProduct,
+    categoryIds: initialProduct.categories?.map((c: any) => c.id) || [],
+    subCategoryIds: initialProduct.subCategory?.id ? [initialProduct.subCategory.id] : [],
+    skinToneIds: initialProduct.skinTones?.map((s: any) => s.id) || [],
+    skinConcernIds: initialProduct.skinConcerns?.map((sc: any) => sc.id) || [],
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     let finalValue: any = value;
     
     if (type === 'number') {
-      // For price fields, we're now entering cents directly
       const numValue = parseFloat(value);
       finalValue = isNaN(numValue) ? 0 : Math.round(numValue);
     } else if (type === 'checkbox') {
@@ -28,6 +37,74 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
     }
     
     setProduct((prev: any) => ({ ...prev, [name]: finalValue }));
+  };
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setProduct((prev: any) => {
+      const currentIds = prev.categoryIds || [];
+      if (currentIds.includes(categoryId)) {
+        return {
+          ...prev,
+          categoryIds: currentIds.filter((id: string) => id !== categoryId)
+        };
+      } else {
+        return {
+          ...prev,
+          categoryIds: [...currentIds, categoryId]
+        };
+      }
+    });
+  };
+
+  const handleSkinToneToggle = (skinToneId: string) => {
+    setProduct((prev: any) => {
+      const currentIds = prev.skinToneIds || [];
+      if (currentIds.includes(skinToneId)) {
+        return {
+          ...prev,
+          skinToneIds: currentIds.filter((id: string) => id !== skinToneId)
+        };
+      } else {
+        return {
+          ...prev,
+          skinToneIds: [...currentIds, skinToneId]
+        };
+      }
+    });
+  };
+
+  const handleSkinConcernToggle = (concernId: string) => {
+    setProduct((prev: any) => {
+      const currentIds = prev.skinConcernIds || [];
+      if (currentIds.includes(concernId)) {
+        return {
+          ...prev,
+          skinConcernIds: currentIds.filter((id: string) => id !== concernId)
+        };
+      } else {
+        return {
+          ...prev,
+          skinConcernIds: [...currentIds, concernId]
+        };
+      }
+    });
+  };
+
+  const handleSubCategoryToggle = (subCatId: string) => {
+    setProduct((prev: any) => {
+      const currentIds = prev.subCategoryIds || [];
+      if (currentIds.includes(subCatId)) {
+        return {
+          ...prev,
+          subCategoryIds: currentIds.filter((id: string) => id !== subCatId)
+        };
+      } else {
+        return {
+          ...prev,
+          subCategoryIds: [...currentIds, subCatId]
+        };
+      }
+    });
   };
 
   const handleSave = async () => {
@@ -39,6 +116,10 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
         body: JSON.stringify({
           name: product.name,
           description: product.description,
+          shortDescription: product.shortDescription,
+          benefits: product.benefits,
+          ingredients: product.ingredients,
+          howToUse: product.howToUse,
           priceCents: Math.round((product.priceCents || 0)),
           discountCents: Math.round((product.discountCents || 0)),
           stockQuantity: parseInt(product.stockQuantity || 0),
@@ -46,10 +127,11 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
           mainImage: product.mainImage || '',
           images: product.images || [],
           brandName: product.brand?.name,
-          categoryName: product.category?.name,
-          categoryId: product.categoryId || product.category?.id,
-          subCategoryId: product.subCategoryId || product.subCategory?.id,
-          skinToneId: product.skinToneId || product.skinTone?.id,
+          categoryIds: product.categoryIds,
+          skinToneIds: product.skinToneIds,
+          skinConcernIds: product.skinConcernIds,
+          subCategoryIds: product.subCategoryIds,
+          subCategoryId: product.subCategoryIds?.[0] || null,
           kuwaitPrice: product.kuwaitPrice,
           kuwaitStock: product.kuwaitStock,
         }),
@@ -93,56 +175,203 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <div className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-8">
-            <div className="grid gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Product Name</label>
-                <input 
-                  name="name"
-                  value={product.name}
-                  onChange={handleChange}
-                  className="w-full h-14 px-6 rounded-2xl bg-black/5 border-none font-bold text-black focus:ring-2 focus:ring-black transition"
-                />
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Price (Cents)</label>
-                  <input
-                    name="priceCents"
-                    type="number"
-                    value={product.priceCents || 0}
+        <div className="lg:col-span-2 space-y-8">
+          {/* General Info */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+              <Package size={14} /> General Info
+            </h3>
+            
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Product Name</label>
+                  <input 
+                    name="name"
+                    value={product.name}
                     onChange={handleChange}
-                    className="w-full h-14 px-6 rounded-2xl bg-black/5 border-none font-bold text-black focus:ring-2 focus:ring-black transition"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
                   />
-                  <p className="text-[8px] text-black/20 ml-4">Enter price in cents (e.g., 1050 for $10.50)</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Discount (Cents)</label>
-                  <input
-                    name="discountCents"
-                    type="number"
-                    value={product.discountCents || 0}
-                    onChange={handleChange}
-                    className="w-full h-14 px-6 rounded-2xl bg-black/5 border-none font-bold text-black focus:ring-2 focus:ring-black transition"
-                  />
-                  <p className="text-[8px] text-black/20 ml-4">Enter discount in cents</p>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Brand</label>
+                  <div className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold">
+                    {product.brand?.name || 'N/A'}
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/30 ml-4">Description</label>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Description</label>
                 <textarea 
                   name="description"
                   value={product.description || ''} 
                   onChange={handleChange}
-                  rows={6}
-                  className="w-full p-6 rounded-2xl bg-black/5 border-none font-medium text-sm text-black/80 focus:ring-2 focus:ring-black transition resize-none"
+                  rows={3}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Short Description</label>
+                <textarea 
+                  name="shortDescription"
+                  value={product.shortDescription || ''} 
+                  onChange={handleChange}
+                  rows={2}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Benefits</label>
+                <textarea 
+                  name="benefits"
+                  value={product.benefits || ''} 
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Ingredients</label>
+                <textarea 
+                  name="ingredients"
+                  value={product.ingredients || ''} 
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">How to Use</label>
+                <textarea 
+                  name="howToUse"
+                  value={product.howToUse || ''} 
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                />
+              </div>
+
+              {/* Categories */}
+              <div>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Categories</h4>
+                <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map(cat => (
+                      <label
+                        key={cat.id}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                          (product.categoryIds || []).includes(cat.id)
+                            ? 'bg-black text-white'
+                            : 'bg-white hover:bg-black/5'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(product.categoryIds || []).includes(cat.id)}
+                          onChange={() => handleCategoryToggle(cat.id)}
+                          className="hidden"
+                        />
+                        <span className="text-sm font-medium">{cat.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Sub-categories */}
+              <div>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Sub-categories</h4>
+                <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2">
+                    {subCategories.map((subCat) => (
+                      <label
+                        key={subCat.id}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                          (product.subCategoryIds || []).includes(subCat.id)
+                            ? 'bg-black text-white'
+                            : 'bg-white hover:bg-black/5'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(product.subCategoryIds || []).includes(subCat.id)}
+                          onChange={() => handleSubCategoryToggle(subCat.id)}
+                          className="hidden"
+                        />
+                        <span className="text-sm font-medium">{subCat.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Skin Tones */}
+              <div>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Skin Tones</h4>
+                <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2">
+                    {skinTones.map((tone) => (
+                      <label
+                        key={tone.id}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                          (product.skinToneIds || []).includes(tone.id)
+                            ? 'bg-black text-white'
+                            : 'bg-white hover:bg-black/5'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(product.skinToneIds || []).includes(tone.id)}
+                          onChange={() => handleSkinToneToggle(tone.id)}
+                          className="hidden"
+                        />
+                        {tone.hexColor && (
+                          <div
+                            className="w-4 h-4 rounded-full border border-white/20"
+                            style={{ backgroundColor: tone.hexColor }}
+                          />
+                        )}
+                        <span className="text-sm font-medium">{tone.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Skin Concerns */}
+              <div>
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Skin Concerns</h4>
+                <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2">
+                    {skinConcerns.map((concern) => (
+                      <label
+                        key={concern.id}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                          (product.skinConcernIds || []).includes(concern.id)
+                            ? 'bg-black text-white'
+                            : 'bg-white hover:bg-black/5'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(product.skinConcernIds || []).includes(concern.id)}
+                          onChange={() => handleSkinConcernToggle(concern.id)}
+                          className="hidden"
+                        />
+                        <span className="text-sm font-medium">{concern.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
 
         <div className="space-y-8">
@@ -182,7 +411,6 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
             </div>
           </section>
 
-          {/* Kuwait Specifics */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><Store size={16} /></div>
@@ -211,8 +439,6 @@ export function EditProductForm({ product: initialProduct }: EditProductFormProp
                </div>
             </div>
           </section>
-
-
 
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <div className="flex items-center gap-3 mb-2">

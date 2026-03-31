@@ -22,7 +22,7 @@ export async function POST(req: Request) {
         const updatedOrder = await prisma.order.update({
           where: { id: orderId },
           data: { 
-            status: OrderStatus.PAID,
+            status: OrderStatus.ORDER_CONFIRMED,
             stripePaymentIntentId: paymentIntent.id
           },
           include: { 

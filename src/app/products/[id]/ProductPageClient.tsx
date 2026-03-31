@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,11 +10,14 @@ import { Footer } from "@/components/Footer";
 import { Price } from "@/components/Price";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
+import { CountrySelector } from "@/components/CountrySelector";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useUserCountry } from "@/lib/country-detection";
+import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 
 interface ProductPageClientProps {
   product: any;
@@ -26,11 +29,44 @@ export default function ProductPageClient({ product, recommendations }: ProductP
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
+  const userCountry = useUserCountry();
+  
+  // Check if user's country is supported
+  const isCountrySupported = SUPPORTED_COUNTRIES.some(c => c.code === userCountry);
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
-  const [showDescription, setShowDescription] = useState(false);
+  const [showDescription, setShowDescription] = useState<string>('shortDescription');
   const [quickView, setQuickView] = useState<any>(null);
+
+  const descriptionTabs = [
+    { key: 'shortDescription', label: 'Overview' },
+    { key: 'description', label: 'Description' },
+    { key: 'benefits', label: 'Benefits' },
+    { key: 'ingredients', label: 'Ingredients' },
+    { key: 'howToUse', label: 'How to Use' },
+  ];
+
+  const availableTabs = descriptionTabs.filter(tab => (product as any)[tab.key]);
+  const defaultTab = availableTabs[0]?.key || null;
+  
+  // Filter recommendations based on country support
+  const filteredRecommendations = useMemo(() => {
+    return recommendations.filter((p) => {
+      let hasValidPrice = false;
+      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
+        const countryPrice = p.countryPrices.find((cp: any) =>
+          cp.country.toUpperCase() === userCountry.toUpperCase()
+        );
+        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
+      } else if (!isCountrySupported) {
+        hasValidPrice = false;
+      } else {
+        hasValidPrice = p.priceCents > 0;
+      }
+      return hasValidPrice;
+    });
+  }, [recommendations, userCountry, isCountrySupported]);
 
   // Combine images
   const allImages = [
@@ -56,6 +92,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       category: p.category?.name,
       price: (p.salePriceCents || p.priceCents) / 100,
       imageUrl: p.mainImage,
+      countryPrices: p.countryPrices,
     }, 1);
     toast.success(`${p.name} added to cart`);
   }
@@ -70,11 +107,24 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
     const tid = toast.loading(t.cart.creatingOrder);
     try {
+      // Calculate unit price matching cart calculation
+      const countryPrice = p.countryPrices?.find((cp: any) =>
+        cp.country.toUpperCase() === userCountry.toUpperCase()
+      );
+      const unitPriceCents = countryPrice && countryPrice.priceCents > 0
+        ? countryPrice.priceCents
+        : (p.salePriceCents || p.priceCents);
+
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: [{ productId: p.id, quantity: 1 }]
+          items: [{ 
+            productId: p.id, 
+            quantity: 1,
+            unitPriceCents
+          }],
+          country: userCountry
         }),
       });
       const data = await res.json();
@@ -188,9 +238,16 @@ export default function ProductPageClient({ product, recommendations }: ProductP
           <div className="space-y-10">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                  {product.category?.name || "General"}
-                </span>
+                {product.categories?.map((cat: string, idx: number) => (
+                  <span key={idx} className="px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                    {cat}
+                  </span>
+                ))}
+                {product.subCategory?.name && (
+                  <span className="px-3 py-1 bg-gray-200 text-black text-[9px] font-black uppercase tracking-widest rounded-full">
+                    {product.subCategory.name}
+                  </span>
+                )}
                 {product.hot && (
                   <span className="px-3 py-1 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full">Hot</span>
                 )}
@@ -215,41 +272,49 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               )}
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Description</div>
-                <button 
-                  onClick={() => setShowDescription(!showDescription)}
-                  className="text-[10px] font-black uppercase tracking-widest text-black underline underline-offset-4 hover:text-black/60 transition-colors"
-                >
-                  {showDescription ? "Hide" : "Show"}
-                </button>
+            {availableTabs.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Details</div>
+                </div>
+                
+                <div className="border-b border-black/10">
+                  <div className="flex flex-wrap gap-1">
+                    {availableTabs.map(tab => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setShowDescription(tab.key)}
+                        className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
+                          showDescription === tab.key 
+                            ? 'text-black border-b-2 border-black' 
+                            : 'text-black/40 hover:text-black/60'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <AnimatePresence mode="wait">
+                  {showDescription && (product as any)[showDescription] && (
+                    <motion.div
+                      key={showDescription}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="py-4"
+                    >
+                      <div 
+                        className="text-lg leading-relaxed text-black/60 font-medium prose prose-stone max-w-none"
+                        dangerouslySetInnerHTML={{ __html: (product as any)[showDescription] || "" }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              
-              <AnimatePresence>
-                {showDescription ? (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div 
-                      className="text-lg leading-relaxed text-black/60 font-medium prose prose-stone max-w-none pt-2"
-                      dangerouslySetInnerHTML={{ __html: product.description || "No description available." }}
-                    />
-                  </motion.div>
-                ) : (
-                  <button 
-                    onClick={() => setShowDescription(true)}
-                    className="w-full py-6 bg-black/[0.02] border border-dashed border-black/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-black/30 hover:bg-black/5 hover:text-black transition-all group"
-                  >
-                    Click to view product description
-                  </button>
-                )}
-              </AnimatePresence>
-            </div>
+            )}
 
             {product.features && product.features.length > 0 && (
               <div className="space-y-6">
@@ -260,6 +325,37 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                       <div className="w-1.5 h-1.5 bg-black/20 rounded-full" />
                       <span className="text-[11px] font-bold text-black/50 uppercase tracking-widest">{f}</span>
                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Skin Tones */}
+            {product.skinTones && product.skinTones.length > 0 && (
+              <div className="space-y-4">
+                <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Suitable for Skin Tones</div>
+                <div className="flex flex-wrap gap-3">
+                  {product.skinTones.map((tone: any, idx: number) => (
+                    <span key={idx} className="inline-flex items-center gap-2 px-4 py-2 bg-black/[0.03] border border-black/5 text-black text-[10px] font-bold uppercase tracking-widest rounded-full">
+                      {tone.hexColor && (
+                        <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: tone.hexColor }} />
+                      )}
+                      {tone.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Skin Concerns */}
+            {product.skinConcerns && product.skinConcerns.length > 0 && (
+              <div className="space-y-4">
+                <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Addresses Skin Concerns</div>
+                <div className="flex flex-wrap gap-3">
+                  {product.skinConcerns.map((concern: string, idx: number) => (
+                    <span key={idx} className="px-4 py-2 bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-widest rounded-full border border-red-100">
+                      {concern}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -304,7 +400,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         </div>
 
         {/* Recommendations */}
-        {recommendations.length > 0 && (
+        {filteredRecommendations.length > 0 && (
           <section className="mt-32 space-y-12">
             <div className="flex items-center gap-6">
               <h2 className="text-4xl font-bold tracking-tight text-black">Recommended</h2>
@@ -312,7 +408,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-              {recommendations.map((rec, idx) => (rec &&
+              {filteredRecommendations.map((rec, idx) => (rec &&
                 <ProductCard
                   key={rec.id}
                   product={{
@@ -413,6 +509,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         onOrderNow={(p) => orderNow(p)}
         onMoreDetails={(productId) => router.push(`/products/${productId}`)}
       />
+      
+      {/* Development Country Selector */}
+      <CountrySelector />
     </div>
   );
 }

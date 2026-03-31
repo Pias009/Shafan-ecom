@@ -24,6 +24,11 @@ interface HomeProductCardProps {
     ratingCount?: number;
     stockQuantity?: number;
     totalSales?: number;
+    countryPrices?: Array<{
+      country: string;
+      priceCents: number;
+      currency: string;
+    }>;
   };
   onQuickView: (product: any) => void;
   onAddToCart: (product: any) => void;
@@ -90,7 +95,11 @@ export function HomeProductCard({
         <div className="cart absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col items-center justify-center">
           {/* Price - Shows on Hover */}
           <div className="price mb-2 sm:mb-3 md:mb-4 text-lg sm:text-xl md:text-2xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 active:opacity-100 transform translate-y-4 group-hover:translate-y-0 active:translate-y-0" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-            <Price amount={price} showSymbolSmall />
+            <Price
+              amount={price}
+              countryPrices={product.countryPrices}
+              showSymbolSmall
+            />
           </div>
           
           {/* Action Buttons - Vertical View */}
@@ -123,7 +132,11 @@ export function HomeProductCard({
       <div className="box-down relative overflow-hidden bg-white p-2 sm:p-3 flex flex-col flex-1 min-h-0">
         {/* Price - Always Visible - Above Title */}
         <div className="flex items-baseline gap-1 sm:gap-2 mb-1.5 sm:mb-2 justify-start flex-shrink-0">
-          <Price amount={price} className="text-xs sm:text-sm md:text-base font-black text-black" />
+          <Price
+            amount={price}
+            countryPrices={product.countryPrices}
+            className="text-xs sm:text-sm md:text-base font-black text-black"
+          />
           {hasDiscount && (
             <Price amount={product.price} className="text-[10px] sm:text-xs text-red-500 line-through font-bold" />
           )}

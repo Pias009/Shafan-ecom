@@ -12,16 +12,43 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
     const session = await getServerAuthSession();
     const isSuper = session?.user?.email === "pvs178380@gmail.com";
 
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        brand: true,
-        category: true,
-        storeInventories: {
-          include: { store: true }
+    const [product, categories, subCategories, skinTones, skinConcerns] = await Promise.all([
+      prisma.product.findUnique({
+        where: { id },
+        include: {
+          brand: true,
+          subCategory: true,
+          storeInventories: {
+            include: { store: true }
+          },
+          productCategories: {
+            include: { category: { select: { id: true, name: true } } }
+          },
+          productSkinTones: {
+            include: { skinTone: { select: { id: true, name: true, hexColor: true } } }
+          },
+          productSkinConcerns: {
+            include: { skinConcern: { select: { id: true, name: true } } }
+          }
         }
-      }
-    });
+      }),
+      prisma.category.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.subCategory.findMany({
+        select: { id: true, name: true, categoryId: true, category: { select: { name: true } } },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.skinTone.findMany({
+        select: { id: true, name: true, hexColor: true },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.skinConcern.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' }
+      })
+    ]);
 
     if (!product) {
       return (
@@ -32,18 +59,20 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       );
     }
 
-    // Flatten inventories for the form
     const kuwaitInv = (product as any).storeInventories?.find((i: any) => i.store?.code === 'KUW');
     
     const productWithGlobal = {
       ...product,
+      categories: product.productCategories.map((pc: any) => pc.category),
+      skinTones: product.productSkinTones.map((ps: any) => ps.skinTone),
+      skinConcerns: product.productSkinConcerns.map((sc: any) => sc.skinConcern),
       kuwaitPrice: kuwaitInv?.price || 0,
       kuwaitStock: kuwaitInv?.quantity || 0,
-      allInventories: (product as any).storeInventories || [], // For Super Admin
+      allInventories: (product as any).storeInventories || [],
       isSuper
     };
 
-    return <EditProductForm product={productWithGlobal} />;
+    return <EditProductForm product={productWithGlobal} categories={categories} subCategories={subCategories} skinTones={skinTones} skinConcerns={skinConcerns} />;
   } catch (error) {
     console.error("Error loading product:", error);
     return (

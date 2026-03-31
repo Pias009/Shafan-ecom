@@ -146,7 +146,7 @@ async function testAdminSecurity() {
   const uaeOrder = await prisma.order.create({
     data: {
       email: 'test-order-uae@example.com',
-      status: 'PAID',
+      status: 'ORDER_CONFIRMED',
       totalCents: 10000,
       subtotalCents: 9000,
       currency: 'aed',

@@ -36,10 +36,10 @@ export async function GET() {
     }));
 
     const stats = {
-      pending: dbOrders.filter((o) => o.status === OrderStatus.PENDING_PAYMENT || o.status === OrderStatus.PROCESSING).length,
-      shipped: dbOrders.filter((o) => o.status === OrderStatus.SHIPPED).length,
-      delivered: dbOrders.filter((o) => o.status === OrderStatus.DELIVERED).length,
-      refunded: dbOrders.filter((o) => o.status === OrderStatus.REFUNDED).length,
+      pending: dbOrders.filter((o) => o.status === "ORDER_RECEIVED" || o.status === "PROCESSING").length,
+      shipped: dbOrders.filter((o) => ["READY_FOR_PICKUP", "ORDER_PICKED_UP", "IN_TRANSIT"].includes(o.status)).length,
+      delivered: dbOrders.filter((o) => o.status === "DELIVERED").length,
+      refunded: dbOrders.filter((o) => o.status === "REFUNDED").length,
     };
 
     return NextResponse.json({ orders, stats });

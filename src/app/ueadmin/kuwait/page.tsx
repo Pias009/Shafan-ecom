@@ -64,8 +64,8 @@ export default async function KuwaitDashboard() {
   
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case OrderStatus.PENDING_PAYMENT: return 'bg-yellow-100 text-yellow-800';
-      case OrderStatus.PAID:
+      case OrderStatus.ORDER_RECEIVED: return 'bg-yellow-100 text-yellow-800';
+      case OrderStatus.ORDER_CONFIRMED:
       case OrderStatus.PROCESSING: return 'bg-blue-100 text-blue-800';
       case OrderStatus.DELIVERED: return 'bg-green-100 text-green-800';
       case OrderStatus.CANCELLED: return 'bg-red-100 text-red-800';
@@ -88,9 +88,6 @@ export default async function KuwaitDashboard() {
         <div className="flex flex-wrap gap-4">
            <Link href="/ueadmin/products/add?storeId=KUW" className="h-14 px-8 rounded-full bg-black text-white font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/20">
               <Plus size={16} /> New Kuwait Product
-           </Link>
-           <Link href="/ueadmin/kuwait/inventory" className="h-14 px-8 rounded-full bg-black/5 text-black font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-black hover:text-white transition-all border border-black/5">
-              <Package size={16} /> Global Catalog
            </Link>
         </div>
       </div>

@@ -9,6 +9,8 @@ export const revalidate = 0; // No ISR when dynamic
 
 export default async function HomePage() {
   const storeCode = await getStoreCode();
+  
+  // Get all products - filtering happens on client side to avoid hydration mismatches
   const [products, newArrivals] = await Promise.all([
     getProducts(storeCode),
     getNewArrivals(storeCode)

@@ -310,7 +310,7 @@ export default function CustomPaymentPage() {
                       <div className="text-[9px] md:text-[10px] text-black/40 font-bold uppercase tracking-widest mt-1">Quantity: {item.quantity}</div>
                     </div>
                     <div className="text-right font-black text-xs md:text-sm">
-                      <Price amount={item.priceCents * item.quantity / 100} />
+                      <Price amount={item.unitPriceCents * item.quantity} currency={order.currency} isCents={true} />
                     </div>
                   </div>
                 ))}
@@ -319,11 +319,11 @@ export default function CustomPaymentPage() {
               <div className="space-y-3 pt-6 border-t border-black/5">
                 <div className="flex justify-between text-[10px] text-black/40 font-bold uppercase tracking-widest">
                   <span>Subtotal</span>
-                  <Price amount={order.subtotalCents / 100} className="text-black" />
+                  <Price amount={order.subtotalCents} currency={order.currency} isCents={true} className="text-black" />
                 </div>
                 <div className="flex justify-between pt-4 border-t border-black/5">
                   <span className="font-bold text-base md:text-lg">Total</span>
-                  <Price amount={order.totalCents / 100} className="font-black text-xl md:text-2xl" />
+                  <Price amount={order.totalCents} currency={order.currency} isCents={true} className="font-black text-xl md:text-2xl" />
                 </div>
               </div>
 

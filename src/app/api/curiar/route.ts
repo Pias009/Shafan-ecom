@@ -4,10 +4,12 @@ import { OrderStatus } from "@prisma/client";
 
 // Map internal statuses if needed, but we should use OrderStatus directly
 const statusMap: Record<string, OrderStatus> = {
-  "PENDING_PAYMENT": OrderStatus.PENDING_PAYMENT,
-  "PAID": OrderStatus.PAID,
+  "ORDER_RECEIVED": OrderStatus.ORDER_RECEIVED,
+  "ORDER_CONFIRMED": OrderStatus.ORDER_CONFIRMED,
   "PROCESSING": OrderStatus.PROCESSING,
-  "SHIPPED": OrderStatus.SHIPPED,
+  "READY_FOR_PICKUP": OrderStatus.READY_FOR_PICKUP,
+  "ORDER_PICKED_UP": OrderStatus.ORDER_PICKED_UP,
+  "IN_TRANSIT": OrderStatus.IN_TRANSIT,
   "DELIVERED": OrderStatus.DELIVERED,
   "CANCELLED": OrderStatus.CANCELLED
 };

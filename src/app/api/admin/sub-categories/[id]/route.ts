@@ -6,16 +6,16 @@ import { authOptions } from "@/lib/auth";
 // GET single sub-category by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const subCategory = await prisma.subCategory.findUnique({
       where: { id },
@@ -54,16 +54,16 @@ export async function GET(
 // PUT update sub-category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { name, description, categoryId } = body;
 
@@ -140,16 +140,16 @@ export async function PUT(
 // DELETE sub-category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session?.user || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if sub-category exists
     const subCategory = await prisma.subCategory.findUnique({

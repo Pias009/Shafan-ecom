@@ -14,10 +14,12 @@ enum Role {
 }
 
 enum OrderStatus {
-  PENDING_PAYMENT
-  PAID
+  ORDER_RECEIVED
+  ORDER_CONFIRMED
   PROCESSING
-  SHIPPED
+  READY_FOR_PICKUP
+  ORDER_PICKED_UP
+  IN_TRANSIT
   DELIVERED
   CANCELLED
   REFUNDED
@@ -131,8 +133,12 @@ model Product {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   name          String   @unique
   slug          String?  @unique
-  description   String?
-  features      String[]
+  description       String?
+  shortDescription String?
+  benefits         String?
+  ingredients      String?
+  howToUse         String?
+  features         String[]
   images        String[]
   mainImage     String?
   stockQuantity Int      @default(0)
@@ -156,20 +162,68 @@ model Product {
   store   Store?  @relation(fields: [storeId], references: [id], name: "StoreProducts")
 
   brandId          String?           @db.ObjectId
-  categoryId       String?           @db.ObjectId
   subCategoryId    String?           @db.ObjectId
-  skinToneId       String?           @db.ObjectId
   brand            Brand?            @relation(fields: [brandId], references: [id])
-  category         Category?         @relation(fields: [categoryId], references: [id])
   subCategory      SubCategory?      @relation(fields: [subCategoryId], references: [id])
-  skinTone         SkinTone?         @relation(fields: [skinToneId], references: [id])
   orderItems       OrderItem[]
   storeInventories StoreInventory[]
   productDiscounts ProductDiscount[]
   countryPrices    CountryPrice[]
 
+  productCategories ProductCategory[]
+  productSkinTones  ProductSkinTone[]
+  productSkinConcerns ProductSkinConcern[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProductCategory {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId  String   @db.ObjectId
+  categoryId String   @db.ObjectId
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([productId, categoryId])
+  @@index([productId])
+  @@index([categoryId])
+}
+
+model ProductSkinTone {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId  String   @db.ObjectId
+  skinToneId String   @db.ObjectId
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  skinTone   SkinTone @relation(fields: [skinToneId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([productId, skinToneId])
+  @@index([productId])
+  @@index([skinToneId])
+}
+
+model SkinConcern {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  name              String             @unique
+  description       String?
+  products          ProductSkinConcern[]
+  createdAt         DateTime?
+  updatedAt         DateTime?
+}
+
+model ProductSkinConcern {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  productId     String      @db.ObjectId
+  skinConcernId String      @db.ObjectId
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  skinConcern   SkinConcern @relation(fields: [skinConcernId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@unique([productId, skinConcernId])
+  @@index([productId])
+  @@index([skinConcernId])
 }
 
 model Brand {
@@ -185,11 +239,11 @@ model Category {
   id                String             @id @default(auto()) @map("_id") @db.ObjectId
   name              String             @unique
   description       String?
-  products          Product[]
   categoryDiscounts CategoryDiscount[]
   subCategories     SubCategory[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  products          ProductCategory[]
+  createdAt         DateTime?
+  updatedAt         DateTime?
 }
 
 model SubCategory {
@@ -199,8 +253,8 @@ model SubCategory {
   categoryId        String             @db.ObjectId
   category          Category           @relation(fields: [categoryId], references: [id])
   products          Product[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  createdAt         DateTime?
+  updatedAt         DateTime?
 }
 
 model SkinTone {
@@ -208,9 +262,9 @@ model SkinTone {
   name              String             @unique
   description       String?
   hexColor          String?            // Optional color representation
-  products          Product[]
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  products          ProductSkinTone[]
+  createdAt         DateTime?
+  updatedAt         DateTime?
 }
 
 model Order {
@@ -220,7 +274,7 @@ model Order {
   userId                String?         @db.ObjectId
   user                  User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   email                 String?
-  status                OrderStatus     @default(PENDING_PAYMENT)
+  status                OrderStatus     @default(ORDER_RECEIVED)
   currency              String          @default("usd")
   subtotalCents         Int
   totalCents            Int

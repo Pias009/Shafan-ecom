@@ -26,6 +26,20 @@ function generateTrackingCode(courier: string): string {
   return `${prefix}-${random}-${Date.now().toString().slice(-6)}`;
 }
 
+// Helper to get currency for country
+function getCurrencyForCountry(country: string): string {
+  const currencies: Record<string, string> = {
+    AE: 'AED',
+    KW: 'KWD',
+    SA: 'SAR',
+    BH: 'BHD',
+    OM: 'OMR',
+    QA: 'QAR',
+    BD: 'BDT',
+  };
+  return currencies[country?.toUpperCase()] || 'USD';
+}
+
 export async function POST(req: Request) {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
@@ -33,7 +47,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { items, couponCode } = await req.json();
+    const { items, country: requestCountry } = await req.json();
 
     // 1. Fetch address from Prisma
     const address = await prisma.address.findUnique({
@@ -44,7 +58,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Shipping address not found" }, { status: 400 });
     }
 
-    // 2. Calculate subtotals by fetching real products (critical for safety)
+    // Use country from request or address
+    const countryCode = requestCountry || address.country || 'AE';
+    const currency = getCurrencyForCountry(countryCode);
+
+    // 2. Calculate subtotals by fetching real products with country pricing
     let subtotalCents = 0;
     const orderItems = [];
 
@@ -55,11 +73,29 @@ export async function POST(req: Request) {
       }
 
       const product = await prisma.product.findUnique({
-        where: { id: item.productId }
+        where: { id: item.productId },
+        include: {
+          countryPrices: {
+            where: { country: countryCode.toUpperCase(), active: true }
+          }
+        }
       });
       if (!product) throw new Error("Product not found: " + item.productId);
 
-      const price = product.discountCents ? (product.priceCents - product.discountCents) : product.priceCents;
+      // Check for country-specific price first
+      let price = 0;
+      if (product.countryPrices && product.countryPrices.length > 0) {
+        price = product.countryPrices[0].priceCents;
+      } else {
+        // Fall back to base price calculation
+        price = product.discountCents ? (product.priceCents - product.discountCents) : product.priceCents;
+      }
+
+      // If price is still 0, use the base price (in case country price wasn't set)
+      if (price <= 0) {
+        price = product.discountCents ? (product.priceCents - product.discountCents) : product.priceCents;
+      }
+
       subtotalCents += price * item.quantity;
       
       orderItems.push({
@@ -69,6 +105,11 @@ export async function POST(req: Request) {
         nameSnapshot: product.name,
         imageSnapshot: product.mainImage
       });
+    }
+
+    // Validate total
+    if (subtotalCents <= 0) {
+      return NextResponse.json({ error: "Order total must be greater than 0. Please check product prices." }, { status: 400 });
     }
 
     // Determine courier based on shipping address
@@ -83,10 +124,10 @@ export async function POST(req: Request) {
       data: {
         userId: session.user.id,
         email: session.user.email,
-        status: OrderStatus.PENDING_PAYMENT,
-        currency: "usd",
+        status: OrderStatus.ORDER_RECEIVED,
+        currency: currency.toLowerCase(),
         subtotalCents,
-        totalCents: subtotalCents, // Simplified
+        totalCents: subtotalCents,
         billingAddress: {
           first_name: address.fullName?.split(" ")[0] || "",
           last_name: address.fullName?.split(" ").slice(1).join(" ") || "",

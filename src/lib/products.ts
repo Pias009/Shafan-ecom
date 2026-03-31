@@ -25,7 +25,13 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
           product: {
             include: {
               brand: true,
-              category: true,
+              productCategories: {
+                include: { category: { select: { id: true, name: true } } }
+              },
+              productSkinTones: {
+                include: { skinTone: true }
+              },
+              subCategory: true,
               countryPrices: {
                 where: {
                   active: true
@@ -55,7 +61,13 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         },
         include: {
           brand: true,
-          category: true,
+          productCategories: {
+            include: { category: { select: { id: true, name: true } } }
+          },
+          productSkinTones: {
+            include: { skinTone: true }
+          },
+          subCategory: true,
           countryPrices: {
             where: {
               active: true
@@ -85,10 +97,27 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
       // Safely handle currency field
       const currency = p.currency ? p.currency.toUpperCase() : 'USD';
 
+      // Extract category names
+      const categoryNames = p.productCategories?.map((pc: any) => pc.category?.name).filter(Boolean) || [];
+      const primaryCategory = categoryNames[0] || "General";
+
+      // Extract skin tones
+      const skinTones = p.productSkinTones?.map((pst: any) => ({
+        name: pst.skinTone?.name,
+        hexColor: pst.skinTone?.hexColor
+      })).filter((t: any) => t.name) || [];
+
+      // Extract subcategory
+      const subCategoryName = p.subCategory?.name;
+
       return {
         id: p.id,
         name: p.name,
         description: p.description || "",
+        shortDescription: p.shortDescription || "",
+        benefits: p.benefits || "",
+        ingredients: p.ingredients || "",
+        howToUse: p.howToUse || "",
         features: p.features || [],
         images: galleryImages,
         mainImage: mainImage,
@@ -104,7 +133,12 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         hot: p.hot,
         trending: p.trending,
         brand: p.brand ? { name: p.brand.name } : null,
-        category: p.category ? { name: p.category.name } : null,
+        category: { name: primaryCategory },
+        categoryName: primaryCategory,
+        categories: categoryNames,
+        skinTones,
+        subCategory: subCategoryName ? { name: subCategoryName } : null,
+        subCategoryName: subCategoryName,
         countryPrices: p.countryPrices || [],
       };
     });
@@ -129,6 +163,10 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         id: `demo-${index + 1}`,
         name: demo.name,
         description: demo.details,
+        shortDescription: "",
+        benefits: "",
+        ingredients: "",
+        howToUse: "",
         features: demo.features,
         images: [demo.imageUrl],
         mainImage: demo.imageUrl,
@@ -164,7 +202,10 @@ export async function getProduct(id: string) {
       where: { id },
       include: {
         brand: true,
-        category: true,
+        productCategories: { include: { category: true } },
+        productSkinTones: { include: { skinTone: true } },
+        productSkinConcerns: { include: { skinConcern: true } },
+        subCategory: { include: { category: true } },
       },
     });
 
@@ -177,6 +218,10 @@ export async function getProduct(id: string) {
       id: p.id,
       name: p.name,
       description: p.description || "",
+      shortDescription: p.shortDescription || "",
+      benefits: p.benefits || "",
+      ingredients: p.ingredients || "",
+      howToUse: p.howToUse || "",
       features: p.features || [],
       images: galleryImages,
       mainImage: mainImage,
@@ -192,7 +237,11 @@ export async function getProduct(id: string) {
       hot: p.hot,
       trending: p.trending,
       brand: p.brand ? { name: p.brand.name } : null,
-      category: p.category ? { name: p.category.name } : null,
+      category: p.productCategories && p.productCategories.length > 0 ? { name: p.productCategories[0].category.name } : null,
+      categories: p.productCategories?.map((pc: any) => pc.category.name) || [],
+      subCategory: p.subCategory ? { name: p.subCategory.name, category: p.subCategory.category?.name } : null,
+      skinTones: p.productSkinTones?.map((pst: any) => ({ name: pst.skinTone.name, hexColor: pst.skinTone.hexColor })) || [],
+      skinConcerns: p.productSkinConcerns?.map((psc: any) => psc.skinConcern.name) || [],
       related_ids: [],
     };
 
@@ -216,6 +265,10 @@ export async function getProduct(id: string) {
         id: 'demo-1',
         name: demo.name,
         description: demo.details,
+        shortDescription: "",
+        benefits: "",
+        ingredients: "",
+        howToUse: "",
         features: demo.features,
         images: [demo.imageUrl],
         mainImage: demo.imageUrl,
@@ -259,7 +312,7 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
           product: {
             include: {
               brand: true,
-              category: true,
+              productCategories: { include: { category: true } },
             },
           }
         },
@@ -283,7 +336,10 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
         },
         include: {
           brand: true,
-          category: true,
+          productCategories: { include: { category: true } },
+          productSkinTones: { include: { skinTone: true } },
+          productSkinConcerns: { include: { skinConcern: true } },
+          subCategory: { include: { category: true } },
         },
         orderBy: {
           createdAt: 'desc',
@@ -299,10 +355,23 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
       const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
       const galleryImages = (p.images || []).filter(isValidImageUrl);
 
+      const categoryNames = p.productCategories?.map((pc: any) => pc.category?.name).filter(Boolean) || [];
+      const primaryCategory = categoryNames[0] || "General";
+      const skinTones = p.productSkinTones?.map((pst: any) => ({
+        name: pst.skinTone?.name,
+        hexColor: pst.skinTone?.hexColor
+      })).filter((t: any) => t.name) || [];
+      const skinConcerns = p.productSkinConcerns?.map((psc: any) => psc.skinConcern?.name).filter(Boolean) || [];
+      const subCategoryName = p.subCategory?.name;
+
       return {
         id: p.id,
         name: p.name,
         description: p.description || "",
+        shortDescription: p.shortDescription || "",
+        benefits: p.benefits || "",
+        ingredients: p.ingredients || "",
+        howToUse: p.howToUse || "",
         features: p.features || [],
         images: galleryImages,
         mainImage: mainImage,
@@ -318,7 +387,14 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
         hot: p.hot,
         trending: p.trending,
         brand: p.brand ? { name: p.brand.name } : null,
-        category: p.category ? { name: p.category.name } : null,
+        brandName: p.brand?.name,
+        category: { name: primaryCategory },
+        categoryName: primaryCategory,
+        categories: categoryNames,
+        categoriesArray: categoryNames,
+        skinTones,
+        skinConcerns,
+        subCategory: subCategoryName ? { name: subCategoryName } : null,
       };
     });
 

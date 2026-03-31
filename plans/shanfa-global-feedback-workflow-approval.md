@@ -166,7 +166,7 @@ This document consolidates all feedback received for the Shanfa Global e-commerc
     - **Priority:** High
     - **Approval Status:** Pending
 
-28. **FB-028:** In product description, we want 4 options: Short Description, Benefits, Ingredients, How to Use.
+28. *///*FB-028:** In product description, we want 4 options: Short Description, Benefits, Ingredients, How to Use.
     - **Issue:** Product detail structure
     - **Priority:** High
     - **Approval Status:** Pending
@@ -177,14 +177,14 @@ This document consolidates all feedback received for the Shanfa Global e-commerc
     - **Priority:** High
     - **Approval Status:** Pending
 
-30. **make add catagory sub catagary from admin panel auto will apare //FB-030:** Category structure:
+30. ///**make add catagory sub catagary from admin panel auto will apare //FB-030:** Category structure:
     - Main Categories: Skin Care, Body Care, Hair Care, Fragrances
     - Sub Categories: Cleanser, Mask & Scrub, Toner, Face Serum, Cream, Lotion, Moisturizer, Sunscreen, Eye Care, Body Cream & Lotion, Body Wash, Body Oil, Hair Serum, Hair oil, Hair Shampoo, Hair conditioner, Hair mask, Fragrances for Men, Fragrances for Women
     - **Issue:** Taxonomy implementation
     - **Priority:** High
     - **Approval Status:** Pending
 
-31. **FB-031:** Skin Type options:
+31.///**FB-031:** Skin Type options:
     - Oily Skin, Dry Skin, Normal Skin, Combination, Acne-prone Skin, All type Skin
     - **Issue:** Product filtering attributes
     - **Priority:** Medium
@@ -196,22 +196,22 @@ This document consolidates all feedback received for the Shanfa Global e-commerc
     - **Priority:** Medium
     - **Approval Status:** Pending
 
-33. **FB-033:** During product listing - these options should be available as dropdowns.
+33. **///FB-033:** During product listing - these options should be available as dropdowns.
     - **Issue:** Admin UI improvement
     - **Priority:** Low
     - **Approval Status:** Pending
 
-34. **FB-034:** Price option - don't show cents, show direct main currency. Currently adding 100 fils makes 1 dirham. Fix to show direct amount.
+34.done,,,,,, **FB-034:** Price option - don't show cents, show direct main currency. Currently adding 100 fils makes 1 dirham. Fix to show direct amount.
     - **Issue:** Price display formatting
     - **Priority:** High
     - **Approval Status:** Pending
 
-35. **FB-035:** Other currencies show fractional prices, but currency fractional option not working. Fix this.
+35. ////////**FB-035:** Other currencies show fractional prices, but currency fractional option not working. Fix this.
     - **Issue:** Currency decimal handling
     - **Priority:** High
     - **Approval Status:** Pending
 
-36. **FB-036:** Below variant options (star options) where only one option can be selected. But if same product for Kuwait and Dubai store, should we add separately? No, add 2 inventories here and we'll manage stock here.
+36./////// **FB-036:** Below variant options (star options) where only one option can be selected. But if same product for Kuwait and Dubai store, should we add separately? No, add 2 inventories here and we'll manage stock here.
     - **Issue:** Multi-store inventory management
     - **Priority:** High
     - **Approval Status:** Pending
@@ -221,7 +221,7 @@ This document consolidates all feedback received for the Shanfa Global e-commerc
     - **Priority:** Medium
     - **Approval Status:** Pending
 
-38. **FB-038:** Hero banner cannot be edited at all.
+38. **FB-038:** homePAge  banner cannot be edited at all.
     - **Issue:** CMS functionality
     - **Priority:** High
     - **Approval Status:** Pending

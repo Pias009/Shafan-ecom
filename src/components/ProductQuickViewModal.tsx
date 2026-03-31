@@ -16,11 +16,20 @@ interface QuickViewProduct {
   name: string;
   brand?: string | { name: string };
   category?: string | { name: string };
+  categories?: string[];
+  subCategory?: { name: string; category?: string } | null;
+  skinTones?: { name: string; hexColor?: string }[];
+  skinConcerns?: string[];
   price: number;
   discountPrice?: number;
   imageUrl: string;
   images?: string[];
   details?: string;
+  description?: string;
+  shortDescription?: string;
+  benefits?: string;
+  ingredients?: string;
+  howToUse?: string;
   features?: string[];
 }
 
@@ -69,6 +78,11 @@ export function ProductQuickViewModal({
   const categoryName = typeof product.category === "string" 
     ? product.category 
     : product.category?.name || "General";
+
+  const categories = product.categories || [];
+  const subCategoryName = product.subCategory?.name;
+  const skinTones = product.skinTones || [];
+  const skinConcerns = product.skinConcerns || [];
 
   const displayPrice = product.discountPrice ?? product.price;
 
@@ -176,10 +190,50 @@ export function ProductQuickViewModal({
                   <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-black leading-tight">
                     {product.name}
                   </h2>
-                  <div className="mt-2 inline-block px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full">
-                    {categoryName}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {categories.map((cat, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                        {cat}
+                      </span>
+                    ))}
+                    {subCategoryName && (
+                      <span className="px-3 py-1 bg-gray-200 text-black text-[9px] font-black uppercase tracking-widest rounded-full">
+                        {subCategoryName}
+                      </span>
+                    )}
                   </div>
                 </div>
+
+                {/* Skin Tones */}
+                {skinTones.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Skin Tones</div>
+                    <div className="flex flex-wrap gap-2">
+                      {skinTones.map((tone, idx) => (
+                        <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/5 text-black text-[9px] font-bold uppercase tracking-widest rounded-full">
+                          {tone.hexColor && (
+                            <span className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: tone.hexColor }} />
+                          )}
+                          {tone.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Skin Concerns */}
+                {skinConcerns.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Skin Concerns</div>
+                    <div className="flex flex-wrap gap-2">
+                      {skinConcerns.map((concern, idx) => (
+                        <span key={idx} className="px-3 py-1 bg-red-50 text-red-600 text-[9px] font-bold uppercase tracking-widest rounded-full border border-red-100">
+                          {concern}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-baseline gap-3">
                   <Price amount={displayPrice} className="text-2xl md:text-4xl font-black text-black" />
@@ -189,11 +243,41 @@ export function ProductQuickViewModal({
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-black/20">{t.product.description}</div>
-                  <div 
-                    className="text-sm leading-relaxed text-black/60 font-medium prose prose-sm max-w-none line-clamp-6"
-                    dangerouslySetInnerHTML={{ __html: product.details || t.product.noDescription }}
-                  />
+                  <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Details</div>
+                  <div className="border-b border-black/10">
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { key: 'shortDescription', label: 'Overview' },
+                        { key: 'description', label: 'Description' },
+                        { key: 'benefits', label: 'Benefits' },
+                        { key: 'ingredients', label: 'Ingredients' },
+                        { key: 'howToUse', label: 'How to Use' },
+                      ].map(tab => (
+                        (product.details && tab.key === 'description') || product[tab.key as keyof typeof product] ? (
+                          <button
+                            key={tab.key}
+                            onClick={() => {
+                              const el = document.getElementById(`quickview-tab-${tab.key}`);
+                              el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
+                            className="px-3 py-2 text-[9px] font-black uppercase tracking-widest transition-all text-black/40 hover:text-black/60"
+                          >
+                            {tab.label}
+                          </button>
+                        ) : null
+                      ))}
+                    </div>
+                  </div>
+                  {product.shortDescription && (
+                    <div id="quickview-tab-shortDescription" className="text-sm leading-relaxed text-black/60 font-medium prose prose-sm max-w-none line-clamp-4 pt-2">
+                      {product.shortDescription}
+                    </div>
+                  )}
+                  {(product.details || product.description) && (
+                    <div id="quickview-tab-description" className="text-sm leading-relaxed text-black/60 font-medium prose prose-sm max-w-none line-clamp-6 pt-2">
+                      {product.description || product.details}
+                    </div>
+                  )}
                 </div>
 
                 {product.features && product.features.length > 0 && (

@@ -32,7 +32,7 @@ export function getPriceForCountry(
   countryCode: CountryCode | string
 ): { priceCents: number; currency: string; isCountrySpecific: boolean } {
   if (!countryCode || !isValidCountryCode(countryCode)) {
-    // Return base price if invalid country
+    // Return default price if invalid country
     return {
       priceCents: product.salePriceCents || product.priceCents,
       currency: product.currency,
@@ -52,7 +52,7 @@ export function getPriceForCountry(
     };
   }
 
-  // Fall back to base price
+  // Fall back to default price
   return {
     priceCents: product.salePriceCents || product.priceCents,
     currency: product.currency,
@@ -165,7 +165,7 @@ export function autoCompleteCountryPrices(countryPrices: any[]): CountryPrice[] 
 /**
  * Validate product data integrity for country pricing
  * Ensures:
- * 1. Base price is valid
+ * 1. Default price is valid
  * 2. Country prices are valid and complete
  * 3. No duplicate countries
  * 4. Currency matches country
@@ -180,14 +180,14 @@ export function validateProductCountryPricing(
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Validate base price
+  // Validate default price
   if (typeof productData.priceCents !== 'number' || productData.priceCents < 0) {
-    errors.push(`Invalid base price: ${productData.priceCents}`);
+    errors.push(`Invalid default price: ${productData.priceCents}`);
   }
 
-  // Validate base currency
+  // Validate default currency
   if (!productData.currency || typeof productData.currency !== 'string') {
-    errors.push('Invalid base currency');
+    errors.push('Invalid default currency');
   }
 
   // Validate country prices if present
@@ -209,11 +209,11 @@ export function validateProductCountryPricing(
       warnings.push(`Missing country prices for: ${missingCountries.join(', ')}`);
     }
 
-    // Check for price consistency (warning if country price differs significantly from base)
-    const basePrice = productData.priceCents;
+    // Check for price consistency (warning if country price differs significantly from default)
+    const defaultPrice = productData.priceCents;
     productData.countryPrices.forEach((cp: any) => {
-      if (cp.priceCents && Math.abs(cp.priceCents - basePrice) / basePrice > 0.5) {
-        warnings.push(`Country price for ${cp.country} differs significantly from base price (${cp.priceCents} vs ${basePrice})`);
+      if (cp.priceCents && Math.abs(cp.priceCents - defaultPrice) / defaultPrice > 0.5) {
+        warnings.push(`Country price for ${cp.country} differs significantly from default price (${cp.priceCents} vs ${defaultPrice})`);
       }
     });
   }

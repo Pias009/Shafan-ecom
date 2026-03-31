@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         if (paymentStatus === "CAPTURED") {
           await prisma.order.update({
             where: { id: order.id },
-            data: { status: "PAID" },
+            data: { status: "ORDER_CONFIRMED" },
           });
         }
         break;

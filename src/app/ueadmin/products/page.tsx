@@ -23,9 +23,11 @@ export default async function ProductsPage() {
         ]
       },
       include: {
-        category: true,
         brand: true,
         store: true,
+        productCategories: {
+          include: { category: { select: { id: true, name: true } } }
+        },
       },
       orderBy: {
         createdAt: 'desc'
@@ -94,11 +96,11 @@ export default async function ProductsPage() {
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex flex-wrap gap-1 max-w-[200px]">
-                      {p.category && (
-                        <span key={p.category.id} className="inline-block px-2 py-0.5 rounded bg-black/5 text-[9px] font-bold text-black/40 uppercase tracking-tighter">
-                          {p.category.name}
+                      {p.productCategories?.map((pc: any) => (
+                        <span key={pc.category.id} className="inline-block px-2 py-0.5 rounded bg-black/5 text-[9px] font-bold text-black/40 uppercase tracking-tighter">
+                          {pc.category.name}
                         </span>
-                      )}
+                      ))}
                     </div>
                   </td>
                   <td className="px-8 py-5">

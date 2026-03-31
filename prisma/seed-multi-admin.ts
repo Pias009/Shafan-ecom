@@ -372,7 +372,7 @@ async function main() {
       storeId: kuwaitStore.id,
       userId: kuwaitUser.id,
       email: kuwaitUser.email,
-      status: 'PAID',
+      status: 'ORDER_CONFIRMED',
       currency: 'KWD',
       subtotalCents: 1500,
       totalCents: 1650,

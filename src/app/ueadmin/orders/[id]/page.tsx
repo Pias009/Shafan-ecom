@@ -4,6 +4,16 @@ import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, ShieldCheck
 import OrderStatusActions from './OrderStatusActions';
 import { OrderStatus } from '@prisma/client';
 
+function formatPrice(amountCents: number, currency: string): string {
+  const code = currency?.toUpperCase() || 'USD';
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
+  const amount = amountCents / 100;
+  return `${code} ${amount.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+}
+
 export const dynamic = 'force-dynamic';
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +23,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     order = await (prisma as any).order.findUnique({
       where: { id },
       include: {
-        items: true,
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                images: true
+              }
+            }
+          }
+        },
         user: true,
       }
     }) as any;
@@ -95,21 +115,27 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               {order.items.map((it: any) => (
                 <div key={it.id} className="p-4 md:p-8 flex items-center gap-4 hover:bg-black/[0.01] transition-colors">
                   <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-black/5 overflow-hidden flex-shrink-0 border border-black/5">
-                    {it.imageSnapshot ? (
-                      <img src={it.imageSnapshot} alt={it.nameSnapshot} className="w-full h-full object-cover" />
+                    {it.imageSnapshot || it.product?.images?.[0] ? (
+                      <img
+                        src={it.imageSnapshot || it.product?.images?.[0]}
+                        alt={it.nameSnapshot || it.product?.name}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-[10px] font-black text-black/10 uppercase">No Img</div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm md:text-base text-black truncate">{it.nameSnapshot}</div>
+                    <div className="font-bold text-sm md:text-base text-black truncate">
+                      {it.nameSnapshot || it.product?.name}
+                    </div>
                     <div className="text-[10px] md:text-xs font-bold text-black/40 mt-1 uppercase tracking-widest">
-                      Qty: {it.quantity} × ${(it.unitPriceCents / 100).toFixed(2)}
+                      Qty: {it.quantity} × {formatPrice(it.unitPriceCents, order.currency)}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="font-black text-black text-sm md:text-lg">
-                      ${(it.unitPriceCents * it.quantity / 100).toFixed(2)}
+                      {formatPrice(it.unitPriceCents * it.quantity, order.currency)}
                     </div>
                   </div>
                 </div>
@@ -170,19 +196,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <div className="space-y-4 md:space-y-5">
               <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/30">
                 <span>Subtotal</span>
-                <span>${(order.subtotalCents / 100).toFixed(2)}</span>
+                <span>{formatPrice(order.subtotalCents, order.currency)}</span>
               </div>
               <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/30">
                 <span>Shipping</span>
-                <span>${(order.shippingCents / 100).toFixed(2)}</span>
+                <span>{formatPrice(order.shippingCents || 0, order.currency)}</span>
               </div>
               <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/30">
                 <span>Discount</span>
-                <span>-${(order.discountCents / 100).toFixed(2)}</span>
+                <span>-{formatPrice(order.discountCents || 0, order.currency)}</span>
               </div>
               <div className="pt-6 md:pt-8 border-t border-white/10 flex justify-between items-end">
                 <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Grand Total</span>
-                <span className="text-3xl md:text-4xl font-black">${(order.totalCents / 100).toFixed(2)}</span>
+                <span className="text-3xl md:text-4xl font-black">{formatPrice(order.totalCents, order.currency)}</span>
               </div>
             </div>
 
@@ -191,9 +217,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                  <div className="p-3 bg-white/10 rounded-xl"><ShieldCheck size={18} /></div>
                  <div>
                     <div className="text-[8px] font-black uppercase tracking-widest text-white/30">Integrity</div>
-                    <div className="font-bold text-[9px] uppercase tracking-widest bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full inline-block mt-1">
-                      {[OrderStatus.PAID, OrderStatus.PROCESSING, OrderStatus.DELIVERED].includes(order.status) ? 'Verified' : 'Review'}
-                    </div>
+                     <div className="font-bold text-[9px] uppercase tracking-widest bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full inline-block mt-1">
+                       {['ORDER_CONFIRMED', 'PROCESSING', 'DELIVERED'].includes(order.status) ? 'Verified' : 'Review'}
+                     </div>
                  </div>
                </div>
 

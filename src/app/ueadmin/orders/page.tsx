@@ -4,18 +4,32 @@ import { OrderStatus } from '@prisma/client';
 import { OrderFilter } from './_components/OrderFilter';
 import { getAdminStoreAccess } from '@/lib/admin-store-guard';
 
+function formatPrice(amountCents: number, currency: string): string {
+  const code = currency?.toUpperCase() || 'USD';
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
+  const amount = amountCents / 100;
+  return `${code} ${amount.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+}
+
 export const dynamic = 'force-dynamic';
 
 function getStatusColor(status: OrderStatus): string {
   switch (status) {
-    case OrderStatus.PENDING_PAYMENT:
+    case OrderStatus.ORDER_RECEIVED:
       return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case OrderStatus.PROCESSING:
+    case OrderStatus.ORDER_CONFIRMED:
       return 'bg-blue-100 text-blue-800 border-blue-200';
-    case OrderStatus.PAID:
-      return 'bg-green-100 text-green-800 border-green-200';
-    case OrderStatus.SHIPPED:
+    case OrderStatus.PROCESSING:
+      return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+    case OrderStatus.READY_FOR_PICKUP:
+      return 'bg-purple-100 text-purple-800 border-purple-200';
+    case OrderStatus.ORDER_PICKED_UP:
       return 'bg-orange-100 text-orange-800 border-orange-200';
+    case OrderStatus.IN_TRANSIT:
+      return 'bg-cyan-100 text-cyan-800 border-cyan-200';
     case OrderStatus.DELIVERED:
       return 'bg-green-200 text-green-900 border-green-300';
     case OrderStatus.CANCELLED:
@@ -81,20 +95,20 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Orders</h1>
           {storeAccess.userCountry && (
-            <p className="text-sm text-black/40 mt-1">
+            <p className="text-sm text-black/70 mt-1">
               Viewing orders for {storeAccess.userCountry} store{storeAccess.allowedStores.length > 1 ? 's' : ''}: {storeAccess.allowedStores.join(', ')}
             </p>
           )}
         </div>
-        <div className="text-[10px] md:text-sm text-black/40 font-medium uppercase tracking-widest bg-black/5 px-4 py-1.5 rounded-full inline-block">
-          {dbOrders.length} Order{dbOrders.length !== 1 ? 's' : ''}
-        </div>
+          <div className="text-[10px] md:text-sm text-black font-medium uppercase tracking-widest bg-black/5 px-4 py-1.5 rounded-full inline-block">
+            {dbOrders.length} Order{dbOrders.length !== 1 ? 's' : ''}
+          </div>
       </div>
 
       <div className="glass-panel-heavy overflow-hidden rounded-3xl border border-black/5 shadow-sm bg-white">
         <div className="mb-2 p-6 flex items-center justify-between border-b border-black/5">
            <OrderFilter currentStatus={status} />
-           <div className="text-[10px] font-black uppercase tracking-widest text-black/20 italic">Global Fulfilment Flow</div>
+           <div className="text-[10px] font-black uppercase tracking-widest text-black italic">Global Fulfilment Flow</div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[800px] md:min-w-0">
@@ -125,15 +139,15 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
                     <td className="px-4 md:px-6 py-4 font-black">#{o.id.substring(0, 8)}</td>
                     <td className="px-4 md:px-6 py-4">
                       <div className="font-black text-[10px] md:text-xs uppercase tracking-widest">{storeCode}</div>
-                      <div className="text-[9px] text-black/40 truncate max-w-[80px]">{storeName}</div>
+                      <div className="text-[9px] text-black/70 truncate max-w-[80px]">{storeName}</div>
                     </td>
-                    <td className="px-4 md:px-6 py-4 text-[10px] md:text-sm font-medium text-black/60">{date}</td>
+                    <td className="px-4 md:px-6 py-4 text-[10px] md:text-sm font-medium text-black">{date}</td>
                     <td className="px-4 md:px-6 py-4">
                       <div className="font-bold text-[11px] md:text-sm">{customer}</div>
-                      <div className="text-[9px] md:text-[10px] font-bold text-black/30 truncate max-w-[120px] md:max-w-[150px] uppercase tracking-tighter">{email}</div>
+                      <div className="text-[9px] md:text-[10px] font-bold text-black/70 truncate max-w-[120px] md:max-w-[150px] uppercase tracking-tighter">{email}</div>
                     </td>
                     <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{paid}</td>
-                    <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">${(o.totalCents / 100).toFixed(2)}</td>
+                    <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{formatPrice(o.totalCents, o.currency)}</td>
                     <td className="px-4 md:px-6 py-4">
                       <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getStatusColor(o.status)}`}>
                         {o.status}

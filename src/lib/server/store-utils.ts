@@ -2,19 +2,20 @@ import { cookies } from 'next/headers';
 
 /**
  * Get the user's store code from cookies (set by middleware)
- * Defaults to 'UAE' if not set (non-Kuwait users)
+ * Defaults to 'UAE' if not set
  */
 export async function getStoreCode(): Promise<string> {
   try {
     const cookieStore = await cookies();
     const storeCode = cookieStore.get('store_code')?.value;
     
-    // Validate store code
-    if (storeCode && (storeCode === 'KUW' || storeCode === 'UAE')) {
+    // Validate store code - support all 6 countries
+    const validStoreCodes = ['KUW', 'UAE', 'BHR', 'SAU', 'OMN', 'QAT'];
+    if (storeCode && validStoreCodes.includes(storeCode)) {
       return storeCode;
     }
     
-    // Default to UAE if invalid or not set (non-Kuwait users)
+    // Default to UAE if invalid or not set
     return 'UAE';
   } catch (error) {
     console.error('Error reading store code from cookies:', error);
@@ -47,6 +48,34 @@ export function getStoreInfo(storeCode: string) {
       name: 'UAE',
       country: 'AE',
       currency: 'AED',
+      region: 'Middle East'
+    },
+    BHR: {
+      code: 'BHR',
+      name: 'Bahrain',
+      country: 'BH',
+      currency: 'BHD',
+      region: 'Middle East'
+    },
+    SAU: {
+      code: 'SAU',
+      name: 'Saudi Arabia',
+      country: 'SA',
+      currency: 'SAR',
+      region: 'Middle East'
+    },
+    OMN: {
+      code: 'OMN',
+      name: 'Oman',
+      country: 'OM',
+      currency: 'OMR',
+      region: 'Middle East'
+    },
+    QAT: {
+      code: 'QAT',
+      name: 'Qatar',
+      country: 'QA',
+      currency: 'QAR',
       region: 'Middle East'
     }
   };

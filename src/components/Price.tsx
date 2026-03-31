@@ -3,7 +3,6 @@
 import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
 import { useEffect, useState } from "react";
 import { useUserCountry } from "@/lib/country-detection";
-import { getCurrencyForCountry } from "@/lib/countries";
 
 interface PriceProps {
   amount: number | string;
@@ -14,15 +13,29 @@ interface PriceProps {
     priceCents: number;
     currency: string;
   }>;
+  currency?: string;
+  isCents?: boolean; // If true, divide by 100
+}
+
+function formatPriceSimple(amount: number, currencyCode: string): string {
+  const code = currencyCode?.toUpperCase() || 'USD';
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
+  const symbol = code;
+  return `${symbol} ${amount.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
 }
 
 export function Price({
   amount,
   className = "",
   showSymbolSmall = false,
-  countryPrices = []
+  countryPrices = [],
+  currency,
+  isCents = false
 }: PriceProps) {
-  const { formatPrice, currentCurrency } = useCurrencyStore();
+  const { currentCurrency } = useCurrencyStore();
   const [mounted, setMounted] = useState(false);
   const userCountry = useUserCountry();
 
@@ -34,49 +47,63 @@ export function Price({
     return <span className={className}>...</span>;
   }
 
-  // Find country-specific price for user's country
-  let displayAmount = amount;
-  let displayCurrency = currentCurrency.code;
-  let sourceCurrency = "AED"; // Default source currency
-  
+  let displayAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(displayAmount)) displayAmount = 0;
+
+  // If isCents is true, convert cents to actual amount
+  if (isCents) {
+    displayAmount = displayAmount / 100;
+  }
+
+  // If explicit currency is provided (for order display), use it directly
+  if (currency) {
+    const formatted = formatPriceSimple(displayAmount, currency);
+    
+    if (showSymbolSmall) {
+      const symbol = currency.toUpperCase();
+      return (
+        <span className={className}>
+          <span className="text-[0.6em] mr-0.5 opacity-90 font-bold">{symbol}</span>
+          {formatted.replace(symbol, '').trim()}
+        </span>
+      );
+    }
+    
+    return <span className={className}>{formatted}</span>;
+  }
+
+  // For product display with countryPrices
   if (countryPrices && countryPrices.length > 0) {
     const countryPrice = countryPrices.find(cp =>
       cp.country.toUpperCase() === userCountry.toUpperCase()
     );
     
-    if (countryPrice) {
-      // Use country-specific price in cents
+    if (countryPrice && countryPrice.priceCents > 0) {
       displayAmount = countryPrice.priceCents / 100;
-      displayCurrency = countryPrice.currency || getCurrencyForCountry(userCountry) || "AED";
-      sourceCurrency = displayCurrency;
+      const formatted = formatPriceSimple(displayAmount, countryPrice.currency);
+      
+      if (showSymbolSmall) {
+        const symbol = countryPrice.currency.toUpperCase();
+        return (
+          <span className={className}>
+            <span className="text-[0.6em] mr-0.5 opacity-90 font-bold">{symbol}</span>
+            {formatted.replace(symbol, '').trim()}
+          </span>
+        );
+      }
+      return <span className={className}>{formatted}</span>;
     }
   }
 
-  // Convert amount to AED for formatting (since formatPrice expects AED)
-  // First, we need to convert from source currency to AED if needed
-  let amountInAED = typeof displayAmount === 'string' ? parseFloat(displayAmount) : displayAmount;
-  
-  if (sourceCurrency !== "AED") {
-    // Find the source currency rate
-    const sourceCurrencyObj = SUPPORTED_CURRENCIES.find(c => c.code === sourceCurrency);
-    if (sourceCurrencyObj && sourceCurrencyObj.rate > 0) {
-      // Convert from source currency to AED
-      // rate is "relative to AED", so to convert to AED: amount / rate
-      amountInAED = amountInAED / sourceCurrencyObj.rate;
-    }
-  }
-  
-  const formatted = formatPrice(amountInAED);
+  // Default: use current currency
+  const formatted = formatPriceSimple(displayAmount, currentCurrency.code);
   
   if (showSymbolSmall) {
-    // formatPrice returns "Symbol Value", we split them
-    const symbol = currentCurrency.symbol;
-    const value = formatted.replace(symbol, "").trim();
-    
+    const symbol = currentCurrency.code;
     return (
       <span className={className}>
         <span className="text-[0.6em] mr-0.5 opacity-90 font-bold">{symbol}</span>
-        {value}
+        {formatted.replace(symbol, '').trim()}
       </span>
     );
   }

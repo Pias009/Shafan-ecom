@@ -21,6 +21,10 @@ const PRODUCT_LIST_SELECT = {
   id: true,
   name: true,
   description: true,
+  shortDescription: true,
+  benefits: true,
+  ingredients: true,
+  howToUse: true,
   mainImage: true,
   priceCents: true,
   discountCents: true,
@@ -34,13 +38,40 @@ const PRODUCT_LIST_SELECT = {
   brand: {
     select: {
       name: true,
-      logo: true,
+      image: true,
     }
   },
-  category: {
+  productCategories: {
+    select: {
+      category: {
+        select: {
+          name: true,
+        }
+      }
+    }
+  },
+  productSkinTones: {
+    select: {
+      skinTone: {
+        select: {
+          name: true,
+          hexColor: true,
+        }
+      }
+    }
+  },
+  productSkinConcerns: {
+    select: {
+      skinConcern: {
+        select: {
+          name: true,
+        }
+      }
+    }
+  },
+  subCategory: {
     select: {
       name: true,
-      slug: true,
     }
   },
   createdAt: true,
@@ -52,14 +83,9 @@ const PRODUCT_DETAIL_SELECT = {
   ...PRODUCT_LIST_SELECT,
   features: true,
   images: true,
-  specifications: true,
-  weight: true,
-  dimensions: true,
   sku: true,
-  barcode: true,
   metaTitle: true,
   metaDescription: true,
-  metaKeywords: true,
 };
 
 function isValidImageUrl(url: any): boolean {
@@ -100,7 +126,7 @@ export async function getOptimizedProducts(
     if (options.hot) where.hot = true;
     if (options.trending) where.trending = true;
     if (options.category) where.category = { slug: options.category };
-    if (options.brand) where.brand = { slug: options.brand };
+    if (options.brand) where.brand = { name: options.brand };
     
     if (options.minPrice !== undefined || options.maxPrice !== undefined) {
       where.priceCents = {};
@@ -171,10 +197,22 @@ export async function getOptimizedProducts(
       const discountCents = p.discountCents || 0;
       const salePriceCents = discountCents > 0 ? priceCents - discountCents : null;
 
+      const categoryNames = p.productCategories?.map((pc: any) => pc.category?.name).filter(Boolean) || [];
+      const primaryCategory = categoryNames[0] || "General";
+      const skinTones = p.productSkinTones?.map((pst: any) => ({
+        name: pst.skinTone?.name,
+        hexColor: pst.skinTone?.hexColor
+      })).filter((t: any) => t.name) || [];
+      const skinConcerns = p.productSkinConcerns?.map((psc: any) => psc.skinConcern?.name).filter(Boolean) || [];
+
       return {
         id: p.id,
         name: p.name,
         description: p.description || "",
+        shortDescription: p.shortDescription || "",
+        benefits: p.benefits || "",
+        ingredients: p.ingredients || "",
+        howToUse: p.howToUse || "",
         features: p.features || [],
         images: [p.mainImage].filter(isValidImageUrl),
         mainImage: isValidImageUrl(p.mainImage) ? p.mainImage : null,
@@ -191,12 +229,18 @@ export async function getOptimizedProducts(
         trending: p.trending,
         brand: p.brand ? { 
           name: p.brand.name,
-          logo: p.brand.logo,
+          image: p.brand.image,
         } : null,
-        category: p.category ? { 
-          name: p.category.name,
-          slug: p.category.slug,
-        } : null,
+        brandName: p.brand?.name,
+        category: { 
+          name: primaryCategory,
+          slug: p.productCategories?.[0]?.category?.name?.toLowerCase().replace(/\s+/g, '-'),
+        },
+        categoryName: primaryCategory,
+        categories: categoryNames,
+        skinTones,
+        skinConcerns,
+        subCategory: p.subCategory ? { name: p.subCategory.name } : null,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       };
@@ -225,7 +269,7 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
     let product: any = null;
     
     if (storeCode) {
-      // Get product with store inventory
+      // Get product with store inventory first
       const inventory = await (prisma as any).storeInventory.findFirst({
         where: {
           productId: id,
@@ -252,6 +296,12 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
           storePrice: inventory.price,
           store: inventory.store,
         };
+      } else {
+        // Fallback: Try to get product directly if no store inventory
+        product = await prisma.product.findUnique({
+          where: { id },
+          select: PRODUCT_DETAIL_SELECT,
+        });
       }
     } else {
       // Get product directly
@@ -274,8 +324,11 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
       id: product.id,
       name: product.name,
       description: product.description || "",
+      shortDescription: product.shortDescription || "",
+      benefits: product.benefits || "",
+      ingredients: product.ingredients || "",
+      howToUse: product.howToUse || "",
       features: product.features || [],
-      specifications: product.specifications || {},
       images: [product.mainImage, ...(product.images || [])].filter(isValidImageUrl),
       mainImage: isValidImageUrl(product.mainImage) ? product.mainImage : null,
       stockQuantity: product.stockQuantity || 0,
@@ -291,19 +344,15 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
       trending: product.trending,
       brand: product.brand ? { 
         name: product.brand.name,
-        logo: product.brand.logo,
+        image: product.brand.image,
       } : null,
-      category: product.category ? { 
-        name: product.category.name,
-        slug: product.category.slug,
+      category: product.productCategories && product.productCategories.length > 0 ? { 
+        name: product.productCategories[0].category.name,
+        slug: product.productCategories[0].category.name?.toLowerCase().replace(/\s+/g, '-'),
       } : null,
-      weight: product.weight,
-      dimensions: product.dimensions,
       sku: product.sku,
-      barcode: product.barcode,
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
-      metaKeywords: product.metaKeywords,
       store: product.store,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

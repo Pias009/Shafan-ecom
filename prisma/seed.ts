@@ -1,9 +1,42 @@
 import { prisma } from "../src/lib/prisma";
+import { MongoClient } from "mongodb";
 import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
 
 async function main() {
   console.log("Seeding database...");
+
+  // Fix existing records with null timestamps using MongoDB native driver
+  try {
+    const mongoUrl = process.env.DATABASE_URL || "";
+    const client = new MongoClient(mongoUrl);
+    await client.connect();
+    const db = client.db();
+    
+    const now = new Date();
+    
+    await db.collection("Category").updateMany(
+      { createdAt: null },
+      { $set: { createdAt: now, updatedAt: now } }
+    );
+    await db.collection("SubCategory").updateMany(
+      { createdAt: null },
+      { $set: { createdAt: now, updatedAt: now } }
+    );
+    await db.collection("SkinTone").updateMany(
+      { createdAt: null },
+      { $set: { createdAt: now, updatedAt: now } }
+    );
+    await db.collection("SkinConcern").updateMany(
+      { createdAt: null },
+      { $set: { createdAt: now, updatedAt: now } }
+    );
+    
+    await client.close();
+    console.log("Fixed null timestamps in existing records using MongoDB driver.");
+  } catch (e) {
+    console.log("Note: Could not fix timestamps with MongoDB driver, continuing...");
+  }
 
   // 1. Create Master Admin User (from environment variables or defaults)
   const masterAdminEmail = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
@@ -16,13 +49,15 @@ async function main() {
       passwordHash: masterAdminHashedPassword,
       role: "SUPERADMIN",
       name: "Master Admin",
-      approvedBySuperAdmin: true, // Master admin is pre-approved
+      country: "UAE",
+      approvedBySuperAdmin: true,
     },
     create: {
       email: masterAdminEmail,
       name: "Master Admin",
       passwordHash: masterAdminHashedPassword,
       role: "SUPERADMIN",
+      country: "UAE",
       approvedBySuperAdmin: true,
     },
   });
@@ -38,13 +73,15 @@ async function main() {
     update: {
       passwordHash: adminHashedPassword,
       role: "ADMIN",
-      approvedBySuperAdmin: true, // Demo admin is pre-approved
+      country: "UAE",
+      approvedBySuperAdmin: true,
     },
     create: {
       email: adminEmail,
       name: "Demo Admin",
       passwordHash: adminHashedPassword,
       role: "ADMIN",
+      country: "UAE",
       approvedBySuperAdmin: true,
     },
   });
@@ -93,23 +130,113 @@ async function main() {
   });
   console.log(`Normal user created/updated: ${user.email}`);
 
-  // 2. Create Categories
-  const categories = [
-    { name: "Skincare" },
-    { name: "Haircare" },
-    { name: "Fragrance" },
+  // 4. Create Main Categories with Sub-categories
+  const mainCategories = [
+    {
+      name: "Skin Care",
+      subCategories: [
+        "Cleanser",
+        "Mask & Scrub",
+        "Toner",
+        "Face Serum",
+        "Cream",
+        "Lotion",
+        "Moisturizer",
+        "Sunscreen",
+        "Eye Care"
+      ]
+    },
+    {
+      name: "Body Care",
+      subCategories: [
+        "Body Cream & Lotion",
+        "Body Wash",
+        "Body Oil"
+      ]
+    },
+    {
+      name: "Hair Care",
+      subCategories: [
+        "Hair Serum",
+        "Hair Oil",
+        "Hair Shampoo",
+        "Hair Conditioner",
+        "Hair Mask"
+      ]
+    },
+    {
+      name: "Fragrances",
+      subCategories: [
+        "Fragrances for Men",
+        "Fragrances for Women"
+      ]
+    }
   ];
 
-  for (const cat of categories) {
-    await prisma.category.upsert({
+  for (const cat of mainCategories) {
+    const category = await prisma.category.upsert({
       where: { name: cat.name },
       update: {},
-      create: cat,
+      create: { name: cat.name },
+    });
+    
+    for (const subCatName of cat.subCategories) {
+      await prisma.subCategory.upsert({
+        where: { name: subCatName },
+        update: {},
+        create: { 
+          name: subCatName,
+          categoryId: category.id
+        },
+      });
+    }
+  }
+  console.log("Categories and Sub-categories seeded.");
+
+  // 5. Create Skin Tones
+  const skinTones = [
+    { name: "Oily Skin", hexColor: "#F5D0A9" },
+    { name: "Dry Skin", hexColor: "#FFE4C4" },
+    { name: "Normal Skin", hexColor: "#FFDBAC" },
+    { name: "Combination", hexColor: "#E8C4A0" },
+    { name: "Acne-prone Skin", hexColor: "#FFDAB9" },
+    { name: "All type Skin", hexColor: "#D2B48C" }
+  ];
+
+  for (const tone of skinTones) {
+    await prisma.skinTone.upsert({
+      where: { name: tone.name },
+      update: { hexColor: tone.hexColor },
+      create: { name: tone.name, hexColor: tone.hexColor },
     });
   }
-  console.log("Categories seeded.");
+  console.log("Skin tones seeded.");
 
-  // 3. Create Brands
+  // 6. Create Skin Concerns
+  const skinConcerns = [
+    { name: "Acne", description: "Treat and prevent acne breakouts" },
+    { name: "Acne Scar", description: "Reduce appearance of acne scars" },
+    { name: "Anti Pores", description: "Minimize the appearance of pores" },
+    { name: "Anti Wrinkles", description: "Reduce fine lines and wrinkles" },
+    { name: "Anti Aging", description: "Fight signs of aging" },
+    { name: "Brightening", description: "Achieve brighter, more radiant skin" },
+    { name: "Dark Circles", description: "Reduce appearance of dark circles under eyes" },
+    { name: "Dark Spot", description: "Fade dark spots and hyperpigmentation" },
+    { name: "Melasma", description: "Treat melasma and uneven skin tone" },
+    { name: "Pigmentation", description: "Address pigmentation issues" },
+    { name: "Redness", description: "Calm and reduce skin redness" }
+  ];
+
+  for (const concern of skinConcerns) {
+    await prisma.skinConcern.upsert({
+      where: { name: concern.name },
+      update: { description: concern.description },
+      create: { name: concern.name, description: concern.description },
+    });
+  }
+  console.log("Skin concerns seeded.");
+
+  // 7. Create Brands
   const brands = [
     { name: "Anua" },
     { name: "Axis-Y" },
@@ -134,7 +261,6 @@ async function main() {
     { name: "Some by mi" },
     { name: "The Ordinary" },
     { name: "Timeless" },
-    // Keep existing demo brands for backward compatibility
     { name: "Frost & Co" },
     { name: "AquaGlass" },
     { name: "NoirMint" },
@@ -152,18 +278,16 @@ async function main() {
   }
   console.log("Brands seeded.");
 
-  // 5. Create a sample Banner(s)
+  // 8. Create sample Banner(s)
   const banners = [
     {
-      imageUrl:
-        "https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      imageUrl: "https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=1200",
       title: "Spring Sale",
       link: "/brands",
       active: true,
     },
     {
-      imageUrl:
-        "https://images.pexels.com/photos/3735641/pexels-photo-3735641.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      imageUrl: "https://images.pexels.com/photos/3735641/pexels-photo-3735641.jpeg?auto=compress&cs=tinysrgb&w=1200",
       title: "New Arrivals",
       link: "/products",
       active: true,
@@ -178,43 +302,28 @@ async function main() {
     });
   }
   console.log("Banners seeded.");
-  // 6. Create SUPERADMIN (verification flow starts here)
-  const superAdminEmail = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
-  const rawSuperPwd = process.env.DEMO_SUPERADMIN_PASSWORD || "superadmin123";
-  const verificationToken = crypto.randomBytes(32).toString("hex");
-  const verificationExpires = new Date(Date.now() + 24*60*60*1000);
-  const hashedSuper = await bcrypt.hash(rawSuperPwd, 10);
-  const superAdmin = await prisma.user.upsert({
-    where: { email: superAdminEmail },
-    update: { passwordHash: hashedSuper, role: "SUPERADMIN" },
-    create: { email: superAdminEmail, name: "Super Admin", passwordHash: hashedSuper, role: "SUPERADMIN" },
-  });
-  console.log(`Super Admin prepared: ${superAdmin.email} (verification required)`);
 
-  // 5. Audit log seed (sample)
-  try {
-    const adminForLog = admin;
-    const seedLog = await prisma.auditLog.create({
-      data: {
-        action: "SEED",
-        actorId: adminForLog.id,
-        subjectId: adminForLog.id,
-        details: "Initial seed of admin data and banners",
-      },
-    });
-    console.log(`Audit log seeded: ${seedLog?.id}`);
-  } catch {
-    console.log("AuditLog model not yet available in Prisma client. Skipping seed.");
-  }
-
-  // 4. Fetch created brands and categories for mapping
+  // 9. Fetch created data for mapping
   const dbBrands = await prisma.brand.findMany();
   const dbCategories = await prisma.category.findMany();
+  const dbSkinTones = await prisma.skinTone.findMany();
+  const dbSkinConcerns = await prisma.skinConcern.findMany();
 
-  const brandMap = Object.fromEntries(dbBrands.map((b: {name: string, id: string}) => [b.name, b.id]));
-  const catMap = Object.fromEntries(dbCategories.map((c: {name: string, id: string}) => [c.name, c.id]));
+  const brandMap: Record<string, string> = {};
+  dbBrands.forEach((b: any) => { brandMap[b.name] = b.id; });
+  
+  const catMap: Record<string, string> = {};
+  dbCategories.forEach((c: any) => { 
+    if (c.name && c.id) catMap[c.name] = c.id; 
+  });
+  
+  const skinToneMap: Record<string, string> = {};
+  dbSkinTones.forEach((s: any) => { skinToneMap[s.name] = s.id; });
+  
+  const skinConcernMap: Record<string, string> = {};
+  dbSkinConcerns.forEach((s: any) => { skinConcernMap[s.name] = s.id; });
 
-  // 5. Create Products
+  // 10. Create Products with multiple categories
   const products = [
     {
       name: "Icy Gel Cleanser",
@@ -226,7 +335,10 @@ async function main() {
       stockQuantity: 32,
       images: ["https://images.unsplash.com/photo-1580870069867-74c57ee1bb07?auto=format&fit=crop&w=1200&q=80"],
       brandName: "Frost & Co",
-      categoryName: "Skincare",
+      categoryNames: ["Skin Care"],
+      subCategoryName: "Cleanser",
+      skinToneNames: ["All type Skin", "Combination"],
+      skinConcernNames: ["Acne", "Brightening"],
       hot: true,
       trending: true,
     },
@@ -239,9 +351,11 @@ async function main() {
       stockQuantity: 28,
       images: ["https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=1200&q=80"],
       brandName: "AquaGlass",
-      categoryName: "Skincare",
+      categoryNames: ["Skin Care"],
+      subCategoryName: "Face Serum",
+      skinToneNames: ["All type Skin"],
+      skinConcernNames: ["Brightening", "Anti Aging", "Dark Spot"],
       hot: true,
-      trending: false,
     },
     {
       name: "Mint Cloud Mist",
@@ -251,7 +365,9 @@ async function main() {
       mainImage: "https://images.unsplash.com/photo-1612810436541-336f8fd55eb5?auto=format&fit=crop&w=1200&q=80",
       images: ["https://images.unsplash.com/photo-1612810436541-336f8fd55eb5?auto=format&fit=crop&w=1200&q=80"],
       brandName: "NoirMint",
-      categoryName: "Skincare",
+      categoryNames: ["Skin Care"],
+      subCategoryName: "Toner",
+      skinToneNames: ["All type Skin"],
     },
     {
       name: "Silk Glass Shampoo",
@@ -262,7 +378,8 @@ async function main() {
       mainImage: "https://images.unsplash.com/photo-1611930021866-9f6bf2d2d4a1?auto=format&fit=crop&w=1200&q=80",
       images: ["https://images.unsplash.com/photo-1611930021866-9f6bf2d2d4a1?auto=format&fit=crop&w=1200&q=80"],
       brandName: "Glow Forge",
-      categoryName: "Haircare",
+      categoryNames: ["Hair Care"],
+      subCategoryName: "Hair Shampoo",
       hot: true,
     },
     {
@@ -273,7 +390,8 @@ async function main() {
       mainImage: "https://images.unsplash.com/photo-1620916566393-7a19f78146ee?auto=format&fit=crop&w=1200&q=80",
       images: ["https://images.unsplash.com/photo-1620916566393-7a19f78146ee?auto=format&fit=crop&w=1200&q=80"],
       brandName: "SkyPearl",
-      categoryName: "Haircare",
+      categoryNames: ["Hair Care"],
+      subCategoryName: "Hair Conditioner",
     },
     {
       name: "Violet Night Eau",
@@ -283,36 +401,87 @@ async function main() {
       mainImage: "https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=1200&q=80",
       images: ["https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=1200&q=80"],
       brandName: "Violet Lab",
-      categoryName: "Fragrance",
+      categoryNames: ["Fragrances"],
+      subCategoryName: "Fragrances for Women",
     },
   ];
 
   for (const p of products) {
-    const { brandName, categoryName, ...rest } = p;
+    const { brandName, categoryNames, subCategoryName, skinToneNames, skinConcernNames, ...rest } = p;
 
-    // Manually check by name
     const existing = await prisma.product.findFirst({ where: { name: p.name } });
+    const categoryIds = categoryNames?.map((name: string) => catMap[name]).filter(Boolean) || [];
+    const skinToneIds = skinToneNames?.map((name: string) => skinToneMap[name]).filter(Boolean) || [];
+    const skinConcernIds = skinConcernNames?.map((name: string) => skinConcernMap[name]).filter(Boolean) || [];
+    
+    const subCategory = subCategoryName 
+      ? await prisma.subCategory.findFirst({ where: { name: subCategoryName } })
+      : null;
+
+    const productData = {
+      ...rest,
+      brandId: brandMap[brandName] || null,
+      subCategoryId: subCategory?.id || null,
+      slug: p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now(),
+    };
+
+    let product;
     if (existing) {
-       await prisma.product.update({
-         where: { id: existing.id },
-         data: {
-           ...rest,
-           brandId: brandMap[brandName],
-           categoryId: catMap[categoryName],
-         }
-       });
+      // Clear existing relations first
+      await prisma.productCategory.deleteMany({ where: { productId: existing.id } });
+      await prisma.productSkinTone.deleteMany({ where: { productId: existing.id } });
+      await prisma.productSkinConcern.deleteMany({ where: { productId: existing.id } });
+      
+      product = await prisma.product.update({
+        where: { id: existing.id },
+        data: productData,
+      });
     } else {
-       await prisma.product.create({
-         data: {
-           ...rest,
-           brandId: brandMap[brandName],
-           categoryId: catMap[categoryName],
-         }
-       });
+      try {
+        product = await prisma.product.create({
+          data: productData,
+        });
+      } catch (e) {
+        console.log(`Warning: Could not create product "${p.name}", skipping...`);
+        continue;
+      }
+    }
+
+    // Create product categories
+    if (categoryIds.length > 0) {
+      await prisma.productCategory.deleteMany({ where: { productId: product.id } });
+      await prisma.productCategory.createMany({
+        data: categoryIds.map((catId: string) => ({
+          productId: product.id,
+          categoryId: catId
+        }))
+      });
+    }
+
+    // Create product skin tones
+    if (skinToneIds.length > 0) {
+      await prisma.productSkinTone.deleteMany({ where: { productId: product.id } });
+      await prisma.productSkinTone.createMany({
+        data: skinToneIds.map((toneId: string) => ({
+          productId: product.id,
+          skinToneId: toneId
+        }))
+      });
+    }
+
+    // Create product skin concerns
+    if (skinConcernIds.length > 0) {
+      await prisma.productSkinConcern.deleteMany({ where: { productId: product.id } });
+      await prisma.productSkinConcern.createMany({
+        data: skinConcernIds.map((concernId: string) => ({
+          productId: product.id,
+          skinConcernId: concernId
+        }))
+      });
     }
   }
 
-  console.log("Products seeded.");
+  console.log("Products seeded with categories, skin tones, and skin concerns.");
   console.log("Seeding complete!");
 }
 

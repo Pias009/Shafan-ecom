@@ -52,6 +52,7 @@ export function TrendingNowSlider({
                     ratingCount: product.ratingCount,
                     stockQuantity: product.stockQuantity,
                     totalSales: product.totalSales,
+                    countryPrices: product.countryPrices,
                   }}
                   onQuickView={onQuickView}
                   onAddToCart={onAddToCart}

@@ -5,15 +5,20 @@ import { uploadFromUrl } from '@/lib/cloudinary';
 
 const UpdateSchema = z.object({
   name: z.string().optional(),
+  description: z.string().optional(),
+  shortDescription: z.string().optional(),
+  benefits: z.string().optional(),
+  ingredients: z.string().optional(),
+  howToUse: z.string().optional(),
   priceCents: z.number().optional(),
   discountCents: z.number().optional(),
   active: z.boolean().optional(),
   stockQuantity: z.number().optional(),
   brandName: z.string().optional(),
-  categoryName: z.string().optional(),
-  categoryId: z.string().optional(),
+  categoryIds: z.array(z.string()).optional(),
+  skinToneIds: z.array(z.string()).optional(),
+  skinConcernIds: z.array(z.string()).optional(),
   subCategoryId: z.string().optional(),
-  skinToneId: z.string().optional(),
   images: z.union([z.string(), z.array(z.string())]).optional(),
   mainImage: z.string().optional(),
   variants: z.any().optional(),
@@ -29,24 +34,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
   const product = await prisma.product.findUnique({
     where: { id: id },
-    select: {
-      id: true,
-      name: true,
-      priceCents: true,
-      discountCents: true,
-      description: true,
-      active: true,
+    include: {
       brand: { select: { name: true } },
-      category: { select: { name: true, id: true } },
       subCategory: { select: { name: true, id: true } },
-      skinTone: { select: { name: true, id: true } },
-      categoryId: true,
-      subCategoryId: true,
-      skinToneId: true,
+      productCategories: { include: { category: { select: { name: true, id: true } } } },
+      productSkinTones: { include: { skinTone: { select: { name: true, id: true, hexColor: true } } } },
+      productSkinConcerns: { include: { skinConcern: { select: { name: true, id: true } } } },
     },
   });
   if (!product) return new Response('Not found', { status: 404 });
-  return new Response(JSON.stringify(product), { headers: { 'Content-Type': 'application/json' } });
+  
+  // Transform the response to include categories and skin tones as arrays
+  const transformedProduct = {
+    ...product,
+    categories: product.productCategories.map((pc: any) => pc.category),
+    skinTones: product.productSkinTones.map((ps: any) => ps.skinTone),
+    skinConcerns: product.productSkinConcerns.map((sc: any) => sc.skinConcern),
+  };
+  
+  return new Response(JSON.stringify(transformedProduct), { headers: { 'Content-Type': 'application/json' } });
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -74,6 +80,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     const updates: any = {};
     if (typeof parsed.data.name !== 'undefined') updates.name = parsed.data.name;
+    if (typeof parsed.data.description !== 'undefined') updates.description = parsed.data.description;
+    if (typeof parsed.data.shortDescription !== 'undefined') updates.shortDescription = parsed.data.shortDescription;
+    if (typeof parsed.data.benefits !== 'undefined') updates.benefits = parsed.data.benefits;
+    if (typeof parsed.data.ingredients !== 'undefined') updates.ingredients = parsed.data.ingredients;
+    if (typeof parsed.data.howToUse !== 'undefined') updates.howToUse = parsed.data.howToUse;
     if (typeof parsed.data.priceCents !== 'undefined') updates.priceCents = parsed.data.priceCents;
     if (typeof parsed.data.discountCents !== 'undefined') updates.discountCents = parsed.data.discountCents;
     if (typeof parsed.data.active !== 'undefined') updates.active = parsed.data.active;
@@ -102,21 +113,72 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const b = await prisma.brand.findFirst({ where: { name: parsed.data.brandName } });
       if (b) updates.brandId = b.id;
     }
-    if (parsed.data.categoryName) {
-      const c = await prisma.category.findFirst({ where: { name: parsed.data.categoryName } });
-      if (c) updates.categoryId = c.id;
-    }
-    // Handle direct ID assignments
-    if (parsed.data.categoryId !== undefined) {
-      updates.categoryId = parsed.data.categoryId || null;
-    }
     if (parsed.data.subCategoryId !== undefined) {
       updates.subCategoryId = parsed.data.subCategoryId || null;
     }
-    if (parsed.data.skinToneId !== undefined) {
-      updates.skinToneId = parsed.data.skinToneId || null;
+
+    // Handle category IDs (many-to-many)
+    if (parsed.data.categoryIds !== undefined) {
+      const categoryIds = parsed.data.categoryIds.filter(id => id.trim());
+      const validCategoryIds = categoryIds.length > 0
+        ? (await prisma.category.findMany({ where: { id: { in: categoryIds } }, select: { id: true } })).map(c => c.id)
+        : [];
+      // Delete existing relations
+      await prisma.productCategory.deleteMany({ where: { productId: id } });
+      // Create new relations
+      if (validCategoryIds.length > 0) {
+        await prisma.productCategory.createMany({
+          data: validCategoryIds.map(categoryId => ({
+            productId: id,
+            categoryId
+          }))
+        });
+      }
     }
-    if (Object.keys(updates).length === 0) {
+
+    // Handle skin tone IDs (many-to-many)
+    if (parsed.data.skinToneIds !== undefined) {
+      const skinToneIds = parsed.data.skinToneIds.filter(id => id.trim());
+      const validSkinToneIds = skinToneIds.length > 0
+        ? (await prisma.skinTone.findMany({ where: { id: { in: skinToneIds } }, select: { id: true } })).map((s: any) => s.id)
+        : [];
+      // Delete existing relations
+      await prisma.productSkinTone.deleteMany({ where: { productId: id } });
+      // Create new relations
+      if (validSkinToneIds.length > 0) {
+        await prisma.productSkinTone.createMany({
+          data: validSkinToneIds.map(skinToneId => ({
+            productId: id,
+            skinToneId
+          }))
+        });
+      }
+    }
+
+    // Handle skin concern IDs (many-to-many)
+    if (parsed.data.skinConcernIds !== undefined) {
+      const skinConcernIds = parsed.data.skinConcernIds.filter((id: string) => id.trim());
+      const validSkinConcernIds = skinConcernIds.length > 0
+        ? (await prisma.skinConcern.findMany({ where: { id: { in: skinConcernIds } }, select: { id: true } })).map((s: any) => s.id)
+        : [];
+      // Delete existing relations
+      await prisma.productSkinConcern.deleteMany({ where: { productId: id } });
+      // Create new relations
+      if (validSkinConcernIds.length > 0) {
+        await prisma.productSkinConcern.createMany({
+          data: validSkinConcernIds.map(concernId => ({
+            productId: id,
+            skinConcernId: concernId
+          }))
+        });
+      }
+    }
+
+    // Remove category/skinTone related fields from updates (handled above)
+    delete updates.categoryId;
+    delete updates.skinToneId;
+
+    if (Object.keys(updates).length === 0 && parsed.data.categoryIds === undefined && parsed.data.skinToneIds === undefined && parsed.data.skinConcernIds === undefined) {
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
     const updated = await prisma.product.update({ where: { id: id }, data: updates });
@@ -204,10 +266,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       where: { productId: id }
     });
 
-    await prisma.cartItem.deleteMany({
-      where: { productId: id }
-    });
-
     // Delete the product
     await prisma.product.delete({
       where: { id }
@@ -253,7 +311,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     return new Response(JSON.stringify({
       error: errorMessage,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
     }), {
       status: statusCode,
       headers: { 'Content-Type': 'application/json' }

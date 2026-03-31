@@ -5,6 +5,19 @@ import { uploadFromUrl } from '@/lib/cloudinary';
 import { getAdminStoreAccess } from '@/lib/admin-store-guard';
 import { SUPPORTED_COUNTRIES, isValidCountryCode, getCurrencyForCountry } from '@/lib/countries';
 
+/**
+ * Generate a URL-friendly slug from a product name
+ */
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .substring(0, 100); // Limit length
+}
+
 const CountryPriceSchema = z.object({
   country: z.string().refine(
     (code) => isValidCountryCode(code),
@@ -18,6 +31,10 @@ const CountryPriceSchema = z.object({
 const ProductCreateSchema = z.object({
   name: z.string().min(1, { message: "Product name is required" }),
   description: z.string().optional(),
+  shortDescription: z.string().optional(),
+  benefits: z.string().optional(),
+  ingredients: z.string().optional(),
+  howToUse: z.string().optional(),
   features: z.array(z.string()).optional(),
   images: z.array(z.string()).optional(),
   mainImage: z.string().optional(),
@@ -26,10 +43,10 @@ const ProductCreateSchema = z.object({
   discountCents: z.number().int().min(0).optional(),
   stockQuantity: z.number().int().min(0).optional(),
   brandName: z.string().optional(),
-  categoryName: z.string().optional(),
-  categoryId: z.string().optional(),
-  subCategoryId: z.string().optional(),
-  skinToneId: z.string().optional(),
+  categoryIds: z.array(z.string()).optional().default([]),
+  skinToneIds: z.array(z.string()).optional().default([]),
+  skinConcernIds: z.array(z.string()).optional().default([]),
+  subCategoryId: z.string().nullable().optional(),
   hot: z.boolean().optional(),
   storeId: z.string().optional(), // Store code for product assignment
   countryPrices: z.array(CountryPriceSchema)
@@ -118,7 +135,7 @@ export async function GET() {
         hot: true,
         active: true,
         brand: { select: { name: true } },
-        category: { select: { name: true } },
+        productCategories: { include: { category: { select: { name: true, id: true } } } },
         store: { select: { code: true, name: true } },
         storeInventories: {
           where: accessibleStoreIds.length > 0 ? { storeId: { in: accessibleStoreIds } } : undefined,
@@ -219,55 +236,78 @@ export async function POST(req: Request) {
     }
     productData.images = finalImages;
 
-    // Resolve brand/category by name if provided
+    // Resolve brand by name if provided
     let brandId: string | null = null;
-    let categoryId: string | null = null;
     if (productData.brandName && productData.brandName !== 'All') {
       const b = await prisma.brand.findFirst({ where: { name: productData.brandName } });
       brandId = b?.id || null;
     }
-    if (productData.categoryName && productData.categoryName !== 'All') {
-      const c = await prisma.category.findFirst({ where: { name: productData.categoryName } });
-      categoryId = c?.id || null;
-    }
 
-    // Resolve sub-category and skin tone by ID if provided
+    // Resolve sub-category by ID if provided
     let subCategoryId: string | null = productData.subCategoryId?.trim() || null;
-    let skinToneId: string | null = productData.skinToneId?.trim() || null;
 
-    // Check for existing product by name to avoid non-unique upsert error
-    const existingProduct = await prisma.product.findFirst({ where: { name: productData.name } });
-    
+    // Get valid category IDs (only those that exist in DB)
+    const categoryIds = productData.categoryIds?.filter(id => id.trim()) || [];
+    const validCategoryIds = categoryIds.length > 0
+      ? (await prisma.category.findMany({ where: { id: { in: categoryIds } }, select: { id: true } })).map(c => c.id)
+      : [];
+
+    // Get valid skin tone IDs (only those that exist in DB)
+    const skinToneIds = productData.skinToneIds?.filter(id => id.trim()) || [];
+    const validSkinToneIds = skinToneIds.length > 0
+      ? (await prisma.skinTone.findMany({ where: { id: { in: skinToneIds } }, select: { id: true } })).map(s => s.id)
+      : [];
+
+    // Get valid skin concern IDs (only those that exist in DB)
+    const skinConcernIds = productData.skinConcernIds?.filter(id => id.trim()) || [];
+    const validSkinConcernIds = skinConcernIds.length > 0
+      ? (await prisma.skinConcern.findMany({ where: { id: { in: skinConcernIds } }, select: { id: true } })).map(s => s.id)
+      : [];
+
     // Resolve store assignment
     // All products must be assigned to a store for proper store-specific rendering
     // Default: auto-assign to admin's primary store based on their country
     let storeId: string | null = null;
     let storeCodeForInventory: string | null = null;
     
+    console.log('[DEBUG] Starting store assignment logic...');
+    console.log('[DEBUG] productData.storeId:', productData.storeId);
+    console.log('[DEBUG] storeAccess.allowedStores:', storeAccess.allowedStores);
+    console.log('[DEBUG] storeAccess.isSuperAdmin:', storeAccess.isSuperAdmin);
+    
     if (productData.storeId && productData.storeId !== 'GLOBAL') {
       // If storeId is explicitly provided (and not GLOBAL)
       // Validate that admin has access to the specified store
+      console.log('[DEBUG] Checking access to specified store:', productData.storeId);
       const canAccess = storeAccess.allowedStores.includes(productData.storeId);
       if (!canAccess && !storeAccess.isSuperAdmin) {
+        console.log('[DEBUG] Access denied to store:', productData.storeId);
         return new Response(JSON.stringify({
           error: 'No access to specified store'
         }), { status: 403 });
       }
       
+      console.log('[DEBUG] Looking up store with code:', productData.storeId);
       const store = await prisma.store.findFirst({ where: { code: productData.storeId } });
+      console.log('[DEBUG] Found store:', store);
       if (!store) {
+        console.log('[DEBUG] Store not found with code:', productData.storeId);
         return new Response(JSON.stringify({
           error: 'Specified store not found'
         }), { status: 404 });
       }
       storeId = store.id;
       storeCodeForInventory = productData.storeId;
+      console.log('[DEBUG] Store assigned successfully. storeId:', storeId, 'storeCodeForInventory:', storeCodeForInventory);
     } else {
       // No storeId provided or GLOBAL specified - auto-assign to admin's primary store
+      console.log('[DEBUG] No explicit storeId or GLOBAL specified. Auto-assigning...');
       if (storeAccess.allowedStores.length > 0) {
         // Use the first store from allowedStores (admin's primary store)
         const primaryStoreCode = storeAccess.allowedStores[0];
+        console.log('[DEBUG] Primary store code:', primaryStoreCode);
         const store = await prisma.store.findFirst({ where: { code: primaryStoreCode } });
+        console.log('[DEBUG] Found primary store:', store);
         if (store) {
           storeId = store.id;
           storeCodeForInventory = primaryStoreCode;
@@ -277,17 +317,24 @@ export async function POST(req: Request) {
           if (productData.storeId === 'GLOBAL') {
             console.log(`Note: GLOBAL product request overridden - assigning to ${primaryStoreCode} instead`);
           }
+        } else {
+          console.log('[DEBUG] ERROR: Primary store not found in database!');
         }
       } else if (storeAccess.isSuperAdmin) {
         // SUPERADMIN with no store access - assign to UAE as default
+        console.log('[DEBUG] SUPERADMIN with no store access, assigning to UAE...');
         const uaeStore = await prisma.store.findFirst({ where: { code: 'UAE' } });
+        console.log('[DEBUG] Found UAE store:', uaeStore);
         if (uaeStore) {
           storeId = uaeStore.id;
           storeCodeForInventory = 'UAE';
           console.log(`SUPERADMIN product assigned to UAE store as default`);
+        } else {
+          console.log('[DEBUG] ERROR: UAE store not found in database!');
         }
       } else {
         // Regular admin with no store access cannot create products
+        console.log('[DEBUG] ERROR: Admin has no store access');
         return new Response(JSON.stringify({
           error: 'Admin has no store access. Cannot create products.'
         }), { status: 403 });
@@ -303,7 +350,12 @@ export async function POST(req: Request) {
 
     const dbProductData = {
       name: productData.name,
+      slug: generateSlug(productData.name), // Generate unique slug
       description: productData.description || '',
+      shortDescription: productData.shortDescription || null,
+      benefits: productData.benefits || null,
+      ingredients: productData.ingredients || null,
+      howToUse: productData.howToUse || null,
       features: productData.features ?? [],
       images: (productData.images as string[]) ?? [],
       priceCents: productData.priceCents,
@@ -312,58 +364,126 @@ export async function POST(req: Request) {
       hot: productData.hot ?? false,
       trending: productData.trending ?? false,
       brandId,
-      categoryId,
       subCategoryId,
-      skinToneId,
       storeId,
       currency: 'USD', // Default currency as per schema
     };
+    console.log('[DEBUG] dbProductData.slug:', dbProductData.slug);
 
-    const product = existingProduct
-      ? await prisma.product.update({
-          where: { id: existingProduct.id },
-          data: dbProductData,
-        })
-      : await prisma.product.create({
-          data: dbProductData,
-        });
+    // Use upsert to handle existing products atomically
+    // This prevents race conditions and P2002 unique constraint errors
+    console.log('[DEBUG] Upserting product with name:', productData.name);
+    const product = await prisma.product.upsert({
+      where: { name: productData.name },
+      update: dbProductData,
+      create: dbProductData,
+    });
+    console.log('[DEBUG] Product upserted successfully. Product ID:', product.id);
 
-    // Handle initial store inventory if storeId provided (and not GLOBAL)
-    if (storeCodeForInventory && storeId) {
-      const store = await prisma.store.findFirst({
-        where: { code: storeCodeForInventory }
+    // Handle product categories (many-to-many)
+    // Always delete and recreate relations to ensure consistency
+    if (validCategoryIds.length > 0) {
+      // Delete existing relations
+      await prisma.productCategory.deleteMany({
+        where: { productId: product.id }
       });
-      
-      if (store) {
-        await prisma.storeInventory.upsert({
-          where: {
-            storeId_productId: {
-              storeId: store.id,
-              productId: product.id
-            }
-          },
-          update: {
-            quantity: productData.stockQuantity ?? 0,
-            price: (productData.priceCents - (productData.discountCents || 0)) / 100
-          },
-          create: {
-            storeId: store.id,
+      // Create new relations
+      if (validCategoryIds.length > 0) {
+        await prisma.productCategory.createMany({
+          data: validCategoryIds.map(categoryId => ({
             productId: product.id,
-            quantity: productData.stockQuantity ?? 0,
-            price: (productData.priceCents - (productData.discountCents || 0)) / 100
-          }
+            categoryId
+          }))
         });
       }
     }
 
-    // Create country-specific prices if provided
-    if (productData.countryPrices && productData.countryPrices.length > 0) {
-      // First, delete existing country prices for this product (if updating)
-      if (existingProduct) {
-        await prisma.countryPrice.deleteMany({
-          where: { productId: product.id }
+    // Handle product skin tones (many-to-many)
+    // Always delete and recreate relations to ensure consistency
+    if (validSkinToneIds.length > 0) {
+      // Delete existing relations
+      await prisma.productSkinTone.deleteMany({
+        where: { productId: product.id }
+      });
+      // Create new relations
+      if (validSkinToneIds.length > 0) {
+        await prisma.productSkinTone.createMany({
+          data: validSkinToneIds.map(skinToneId => ({
+            productId: product.id,
+            skinToneId
+          }))
         });
       }
+    }
+
+    // Handle product skin concerns (many-to-many)
+    // Always delete and recreate relations to ensure consistency
+    if (validSkinConcernIds.length > 0) {
+      // Delete existing relations
+      await prisma.productSkinConcern.deleteMany({
+        where: { productId: product.id }
+      });
+      // Create new relations
+      if (validSkinConcernIds.length > 0) {
+        await prisma.productSkinConcern.createMany({
+          data: validSkinConcernIds.map(concernId => ({
+            productId: product.id,
+            skinConcernId: concernId
+          }))
+        });
+      }
+    }
+
+    // Handle initial store inventory if storeId provided (and not GLOBAL)
+    console.log('[DEBUG] Creating store inventory...');
+    if (storeCodeForInventory && storeId) {
+      console.log('[DEBUG] storeCodeForInventory:', storeCodeForInventory, 'storeId:', storeId);
+      const store = await prisma.store.findFirst({
+        where: { code: storeCodeForInventory }
+      });
+      console.log('[DEBUG] Found store for inventory:', store);
+      
+      if (store) {
+        try {
+          await prisma.storeInventory.upsert({
+            where: {
+              storeId_productId: {
+                storeId: store.id,
+                productId: product.id
+              }
+            },
+            update: {
+              quantity: productData.stockQuantity ?? 0,
+              price: (productData.priceCents - (productData.discountCents || 0)) / 100
+            },
+            create: {
+              storeId: store.id,
+              productId: product.id,
+              quantity: productData.stockQuantity ?? 0,
+              price: (productData.priceCents - (productData.discountCents || 0)) / 100
+            }
+          });
+          console.log('[DEBUG] Store inventory created/updated successfully');
+        } catch (inventoryError) {
+          console.error('[DEBUG] ERROR creating store inventory:', inventoryError);
+          throw inventoryError; // Re-throw to be caught by outer catch block
+        }
+      } else {
+        console.log('[DEBUG] WARNING: Store not found for inventory creation');
+      }
+    } else {
+      console.log('[DEBUG] No store inventory to create (storeCodeForInventory or storeId is null)');
+    }
+
+    // Create country-specific prices if provided
+    console.log('[DEBUG] Creating country prices...');
+    if (productData.countryPrices && productData.countryPrices.length > 0) {
+      console.log('[DEBUG] Country prices to create:', productData.countryPrices);
+      // First, delete existing country prices for this product
+      console.log('[DEBUG] Deleting existing country prices for product:', product.id);
+      await prisma.countryPrice.deleteMany({
+        where: { productId: product.id }
+      });
       
       // Auto-detect currency for each country price if not provided
       const countryPricesWithCurrency = productData.countryPrices.map(countryPrice => {
@@ -375,33 +495,50 @@ export async function POST(req: Request) {
           active: countryPrice.active !== false, // Default to true if not specified
         };
       });
+      console.log('[DEBUG] Country prices with currency:', countryPricesWithCurrency);
       
       // Create new country prices
-      await Promise.all(
-        countryPricesWithCurrency.map(countryPrice =>
-          prisma.countryPrice.create({
-            data: {
-              productId: product.id,
-              country: countryPrice.country,
-              priceCents: countryPrice.priceCents,
-              currency: countryPrice.currency,
-              active: countryPrice.active
-            }
-          })
-        )
-      );
+      try {
+        await Promise.all(
+          countryPricesWithCurrency.map(countryPrice =>
+            prisma.countryPrice.create({
+              data: {
+                productId: product.id,
+                country: countryPrice.country,
+                priceCents: countryPrice.priceCents,
+                currency: countryPrice.currency,
+                active: countryPrice.active
+              }
+            })
+          )
+        );
+        console.log('[DEBUG] Country prices created successfully');
+      } catch (countryPriceError) {
+        console.error('[DEBUG] ERROR creating country prices:', countryPriceError);
+        throw countryPriceError; // Re-throw to be caught by outer catch block
+      }
+    } else {
+      console.log('[DEBUG] No country prices provided');
     }
 
     // Log activity
-    await prisma.auditLog.create({
-      data: {
-        action: 'PRODUCT_CREATED',
-        actorId: user.id,
-        subjectId: product.id,
-        details: `Product "${productData.name}" created by ${user.email}`,
-      }
-    });
+    console.log('[DEBUG] Creating audit log...');
+    try {
+      await prisma.auditLog.create({
+        data: {
+          action: 'PRODUCT_CREATED',
+          actorId: user.id,
+          subjectId: product.id,
+          details: `Product "${productData.name}" created by ${user.email}`,
+        }
+      });
+      console.log('[DEBUG] Audit log created successfully');
+    } catch (auditError) {
+      console.error('[DEBUG] ERROR creating audit log:', auditError);
+      // Don't fail the entire request if audit log fails
+    }
 
+    console.log('[DEBUG] Product creation completed successfully');
     return new Response(JSON.stringify(product), { headers: { 'Content-Type': 'application/json' } });
   } catch (error: any) {
     console.error('PRODUCT_CREATE_ERROR:', error);

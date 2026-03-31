@@ -26,6 +26,11 @@ interface AddProductFormProps {
     name: string;
     hexColor: string | null;
   }[];
+  skinConcerns: {
+    id: string;
+    name: string;
+    description: string | null;
+  }[];
   adminStoreCode: string | null;
   isSuperAdmin: boolean;
 }
@@ -35,6 +40,7 @@ export function AddProductForm({
   categories,
   subCategories,
   skinTones,
+  skinConcerns,
   adminStoreCode,
   isSuperAdmin
 }: AddProductFormProps) {
@@ -47,22 +53,33 @@ export function AddProductForm({
 
   const [loading, setLoading] = useState(false);
   
-  // Initialize country prices for all 6 supported countries with base price 0
-  const initialCountryPrices = SUPPORTED_COUNTRIES.map(country => ({
-    country: country.code as CountryCode,
-    priceCents: 0, // Base price 0
-    currency: country.currency,
-    active: true
-  }));
+  // Initialize country prices - only Kuwait for Kuwait admins, all countries for super admin
+  const initialCountryPrices = adminStoreCode === 'KUW'
+    ? [{
+        country: 'KUW' as CountryCode,
+        priceCents: 0,
+        currency: 'KWD',
+        active: true
+      }]
+    : SUPPORTED_COUNTRIES.map(country => ({
+        country: country.code as CountryCode,
+        priceCents: 0,
+        currency: country.currency,
+        active: true
+      }));
 
   const [formData, setFormData] = useState({
     name: '',
     brandName: brands[0]?.name || '',
-    categoryId: categories[0]?.id || '',
-    categoryName: categories[0]?.name || '',
+    categoryIds: [] as string[],
     subCategoryId: '',
-    skinToneId: '',
+    skinToneIds: [] as string[],
+    skinConcernIds: [] as string[],
     description: '',
+    shortDescription: '',
+    benefits: '',
+    ingredients: '',
+    howToUse: '',
     features: [] as string[],
     priceCents: 0, // Base price 0
     discountCents: 0,
@@ -73,27 +90,11 @@ export function AddProductForm({
     trending: false,
     storeId: initialStoreId, // Set based on admin's access
     countryPrices: initialCountryPrices,
+    subCategoryIds: [] as string[],
   });
 
-  // Filter sub-categories based on selected category
-  const filteredSubCategories = subCategories.filter(
-    sub => sub.categoryId === formData.categoryId
-  );
-
-  // Update country prices when base price changes
-  useEffect(() => {
-    const hasManualEdits = formData.countryPrices.some(cp => cp.priceCents !== 0);
-    if (!hasManualEdits) {
-      // Auto-fill country prices with base price
-      setFormData(prev => ({
-        ...prev,
-        countryPrices: prev.countryPrices.map(cp => ({
-          ...cp,
-          priceCents: prev.priceCents
-        }))
-      }));
-    }
-  }, [formData.priceCents]);
+  // Filter sub-categories based on selected categories (first category) - now showing all
+  const filteredSubCategories = subCategories;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -112,22 +113,83 @@ export function AddProductForm({
         [name]: isNaN(numValue) ? 0 : numValue
       }));
     } else {
-      // Special handling for category changes
-      if (name === 'categoryId') {
-        const selectedCategory = categories.find(cat => cat.id === value);
-        setFormData(prev => ({
-          ...prev,
-          categoryId: value,
-          categoryName: selectedCategory?.name || '',
-          subCategoryId: '' // Reset sub-category when category changes
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: value
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
+  };
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setFormData(prev => {
+      const currentIds = prev.categoryIds;
+      if (currentIds.includes(categoryId)) {
+        return {
+          ...prev,
+          categoryIds: currentIds.filter(id => id !== categoryId),
+          subCategoryId: '' // Reset sub-category when categories change
+        };
+      } else {
+        return {
+          ...prev,
+          categoryIds: [...currentIds, categoryId],
+          subCategoryId: '' // Reset sub-category when categories change
+        };
+      }
+    });
+  };
+
+  const handleSkinToneToggle = (skinToneId: string) => {
+    setFormData(prev => {
+      const currentIds = prev.skinToneIds;
+      if (currentIds.includes(skinToneId)) {
+        return {
+          ...prev,
+          skinToneIds: currentIds.filter(id => id !== skinToneId)
+        };
+      } else {
+        return {
+          ...prev,
+          skinToneIds: [...currentIds, skinToneId]
+        };
+      }
+    });
+  };
+
+  const handleSubCategoryToggle = (subCategoryId: string) => {
+    setFormData(prev => {
+      const currentIds = prev.subCategoryIds;
+      if (currentIds.includes(subCategoryId)) {
+        return {
+          ...prev,
+          subCategoryIds: currentIds.filter(id => id !== subCategoryId),
+          subCategoryId: currentIds.includes(subCategoryId) && currentIds.length === 1 ? '' : prev.subCategoryId
+        };
+      } else {
+        return {
+          ...prev,
+          subCategoryIds: [...currentIds, subCategoryId],
+          subCategoryId: subCategoryId
+        };
+      }
+    });
+  };
+
+  const handleSkinConcernToggle = (concernId: string) => {
+    setFormData(prev => {
+      const currentIds = prev.skinConcernIds;
+      if (currentIds.includes(concernId)) {
+        return {
+          ...prev,
+          skinConcernIds: currentIds.filter(id => id !== concernId)
+        };
+      } else {
+        return {
+          ...prev,
+          skinConcernIds: [...currentIds, concernId]
+        };
+      }
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,13 +211,32 @@ export function AddProductForm({
       const countryPrices = formData.countryPrices.map(cp => ({
         country: cp.country,
         priceCents: cp.priceCents,
-        currency: cp.currency, // Already auto-detected from initialization
+        currency: cp.currency,
         active: cp.active
       }));
 
       const payload = {
-        ...formData,
-        countryPrices
+        name: formData.name,
+        description: formData.description,
+        shortDescription: formData.shortDescription,
+        benefits: formData.benefits,
+        ingredients: formData.ingredients,
+        howToUse: formData.howToUse,
+        priceCents: formData.priceCents,
+        discountCents: formData.discountCents,
+        stockQuantity: formData.stockQuantity,
+        brandName: formData.brandName,
+        categoryIds: formData.categoryIds,
+        skinToneIds: formData.skinToneIds,
+        skinConcernIds: formData.skinConcernIds,
+        subCategoryId: formData.subCategoryIds[0] || null,
+        hot: formData.hot,
+        trending: formData.trending,
+        storeId: formData.storeId,
+        countryPrices,
+        mainImage: formData.mainImage,
+        images: formData.images,
+        features: formData.features,
       };
 
       const res = await fetch('/api/admin/products', {
@@ -204,16 +285,15 @@ export function AddProductForm({
         </button>
       </div>
 
-      <form id="product-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* General Information */}
-          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
-              <Package size={14} /> General Info
-            </h3>
-            
-            <div className="space-y-4">
+      <form id="product-form" onSubmit={handleSubmit} className="space-y-8">
+        {/* General Information */}
+        <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+          <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+            <Package size={14} /> General Info
+          </h3>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Product Name</label>
                 <input
@@ -226,188 +306,217 @@ export function AddProductForm({
                 />
               </div>
 
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={6}
-                  placeholder="Tell customers about this product..."
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Brand</label>
-                  <div className="relative">
-                    <select
-                      name="brandName"
-                      value={formData.brandName}
-                      onChange={handleChange}
-                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
-                    >
-                      {brands.map(b => (
-                        <option key={b.name} value={b.name}>{b.name}</option>
-                      ))}
-                    </select>
-                    <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Category</label>
-                  <div className="relative">
-                    <select
-                      name="categoryId"
-                      value={formData.categoryId}
-                      onChange={handleChange}
-                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
-                    >
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                    <Hash className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
-                  </div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Brand</label>
+                <div className="relative">
+                  <select
+                    name="brandName"
+                    value={formData.brandName}
+                    onChange={handleChange}
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                  >
+                    {brands.map(b => (
+                      <option key={b.name} value={b.name}>{b.name}</option>
+                    ))}
+                  </select>
+                  <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
                 </div>
               </div>
             </div>
-          </section>
 
-          {/* Category & Skin Tone Selection */}
-          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
-              <Layers size={14} /> Category & Skin Tone
-            </h3>
-            
-            <div className="space-y-6">
-              {/* Sub-category Selection */}
-              <div>
-                <h4 className="text-xs font-black uppercase tracking-widest text-black/40 mb-3">Sub-category (Optional)</h4>
-                {filteredSubCategories.length === 0 ? (
-                  <div className="text-center py-4 text-black/30 text-sm">
-                    No sub-categories available for this category.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {filteredSubCategories.map((subCat) => (
-                      <label
-                        key={subCat.id}
-                        className={`flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
-                          formData.subCategoryId === subCat.id
-                            ? 'border-black bg-black/5'
-                            : 'border-black/10 hover:border-black/20'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="subCategoryId"
-                          value={subCat.id}
-                          checked={formData.subCategoryId === subCat.id}
-                          onChange={handleChange}
-                          className="hidden"
-                        />
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                          formData.subCategoryId === subCat.id
-                            ? 'border-black bg-black'
-                            : 'border-black/20'
-                        }`}>
-                          {formData.subCategoryId === subCat.id && (
-                            <div className="w-2 h-2 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <span className="font-medium text-sm">{subCat.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                <p className="text-[10px] text-black/30 mt-2">Select a sub-category to further categorize your product</p>
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Description</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Tell customers about this product..."
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+              />
+            </div>
 
-              {/* Skin Tone Selection */}
-              <div>
-                <h4 className="text-xs font-black uppercase tracking-widest text-black/40 mb-3">Skin Tone (Optional)</h4>
-                {skinTones.length === 0 ? (
-                  <div className="text-center py-4 text-black/30 text-sm">
-                    No skin tones available. Create skin tones in the admin panel first.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {skinTones.map((tone) => (
-                      <label
-                        key={tone.id}
-                        className={`flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${
-                          formData.skinToneId === tone.id
-                            ? 'border-black bg-black/5'
-                            : 'border-black/10 hover:border-black/20'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="skinToneId"
-                          value={tone.id}
-                          checked={formData.skinToneId === tone.id}
-                          onChange={handleChange}
-                          className="hidden"
-                        />
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                          formData.skinToneId === tone.id
-                            ? 'border-black bg-black'
-                            : 'border-black/20'
-                        }`}>
-                          {formData.skinToneId === tone.id && (
-                            <div className="w-2 h-2 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {tone.hexColor && (
-                            <div
-                              className="w-4 h-4 rounded-full border border-black/10"
-                              style={{ backgroundColor: tone.hexColor }}
-                            />
-                          )}
-                          <span className="font-medium text-sm">{tone.name}</span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                <p className="text-[10px] text-black/30 mt-2">Select the skin tone this product is suitable for</p>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Short Description</label>
+              <textarea
+                name="shortDescription"
+                value={formData.shortDescription}
+                onChange={handleChange}
+                rows={2}
+                placeholder="Brief overview of the product..."
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Benefits</label>
+              <textarea
+                name="benefits"
+                value={formData.benefits}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Key benefits of the product..."
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Ingredients</label>
+              <textarea
+                name="ingredients"
+                value={formData.ingredients}
+                onChange={handleChange}
+                rows={3}
+                placeholder="List of ingredients..."
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">How to Use</label>
+              <textarea
+                name="howToUse"
+                value={formData.howToUse}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Instructions on how to use the product..."
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+              />
+            </div>
+
+            {/* Categories */}
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Categories</h4>
+              <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
+                <div className="flex flex-wrap gap-2">
+                  {categories.map(cat => (
+                    <label
+                      key={cat.id}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                        formData.categoryIds.includes(cat.id)
+                          ? 'bg-black text-white'
+                          : 'bg-white hover:bg-black/5'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.categoryIds.includes(cat.id)}
+                        onChange={() => handleCategoryToggle(cat.id)}
+                        className="hidden"
+                      />
+                      <span className="text-sm font-medium">{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-          </section>
 
-          {/* Country-Specific Pricing - All 6 Countries */}
-          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
-              <Globe size={14} /> Country-Specific Pricing (All 6 Countries)
-            </h3>
+            {/* Sub-categories */}
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Sub-categories</h4>
+              <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
+                <div className="flex flex-wrap gap-2">
+                  {subCategories.map((subCat) => (
+                    <label
+                      key={subCat.id}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                        formData.subCategoryIds.includes(subCat.id)
+                          ? 'bg-black text-white'
+                          : 'bg-white hover:bg-black/5'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.subCategoryIds.includes(subCat.id)}
+                        onChange={() => handleSubCategoryToggle(subCat.id)}
+                        className="hidden"
+                      />
+                      <span className="text-sm font-medium">{subCat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Skin Tones */}
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Skin Tones</h4>
+              <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
+                <div className="flex flex-wrap gap-2">
+                  {skinTones.map((tone) => (
+                    <label
+                      key={tone.id}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                        formData.skinToneIds.includes(tone.id)
+                          ? 'bg-black text-white'
+                          : 'bg-white hover:bg-black/5'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.skinToneIds.includes(tone.id)}
+                        onChange={() => handleSkinToneToggle(tone.id)}
+                        className="hidden"
+                      />
+                      {tone.hexColor && (
+                        <div
+                          className="w-4 h-4 rounded-full border border-white/20"
+                          style={{ backgroundColor: tone.hexColor }}
+                        />
+                      )}
+                      <span className="text-sm font-medium">{tone.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Skin Concerns */}
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Skin Concerns</h4>
+              <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
+                <div className="flex flex-wrap gap-2">
+                  {skinConcerns.map((concern) => (
+                    <label
+                      key={concern.id}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+                        formData.skinConcernIds.includes(concern.id)
+                          ? 'bg-black text-white'
+                          : 'bg-white hover:bg-black/5'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.skinConcernIds.includes(concern.id)}
+                        onChange={() => handleSkinConcernToggle(concern.id)}
+                        className="hidden"
+                      />
+                      <span className="text-sm font-medium">{concern.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Country-Specific Pricing */}
+        <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+          <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+            <Globe size={14} /> {adminStoreCode === 'KUW' ? 'Kuwait Pricing' : 'Country-Specific Pricing (All 6 Countries)'}
+          </h3>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs font-bold text-black/60">Define prices for all supported countries in regular currency</p>
-                  <p className="text-[10px] text-black/40 mt-1">Currencies are automatically detected. Enter whole numbers only (e.g., 10 for $10)</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Reset all country prices to base price (0)
-                    setFormData(prev => ({
-                      ...prev,
-                      countryPrices: prev.countryPrices.map(cp => ({
-                        ...cp,
-                        priceCents: prev.priceCents
-                      }))
-                    }));
-                    toast.success('All country prices reset to base price');
-                  }}
-                  className="bg-black text-white px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all"
-                >
-                  Reset All to Base
-                </button>
+              <div className="mb-4">
+                <p className="text-xs font-bold text-black/60">
+                  {adminStoreCode === 'KUW'
+                    ? 'Set the price for Kuwait market in KWD'
+                    : 'Define prices for all supported countries in regular currency'}
+                </p>
+                <p className="text-[10px] text-black/40 mt-1">Enter whole numbers only (e.g., 10 for 10 KWD)</p>
               </div>
 
               <div className="space-y-3">
@@ -426,46 +535,33 @@ export function AddProductForm({
                           </div>
                         </div>
                       </div>
-                      <div className="col-span-5 space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Price (Regular Currency)</label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            step="1"
-                            value={cp.priceCents === 0 ? '' : (cp.priceCents / 100)}
-                            onChange={(e) => {
-                              const newPrices = [...formData.countryPrices];
-                              const numValue = parseFloat(e.target.value);
-                              newPrices[index].priceCents = isNaN(numValue) ? 0 : Math.round(numValue * 100);
-                              setFormData(prev => ({ ...prev, countryPrices: newPrices }));
-                            }}
-                            className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                            min="0"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newPrices = [...formData.countryPrices];
-                              newPrices[index].priceCents = formData.priceCents;
-                              setFormData(prev => ({ ...prev, countryPrices: newPrices }));
-                            }}
-                            className="text-[10px] font-black uppercase tracking-widest bg-black/10 hover:bg-black/20 px-3 py-2 rounded-xl transition-colors whitespace-nowrap"
-                          >
-                            Use Base
-                          </button>
-                        </div>
-                        <p className="text-[8px] text-black/20 px-2">Enter whole number price (e.g., 10 for $10)</p>
+                      <div className="col-span-6 space-y-1.5">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Price (KWD)</label>
+                        <input
+                          type="number"
+                          step="1"
+                          value={cp.priceCents === 0 ? '' : (cp.priceCents / 100)}
+                          onChange={(e) => {
+                            const newPrices = [...formData.countryPrices];
+                            const numValue = parseFloat(e.target.value);
+                            newPrices[index].priceCents = isNaN(numValue) ? 0 : Math.round(numValue * 100);
+                            setFormData(prev => ({ ...prev, countryPrices: newPrices }));
+                          }}
+                          className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                          min="0"
+                        />
+                        <p className="text-[8px] text-black/20 px-2">Enter whole number price (e.g., 10 for 10 KWD)</p>
                       </div>
                       <div className="col-span-3 space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Currency (Auto)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Currency</label>
                         <div className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold flex items-center justify-between">
                           <span>{cp.currency}</span>
                           <span className="text-[10px] text-black/40">{countryConfig?.currencySymbol}</span>
                         </div>
                       </div>
-                      <div className="col-span-1 flex justify-center">
-                        <div className={`w-3 h-3 rounded-full ${cp.priceCents === formData.priceCents ? 'bg-gray-300' : 'bg-green-500'}`}
-                             title={cp.priceCents === formData.priceCents ? 'Using base price (0)' : 'Custom price set'}>
+                      <div className="col-span-3 flex justify-center items-center">
+                        <div className={`w-3 h-3 rounded-full ${cp.priceCents > 0 ? 'bg-green-500' : 'bg-gray-300'}`}
+                             title={cp.priceCents > 0 ? 'Price set' : 'No price set'}>
                         </div>
                       </div>
                     </div>
@@ -473,30 +569,41 @@ export function AddProductForm({
                 })}
               </div>
               
-              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                <p className="text-xs text-blue-700">
-                  <strong>System Configuration:</strong> All 6 countries are required. Prices are in whole numbers only (e.g., 10 for $10).
-                  Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
-                  If a country price equals the base price (0), it will use the base price logic.
-                </p>
-              </div>
+              {adminStoreCode === 'KUW' ? (
+                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                  <p className="text-xs text-emerald-700">
+                    <strong>Kuwait Market:</strong> Products added here will only be visible to Kuwait customers.
+                    Set the price in Kuwaiti Dinar (KWD). Other countries cannot access these products.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                    <p className="text-xs text-blue-700">
+                      <strong>System Configuration:</strong> All 6 countries are required. Prices are in whole numbers only (e.g., 10 for $10).
+                      Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
+                      Products will only be visible to users in countries where a price is set.
+                    </p>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="p-3 bg-green-50 rounded-xl border border-green-100">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="font-bold text-green-700">Custom Price Set</span>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div className="p-3 bg-green-50 rounded-xl border border-green-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span className="font-bold text-green-700">Price Set</span>
+                      </div>
+                      <p className="text-green-600 mt-1">Country has a specific price configured</p>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                        <span className="font-bold text-gray-700">No Price Set</span>
+                      </div>
+                      <p className="text-gray-600 mt-1">Product will not be visible in this country</p>
+                    </div>
                   </div>
-                  <p className="text-green-600 mt-1">Country has a specific price different from base</p>
-                </div>
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                    <span className="font-bold text-gray-700">Using Base Price</span>
-                  </div>
-                  <p className="text-gray-600 mt-1">Country uses the base price (shown above)</p>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           </section>
 
@@ -522,24 +629,21 @@ export function AddProductForm({
               <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
                  <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">
                     Note: Product will be added to this store&apos;s active inventory immediately.
-                 </div>
+                  </div>
               </div>
             </div>
           </section>
-        </div>
 
-        {/* Sidebar Controls */}
-        <div className="space-y-8">
-          {/* Images */}
+          {/* Media Assets */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
               <ImageIcon size={14} /> Media Assets
             </h3>
             
-            <div className="space-y-6">
-              {/* Main Image Upload */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Main Image */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Main Image (Primary)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Main Image</label>
                 <div className="relative group">
                   {formData.mainImage ? (
                     <div className="aspect-square rounded-2xl bg-black/5 overflow-hidden border border-black/5 relative">
@@ -585,10 +689,10 @@ export function AddProductForm({
                 </div>
               </div>
 
-              {/* Gallery Upload */}
+              {/* Gallery */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Gallery (Min 2 recommended)</label>
-                <div className="grid grid-cols-2 gap-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Gallery</label>
+                <div className="grid grid-cols-3 gap-3">
                   {formData.images.map((img, idx) => (
                     <div key={idx} className="aspect-square rounded-xl bg-black/5 overflow-hidden border border-black/5 relative group">
                       <img src={img} alt="Gallery" className="w-full h-full object-cover" />
@@ -607,7 +711,7 @@ export function AddProductForm({
                   ))}
                   <label className="aspect-square rounded-xl bg-black/5 border-2 border-dashed border-black/10 hover:border-black/20 transition-all flex flex-col items-center justify-center cursor-pointer group">
                     <ImageIcon className="text-black/20 mb-1 group-hover:scale-110 transition-transform" size={16} />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-black/40">Add More</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-black/40">Add</span>
                     <input 
                       type="file" 
                       className="hidden" 
@@ -628,7 +732,7 @@ export function AddProductForm({
                           setFormData(p => ({ ...p, images: [...p.images, ...urls] }));
                           toast.success('Gallery updated', { id: tid });
                         } catch (err) {
-                          toast.error('Gallery upload partially failed', { id: tid });
+                          toast.error('Gallery upload failed', { id: tid });
                         }
                       }}
                     />
@@ -666,8 +770,7 @@ export function AddProductForm({
               </label>
             </div>
           </section>
-        </div>
-      </form>
-    </div>
-  );
-}
+        </form>
+      </div>
+    );
+  }

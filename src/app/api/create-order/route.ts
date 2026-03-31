@@ -26,11 +26,87 @@ function generateTrackingCode(courier: string): string {
   return `${prefix}-${random}-${Date.now().toString().slice(-6)}`;
 }
 
+// Helper to get currency for country
+function getCurrencyForCountry(country: string): string {
+  const currencies: Record<string, string> = {
+    AE: 'AED',
+    KW: 'KWD',
+    SA: 'SAR',
+    BH: 'BHD',
+    OM: 'OMR',
+    QA: 'QAR',
+    BD: 'BDT',
+  };
+  return currencies[country?.toUpperCase()] || 'USD';
+}
+
+// Normalize country code to 2-letter format
+function normalizeCountryCode(country: string | undefined): string {
+  if (!country) return 'AE';
+  
+  const countryMap: Record<string, string> = {
+    'AE': 'AE', 'UAE': 'AE', 'UNITED ARAB EMIRATES': 'AE',
+    'KW': 'KW', 'KUWAIT': 'KW',
+    'SA': 'SA', 'SAUDI': 'SA', 'SAUDI ARABIA': 'SA',
+    'BH': 'BH', 'BAHRAIN': 'BH',
+    'OM': 'OM', 'OMAN': 'OM',
+    'QA': 'QA', 'QATAR': 'QA',
+    'BD': 'BD', 'BANGLADESH': 'BD',
+  };
+  
+  return countryMap[country.toUpperCase()] || 'AE';
+}
+
+// Get price for a product - check all possible sources
+async function getProductPrice(productId: string, countryCode: string, storeCode?: string) {
+  // First try store inventory price if store is specified
+  if (storeCode) {
+    const inventory = await (prisma as any).storeInventory.findFirst({
+      where: {
+        productId: productId,
+        store: { code: storeCode }
+      }
+    });
+    
+    if (inventory && inventory.price > 0) {
+      return { priceCents: Math.round(inventory.price * 100), source: 'store_inventory' };
+    }
+  }
+  
+  // Then try country-specific price
+  const countryPrice = await (prisma as any).countryPrice.findFirst({
+    where: {
+      productId: productId,
+      country: countryCode.toUpperCase(),
+      active: true
+    }
+  });
+  
+  if (countryPrice && countryPrice.priceCents > 0) {
+    return { priceCents: countryPrice.priceCents, source: 'country_price' };
+  }
+  
+  // Finally use base product price
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { priceCents: true, discountCents: true }
+  });
+  
+  if (product) {
+    const basePrice = product.discountCents 
+      ? product.priceCents - product.discountCents 
+      : product.priceCents;
+    return { priceCents: basePrice, source: 'base_price' };
+  }
+  
+  return { priceCents: 0, source: 'none' };
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerAuthSession();
     const body = await req.json();
-    const { items, billing, shipping, payment_method, payment_method_title, couponCode } = body;
+    const { items, billing, shipping, payment_method, payment_method_title, couponCode, storeCode, country } = body;
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -65,7 +141,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // Calculate totals
+    // Get normalized country code for pricing - prioritize direct country param, then shipping, then billing
+    const countryCode = normalizeCountryCode(country || shipping?.country || billing?.country);
+    const currency = getCurrencyForCountry(countryCode);
+
+    // Calculate totals with improved price lookup
     let subtotalCents = 0;
     const orderItemsData = [];
     let orderStoreId: string | null = null;
@@ -75,12 +155,12 @@ export async function POST(req: Request) {
       const productId = item.productId;
       
       // Sanity check: Ensure productId is a valid MongoDB ObjectId (24 chars hex)
-      // Old WooCommerce IDs like "34263" will trigger Malformed ObjectID in Prisma
       if (!/^[0-9a-fA-F]{24}$/.test(productId)) {
         console.warn(`Skipping invalid product ID: ${productId}`);
-        continue; // Or throw a specific error
+        continue;
       }
 
+      // Get product with all relations
       const product = await prisma.product.findUnique({
         where: { id: productId },
         include: {
@@ -103,16 +183,13 @@ export async function POST(req: Request) {
       
       // If product doesn't have direct store assignment, check store inventories
       if (!productStoreId && product.storeInventories.length > 0) {
-        // Use the first store inventory as the product's store
         productStoreId = product.storeInventories[0].storeId;
         productStoreCode = product.storeInventories[0].store.code;
       }
 
       // Track store for validation
       if (productStoreId) {
-        // Check if this is a Kuwait store product
         if (productStoreCode === 'KUW') {
-          // Validate shipping address is Kuwait
           const shippingCountry = shipping?.country?.toString().toLowerCase().trim();
           if (!shippingCountry || (shippingCountry !== 'kuwait' && shippingCountry !== 'kw')) {
             throw new Error('Kuwait products can only be ordered from Kuwait addresses');
@@ -120,9 +197,25 @@ export async function POST(req: Request) {
         }
       }
 
-      const unitPriceCents = product.discountCents
-        ? (product.priceCents - product.discountCents)
-        : product.priceCents;
+      // Use price from cart item if provided, otherwise lookup from database
+      let unitPriceCents = 0;
+      let priceSource = 'cart_item';
+      
+      if (item.unitPriceCents && item.unitPriceCents > 0) {
+        // Use the price that was calculated in the cart
+        unitPriceCents = item.unitPriceCents;
+      } else {
+        // Fallback to database lookup
+        const dbPrice = await getProductPrice(productId, countryCode, productStoreCode);
+        unitPriceCents = dbPrice.priceCents;
+        priceSource = dbPrice.source;
+      }
+      
+      console.log(`Price for ${product.name}: ${unitPriceCents} cents (source: ${priceSource})`);
+
+      if (unitPriceCents <= 0) {
+        throw new Error(`Invalid price for product ${product.name}. Please contact support.`);
+      }
       
       const itemTotal = unitPriceCents * item.quantity;
       subtotalCents += itemTotal;
@@ -137,14 +230,10 @@ export async function POST(req: Request) {
 
       // Track the store for this product (for order assignment)
       if (productStoreId) {
-        // Store the storeId to assign to order later
-        // For mixed store orders, we need to handle this differently
-        // For now, we'll use the first product's store
         if (!orderStoreId) {
           orderStoreId = productStoreId;
           orderStoreCode = productStoreCode;
         } else if (orderStoreId !== productStoreId) {
-          // Mixed store order - for now, reject or handle appropriately
           throw new Error('Cannot mix products from different stores in a single order');
         }
       }
@@ -154,7 +243,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No valid items found in cart. Your cart may contain outdated product data." }, { status: 400 });
     }
 
-    const totalCents = subtotalCents; // For now, no shipping/tax logic here, but could be added
+    // Validate total
+    if (subtotalCents <= 0) {
+      return NextResponse.json({ error: "Order total must be greater than 0. Please check product prices." }, { status: 400 });
+    }
+
+    const totalCents = subtotalCents;
 
     // Determine courier based on shipping address
     const courier = determineCourier(shipping);
@@ -165,8 +259,8 @@ export async function POST(req: Request) {
       data: {
         userId: session?.user?.id || null,
         email: session?.user?.email || billing?.email || null,
-        status: OrderStatus.PENDING_PAYMENT,
-        currency: "usd", // Default to usd, or get from products
+        status: OrderStatus.ORDER_RECEIVED,
+        currency: currency.toLowerCase(),
         subtotalCents,
         totalCents,
         billingAddress: billing || {},

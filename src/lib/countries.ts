@@ -9,6 +9,7 @@ export interface CountryConfig {
   currency: string;
   currencySymbol: string;
   isActive: boolean;
+  flag: string;
 }
 
 export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
@@ -17,42 +18,48 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     name: 'United Arab Emirates',
     currency: 'AED',
     currencySymbol: 'د.إ',
-    isActive: true
+    isActive: true,
+    flag: '🇦🇪'
   },
   {
     code: 'KW',
     name: 'Kuwait',
     currency: 'KWD',
     currencySymbol: 'د.ك',
-    isActive: true
+    isActive: true,
+    flag: '🇰🇼'
   },
   {
     code: 'BH',
     name: 'Bahrain',
     currency: 'BHD',
     currencySymbol: '.د.ب',
-    isActive: true
+    isActive: true,
+    flag: '🇧🇭'
   },
   {
     code: 'SA',
     name: 'Saudi Arabia',
     currency: 'SAR',
     currencySymbol: 'ر.س',
-    isActive: true
+    isActive: true,
+    flag: '🇸🇦'
   },
   {
     code: 'OM',
     name: 'Oman',
     currency: 'OMR',
     currencySymbol: 'ر.ع.',
-    isActive: true
+    isActive: true,
+    flag: '🇴🇲'
   },
   {
     code: 'QA',
     name: 'Qatar',
     currency: 'QAR',
     currencySymbol: 'ر.ق',
-    isActive: true
+    isActive: true,
+    flag: '🇶🇦'
   }
 ] as const;
 

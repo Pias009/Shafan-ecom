@@ -5,6 +5,16 @@ import { redirect } from "next/navigation";
 import { PackageOpen, ExternalLink } from "lucide-react";
 import { OrderStatus } from "@prisma/client";
 
+function formatPrice(amountCents: number, currency: string): string {
+  const code = currency?.toUpperCase() || 'USD';
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
+  const amount = amountCents / 100;
+  return `${code} ${amount.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+}
+
 export default async function OrdersPage() {
   const session = await getServerAuthSession();
   if (!session?.user?.email) return redirect("/auth/sign-in");
@@ -35,6 +45,7 @@ export default async function OrdersPage() {
     orders = dbOrders.map((o: any) => ({
       id: String(o.id),
       totalCents: o.totalCents,
+      currency: o.currency,
       status: o.status,
       createdAt: o.createdAt,
       itemCount: o.items.reduce((acc: number, item: any) => acc + item.quantity, 0),
@@ -84,15 +95,16 @@ export default async function OrdersPage() {
                   <div className="space-y-3 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="text-2xl font-black text-black">
-                        ${(order.totalCents / 100).toFixed(2)}
+                        {formatPrice(order.totalCents, order.currency)}
                       </span>
                       <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
-                        order.status === OrderStatus.DELIVERED ? 'bg-green-100 text-green-800 border-green-200' : 
-                        [OrderStatus.PAID, OrderStatus.PROCESSING].includes(order.status) ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                        [OrderStatus.PENDING_PAYMENT].includes(order.status) ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
+                        order.status === OrderStatus.DELIVERED ? 'bg-green-100 text-green-800 border-green-200' :
+                        [OrderStatus.ORDER_CONFIRMED, OrderStatus.PROCESSING].includes(order.status) ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                        [OrderStatus.READY_FOR_PICKUP, OrderStatus.ORDER_PICKED_UP, OrderStatus.IN_TRANSIT].includes(order.status) ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                        [OrderStatus.ORDER_RECEIVED].includes(order.status) ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
                         'bg-black/5 text-black/40 border-black/5'
                       }`}>
-                        {order.status}
+                        {order.status.replace(/_/g, ' ')}
                       </span>
                     </div>
 

@@ -17,6 +17,7 @@ export default async function ProductsPage({
   const brand = params.brand;
   
   // Transform data for UI compatibility on the server
+  // Note: Country filtering happens on client side to avoid hydration mismatches
   const transformed = products.map((p: any) => ({
     ...p,
     price: p.regularPriceCents / 100,

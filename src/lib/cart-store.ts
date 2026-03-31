@@ -5,9 +5,14 @@ export interface ProductSummary {
   name: string;
   brand: string;
   category: string;
-  price: number;
+  price: number; // Base price
   imageUrl: string;
   discountPrice?: number;
+  countryPrices?: Array<{
+    country: string;
+    priceCents: number;
+    currency: string;
+  }>;
 }
 
 export interface CartItem extends ProductSummary {
@@ -26,6 +31,7 @@ interface CartState {
   clearCart: () => void;
   hasAddress: boolean;
   setHasAddress: (val: boolean) => void;
+  getCountryPrice: (productId: string) => number | null;
 }
 
 export const useCartStore = create<CartState>()(
@@ -69,6 +75,9 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [], couponCode: null, couponDiscount: 0 }),
       hasAddress: false,
       setHasAddress: (val) => set({ hasAddress: val }),
+      getCountryPrice: (productId: string) => {
+        return null; // Placeholder - actual implementation depends on country price lookup
+      },
     }),
     {
       name: "cart-storage",

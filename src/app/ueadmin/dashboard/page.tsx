@@ -45,11 +45,12 @@ export default async function Dashboard() {
   ]);
 
   const totalRevenue = (revenueData._sum.totalCents || 0) / 100;
+  const currencySymbol = 'AED';
   
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case OrderStatus.PENDING_PAYMENT: return 'bg-yellow-100 text-yellow-800';
-      case OrderStatus.PAID:
+      case OrderStatus.ORDER_RECEIVED: return 'bg-yellow-100 text-yellow-800';
+      case OrderStatus.ORDER_CONFIRMED:
       case OrderStatus.PROCESSING: return 'bg-blue-100 text-blue-800';
       case OrderStatus.DELIVERED: return 'bg-green-100 text-green-800';
       case OrderStatus.CANCELLED: return 'bg-red-100 text-red-800';
@@ -93,7 +94,7 @@ export default async function Dashboard() {
           <div className="p-4 bg-black/5 rounded-2xl text-black"><TrendingUp size={24} /></div>
           <div>
             <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Revenue</div>
-            <div className="text-3xl font-black text-black">${totalRevenue.toLocaleString()}</div>
+            <div className="text-3xl font-black text-black">{currencySymbol} {totalRevenue.toLocaleString()}</div>
           </div>
         </div>
       </div>

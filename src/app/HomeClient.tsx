@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
+import { CountrySelector } from "@/components/CountrySelector";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -21,6 +22,9 @@ import { BlogShowcase } from "@/components/BlogShowcase";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
+import { useUserCountry } from "@/lib/country-detection";
+import { SUPPORTED_COUNTRIES } from "@/lib/countries";
+import HomeBannerSlider from "@/components/HomeBannerSlider";
 
 export default function HomeClient({ initialProducts, newArrivals = [] }: { initialProducts: any[], newArrivals?: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
@@ -31,11 +35,16 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   const [quickView, setQuickView] = useState<any | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [banners, setBanners] = useState<any[]>([]);
   const { status } = useSession();
 
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
   const { setCurrency } = useCurrencyStore();
+  const userCountry = useUserCountry();
+  
+  // Check if user's country is supported
+  const isCountrySupported = SUPPORTED_COUNTRIES.some(c => c.code === userCountry);
 
   useEffect(() => {
     async function detectCountry() {
@@ -50,22 +59,50 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         };
 
         const storeCode = getCookie('store_code');
-        const cached = localStorage.getItem("user_country");
+        const cached = localStorage.getItem("user-country");
 
-        if (storeCode === "KUW" || cached === "KW") {
-          setCurrency("KWD");
-          const res = await fetch("/api/products?store=KUW");
-          if (res.ok) {
-            const data = await res.json();
-            if (data.length > 0) setProducts(data);
-          }
-          if (storeCode === "KUW") localStorage.setItem("user_country", "KW");
+        // Map country codes to store codes
+        const countryToStore: Record<string, string> = {
+          'KW': 'KUW',
+          'AE': 'UAE',
+          'BH': 'BHR',
+          'SA': 'SAU',
+          'OM': 'OMN',
+          'QA': 'QAT',
+        };
+
+        const countryToCurrency: Record<string, string> = {
+          'KW': 'KWD',
+          'AE': 'AED',
+          'BH': 'BHD',
+          'SA': 'SAR',
+          'OM': 'OMR',
+          'QA': 'QAR',
+        };
+
+        // Determine the country to use
+        let country = cached;
+        if (storeCode) {
+          // Map store code back to country code
+          const storeToCountry: Record<string, string> = {
+            'KUW': 'KW',
+            'UAE': 'AE',
+            'BHR': 'BH',
+            'SAU': 'SA',
+            'OMN': 'OM',
+            'QAT': 'QA',
+          };
+          country = storeToCountry[storeCode] || country;
+        }
+
+        if (country && countryToCurrency[country]) {
+          setCurrency(countryToCurrency[country]);
+          localStorage.setItem("user-country", country);
           return;
         }
 
-        // 2. If no cookie, try a silent local check or just default to global
-        // Avoiding external ipapi.co to prevent "Failed to fetch" errors.
-        // The middleware will eventually set the cookie on next refresh.
+        // 2. If no country detected, use default currency
+        setCurrency("AED");
         
       } catch (err) {
         // Silently fail, defaulting to initialProducts from server
@@ -74,6 +111,38 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
     }
     detectCountry();
   }, [setCurrency]);
+
+  // Fetch active banners
+  useEffect(() => {
+    async function fetchBanners() {
+      try {
+        const response = await fetch('/api/banners');
+        if (!response.ok) throw new Error('Failed to fetch banners');
+        const data = await response.json();
+        setBanners(data);
+      } catch (error) {
+        console.error('Error fetching banners:', error);
+      }
+    }
+    
+    fetchBanners();
+  }, []);
+
+  // Fetch active banners
+  useEffect(() => {
+    async function fetchBanners() {
+      try {
+        const response = await fetch('/api/banners');
+        if (!response.ok) throw new Error('Failed to fetch banners');
+        const data = await response.json();
+        setBanners(data);
+      } catch (error) {
+        console.error('Error fetching banners:', error);
+      }
+    }
+    
+    fetchBanners();
+  }, []);
 
   const brands = useMemo(() => {
     const set = new Set(products.map((p) => p.brand?.name).filter(Boolean));
@@ -88,6 +157,23 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return products.filter((p) => {
+      // Check if product has a valid price for user's country
+      let hasValidPrice = false;
+      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
+        const countryPrice = p.countryPrices.find((cp: any) =>
+          cp.country.toUpperCase() === userCountry.toUpperCase()
+        );
+        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
+      } else if (!isCountrySupported) {
+        // For unsupported countries, hide products entirely
+        hasValidPrice = false;
+      } else {
+        // For supported countries without country prices, hide the product
+        hasValidPrice = false;
+      }
+      
+      if (!hasValidPrice) return false;
+      
       const price = p.priceCents / 100;
       if (price > maxPrice) return false;
       if (category !== "All" && p.category?.name !== category) return false;
@@ -99,9 +185,49 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         p.category?.name?.toLowerCase().includes(query)
       );
     });
-  }, [q, category, brand, maxPrice, products]);
+  }, [q, category, brand, maxPrice, products, userCountry, isCountrySupported]);
 
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
+  
+  // Filter newArrivals based on country support
+  const filteredNewArrivals = useMemo(() => {
+    return newArrivals.filter((p) => {
+      let hasValidPrice = false;
+      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
+        const countryPrice = p.countryPrices.find((cp: any) =>
+          cp.country.toUpperCase() === userCountry.toUpperCase()
+        );
+        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
+      } else if (!isCountrySupported) {
+        // For unsupported countries, hide products entirely
+        hasValidPrice = false;
+      } else {
+        // For supported countries without country prices, hide the product
+        hasValidPrice = false;
+      }
+      return hasValidPrice;
+    });
+  }, [newArrivals, userCountry, isCountrySupported]);
+  
+  // Filter hot products based on country support
+  const filteredHot = useMemo(() => {
+    return hot.filter((p) => {
+      let hasValidPrice = false;
+      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
+        const countryPrice = p.countryPrices.find((cp: any) =>
+          cp.country.toUpperCase() === userCountry.toUpperCase()
+        );
+        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
+      } else if (!isCountrySupported) {
+        // For unsupported countries, hide products entirely
+        hasValidPrice = false;
+      } else {
+        // For supported countries without country prices, hide the product
+        hasValidPrice = false;
+      }
+      return hasValidPrice;
+    });
+  }, [hot, userCountry, isCountrySupported]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -111,6 +237,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       category: product.category?.name || product.category || "General",
       price: product.price ?? product.priceCents / 100,
       imageUrl: product.mainImage || product.imageUrl || "/placeholder-product.png",
+      countryPrices: product.countryPrices,
     };
     addItem(cartItem, 1);
     toast.success(`Added ${product.name} to cart`);
@@ -130,11 +257,24 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
 
     const tid = toast.loading("Preparing your order...");
     try {
+      // Calculate unit price matching cart calculation
+      const countryPrice = product.countryPrices?.find((cp: any) =>
+        cp.country.toUpperCase() === userCountry.toUpperCase()
+      );
+      const unitPriceCents = countryPrice && countryPrice.priceCents > 0
+        ? countryPrice.priceCents
+        : (product.discountPrice ?? product.price) * 100;
+
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          items: [{ productId: product.id, quantity: 1 }] 
+          items: [{ 
+            productId: product.id, 
+            quantity: 1,
+            unitPriceCents 
+          }],
+          country: userCountry
         }),
       });
       const data = await res.json();
@@ -173,7 +313,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 pb-20 flex-1 overflow-x-hidden">
 
             {/* New Arrivals Section */}
-            {newArrivals.length > 0 && (
+            {filteredNewArrivals.length > 0 && (
               <section className="py-12 md:py-20 w-full overflow-hidden">
                 <div className="text-center mb-8 md:mb-12 px-4 sm:px-6 md:px-0">
                   <div className="relative z-10 w-full">
@@ -187,7 +327,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
 
                 {/* 4 Products in Column Layout */}
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 px-4 sm:px-6 md:px-0 w-full">
-                  {newArrivals.slice(0, 4).map((product, index) => (
+                  {filteredNewArrivals.slice(0, 4).map((product, index) => (
                     <HomeProductCard
                       key={product.id}
                       product={{
@@ -200,6 +340,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                         ratingCount: product.ratingCount,
                         stockQuantity: product.stockQuantity,
                         totalSales: product.totalSales,
+                        countryPrices: product.countryPrices,
                       }}
                       onQuickView={(pp) => setQuickView(pp)}
                       onAddToCart={(pp) => addToCart(pp)}
@@ -210,9 +351,9 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
               </section>
             )}
 
-            {hot.length > 0 && (
+            {filteredHot.length > 0 && (
               <TrendingNowSlider
-                products={hot}
+                products={filteredHot}
                 onQuickView={(pp) => setQuickView(pp)}
                 onAddToCart={(pp) => addToCart(pp)}
                 onOrderNow={(pp) => orderNow(pp)}
@@ -340,6 +481,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                         ratingCount: p.ratingCount,
                         stockQuantity: p.stockQuantity,
                         totalSales: p.totalSales,
+                        countryPrices: p.countryPrices,
                       }}
                       onQuickView={(pp) => setQuickView(pp)}
                       onAddToCart={(pp) => addToCart(pp)}
@@ -393,6 +535,9 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       />
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      
+      {/* Development Country Selector */}
+      <CountrySelector />
     </div>
   );
 }

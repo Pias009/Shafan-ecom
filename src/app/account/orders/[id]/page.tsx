@@ -6,6 +6,16 @@ import { ArrowLeft, CreditCard, User, MapPin, CheckCircle2, ShoppingBag } from "
 import OrderActions from "./OrderActions";
 import { OrderStatus } from "@prisma/client";
 
+function formatPrice(amountCents: number, currency: string): string {
+  const code = currency?.toUpperCase() || 'USD';
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
+  const amount = amountCents / 100;
+  return `${code} ${amount.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+}
+
 export const dynamic = 'force-dynamic';
 
 export default async function UserOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -70,7 +80,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
         </div>
         <div className="text-center md:text-right bg-black/5 p-6 rounded-3xl md:bg-transparent md:p-0">
           <div className="text-[10px] font-black uppercase tracking-widest text-black/20 mb-1">Total Paid</div>
-          <div className="text-4xl md:text-5xl font-black">${(order.totalCents / 100).toFixed(2)}</div>
+          <div className="text-4xl md:text-5xl font-black">{formatPrice(order.totalCents, order.currency)}</div>
         </div>
       </div>
 
@@ -122,8 +132,8 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
                 </Link>
                 <div className="text-[8px] font-black text-black/20 uppercase tracking-widest mt-1">Qty: {it.quantity}</div>
               </div>
-              <div className="text-right font-black text-xs shrink-0">
-                ${(it.priceCents * it.quantity / 100).toFixed(2)}
+                <div className="text-right font-black text-xs shrink-0">
+                {formatPrice(it.unitPriceCents * it.quantity, order.currency)}
               </div>
             </div>
           ))}
@@ -148,7 +158,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
                     </Link>
                   </td>
                   <td className="px-8 py-6 text-center font-black text-black/40">{it.quantity}</td>
-                  <td className="px-8 py-6 text-right font-black text-sm">${(it.priceCents * it.quantity / 100).toFixed(2)}</td>
+                  <td className="px-8 py-6 text-right font-black text-sm">{formatPrice(it.unitPriceCents * it.quantity, order.currency)}</td>
                 </tr>
               ))}
             </tbody>

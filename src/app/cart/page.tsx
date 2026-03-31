@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Price } from "@/components/Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import { useUserCountry } from "@/lib/country-detection";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -21,6 +22,7 @@ function isValidImageUrl(url: any): boolean {
 function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, applyCoupon, removeCoupon, subtotalCents, discountCents, totalCents, t }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
+  const userCountry = useUserCountry();
 
   async function handleCheckout() {
     if (!hasAddress) {
@@ -48,17 +50,33 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
           shipping = addressData;
         }
       }
+
+      // Calculate prices matching cart summary calculation
+      const orderItems = items.map((i: any) => {
+        const countryPrice = i.countryPrices?.find((cp: any) =>
+          cp.country.toUpperCase() === userCountry.toUpperCase()
+        );
+        const unitPriceCents = countryPrice && countryPrice.priceCents > 0
+          ? countryPrice.priceCents
+          : (i.discountPrice ?? i.price) * 100;
+        return {
+          productId: i.id,
+          quantity: i.quantity,
+          unitPriceCents
+        };
+      });
       
       const orderRes = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i: any) => ({ productId: i.id, quantity: i.quantity })),
+          items: orderItems,
           couponCode,
           billing,
           shipping,
           payment_method: "stripe",
-          payment_method_title: "Credit Card (Stripe)"
+          payment_method_title: "Credit Card (Stripe)",
+          country: userCountry
         }),
       });
       
@@ -110,7 +128,12 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                         {item.name}
                       </h3>
                     </div>
-                    <Price amount={price * item.quantity} className="font-body font-black text-black text-sm md:text-lg shrink-0" />
+                    <Price
+                      amount={price}
+                      countryPrices={item.countryPrices}
+                      className="font-body font-black text-black text-sm md:text-lg shrink-0"
+                    />
+                    <span className="text-xs">×{item.quantity}</span>
                   </div>
 
                   <div className="mt-4 md:mt-6 flex items-center justify-between">
@@ -221,10 +244,25 @@ export default function CartPage() {
 
   if (!mounted) return null;
 
+  const userCountry = useUserCountry();
+  
   const subtotalCents = items.reduce(
-    (acc, item) => acc + (item.discountPrice ?? item.price) * 100 * item.quantity,
+    (acc, item) => {
+      // Find country-specific price for user's country
+      const countryPrice = item.countryPrices?.find(cp =>
+        cp.country.toUpperCase() === userCountry.toUpperCase()
+      );
+      
+      // Use country price if available, otherwise fallback to base price
+      const priceCents = countryPrice && countryPrice.priceCents > 0
+        ? countryPrice.priceCents
+        : (item.discountPrice ?? item.price) * 100;
+        
+      return acc + priceCents * item.quantity;
+    },
     0
   );
+  
   const discountCents = Math.round(subtotalCents * couponDiscount);
   const totalCents = subtotalCents - discountCents;
 

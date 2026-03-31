@@ -133,7 +133,6 @@ async function testMultiAdminProducts() {
       trending: false,
       storeId: uaeStore.id,
       brandId: uaeBrand.id,
-      categoryId: foodCategory.id
     }
   });
   
@@ -156,7 +155,6 @@ async function testMultiAdminProducts() {
       trending: true,
       storeId: kuwaitStore.id,
       brandId: kuwaitBrand.id,
-      categoryId: beautyCategory.id
     }
   });
   
@@ -191,7 +189,7 @@ async function testMultiAdminProducts() {
   const uaeOrder = await prisma.order.create({
     data: {
       email: 'test-customer-uae@example.com',
-      status: 'PAID',
+      status: 'ORDER_CONFIRMED',
       totalCents: 20000, // 200 AED
       subtotalCents: 18000,
       currency: 'aed',
@@ -304,7 +302,7 @@ async function testMultiAdminProducts() {
     },
     include: {
       brand: true,
-      category: true,
+      productCategories: { include: { category: true } },
       storeInventories: {
         where: { storeId: uaeStore.id }
       }
@@ -322,7 +320,7 @@ async function testMultiAdminProducts() {
     },
     include: {
       brand: true,
-      category: true,
+      productCategories: { include: { category: true } },
       storeInventories: {
         where: { storeId: kuwaitStore.id }
       }
