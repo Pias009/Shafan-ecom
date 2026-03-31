@@ -6,7 +6,7 @@ import { useLanguageStore } from "@/lib/language-store";
 
 const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
   AE: { currency: "AED", lang: "en" },
-  KW: { currency: "KWD", lang: "ar" }, // Auto-set Arabic for Kuwait
+  KW: { currency: "KWD", lang: "ar" },
   SA: { currency: "SAR", lang: "ar" },
   BH: { currency: "BHD", lang: "ar" },
   QA: { currency: "QAR", lang: "ar" },
@@ -14,45 +14,31 @@ const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
   US: { currency: "USD", lang: "en" },
 };
 
-// Default fallback configuration
 const DEFAULT_CONFIG = { currency: "AED", lang: "en" as const };
 
 export function GlobalInitializer() {
-  const { setCurrency, currentCurrency } = useCurrencyStore();
-  const { setLanguage, currentLanguage } = useLanguageStore();
+  const { setCurrency } = useCurrencyStore();
+  const { setLanguage } = useLanguageStore();
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Only run if not already stored or first load
     const storage = localStorage.getItem("currency-storage");
     const langStorage = localStorage.getItem("language-storage");
     
-    // Check if we already have users preference, if yes don't overwrite every time
     if (!storage || !langStorage) {
-        // Use a timeout to prevent hanging on failed requests
         const timeoutId = setTimeout(() => {
             setInitialized(true);
         }, 3000);
 
-        // Use a more reliable method - try ipapi.co but with better error handling
         fetch("https://ipapi.co/json/", {
-            mode: 'cors',
-            headers: {
-                'Accept': 'application/json',
-            },
+            signal: AbortSignal.timeout(5000),
         })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-            return res.json();
-        })
+        .then(res => res.ok ? res.json() : null)
         .then(data => {
             clearTimeout(timeoutId);
-            if (data.country_code) {
+            if (data?.country_code) {
                 const config = IP_MAP[data.country_code];
                 if (config) {
-                    // Only set if not already manually changed in this session or stored
                     if (!storage && SUPPORTED_CURRENCIES.find(c => c.code === config.currency)) {
                         setCurrency(config.currency);
                     }
@@ -63,16 +49,10 @@ export function GlobalInitializer() {
             }
             setInitialized(true);
         })
-        .catch(error => {
+        .catch(() => {
             clearTimeout(timeoutId);
-            console.warn('Failed to fetch IP location, using defaults:', error.message);
-            // Use default configuration as fallback
-            if (!storage) {
-                setCurrency(DEFAULT_CONFIG.currency);
-            }
-            if (!langStorage) {
-                setLanguage(DEFAULT_CONFIG.lang);
-            }
+            if (!storage) setCurrency(DEFAULT_CONFIG.currency);
+            if (!langStorage) setLanguage(DEFAULT_CONFIG.lang);
             setInitialized(true);
         });
     } else {
@@ -80,5 +60,5 @@ export function GlobalInitializer() {
     }
   }, [setCurrency, setLanguage]);
 
-  return null; // Side effect only
+  return null;
 }
