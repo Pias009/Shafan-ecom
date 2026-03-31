@@ -146,53 +146,40 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
     console.log(`getProducts: Returning ${products.length} products`);
     return products;
   } catch (error: any) {
-    console.error("MongoDB Connection Error - Falling back to demo data:", error.message);
+    console.error("Database Error:", error.message);
     
-    // Check if it's a connection error
-    const isConnectionError = error.message?.includes('connection') ||
-                              error.message?.includes('timeout') ||
-                              error.message?.includes('TLS') ||
-                              error.message?.includes('SSL') ||
-                              error.message?.includes('Mongo');
+    // Always fallback to demo products on any error
+    console.warn("⚠️ Database error - Using demo products.");
     
-    if (isConnectionError) {
-      console.warn("⚠️ MongoDB Atlas connection failed. Using demo products.");
-      
-      // Convert demo products to match the expected format
-      const fallbackProducts = demoProducts.map((demo, index) => ({
-        id: `demo-${index + 1}`,
-        name: demo.name,
-        description: demo.details,
-        shortDescription: "",
-        benefits: "",
-        ingredients: "",
-        howToUse: "",
-        features: demo.features,
-        images: [demo.imageUrl],
-        mainImage: demo.imageUrl,
-        stockQuantity: 100,
-        averageRating: 4.5,
-        ratingCount: 42,
-        totalSales: 150,
-        priceCents: demo.price * 100,
-        regularPriceCents: demo.price * 100,
-        salePriceCents: demo.discountPrice ? demo.discountPrice * 100 : null,
-        currency: 'USD',
-        active: true,
-        hot: demo.hot || false,
-        trending: index < 3,
-        brand: { name: demo.brand },
-        category: { name: demo.category },
-        countryPrices: [],
-      }));
-      
-      console.log(`✅ Returning ${fallbackProducts.length} demo products`);
-      return fallbackProducts;
-    }
+    const fallbackProducts = demoProducts.map((demo, index) => ({
+      id: `demo-${index + 1}`,
+      name: demo.name,
+      description: demo.details,
+      shortDescription: "",
+      benefits: "",
+      ingredients: "",
+      howToUse: "",
+      features: demo.features,
+      images: [demo.imageUrl],
+      mainImage: demo.imageUrl,
+      stockQuantity: 100,
+      averageRating: 4.5,
+      ratingCount: 42,
+      totalSales: 150,
+      priceCents: demo.price * 100,
+      regularPriceCents: demo.price * 100,
+      salePriceCents: demo.discountPrice ? demo.discountPrice * 100 : null,
+      currency: 'USD',
+      active: true,
+      hot: demo.hot || false,
+      trending: index < 3,
+      brand: { name: demo.brand },
+      category: { name: demo.category },
+      countryPrices: [],
+    }));
     
-    // For other errors, return empty array
-    console.error("Non-connection error:", error);
-    return [];
+    console.log(`✅ Returning ${fallbackProducts.length} demo products`);
+    return fallbackProducts;
   }
 }
 
