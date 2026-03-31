@@ -21,6 +21,8 @@ export default function AdminLogin() {
         email: masterEmail,
         password: masterPassword,
         redirect: false,
+      }, { 
+        authErrorRedirect: "/ueadmin/login?error=AuthError",
       });
       
       if (res?.ok) {
@@ -45,6 +47,8 @@ export default function AdminLogin() {
         email,
         password,
         redirect: false,
+      }, {
+        authErrorRedirect: "/ueadmin/login?error=AuthError",
       });
 
       if (res?.ok) {

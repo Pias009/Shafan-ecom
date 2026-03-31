@@ -23,16 +23,13 @@ export const authOptions: NextAuthOptions = {
   cookies: {
     sessionToken: {
       name: process.env.NODE_ENV === 'production'
-        ? '__Secure-next-auth.session-token'
-        : 'next-auth.session-token',
+        ? '__Secure-next-auth.user-session-token'
+        : 'next-auth.user-session-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        // For Vercel deployments, we should NOT set domain for *.vercel.app subdomains
-        // because cookies with domain .vercel.app won't be sent to specific subdomains
-        // Let browser handle domain automatically
         domain: undefined,
       },
     },

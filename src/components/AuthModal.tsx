@@ -30,8 +30,12 @@ export function AuthModal({
   onClose: () => void;
   defaultMode?: Mode;
 }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const { currentLanguage } = useLanguageStore();
+  
+  // Don't show modal if user is admin
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
+  if (isAdmin) return null;
   const { currentCurrency, setCurrency } = useCurrencyStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
 

@@ -74,13 +74,13 @@ export async function middleware(req: NextRequest) {
                        pathname.startsWith('/ueadmin/setup')
 
     if (!isAuthPage) {
-      // Try to get token with explicit cookie name for production
+      // Use admin-specific cookie name
       const token = await getToken({
         req,
         secret: process.env.NEXTAUTH_SECRET,
         cookieName: process.env.NODE_ENV === 'production'
-          ? '__Secure-next-auth.session-token'
-          : 'next-auth.session-token'
+          ? '__Secure-next-auth.admin-session-token'
+          : 'next-auth.admin-session-token'
       })
       
       // Debug logging

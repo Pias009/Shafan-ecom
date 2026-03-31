@@ -75,13 +75,15 @@ export function Navbar() {
 
   // Sync address status
   const setHasAddress = useCartStore(state => state.setHasAddress);
+  const isUserAuthenticated = status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPERADMIN";
+  
   useEffect(() => {
-    if (status === "authenticated") {
+    if (isUserAuthenticated) {
         fetch("/api/account/address").then(r => r.json()).then(data => {
             setHasAddress(!!data);
         });
     }
-  }, [status, setHasAddress]);
+  }, [isUserAuthenticated, setHasAddress]);
 
   // Close menus on navigation
   useEffect(() => {
@@ -94,11 +96,13 @@ export function Navbar() {
   const userLabel = useMemo(() => {
     const u = session?.user;
     if (!u) return null;
+    // Hide user session if they have admin role (treat as not logged in on user site)
+    if (u.role === "ADMIN" || u.role === "SUPERADMIN") return null;
     return u.name?.trim() || u.email?.trim() || t.nav.account;
   }, [session?.user, t.nav.account]);
 
   function onUserButtonClick() {
-    if (status === "authenticated") {
+    if (isUserAuthenticated) {
       setUserMenuOpen(true);
     } else {
       setAuthOpen(true);
