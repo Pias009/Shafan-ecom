@@ -35,9 +35,6 @@ export function AuthModal({
   const { currentCurrency, setCurrency } = useCurrencyStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
 
-  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
-  if (isAdmin) return null;
-
   const [mode, setMode] = useState<Mode>(defaultMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -45,6 +42,8 @@ export function AuthModal({
   const [country, setCountry] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPERADMIN";
 
   // Auto-detect based on current currency code
   useEffect(() => {
@@ -69,6 +68,8 @@ export function AuthModal({
   const title = useMemo(() => {
     return mode === "sign-in" ? t.auth.signIn : t.auth.signUp;
   }, [mode, t.auth.signIn, t.auth.signUp]);
+
+  if (isAdmin) return null;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
