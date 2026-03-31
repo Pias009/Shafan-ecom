@@ -247,14 +247,13 @@ export default function CartPage() {
   const [mounted, setMounted] = useState(false);
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
+  const userCountry = useUserCountry();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) return null;
-
-  const userCountry = useUserCountry();
   
   const subtotalCents = items.reduce(
     (acc, item) => {
