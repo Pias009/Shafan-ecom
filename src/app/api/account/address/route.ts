@@ -6,12 +6,12 @@ import { z } from "zod";
 const AddressSchema = z.object({
   fullName: z.string().trim().min(1).max(100),
   phone: z.string().trim().min(5).max(20),
-  email: z.string().email(),
+  email: z.string().email().optional().or(z.literal("")),
   country: z.string().trim().min(1),
   city: z.string().trim().min(1),
   address1: z.string().trim().min(1),
   address2: z.string().trim().optional(),
-  postalCode: z.string().trim().min(1),
+  postalCode: z.string().trim().optional().or(z.literal("")),
 });
 
 export async function PUT(req: Request) {
