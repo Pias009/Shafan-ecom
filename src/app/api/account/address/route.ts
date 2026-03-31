@@ -31,10 +31,24 @@ export async function PUT(req: Request) {
       where: { userId: session.user.id },
       create: {
         userId: session.user.id,
-        ...parsed.data,
+        fullName: parsed.data.fullName,
+        phone: parsed.data.phone,
+        email: parsed.data.email || "",
+        country: parsed.data.country,
+        city: parsed.data.city,
+        address1: parsed.data.address1,
+        address2: parsed.data.address2 || "",
+        postalCode: parsed.data.postalCode || "",
       },
       update: {
-        ...parsed.data,
+        fullName: parsed.data.fullName,
+        phone: parsed.data.phone,
+        email: parsed.data.email || "",
+        country: parsed.data.country,
+        city: parsed.data.city,
+        address1: parsed.data.address1,
+        address2: parsed.data.address2 || "",
+        postalCode: parsed.data.postalCode || "",
       },
     });
 
@@ -56,7 +70,7 @@ export async function GET() {
       where: { userId: session.user.id },
     });
     return NextResponse.json(address || null);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
