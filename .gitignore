@@ -21,6 +21,8 @@ _dev-scripts/
 *.test.ts
 *.spec.js
 *.spec.ts
+add-products.ts
+test-db.ts
 
 # next.js
 /.next/

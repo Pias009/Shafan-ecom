@@ -27,8 +27,7 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "NEXTAUTH_URL": "https://shafan-ecom-beta.vercel.app",
-    "DATABASE_URL": "mongodb+srv://Shanfa:pias900@cluster0.4utvsjg.mongodb.net/shafan-ecommerce?retryWrites=true&w=majority"
+    "NEXTAUTH_URL": "https://shafan-ecom-beta.vercel.app"
   },
   "build": {
     "env": {
