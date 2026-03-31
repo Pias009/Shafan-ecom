@@ -13,43 +13,51 @@ const RegisterSchema = z.object({
 
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => null);
-  const parsed = RegisterSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
+  try {
+    const body = await req.json().catch(() => null);
+    const parsed = RegisterSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+    if (existing) {
+      return NextResponse.json({ error: "Email already registered." }, { status: 409 });
+    }
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+
+    await prisma.user.create({
+      data: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        passwordHash,
+        country: parsed.data.country,
+        role: "USER",
+      },
+    });
+
+    // Send Welcome Email (Non-blocking)
+    sendEmail({
+      to: parsed.data.email,
+      subject: "Welcome to Shafan Store!",
+      html: `
+        <h1>Hello ${parsed.data.name || 'Value Customer'}!</h1>
+        <p>Thank you for creating an account with Shafan Store. We are excited to have you with us!</p>
+        <p>You can now log in and start shopping for premium skin and hair care products.</p>
+        <br />
+        <p>Best Regards,</p>
+        <p>The Shafan Team</p>
+      `
+    }).catch(() => {});
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    console.error("Registration error:", error);
+    return NextResponse.json({ 
+      error: "Registration failed. Please try again.",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined 
+    }, { status: 500 });
   }
-
-  const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  if (existing) {
-    return NextResponse.json({ error: "Email already registered." }, { status: 409 });
-  }
-
-  const passwordHash = await bcrypt.hash(parsed.data.password, 12);
-
-  await prisma.user.create({
-    data: {
-      name: parsed.data.name,
-      email: parsed.data.email,
-      passwordHash,
-      country: parsed.data.country,
-      role: "USER",
-    },
-  });
-
-  // Send Welcome Email (Non-blocking)
-  sendEmail({
-    to: parsed.data.email,
-    subject: "Welcome to Shafan Store!",
-    html: `
-      <h1>Hello ${parsed.data.name || 'Value Customer'}!</h1>
-      <p>Thank you for creating an account with Shafan Store. We are excited to have you with us!</p>
-      <p>You can now log in and start shopping for premium skin and hair care products.</p>
-      <br />
-      <p>Best Regards,</p>
-      <p>The Shafan Team</p>
-    `
-  }).catch(err => console.error("Welcome email failed", err));
-
-  return NextResponse.json({ ok: true });
 }
 

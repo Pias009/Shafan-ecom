@@ -26,7 +26,8 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "NEXTAUTH_URL": "https://shafan-ecom-beta.vercel.app"
   },
   "build": {
     "env": {
