@@ -14,7 +14,7 @@ interface PriceProps {
     currency: string;
   }>;
   currency?: string;
-  isCents?: boolean; // If true, divide by 100
+  isCents?: boolean;
 }
 
 function formatPriceSimple(amount: number, currencyCode: string): string {
@@ -27,35 +27,14 @@ function formatPriceSimple(amount: number, currencyCode: string): string {
   })}`;
 }
 
-export function Price({
-  amount,
-  className = "",
-  showSymbolSmall = false,
-  countryPrices = [],
-  currency,
-  isCents = false
-}: PriceProps) {
-  const { currentCurrency } = useCurrencyStore();
-  const [mounted, setMounted] = useState(false);
-  const userCountry = useUserCountry();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <span className={className}>...</span>;
-  }
-
+function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, isCents, userCountry, currentCurrency }: PriceProps & { userCountry: string; currentCurrency: { code: string } }) {
   let displayAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(displayAmount)) displayAmount = 0;
 
-  // If isCents is true, convert cents to actual amount
   if (isCents) {
     displayAmount = displayAmount / 100;
   }
 
-  // If explicit currency is provided (for order display), use it directly
   if (currency) {
     const formatted = formatPriceSimple(displayAmount, currency);
     
@@ -72,7 +51,6 @@ export function Price({
     return <span className={className}>{formatted}</span>;
   }
 
-  // For product display with countryPrices
   if (countryPrices && countryPrices.length > 0) {
     const countryPrice = countryPrices.find(cp =>
       cp.country.toUpperCase() === userCountry.toUpperCase()
@@ -95,7 +73,6 @@ export function Price({
     }
   }
 
-  // Default: use current currency
   const formatted = formatPriceSimple(displayAmount, currentCurrency.code);
   
   if (showSymbolSmall) {
@@ -109,4 +86,20 @@ export function Price({
   }
 
   return <span className={className}>{formatted}</span>;
+}
+
+export function Price(props: PriceProps) {
+  const { currentCurrency } = useCurrencyStore();
+  const [mounted, setMounted] = useState(false);
+  const userCountry = useUserCountry();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <span className={props.className}>...</span>;
+  }
+
+  return <PriceContent {...props} userCountry={userCountry} currentCurrency={currentCurrency} />;
 }
