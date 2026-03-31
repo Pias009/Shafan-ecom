@@ -12,80 +12,40 @@ function isValidImageUrl(url: any): boolean {
  * Get products with MongoDB connection fallback to demo data
  * This prevents the application from crashing when MongoDB Atlas is unavailable
  */
-export async function getProducts(storeCode?: string, page: number = 1, limit: number = 20) {
+export async function getProducts(storeCode?: string, page: number = 1, limit: number = 50) {
   try {
     let dbProducts: any[] = [];
     
-    if (storeCode) {
-      const inventories = await (prisma as any).storeInventory.findMany({
-        where: {
-          store: { code: storeCode }
+    // Always query products directly first, then filter by store if needed
+    dbProducts = await prisma.product.findMany({
+      where: {
+        active: true,
+      },
+      include: {
+        brand: true,
+        productCategories: {
+          include: { category: { select: { id: true, name: true } } }
         },
-        include: {
-          product: {
-            include: {
-              brand: true,
-              productCategories: {
-                include: { category: { select: { id: true, name: true } } }
-              },
-              productSkinTones: {
-                include: { skinTone: true }
-              },
-              subCategory: true,
-              countryPrices: {
-                where: {
-                  active: true
-                },
-                select: {
-                  country: true,
-                  priceCents: true,
-                  currency: true
-                }
-              },
-            }
+        productSkinTones: {
+          include: { skinTone: true }
+        },
+        subCategory: true,
+        countryPrices: {
+          where: {
+            active: true
+          },
+          select: {
+            country: true,
+            priceCents: true,
+            currency: true
           }
         },
-        skip: (page - 1) * limit,
-        take: limit,
-      });
-      dbProducts = inventories.map((inv: any) => ({
-        ...inv.product,
-        priceCents: Math.round(inv.price * 100),
-        discountCents: null,
-        stockQuantity: inv.quantity
-      })).filter((p: any) => p.active);
-    } else {
-      dbProducts = await prisma.product.findMany({
-        where: {
-          active: true,
-        },
-        include: {
-          brand: true,
-          productCategories: {
-            include: { category: { select: { id: true, name: true } } }
-          },
-          productSkinTones: {
-            include: { skinTone: true }
-          },
-          subCategory: true,
-          countryPrices: {
-            where: {
-              active: true
-            },
-            select: {
-              country: true,
-              priceCents: true,
-              currency: true
-            }
-          },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-      });
-    }
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+    });
 
     const products = dbProducts.map((p: any) => {
       const regularPrice = p.priceCents / 100;
