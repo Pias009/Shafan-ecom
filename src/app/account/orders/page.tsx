@@ -17,7 +17,7 @@ function formatPrice(amountCents: number, currency: string): string {
 
 export default async function OrdersPage() {
   const session = await getServerAuthSession();
-  if (!session?.user?.email) return redirect("/auth/sign-in");
+  if (!session?.user?.email) return redirect("/?login=true");
 
   let orders: any[] = [];
   try {

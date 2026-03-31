@@ -178,13 +178,13 @@ export function AuthModal({
                       required
                     />
                     
-                    <div className="relative group">
+                    <div className="relative group z-50">
                         <Globe size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/60 group-focus-within:text-black transition-colors" />
                         <select
                             value={country}
                             onChange={(e) => setCountry(e.target.value)}
                             required
-                            className="h-11 w-full rounded-2xl bg-white border border-black pl-10 pr-4 text-sm font-semibold text-black outline-none focus:ring-2 focus:ring-black appearance-none"
+                            className="h-11 w-full rounded-2xl bg-white border border-black pl-10 pr-4 text-sm font-semibold text-black outline-none focus:ring-2 focus:ring-black appearance-none relative"
                         >
                             <option value="" disabled>{t.auth.selectCountry}</option>
                             {COUNTRIES.map(c => (

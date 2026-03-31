@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { SUPPORTED_COUNTRIES } from "./countries";
 
 /**
@@ -86,9 +87,11 @@ export function getUserCountry(): string {
  * React hook for country detection (to be used in components)
  */
 export function useUserCountry(): string {
-  if (typeof window === "undefined") {
-    return DEFAULT_COUNTRY;
-  }
-  
-  return detectUserCountry();
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
+
+  useEffect(() => {
+    setCountry(detectUserCountry());
+  }, []);
+
+  return country;
 }

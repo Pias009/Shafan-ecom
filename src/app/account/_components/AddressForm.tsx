@@ -199,9 +199,9 @@ export default function AddressForm() {
   );
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-      <div className="glass-panel-heavy rounded-3xl p-8 border border-black/5 shadow-xl bg-white">
-        <div className="flex items-center justify-between mb-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6 relative" style={{ isolation: 'isolate' }}>
+      <div className="rounded-3xl p-8 border border-black/5 shadow-xl bg-white relative" style={{ zIndex: 1 }}>
+        <div className="flex items-center justify-between mb-8 relative" style={{ zIndex: 10 }}>
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-black">Shipping Address</h2>
             <p className="text-sm text-black/50 mt-1 font-medium">Required for completing orders.</p>
@@ -209,7 +209,7 @@ export default function AddressForm() {
           <button 
             type="submit"
             disabled={saving}
-            className="bg-black text-black rounded-full px-8 py-2.5 text-sm font-bold shadow-lg shadow-black/20 transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
+            className="bg-black text-white rounded-full px-8 py-2.5 text-sm font-bold shadow-lg shadow-black/20 transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Address
@@ -249,7 +249,7 @@ export default function AddressForm() {
             <button
               type="button"
               onClick={() => setShowRegionDropdown(!showRegionDropdown)}
-              className="w-full rounded-2xl px-5 py-3.5 text-left text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white flex items-center justify-between"
+              className="w-full rounded-2xl px-5 py-3.5 text-left text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white flex items-center justify-between relative z-[60]"
             >
               <span className={formData.country ? "" : "text-black/30"}>
                 {formData.country || "Select Country"}
@@ -257,7 +257,7 @@ export default function AddressForm() {
               <ChevronDown className={`w-5 h-5 transition ${showRegionDropdown ? "rotate-180" : ""}`} />
             </button>
             {showRegionDropdown && (
-              <div className="absolute z-50 w-full mt-1 bg-white border-2 border-black/10 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+              <div className="absolute z-[100] w-full mt-12 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
                 {filteredRegions.map(region => (
                   <button
                     key={region}
@@ -289,7 +289,7 @@ export default function AddressForm() {
               <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-black/30" />
             </div>
             {showCityDropdown && citySuggestions.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white border-2 border-black/10 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+              <div className="absolute z-[100] w-full mt-1 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
                 {citySuggestions.map(city => (
                   <button
                     key={city}
@@ -317,7 +317,7 @@ export default function AddressForm() {
                 className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white"
               />
               {addressSuggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white border-2 border-black/10 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                <div className="absolute z-[100] w-full mt-1 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
                   {addressSuggestions.map((addr, i) => (
                     <button
                       key={i}

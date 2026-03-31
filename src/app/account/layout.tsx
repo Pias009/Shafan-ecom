@@ -14,7 +14,7 @@ export default async function AccountLayout({
 }) {
   const session = await getServerAuthSession();
   if (!session?.user) {
-    return redirect("/auth/sign-in");
+    return redirect("/?login=true");
   }
 
   return (

@@ -62,7 +62,7 @@ function ResetPasswordForm() {
         {message ? (
           <div className="mt-6">
             <div className="text-sm text-green-600">{message}</div>
-            <Link href="/auth/sign-in" className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition hover:translate-y-[-1px]">
+            <Link href="/?login=true" className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-black px-5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition hover:translate-y-[-1px]">
               Sign in
             </Link>
           </div>

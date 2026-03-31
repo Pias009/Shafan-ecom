@@ -27,8 +27,10 @@ const slides = [
 
 export function ProductsSlider() {
   const [index, setIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % slides.length);
     }, 5000);
@@ -79,17 +81,19 @@ export function ProductsSlider() {
         </motion.div>
       </AnimatePresence>
       
-      <div className="absolute bottom-6 left-12 flex gap-3 z-10">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setIndex(i)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              i === index ? "bg-black w-8" : "bg-black/20 hover:bg-black/40"
-            }`}
-          />
-        ))}
-      </div>
+      {mounted && (
+        <div className="absolute bottom-6 left-12 flex gap-3 z-10">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                i === index ? "bg-black w-8" : "bg-black/20 hover:bg-black/40"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

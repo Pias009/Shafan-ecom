@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
 
         <div className="mt-5 text-sm text-black/70 italic text-center">
           Remembered your password?{" "}
-          <Link className="font-bold text-black underline underline-offset-4" href="/auth/sign-in">
+          <Link className="font-bold text-black underline underline-offset-4" href="/?login=true">
             Sign in
           </Link>
         </div>

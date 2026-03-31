@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function UserOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getServerAuthSession();
-  if (!session?.user?.email) return redirect("/auth/sign-in");
+  if (!session?.user?.email) return redirect("/?login=true");
 
   const { id } = await params;
   let order;
