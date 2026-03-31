@@ -17,7 +17,6 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 pt-16 md:pt-0">
           {children}
         </main>
-        <Footer />
       </div>
     );
   }

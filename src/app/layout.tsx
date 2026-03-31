@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { MainStoreLayout } from "@/components/MainStoreLayout";
 import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -38,7 +39,20 @@ export default function RootLayout({
         className={`${playfairDisplay.variable} ${dmSans.variable} antialiased`}
       >
         <Providers>
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+          <Suspense fallback={
+            <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-6">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-black/10 rounded-full"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-black" />
+                </div>
+              </div>
+              <div className="text-center space-y-2">
+                <h2 className="font-display text-2xl font-bold text-black tracking-tight">Shafan</h2>
+                <p className="font-body text-xs text-black/40 font-bold uppercase tracking-[0.2em]">Loading...</p>
+              </div>
+            </div>
+          }>
             <MainStoreLayout>
               {children}
             </MainStoreLayout>

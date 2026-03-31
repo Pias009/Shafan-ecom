@@ -1,25 +1,123 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, CreditCard, Smartphone, Loader2 } from "lucide-react";
+import { CheckCircle2, CreditCard, Loader2, Banknote } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
+import { Elements, PaymentRequestButtonElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import StripePaymentForm from "@/components/StripePaymentForm";
 import { Price } from "@/components/Price";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-type PaymentMethod = "card" | "bkash" | "tabby" | "tamara";
+type PaymentMethod = "card" | "cod" | "tabby" | "tamara" | "apple-pay" | "google-pay";
 
-interface TabbyProduct {
-  type: string;
-  minAmount?: number;
-  maxAmount?: number;
+function PaymentRequestButtonWrapper({ 
+  clientSecret, 
+  orderId, 
+  amount, 
+  currency 
+}: { 
+  clientSecret?: string | null; 
+  orderId: string; 
+  amount: number; 
+  currency?: string;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [paymentRequest, setPaymentRequest] = useState<any>(null);
+  const [canMakePayment, setCanMakePayment] = useState<boolean | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    if (!stripe || isReady) return;
+
+    const pr = stripe.paymentRequest({
+      country: 'US',
+      currency: currency || 'usd',
+      total: {
+        label: 'Shafan Order',
+        amount: amount,
+      },
+      requestPayerName: true,
+      requestPayerEmail: true,
+      requestShipping: false,
+    });
+
+    setPaymentRequest(pr);
+
+    pr.canMakePayment().then((result: any) => {
+      setCanMakePayment(result ? (result.applePay || result.googlePay) : false);
+      setIsReady(true);
+    });
+
+    const handler = (e: any) => {
+      if (!clientSecret) {
+        e.complete('fail');
+        return;
+      }
+
+      stripe.confirmPayment({
+        clientSecret,
+        confirmParams: {
+          return_url: `${window.location.origin}/checkout/success?order_id=${orderId}`,
+        },
+      }).then(({ error }: any) => {
+        if (error) {
+          e.complete('fail');
+          toast.error(error.message || "Payment failed");
+        } else {
+          e.complete('success');
+        }
+      }).catch(() => {
+        e.complete('fail');
+        toast.error("Payment failed");
+      });
+    };
+
+    (pr.on as any)('paymentmethod', handler);
+  }, [stripe, clientSecret, orderId, amount, currency, isReady]);
+
+  if (!stripe || !elements) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="w-6 h-6 animate-spin text-black/40" />
+      </div>
+    );
+  }
+
+  if (!isReady) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="w-6 h-6 animate-spin text-black/40" />
+      </div>
+    );
+  }
+
+  if (!canMakePayment) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 text-center">
+        <p>Apple Pay / Google Pay not available in this browser.</p>
+      </div>
+    );
+  }
+
+  return (
+    <PaymentRequestButtonElement
+      options={{
+        paymentRequest,
+        style: {
+          paymentRequestButton: {
+            type: 'default',
+            theme: 'dark',
+            height: '56px',
+          },
+        },
+      }}
+    />
+  );
 }
 
 export default function CustomPaymentPage() {
@@ -29,13 +127,15 @@ export default function CustomPaymentPage() {
   const [loading, setLoading] = useState(true);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("card");
-  const [tabbyProducts, setTabbyProducts] = useState<TabbyProduct[]>([]);
   const [tabbyLoading, setTabbyLoading] = useState(false);
   const [tamaraLoading, setTamaraLoading] = useState(false);
+  const [codLoading, setCodLoading] = useState(false);
 
   const isMENA = order?.shippingAddress?.country?.toUpperCase() in {
-    AE: true, SA: true, KW: true
+    AE: true, SA: true, KW: true, BH: true, OM: true, QA: true
   };
+  const isApplePayAvailable = typeof window !== 'undefined' && (window as any).ApplePaySession !== undefined;
+  const isGooglePayAvailable = true;
 
   useEffect(() => {
     async function fetchOrderAndStripe() {
@@ -104,6 +204,24 @@ export default function CustomPaymentPage() {
     }
   };
 
+  const handleCODPayment = async () => {
+    setCodLoading(true);
+    try {
+      const res = await fetch("/api/payments/cod", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: id }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      toast.success("Order placed successfully!");
+      router.push(`/checkout/success?orderId=${id}`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to place COD order");
+      setCodLoading(false);
+    }
+  };
+
   if (loading || !order) return (
     <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-4 p-6 text-center">
       <Loader2 className="w-10 h-10 animate-spin text-black/20" />
@@ -111,13 +229,11 @@ export default function CustomPaymentPage() {
     </div>
   );
 
-  const billing = order.billingAddress || {};
   const shipping = order.shippingAddress || {};
-  const currency = order.currency?.toUpperCase() || "USD";
 
   return (
-    <div className="min-h-screen bg-cream text-black">
-      <main className="max-w-6xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
+    <div className="min-h-screen bg-cream text-black flex flex-col">
+      <main className="flex-1 max-w-6xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-12 xl:col-span-8 space-y-6 md:space-y-8 order-1 w-full overflow-x-hidden">
             <div className="text-center xl:text-left">
@@ -143,50 +259,85 @@ export default function CustomPaymentPage() {
                   {method === "card" && <CheckCircle2 className="text-black" size={18} />}
                 </div>
 
-                {isMENA && (
-                  <>
-                    <div 
-                      onClick={() => setMethod("tabby")}
-                      className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
-                    >
-                      <div className={`p-2.5 md:p-3 rounded-2xl ${method === "tabby" ? "bg-black text-white" : "bg-black/5"}`}>
-                        <span className="text-sm font-black">T</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-bold text-base md:text-lg">Tabby</div>
-                        <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay in 4 installments</div>
-                      </div>
-                      {method === "tabby" && <CheckCircle2 className="text-black" size={18} />}
+                {(isMENA || isApplePayAvailable) && (
+                  <div 
+                    onClick={() => setMethod("apple-pay")}
+                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "apple-pay" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                  >
+                    <div className={`p-2.5 md:p-3 rounded-2xl ${method === "apple-pay" ? "bg-black text-white" : "bg-black/5"}`}>
+                      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+                        <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                      </svg>
                     </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-base md:text-lg">Apple Pay</div>
+                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Quick & secure</div>
+                    </div>
+                    {method === "apple-pay" && <CheckCircle2 className="text-black" size={18} />}
+                  </div>
+                )}
 
-                    <div 
-                      onClick={() => setMethod("tamara")}
-                      className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
-                    >
-                      <div className={`p-2.5 md:p-3 rounded-2xl ${method === "tamara" ? "bg-black text-white" : "bg-black/5"}`}>
-                        <span className="text-sm font-black">TM</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-bold text-base md:text-lg">Tamara</div>
-                        <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay later in installments</div>
-                      </div>
-                      {method === "tamara" && <CheckCircle2 className="text-black" size={18} />}
+                {isGooglePayAvailable && (
+                  <div 
+                    onClick={() => setMethod("google-pay")}
+                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "google-pay" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                  >
+                    <div className={`p-2.5 md:p-3 rounded-2xl ${method === "google-pay" ? "bg-black text-white" : "bg-black/5"}`}>
+                      <svg viewBox="0 0 24 24" className="w-5 h-5">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      </svg>
                     </div>
-                  </>
+                    <div className="flex-1">
+                      <div className="font-bold text-base md:text-lg">Google Pay</div>
+                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Fast checkout</div>
+                    </div>
+                    {method === "google-pay" && <CheckCircle2 className="text-black" size={18} />}
+                  </div>
                 )}
 
                 <div 
-                  onClick={() => setMethod("bkash")}
-                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "bkash" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                  onClick={() => setMethod("tabby")}
+                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
                 >
-                  <div className={`p-2.5 md:p-3 rounded-2xl ${method === "bkash" ? "bg-black text-white" : "bg-black/5"}`}>
-                    <Smartphone size={20} className="md:w-6 md:h-6" />
+                  <div className={`p-2.5 md:p-3 rounded-2xl ${method === "tabby" ? "bg-black text-white" : "bg-black/5"}`}>
+                    <span className="text-sm font-black">T</span>
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-base md:text-lg">Mobile Banking</div>
-                    <div className="text-[10px] md:text-xs text-black/40 font-medium">bKash / Nagad</div>
+                    <div className="font-bold text-base md:text-lg">Tabby</div>
+                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay in 4 installments</div>
                   </div>
-                  {method === "bkash" && <CheckCircle2 className="text-black" size={18} />}
+                  {method === "tabby" && <CheckCircle2 className="text-black" size={18} />}
+                </div>
+
+                <div 
+                  onClick={() => setMethod("tamara")}
+                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                >
+                  <div className={`p-2.5 md:p-3 rounded-2xl ${method === "tamara" ? "bg-black text-white" : "bg-black/5"}`}>
+                    <span className="text-sm font-black">TM</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-base md:text-lg">Tamara</div>
+                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay later in installments</div>
+                  </div>
+                  {method === "tamara" && <CheckCircle2 className="text-black" size={18} />}
+                </div>
+
+                <div 
+                  onClick={() => setMethod("cod")}
+                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                >
+                  <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
+                    <Banknote size={20} className="md:w-6 md:h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
+                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
+                  </div>
+                  {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
                 </div>
               </div>
             </div>
@@ -215,6 +366,88 @@ export default function CustomPaymentPage() {
                   <Loader2 className="w-8 h-8 animate-spin text-black/20 mb-3" />
                   <p className="text-[10px] font-bold uppercase tracking-widest text-black/30 text-center">Initializing Stripe Elements...</p>
                 </div>
+              )}
+
+              {method === "apple-pay" && (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: clientSecret || undefined,
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#000000',
+                      }
+                    }
+                  }}
+                >
+                  <div className="py-8 text-center space-y-6 max-w-md mx-auto">
+                    <div className="space-y-2">
+                      <p className="font-bold text-lg">Pay with Apple Pay</p>
+                      <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
+                        Quick and secure payment with Apple Pay.
+                      </p>
+                    </div>
+                    <div className="bg-black/5 rounded-2xl p-4 space-y-2">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Order Total</div>
+                      <div className="font-black text-2xl">
+                        <Price amount={order.totalCents / 100} currency={order.currency} isCents={true} />
+                      </div>
+                    </div>
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+                      <p>To enable Apple Pay, verify your domain at stripe.com and add it to your Apple Developer account.</p>
+                    </div>
+                    <div className="flex justify-center">
+                      <PaymentRequestButtonWrapper 
+                        clientSecret={clientSecret}
+                        orderId={id}
+                        amount={order.totalCents}
+                        currency={order.currency}
+                      />
+                    </div>
+                  </div>
+                </Elements>
+              )}
+
+              {method === "google-pay" && (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret: clientSecret || undefined,
+                    appearance: {
+                      theme: 'stripe',
+                      variables: {
+                        colorPrimary: '#000000',
+                      }
+                    }
+                  }}
+                >
+                  <div className="py-8 text-center space-y-6 max-w-md mx-auto">
+                    <div className="space-y-2">
+                      <p className="font-bold text-lg">Pay with Google Pay</p>
+                      <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
+                        Fast and secure payment with Google Pay.
+                      </p>
+                    </div>
+                    <div className="bg-black/5 rounded-2xl p-4 space-y-2">
+                      <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Order Total</div>
+                      <div className="font-black text-2xl">
+                        <Price amount={order.totalCents / 100} currency={order.currency} isCents={true} />
+                      </div>
+                    </div>
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+                      <p>To enable Google Pay, verify your domain with Stripe.</p>
+                    </div>
+                    <div className="flex justify-center">
+                      <PaymentRequestButtonWrapper 
+                        clientSecret={clientSecret}
+                        orderId={id}
+                        amount={order.totalCents}
+                        currency={order.currency}
+                      />
+                    </div>
+                  </div>
+                </Elements>
               )}
 
               {method === "tabby" && (
@@ -279,16 +512,42 @@ export default function CustomPaymentPage() {
                 </div>
               )}
 
-              {method === "bkash" && (
+              {method === "cod" && (
                 <div className="py-8 text-center space-y-6 max-w-md mx-auto">
-                  <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
-                    Please send the total amount to our bKash/Nagad number <strong className="text-black font-black">+880123456789</strong> and include your order ID <strong className="text-black font-black">#{id.substring(0,8)}</strong> in the reference.
-                  </p>
+                  <div className="flex justify-center">
+                    <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                      <Banknote className="w-8 h-8 text-green-600" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-bold text-lg">Pay Upon Delivery</p>
+                    <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
+                      Pay with cash or card when your order arrives. Our delivery partner will collect the payment.
+                    </p>
+                  </div>
+                  <div className="bg-black/5 rounded-2xl p-4 space-y-2">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Order Total</div>
+                    <div className="font-black text-2xl">
+                      <Price amount={order.totalCents} currency={order.currency} isCents={true} />
+                    </div>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+                    <p className="font-bold mb-1">Note:</p>
+                    <p>AED 10 Cash on Delivery fee may apply.</p>
+                  </div>
                   <button
-                    onClick={() => router.push(`/checkout/success?order_id=${id}`)}
-                    className="w-full h-14 md:h-16 rounded-full bg-black text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-black/20"
+                    onClick={handleCODPayment}
+                    disabled={codLoading}
+                    className="w-full h-14 md:h-16 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-black/20 disabled:opacity-50 flex items-center justify-center gap-3"
                   >
-                    Confirm Offline Payment
+                    {codLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Confirm Cash on Delivery"
+                    )}
                   </button>
                 </div>
               )}
@@ -338,8 +597,6 @@ export default function CustomPaymentPage() {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

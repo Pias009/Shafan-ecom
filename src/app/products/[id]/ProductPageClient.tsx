@@ -432,7 +432,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         )}
       </main>
 
-      <Footer />
 
       {/* Mobile Sticky Bar */}
       <div className="md:hidden fixed bottom-6 left-6 right-6 z-[40]">

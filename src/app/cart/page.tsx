@@ -19,10 +19,9 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
-function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, applyCoupon, removeCoupon, subtotalCents, discountCents, totalCents, t }: any) {
+function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, applyCoupon, removeCoupon, subtotalCents, discountCents, totalCents, shippingCents, freeDelivery, t, userCountry }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
-  const userCountry = useUserCountry();
 
   async function handleCheckout() {
     if (!hasAddress) {
@@ -193,6 +192,17 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 </div>
               )}
 
+              <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-black/40 font-bold uppercase tracking-wider">
+                <div>Delivery</div>
+                <div className={freeDelivery ? "text-green-600" : "text-black"}>
+                  {freeDelivery ? (
+                    <span className="text-green-600 font-black">FREE</span>
+                  ) : (
+                    <Price amount={shippingCents / 100} />
+                  )}
+                </div>
+              </div>
+
               <div className="flex items-center justify-between pt-6 border-t border-black/5">
                 <div className="font-black text-xs md:text-sm uppercase tracking-widest">{t.cart.total}</div>
                 <Price amount={totalCents / 100} className="text-2xl md:text-3xl font-black text-black" />
@@ -264,7 +274,20 @@ export default function CartPage() {
   );
   
   const discountCents = Math.round(subtotalCents * couponDiscount);
-  const totalCents = subtotalCents - discountCents;
+  
+  // Delivery fee calculation based on country
+  const DELIVERY_CONFIG: Record<string, { minOrderCents: number; deliveryFeeCents: number; freeDeliveryCents: number }> = {
+    AE: { minOrderCents: 8000, deliveryFeeCents: 1500, freeDeliveryCents: 15000 },
+    KW: { minOrderCents: 12000, deliveryFeeCents: 1500, freeDeliveryCents: 18000 },
+    SA: { minOrderCents: 15900, deliveryFeeCents: 1900, freeDeliveryCents: 35900 },
+    BH: { minOrderCents: 1300, deliveryFeeCents: 199, freeDeliveryCents: 1800 },
+    OM: { minOrderCents: 1600, deliveryFeeCents: 190, freeDeliveryCents: 2200 },
+    QA: { minOrderCents: 12900, deliveryFeeCents: 1900, freeDeliveryCents: 29900 },
+  };
+  
+  const deliveryConfig = DELIVERY_CONFIG[userCountry.toUpperCase()] || DELIVERY_CONFIG['AE'];
+  const shippingCents = subtotalCents >= deliveryConfig.freeDeliveryCents ? 0 : deliveryConfig.deliveryFeeCents;
+  const totalCents = subtotalCents - discountCents + shippingCents;
 
   if (items.length === 0) {
     return (
@@ -295,8 +318,11 @@ export default function CartPage() {
         subtotalCents={subtotalCents}
         discountCents={discountCents}
         totalCents={totalCents}
+        shippingCents={shippingCents}
+        freeDelivery={shippingCents === 0}
         applyCoupon={() => {}}
         t={t}
+        userCountry={userCountry}
       />
     );
 }

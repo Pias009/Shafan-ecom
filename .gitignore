@@ -16,7 +16,7 @@
 # test scripts
 /scripts/test-*
 /scripts/*test*
-create-test-products.js
+_dev-scripts/
 *.test.js
 *.test.ts
 *.spec.js

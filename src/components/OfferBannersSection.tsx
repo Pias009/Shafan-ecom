@@ -32,19 +32,12 @@ interface EnhancedOfferBanner {
 }
 
 export function OfferBannersSection() {
-  console.log("DEBUG: OfferBannersSection component rendering");
   const [banners, setBanners] = useState<EnhancedOfferBanner[]>([]);
   const [active, setActive] = useState(0);
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
-  
-  console.log("DEBUG: Current banners state:", banners);
 
   useEffect(() => {
-    console.log("DEBUG: OfferBannersSection useEffect running");
-    console.log("DEBUG: Fetching banners from /api/promotional/banners?limit=5");
-    
-    // Add timeout to detect stalled requests
     const controller = new AbortController();
     const signal = controller.signal;
     let timeoutId: NodeJS.Timeout | null = null;
@@ -55,15 +48,13 @@ export function OfferBannersSection() {
         try {
           controller.abort();
           aborted = true;
-        } catch (err) {
+        } catch {
           // Ignore errors from aborting already-aborted controller
-          console.debug("DEBUG: Error during abort (likely already aborted):", err);
         }
       }
     };
     
     timeoutId = setTimeout(() => {
-      console.error("DEBUG: Fetch timeout - request taking too long");
       safeAbort();
     }, 10000);
     
@@ -80,23 +71,15 @@ export function OfferBannersSection() {
           clearTimeout(timeoutId);
           timeoutId = null;
         }
-        console.log("DEBUG: Fetch response status:", r.status);
-        console.log("DEBUG: Response ok?", r.ok);
         if (!r.ok) {
           throw new Error(`HTTP error! status: ${r.status} ${r.statusText}`);
         }
         return r.json();
       })
       .then((data) => {
-        console.log("DEBUG: Banners data received:", data);
-        console.log("DEBUG: Data type:", typeof data);
-        console.log("DEBUG: Is array?", Array.isArray(data));
-        
         if (Array.isArray(data)) {
-          console.log(`DEBUG: Setting ${data.length} banners`);
           setBanners(data);
         } else {
-          console.log("DEBUG: Data is not an array:", data);
           setBanners([]);
         }
       })
@@ -104,14 +87,6 @@ export function OfferBannersSection() {
         if (timeoutId) {
           clearTimeout(timeoutId);
           timeoutId = null;
-        }
-        // Don't log AbortError as an error - it's expected during unmount
-        if (err.name !== 'AbortError') {
-          console.error("DEBUG: Error fetching banners:", err);
-          console.error("DEBUG: Error name:", err.name);
-          console.error("DEBUG: Error message:", err.message);
-        } else {
-          console.debug("DEBUG: Request was aborted (expected during unmount)");
         }
         // Only set empty banners if not aborted (abort is normal during navigation)
         if (err.name !== 'AbortError') {

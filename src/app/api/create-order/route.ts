@@ -3,6 +3,22 @@ import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 
+// Delivery fee configuration by country
+interface DeliveryConfig {
+  minOrderCents: number;
+  deliveryFeeCents: number;
+  freeDeliveryCents: number;
+}
+
+const DELIVERY_CONFIG: Record<string, DeliveryConfig> = {
+  AE: { minOrderCents: 8000, deliveryFeeCents: 1500, freeDeliveryCents: 15000 },      // 80 AED min, 15 AED fee, 150 AED free
+  KW: { minOrderCents: 12000, deliveryFeeCents: 1500, freeDeliveryCents: 18000 },    // 12 KWD min, 1.5 KWD fee, 18 KWD free
+  SA: { minOrderCents: 15900, deliveryFeeCents: 1900, freeDeliveryCents: 35900 },    // 159 SAR min, 19 SAR fee, 359 SAR free
+  BH: { minOrderCents: 1300, deliveryFeeCents: 199, freeDeliveryCents: 1800 },       // 13 BHD min, 1.99 BHD fee, 18 BHD free
+  OM: { minOrderCents: 1600, deliveryFeeCents: 190, freeDeliveryCents: 2200 },        // 16 OMR min, 1.9 OMR fee, 22 OMR free
+  QA: { minOrderCents: 12900, deliveryFeeCents: 1900, freeDeliveryCents: 29900 },     // 129 QAR min, 19 QAR fee, 299 QAR free
+};
+
 // Helper function to determine courier based on shipping address
 function determineCourier(shippingAddress: any): string {
   if (!shippingAddress || !shippingAddress.country) {
@@ -38,6 +54,31 @@ function getCurrencyForCountry(country: string): string {
     BD: 'BDT',
   };
   return currencies[country?.toUpperCase()] || 'USD';
+}
+
+// Calculate delivery fee based on country and subtotal
+function calculateDeliveryFee(countryCode: string, subtotalCents: number): { feeCents: number; freeDelivery: boolean } {
+  const config = DELIVERY_CONFIG[countryCode.toUpperCase()];
+  
+  if (!config) {
+    // Default to UAE config if country not found
+    const defaultConfig = DELIVERY_CONFIG['AE'];
+    const fee = subtotalCents >= defaultConfig.freeDeliveryCents ? 0 : defaultConfig.deliveryFeeCents;
+    return { feeCents: fee, freeDelivery: fee === 0 };
+  }
+  
+  // Check if order qualifies for free delivery
+  if (subtotalCents >= config.freeDeliveryCents) {
+    return { feeCents: 0, freeDelivery: true };
+  }
+  
+  // Check if order meets minimum order requirement
+  if (subtotalCents < config.minOrderCents) {
+    // Return delivery fee but indicate minimum not met
+    return { feeCents: config.deliveryFeeCents, freeDelivery: false };
+  }
+  
+  return { feeCents: config.deliveryFeeCents, freeDelivery: false };
 }
 
 // Normalize country code to 2-letter format
@@ -248,7 +289,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order total must be greater than 0. Please check product prices." }, { status: 400 });
     }
 
-    const totalCents = subtotalCents;
+    // Calculate delivery fee based on country
+    const { feeCents: shippingCents, freeDelivery } = calculateDeliveryFee(countryCode, subtotalCents);
+    
+    // Check if minimum order requirement is met
+    const deliveryConfig = DELIVERY_CONFIG[countryCode.toUpperCase()];
+    if (deliveryConfig && subtotalCents < deliveryConfig.minOrderCents) {
+      const currencySymbol = getCurrencyForCountry(countryCode);
+      const minOrder = deliveryConfig.minOrderCents / 100;
+      return NextResponse.json({ 
+        error: `Minimum order value is ${currencySymbol} ${minOrder.toFixed(0)} for ${countryCode.toUpperCase()}. Current order: ${currencySymbol} ${(subtotalCents / 100).toFixed(2)}`,
+        minOrderRequired: true,
+        minOrderCents: deliveryConfig.minOrderCents,
+        currency: getCurrencyForCountry(countryCode)
+      }, { status: 400 });
+    }
+
+    const totalCents = subtotalCents + shippingCents;
 
     // Determine courier based on shipping address
     const courier = determineCourier(shipping);
@@ -262,6 +319,8 @@ export async function POST(req: Request) {
         status: OrderStatus.ORDER_RECEIVED,
         currency: currency.toLowerCase(),
         subtotalCents,
+        shippingCents,
+        discountCents: 0,
         totalCents,
         billingAddress: billing || {},
         shippingAddress: shipping || {},
@@ -292,9 +351,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       orderId: order.id,
+      subtotal: subtotalCents / 100,
+      shipping: shippingCents / 100,
       total: order.totalCents / 100,
       currency: order.currency,
       status: order.status,
+      freeDelivery,
       courier: order.shipment?.courier,
       trackingCode: order.shipment?.trackingCode
     });

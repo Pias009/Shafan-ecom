@@ -95,7 +95,6 @@ export default function BrandsPage() {
         )}
       </main>
 
-      <Footer />
     </div>
   );
 }

@@ -117,7 +117,6 @@ export default function BlogPostPage() {
         </div>
       </main>
 
-      <Footer />
     </div>
   );
 }

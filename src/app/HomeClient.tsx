@@ -36,17 +36,25 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   const [showFilters, setShowFilters] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [banners, setBanners] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
   const { status } = useSession();
 
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
   const { setCurrency } = useCurrencyStore();
+  
+  // Use fixed country for initial render to prevent hydration mismatch
+  // Actual country detection happens after mount
   const userCountry = useUserCountry();
+  const [effectiveCountry, setEffectiveCountry] = useState("AE");
   
   // Check if user's country is supported
-  const isCountrySupported = SUPPORTED_COUNTRIES.some(c => c.code === userCountry);
+  const isCountrySupported = SUPPORTED_COUNTRIES.some(c => c.code === effectiveCountry);
 
   useEffect(() => {
+    // Mark as mounted after first render
+    setMounted(true);
+    
     async function detectCountry() {
       try {
         // 1. Check if store_code is already in cookies (set by middleware)
@@ -97,12 +105,14 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
 
         if (country && countryToCurrency[country]) {
           setCurrency(countryToCurrency[country]);
+          setEffectiveCountry(country);
           localStorage.setItem("user-country", country);
           return;
         }
 
         // 2. If no country detected, use default currency
         setCurrency("AED");
+        setEffectiveCountry("AE");
         
       } catch (err) {
         // Silently fail, defaulting to initialProducts from server
@@ -161,7 +171,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       let hasValidPrice = false;
       if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
         const countryPrice = p.countryPrices.find((cp: any) =>
-          cp.country.toUpperCase() === userCountry.toUpperCase()
+          cp.country.toUpperCase() === effectiveCountry.toUpperCase()
         );
         hasValidPrice = countryPrice && countryPrice.priceCents > 0;
       } else if (!isCountrySupported) {
@@ -185,7 +195,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         p.category?.name?.toLowerCase().includes(query)
       );
     });
-  }, [q, category, brand, maxPrice, products, userCountry, isCountrySupported]);
+  }, [q, category, brand, maxPrice, products, effectiveCountry, isCountrySupported]);
 
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
   
@@ -195,7 +205,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       let hasValidPrice = false;
       if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
         const countryPrice = p.countryPrices.find((cp: any) =>
-          cp.country.toUpperCase() === userCountry.toUpperCase()
+          cp.country.toUpperCase() === effectiveCountry.toUpperCase()
         );
         hasValidPrice = countryPrice && countryPrice.priceCents > 0;
       } else if (!isCountrySupported) {
@@ -207,7 +217,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       }
       return hasValidPrice;
     });
-  }, [newArrivals, userCountry, isCountrySupported]);
+  }, [newArrivals, effectiveCountry, isCountrySupported]);
   
   // Filter hot products based on country support
   const filteredHot = useMemo(() => {
@@ -215,7 +225,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       let hasValidPrice = false;
       if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
         const countryPrice = p.countryPrices.find((cp: any) =>
-          cp.country.toUpperCase() === userCountry.toUpperCase()
+          cp.country.toUpperCase() === effectiveCountry.toUpperCase()
         );
         hasValidPrice = countryPrice && countryPrice.priceCents > 0;
       } else if (!isCountrySupported) {
@@ -227,7 +237,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       }
       return hasValidPrice;
     });
-  }, [hot, userCountry, isCountrySupported]);
+  }, [hot, effectiveCountry, isCountrySupported]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -259,7 +269,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
     try {
       // Calculate unit price matching cart calculation
       const countryPrice = product.countryPrices?.find((cp: any) =>
-        cp.country.toUpperCase() === userCountry.toUpperCase()
+        cp.country.toUpperCase() === effectiveCountry.toUpperCase()
       );
       const unitPriceCents = countryPrice && countryPrice.priceCents > 0
         ? countryPrice.priceCents
@@ -274,7 +284,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
             quantity: 1,
             unitPriceCents 
           }],
-          country: userCountry
+          country: effectiveCountry
         }),
       });
       const data = await res.json();

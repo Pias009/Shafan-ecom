@@ -41,7 +41,7 @@ export function BrandMarquee() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center gap-3 mb-6">
             <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Premium Partners</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Our Brands</span>
             <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
           </div>
           <div className="flex gap-8 overflow-hidden">
@@ -72,7 +72,7 @@ export function BrandMarquee() {
           className="flex items-center justify-center gap-3 mb-6 md:mb-8"
         >
           <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-          <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Premium Partners</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-gray-500">Our Brands</span>
           <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
         </motion.div>
 
