@@ -65,11 +65,14 @@ export function AuthModal({
     if (status === "authenticated" && open) onClose();
   }, [status, open, onClose]);
 
+  console.log("[AuthModal] Render", { open, isAdmin, status, userRole: session?.user?.role });
+
   const title = useMemo(() => {
     return mode === "sign-in" ? t.auth.signIn : t.auth.signUp;
   }, [mode, t.auth.signIn, t.auth.signUp]);
 
-  if (isAdmin) return null;
+  // Only return null if authenticated as admin - allow modal to show for unauthenticated users
+  if (isAdmin && status === "authenticated") return null;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

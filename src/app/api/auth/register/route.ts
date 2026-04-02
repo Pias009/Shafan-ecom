@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
 
 const RegisterSchema = z.object({
   name: z.string().trim().min(1).max(60).optional(),
@@ -20,12 +19,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+    const existing = await prisma.user.findUnique({ 
+      where: { email: parsed.data.email },
+      select: { id: true }
+    });
     if (existing) {
       return NextResponse.json({ error: "Email already registered." }, { status: 409 });
     }
 
-    const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+    const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
     await prisma.user.create({
       data: {
@@ -37,26 +39,11 @@ export async function POST(req: Request) {
       },
     });
 
-    // Send Welcome Email (Non-blocking)
-    sendEmail({
-      to: parsed.data.email,
-      subject: "Welcome to Shafan Store!",
-      html: `
-        <h1>Hello ${parsed.data.name || 'Value Customer'}!</h1>
-        <p>Thank you for creating an account with Shafan Store. We are excited to have you with us!</p>
-        <p>You can now log in and start shopping for premium skin and hair care products.</p>
-        <br />
-        <p>Best Regards,</p>
-        <p>The Shafan Team</p>
-      `
-    }).catch(() => {});
-
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     console.error("Registration error:", error);
     return NextResponse.json({ 
       error: "Registration failed. Please try again.",
-      details: process.env.NODE_ENV === "development" ? error.message : undefined 
     }, { status: 500 });
   }
 }

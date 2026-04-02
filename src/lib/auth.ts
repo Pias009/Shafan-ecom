@@ -136,48 +136,23 @@ export const authOptions: NextAuthOptions = {
         const parsed = CredentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
 
-        console.log("AUTH_DEBUG_EMAIL:", parsed.data.email);
-        const user = await prisma.user.findFirst({
+        const user = await prisma.user.findUnique({
           where: { email: parsed.data.email },
         });
 
-        if (!user) {
-          console.log("AUTH_DEBUG: User not found");
+        if (!user || !user.passwordHash) {
           return null;
         }
 
-        if (!user.passwordHash) {
-          console.log("AUTH_DEBUG: No password hash for user");
-          return null;
-        }
-
-        // We handle lockout and MFA check in a separate initiate API for admin
-        // For standard client login (if used elsewhere), we proceed normally.
-        // But for admin, they MUST go through the initiate API first.
-        // However, NextAuth doesn't easily stop 'authorize' from being called.
-        // So we just perform a normal check here.
         const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
         if (!ok) {
-          console.log("AUTH_DEBUG: Password comparison FAIL");
           return null;
         }
-
-        // Standard login results in MFA NOT verified.
-        // If this is an admin, they will be blocked by middleware unless they redo MFA.
-        console.log("AUTH_DEBUG: SUCCESS for user:", user.email, "Role:", user.role);
         
-        // Check if this is a developer or master admin login
-        // Developer email is "developer@shafan.com"
-        // Master admin email is from environment variable
         const isDeveloper = user.email === "developer@shafan.com";
         const isMasterAdmin = user.email === process.env.MASTER_ADMIN_EMAIL;
-        
-        // For developer/master admin, allow MFA bypass in both development and production
-        // Master admin should always bypass MFA
         const isSuperAdmin = user.role === 'SUPERADMIN';
         const shouldBypassMFA = (isDeveloper || isMasterAdmin) && isSuperAdmin;
-        
-        // Check if user has been approved by super admin for first-time login
         const isApprovedBySuperAdmin = user.approvedBySuperAdmin || false;
         
         return {
@@ -186,9 +161,9 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
-          mfaVerified: shouldBypassMFA, // Allow MFA bypass for developer/master admin
+          mfaVerified: shouldBypassMFA,
           approvedBySuperAdmin: isApprovedBySuperAdmin,
-          masterAdminBypass: isMasterAdmin, // Flag for master admin bypass
+          masterAdminBypass: isMasterAdmin,
         };
       },
     }),
@@ -197,6 +172,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.name = user.name;
         token.role = (user as { role?: string }).role;
         token.mfaVerified = (user as any).mfaVerified;
         token.masterAdminBypass = (user as any).masterAdminBypass;
@@ -207,6 +183,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = (token.id as string) ?? session.user.id;
         session.user.role = (token.role as "USER" | "ADMIN" | "SUPERADMIN") ?? session.user.role;
+        session.user.name = token.name ?? session.user.name;
         (session.user as any).mfaVerified = token.mfaVerified;
         (session.user as any).masterAdminBypass = token.masterAdminBypass;
       }

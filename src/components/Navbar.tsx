@@ -118,7 +118,7 @@ export function Navbar() {
         scrolled ? "glass-nav shadow-md" : "bg-transparent"
       } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-2 flex items-center">
+      <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-between">
         {/* Mobile layout: Logo centered, hamburger on right */}
         <div className="flex items-center justify-between w-full lg:hidden">
           {/* Empty div for spacing to center logo */}
@@ -139,29 +139,26 @@ export function Navbar() {
           </button>
         </div>
 
-        {/* Desktop layout */}
-        <div className="hidden lg:flex items-center justify-center w-full gap-3 md:gap-6 lg:gap-8">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Logo />
-          </div>
+        {/* Desktop layout - centered */}
+        <div className="hidden lg:flex items-center justify-center">
+          {/* Logo - left side */}
+          <Logo />
 
-          {/* Navigation - Desktop only */}
-          <div className="flex items-center justify-center flex-1">
-            <div className="glass-panel rounded-full px-6 py-2 max-w-3xl">
-              <div className="flex items-center gap-1 md:gap-2">
-                {navLinks.map((link) => {
-                  const isOffers = link.href === "/offers";
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`px-3 md:px-4 py-2 text-xs md:text-sm font-semibold tracking-wide transition-all duration-300 rounded-full relative overflow-hidden group whitespace-nowrap ${
-                        safePathname === link.href
-                          ? "text-black bg-black/10"
-                          : "text-black/70 hover:text-black hover:bg-black/5"
-                      } ${isOffers ? "animate-pulse" : ""}`}
-                    >
+          {/* Navigation - tight next to logo */}
+          <div className="glass-panel rounded-full px-1 py-1 ml-2">
+            <div className="flex items-center gap-0">
+              {navLinks.map((link) => {
+                const isOffers = link.href === "/offers";
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`px-1.5 py-1 text-[9px] font-semibold tracking-wide transition-all duration-300 rounded-full relative overflow-hidden group whitespace-nowrap ${
+                      safePathname === link.href
+                        ? "text-black bg-black/10"
+                        : "text-black/70 hover:text-black hover:bg-black/5"
+                    } ${isOffers ? "animate-pulse" : ""}`}
+                  >
                       {isOffers && (
                         <>
                           <span className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 animate-shimmer bg-[length:200%_100%] group-hover:bg-[length:400%_100%] transition-all duration-1000"></span>
@@ -177,40 +174,77 @@ export function Navbar() {
                 })}
               </div>
             </div>
-          </div>
 
-          {/* Actions (Currency, Language, Cart, User) - Desktop only */}
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* Currency/Language selectors (desktop) */}
-            <div className="hidden md:flex items-center gap-3">
-              <LanguageSelector />
-              <CurrencySelector />
-            </div>
-
-            {/* Cart - visible to all users on desktop */}
-            <Link href="/cart" className="hidden md:flex relative p-2 text-black hover:text-black/70 transition-colors items-center">
-              <ShoppingBag size={22} />
-              {mounted && cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black text-white text-xs flex items-center justify-center font-bold">
-                  {cartCount}
-                </span>
-              )}
-              <span className="ml-1 text-sm font-medium hidden lg:inline">Cart</span>
-            </Link>
-
-            {/* User (desktop) */}
-            <div className="hidden md:block relative">
+            {/* User + Actions dropdown */}
+            <div className="relative ml-2">
               <button
                 type="button"
-                onClick={onUserButtonClick}
-                className="glass-panel inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold text-black transition hover:bg-black/5"
-                aria-label={userLabel ? "Open user menu" : t.nav.signIn}
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="glass-panel inline-flex h-10 items-center gap-2 rounded-full px-2 text-sm font-semibold text-black transition hover:bg-black/5"
               >
-                <UserRound size={18} />
-                <span className="uppercase tracking-wide">{userLabel ?? t.nav.signIn}</span>
-              </button>
-              <UserDropdown open={userMenuOpen} onClose={() => setUserMenuOpen(false)} />
-            </div>
+              <UserRound size={18} />
+              <span className="uppercase tracking-wide">{userLabel ?? t.nav.signIn}</span>
+            </button>
+            
+            {/* Dropdown with User options, Currency, Language, Cart */}
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-60 glass-panel-heavy rounded-2xl p-3 border border-black/5 shadow-xl z-50">
+                {/* User Section - only when logged in */}
+                {status === "authenticated" && (
+                  <div className="pb-2 mb-2 border-b border-black/5">
+                    <div className="px-2 py-1">
+                      <div className="text-sm font-bold text-black">{session?.user?.name}</div>
+                      <div className="text-xs text-black/50">{session?.user?.email}</div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-1">
+                  {/* Currency - vertical */}
+                  <div className="flex flex-col gap-1 px-2 py-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-black/30">Currency</span>
+                    <CurrencySelector />
+                  </div>
+                  
+                  {/* Language - vertical */}
+                  <div className="flex flex-col gap-1 px-2 py-1">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-black/30">Language</span>
+                    <LanguageSelector />
+                  </div>
+                  
+                  {/* User links - only when logged in */}
+                  {status === "authenticated" && (
+                    <>
+                      <div className="my-1 h-px bg-black/5" />
+                      <Link href="/account" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg">
+                        Dashboard
+                      </Link>
+                      <Link href="/account/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg">
+                        Orders
+                      </Link>
+                      <Link href="/account/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg">
+                        Profile
+                      </Link>
+                    </>
+                  )}
+                  
+                  <div className="my-1 h-px bg-black/5" />
+                  
+                  {/* Cart */}
+                  <Link href="/cart" onClick={() => setUserMenuOpen(false)} className="flex items-center justify-between px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg">
+                    <span className="flex items-center gap-2">
+                      <ShoppingBag size={16} />
+                      Cart
+                    </span>
+                    {cartCount > 0 && (
+                      <span className="w-5 h-5 rounded-full bg-black text-white text-xs flex items-center justify-center font-bold">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

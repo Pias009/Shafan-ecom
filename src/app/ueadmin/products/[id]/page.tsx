@@ -29,7 +29,8 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
           },
           productSkinConcerns: {
             include: { skinConcern: { select: { id: true, name: true } } }
-          }
+          },
+          countryPrices: true
         }
       }),
       prisma.category.findMany({
@@ -65,6 +66,7 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       skinTones: product.productSkinTones.map((ps: any) => ps.skinTone),
       skinConcerns: product.productSkinConcerns.map((sc: any) => sc.skinConcern),
       allInventories: (product as any).storeInventories || [],
+      countryPrices: (product as any).countryPrices || [],
       isSuper
     };
 

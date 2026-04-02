@@ -1,10 +1,77 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
+import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
+import { useCartStore } from "@/lib/cart-store";
+import { useUserCountry } from "@/lib/country-detection";
+import toast from "react-hot-toast";
 
 export function OffersClient({ products }: { products: any[] }) {
+  const [quickView, setQuickView] = useState<any>(null);
+  const { addItem, hasAddress } = useCartStore();
+  const router = useRouter();
+  const userCountry = useUserCountry();
+
+  function addToCart(product: any) {
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      brand: product.brandName,
+      category: product.categoryName,
+      price: product.price,
+      imageUrl: product.imageUrl,
+      countryPrices: product.countryPrices,
+    };
+    addItem(cartItem, 1);
+    toast.success(`${product.name} added`);
+  }
+
+  async function orderNow(product: any) {
+    if (!hasAddress) {
+      toast.error("Please add a delivery address first", { duration: 3000 });
+      router.push("/account/address");
+      return;
+    }
+
+    const tid = toast.loading("Creating order...");
+    try {
+      const countryPrice = product.countryPrices?.find((cp: any) =>
+        cp.country.toUpperCase() === userCountry.toUpperCase()
+      );
+      const unitPriceCents = countryPrice && countryPrice.priceCents > 0
+        ? countryPrice.priceCents
+        : (product.discountPrice ?? product.price) * 100;
+
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          items: [{ 
+            productId: product.id, 
+            quantity: 1,
+            unitPriceCents
+          }],
+          country: userCountry
+        }),
+      });
+      const data = await res.json();
+      if (data.orderId) {
+        toast.success("Redirecting...", { id: tid });
+        router.push(`/checkout/payment/${data.orderId}`);
+      } else {
+        throw new Error(data.error || "Failed");
+      }
+    } catch (err: any) {
+      toast.error(err.message, { id: tid });
+      addToCart(product);
+      router.push("/cart");
+    }
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100">
       {/* Header */}
@@ -40,9 +107,9 @@ export function OffersClient({ products }: { products: any[] }) {
                       ? product.discountPrice * 100
                       : undefined,
                   }}
-                  onQuickView={() => {}}
-                  onAddToCart={() => {}}
-                  onOrderNow={() => {}}
+                  onQuickView={(p) => setQuickView(p)}
+                  onAddToCart={(p) => addToCart(p)}
+                  onOrderNow={(p) => orderNow(p)}
                 />
               </div>
             ))}
@@ -98,6 +165,14 @@ export function OffersClient({ products }: { products: any[] }) {
           </div>
         </div>
       </div>
+
+      <ProductQuickViewModal
+        product={quickView}
+        onClose={() => setQuickView(null)}
+        onAddToCart={(p) => addToCart(p)}
+        onOrderNow={(p) => orderNow(p)}
+        onMoreDetails={(productId) => router.push(`/products/${productId}`)}
+      />
     </main>
   );
 }

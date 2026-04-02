@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, Quote, ExternalLink, Loader2, AlertCircle } from "lucide-react";
+import { Star, Quote, ExternalLink, Loader2 } from "lucide-react";
 
 interface Review {
   id: string;
@@ -76,7 +76,6 @@ export function GoogleReviewsSection() {
   const [reviews, setReviews] = useState<Review[]>(MOCK_REVIEWS);
   const [rating, setRating] = useState({ average: 4.8, total: 150 });
   const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchReviews() {
@@ -87,8 +86,6 @@ export function GoogleReviewsSection() {
         if (data.success && data.reviews) {
           setReviews(data.reviews);
           setRating(data.rating);
-        } else if (data.error) {
-          setApiError(data.message || data.error);
         }
       } catch (err) {
         console.error("Failed to fetch reviews:", err);
@@ -125,19 +122,6 @@ export function GoogleReviewsSection() {
   return (
     <section className="w-full bg-gradient-to-b from-white to-gray-50 py-12 md:py-16 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* API Error Warning */}
-        {apiError && (
-          <div className="max-w-3xl mx-auto mb-6">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-800">
-                <p className="font-semibold mb-1">Google Reviews API Not Configured</p>
-                <p className="text-amber-700">Showing mock reviews. Add API keys to fetch real reviews.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}

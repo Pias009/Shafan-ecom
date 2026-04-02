@@ -69,6 +69,31 @@ const ProductCreateSchema = z.object({
     ),
 }).refine(
   (data) => {
+    if (data.stockQuantity !== undefined && data.stockQuantity === 0) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Stock cannot be 0. Please add stock quantity.",
+    path: ["stockQuantity"],
+  }
+).refine(
+  (data) => {
+    if (data.countryPrices && data.countryPrices.length > 0) {
+      const validPrices = data.countryPrices.filter(cp => cp.priceCents > 0);
+      if (validPrices.length === 0) {
+        return false;
+      }
+    }
+    return true;
+  },
+  {
+    message: "At least one country price must be set. Product will not be visible without prices.",
+    path: ["countryPrices"],
+  }
+).refine(
+  (data) => {
     // Validate that discount doesn't exceed price
     if (data.discountCents && data.discountCents > data.priceCents) {
       return false;

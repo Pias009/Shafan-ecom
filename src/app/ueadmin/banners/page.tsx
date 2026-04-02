@@ -89,6 +89,7 @@ export default function AdminHeroBannersPage() {
     setUploading(true);
     const fd = new FormData();
     fd.append("file", file);
+    fd.append("folder", "ecommerce/banners");
     try {
       const r = await fetch("/api/admin/upload", { method: "POST", body: fd });
       const data = await r.json();

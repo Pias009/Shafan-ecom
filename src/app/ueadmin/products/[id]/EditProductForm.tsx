@@ -108,6 +108,17 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
   };
 
   const handleSave = async () => {
+    if (product.stockQuantity === 0) {
+      toast.error('Stock cannot be 0. Please add stock quantity.');
+      return;
+    }
+    
+    const validCountryPrices = (product.countryPrices || []).filter((cp: any) => cp.priceCents > 0);
+    if (validCountryPrices.length === 0) {
+      toast.error('At least one country price must be set. Product will not be visible without prices.');
+      return;
+    }
+    
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/products/${product.id}`, {
@@ -443,6 +454,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                           try {
                             const fd = new FormData();
                             fd.append('file', file);
+                            fd.append('folder', 'ecommerce/products');
                             const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
                             const data = await res.json();
                             if (data.url) {
@@ -489,6 +501,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                           const newUrls = await Promise.all(files.map(async f => {
                             const fd = new FormData();
                             fd.append('file', f);
+                            fd.append('folder', 'ecommerce/products');
                             const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
                             const data = await res.json();
                             return data.url;

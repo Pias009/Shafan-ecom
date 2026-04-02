@@ -13,6 +13,7 @@ export function UserDropdown({
   onClose: () => void;
 }) {
   const { data } = useSession();
+  const userName = data?.user?.name?.split(" ")[0] || data?.user?.email?.split("@")[0] || "User";
 
   return (
     <AnimatePresence>

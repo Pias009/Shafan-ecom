@@ -188,10 +188,17 @@ export function AddProductForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Client-side validation - price can be 0 or any positive value
-    // Check discount doesn't exceed price
+    if (formData.stockQuantity === 0) {
+      toast.error('Stock cannot be 0. Please add stock quantity.');
+      return;
+    }
     
-    // Check discount doesn't exceed price
+    const validCountryPrices = formData.countryPrices.filter(cp => cp.priceCents > 0);
+    if (validCountryPrices.length === 0) {
+      toast.error('At least one country price must be set. Product will not be visible without prices.');
+      return;
+    }
+    
     if (formData.discountCents > formData.priceCents) {
       toast.error('Discount cannot exceed product price');
       return;
@@ -650,6 +657,7 @@ export function AddProductForm({
                           try {
                             const fd = new FormData();
                             fd.append('file', file);
+                            fd.append('folder', 'ecommerce/products');
                             const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
                             const data = await res.json();
                             if (data.url) {
@@ -704,6 +712,7 @@ export function AddProductForm({
                           const urls = await Promise.all(files.map(async file => {
                             const fd = new FormData();
                             fd.append('file', file);
+                            fd.append('folder', 'ecommerce/products');
                             const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
                             const data = await res.json();
                             return data.url;
