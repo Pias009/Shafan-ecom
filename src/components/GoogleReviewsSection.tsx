@@ -16,8 +16,6 @@ interface ApiResponse {
   success: boolean;
   error?: string;
   message?: string;
-  required_env_vars?: Record<string, string>;
-  setup_steps?: string[];
   reviews: Review[];
   source: string;
   rating: {
@@ -26,56 +24,12 @@ interface ApiResponse {
   };
 }
 
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: "1",
-    author_name: "Ahmed Hassan",
-    rating: 5,
-    text: "Great selection of skincare products! Fast delivery and excellent customer service. Highly recommended!",
-    relative_time_description: "2 weeks ago"
-  },
-  {
-    id: "2",
-    author_name: "Sarah Mohammed",
-    rating: 5,
-    text: "Best online beauty store in UAE. Authentic products and reasonable prices. Will definitely order again!",
-    relative_time_description: "1 month ago"
-  },
-  {
-    id: "3",
-    author_name: "Fatima Ali",
-    rating: 4,
-    text: "Good variety of brands. Found exactly what I was looking for. Delivery was quick too.",
-    relative_time_description: "3 weeks ago"
-  },
-  {
-    id: "4",
-    author_name: "Khalid Rashid",
-    rating: 5,
-    text: "Amazing quality products! The packaging was secure and arrived in perfect condition.",
-    relative_time_description: "1 week ago"
-  },
-  {
-    id: "5",
-    author_name: "Noor Khan",
-    rating: 5,
-    text: "My go-to store for all skincare needs. Always fresh products and great discounts!",
-    relative_time_description: "2 weeks ago"
-  },
-  {
-    id: "6",
-    author_name: "Mariam Ahmed",
-    rating: 4,
-    text: "Excellent customer support. Had a question and got immediate response. Love shopping here!",
-    relative_time_description: "1 month ago"
-  }
-];
-
 export function GoogleReviewsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [reviews, setReviews] = useState<Review[]>(MOCK_REVIEWS);
-  const [rating, setRating] = useState({ average: 4.8, total: 150 });
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [rating, setRating] = useState({ average: 0, total: 0 });
   const [loading, setLoading] = useState(true);
+  const [source, setSource] = useState<string>("");
 
   useEffect(() => {
     async function fetchReviews() {
@@ -83,7 +37,9 @@ export function GoogleReviewsSection() {
         const res = await fetch("/api/google-reviews");
         const data: ApiResponse = await res.json();
         
-        if (data.success && data.reviews) {
+        setSource(data.source || "");
+        
+        if (data.success && data.reviews && data.reviews.length > 0) {
           setReviews(data.reviews);
           setRating(data.rating);
         }
@@ -117,6 +73,10 @@ export function GoogleReviewsSection() {
         </div>
       </section>
     );
+  }
+
+  if (reviews.length === 0) {
+    return null;
   }
 
   return (
