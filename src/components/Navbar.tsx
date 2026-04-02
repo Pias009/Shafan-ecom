@@ -118,7 +118,7 @@ export function Navbar() {
         scrolled ? "glass-nav shadow-md" : "bg-transparent"
       } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
-      <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-between">
+      <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center">
         {/* Mobile layout: Logo centered, hamburger on right */}
         <div className="flex items-center justify-between w-full lg:hidden">
           {/* Empty div for spacing to center logo */}
@@ -144,9 +144,9 @@ export function Navbar() {
           {/* Logo - left side */}
           <Logo />
 
-          {/* Navigation - tight next to logo */}
-          <div className="glass-panel rounded-full px-1 py-1 ml-2">
-            <div className="flex items-center gap-0">
+          {/* Navigation - wider and same height as user icon */}
+          <div className="glass-panel rounded-full px-4 py-2 ml-3">
+            <div className="flex items-center gap-1">
               {navLinks.map((link) => {
                 const isOffers = link.href === "/offers";
                 return (
