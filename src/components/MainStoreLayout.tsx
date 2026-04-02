@@ -17,9 +17,9 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
       {showNoticeBoard && pathname && <NoticeBoard />}
-      <main className="flex-1 pt-16 md:pt-0">
+      <Navbar />
+      <main className="flex-1 pt-12">
         {children}
       </main>
       <Footer />

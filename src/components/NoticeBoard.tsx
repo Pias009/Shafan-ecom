@@ -29,7 +29,7 @@ export function NoticeBoard() {
   if (!isVisible) return null;
 
   return (
-    <div className="w-full bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 py-2 px-3 md:px-4 sticky top-16 z-40 md:top-16">
+    <div className="w-full bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 py-2 px-3 md:px-4 fixed top-0 left-0 right-0 z-[60]">
       {/* Animated background dots */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-amber-400 rounded-full"></div>

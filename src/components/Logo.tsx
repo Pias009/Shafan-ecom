@@ -13,7 +13,7 @@ export function Logo({ className = "" }: { className?: string }) {
         className="relative flex items-center"
       >
         {/* Main Logo Text - smaller */}
-        <h1 className="font-display text-lg md:text-xl font-bold tracking-tight">
+        <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight">
           <motion.span
             className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-600 bg-clip-text text-transparent"
             whileHover={{ scale: 1.02 }}

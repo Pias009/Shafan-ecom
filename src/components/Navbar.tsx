@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useMemo, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { AuthModal } from "./AuthModal";
 import { UserDropdown } from "./UserDropdown";
 import { CurrencySelector } from "./CurrencySelector";
@@ -32,17 +33,35 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/", label: t.nav.home },
+    { href: "/products", label: t.nav.products },
     { href: "/brands", label: t.nav.brands },
     { href: "/products?category=Skin+Care", label: t.nav.skinCare },
     { href: "/products?category=Hair+Care", label: t.nav.hairCare },
     { href: "/products?category=Body+Care", label: t.nav.bodyCare },
     { href: "/products?category=Fragrances", label: t.nav.fragrances },
     { href: "/offers", label: "🎉 Offers" },
-    { href: "/products", label: t.nav.products },
   ];
 
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.user-dropdown-container')) {
+        setUserMenuOpen(false);
+      }
+    };
+    
+    if (userMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [userMenuOpen]);
 
   useEffect(() => {
     setMounted(true);
@@ -114,11 +133,11 @@ export function Navbar() {
   return (
     <>
       <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform ${
+      className={`fixed top-12 left-0 right-0 z-40 transition-all duration-300 transform ${
         scrolled ? "glass-nav shadow-md" : "bg-transparent"
       } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
-      <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center">
+      <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center px-0">
         {/* Mobile layout: Logo centered, hamburger on right */}
         <div className="flex items-center justify-between w-full lg:hidden">
           {/* Empty div for spacing to center logo */}
@@ -141,23 +160,21 @@ export function Navbar() {
 
         {/* Desktop layout - centered */}
         <div className="hidden lg:flex items-center justify-center">
-          {/* Logo - left side */}
-          <Logo />
+          <div className="-ml-16">
+            <Logo />
+          </div>
 
-          {/* Navigation - wider and same height as user icon */}
-          <div className="glass-panel rounded-full px-4 py-2 ml-3">
-            <div className="flex items-center gap-1">
-              {navLinks.map((link) => {
+          {/* Navigation - centered */}
+          <div className="ml-16 mr-32 flex-1 flex justify-center">
+            <div className="glass-panel rounded-full px-8 py-3">
+              <div className="flex items-center gap-2">
+                {navLinks.map((link) => {
                 const isOffers = link.href === "/offers";
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-1.5 py-1 text-[9px] font-semibold tracking-wide transition-all duration-300 rounded-full relative overflow-hidden group whitespace-nowrap ${
-                      safePathname === link.href
-                        ? "text-black bg-black/10"
-                        : "text-black/70 hover:text-black hover:bg-black/5"
-                    } ${isOffers ? "animate-pulse" : ""}`}
+                    className={`px-3 py-2 text-sm font-body font-bold tracking-wide transition-all duration-300 rounded-full relative overflow-hidden group whitespace-nowrap hover:scale-105 hover:bg-emerald-50 ${safePathname === link.href ? "text-emerald-700 bg-emerald-100" : "text-black/70 hover:text-emerald-700"} ${isOffers ? "animate-pulse" : ""}`}
                   >
                       {isOffers && (
                         <>
@@ -174,21 +191,44 @@ export function Navbar() {
                 })}
               </div>
             </div>
+          </div>
 
-            {/* User + Actions dropdown */}
-            <div className="relative ml-2">
-              <button
-                type="button"
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="glass-panel inline-flex h-10 items-center gap-2 rounded-full px-2 text-sm font-semibold text-black transition hover:bg-black/5"
-              >
-              <UserRound size={18} />
+          {/* User + Actions dropdown */}
+          <div className="relative -ml-4">
+            <button
+              type="button"
+              onClick={() => {
+                if (status === "authenticated") {
+                  setUserMenuOpen(!userMenuOpen);
+                } else {
+                  setAuthOpen(true);
+                }
+              }}
+              className="inline-flex h-16 items-center gap-2 rounded-full px-2 text-lg font-semibold text-black transition hover:bg-black/5"
+              aria-label={userLabel ? "Open user menu" : "Sign in"}
+            >
+              {/* Always show user icon */}
+              <div className="relative flex items-center">
+                <UserRound size={24} />
+              </div>
+              
+              {/* Always show user name */}
               <span className="uppercase tracking-wide">{userLabel ?? t.nav.signIn}</span>
+              
+              {/* Show cart icon with count when items in cart */}
+              {mounted && cartCount > 0 && (
+                <div className="relative flex items-center ml-2">
+                  <ShoppingBag size={24} />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[8px] flex items-center justify-center font-bold">
+                    {cartCount > 9 ? "9+" : cartCount}
+                  </span>
+                </div>
+              )}
             </button>
             
             {/* Dropdown with User options, Currency, Language, Cart */}
             {userMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-60 glass-panel-heavy rounded-2xl p-3 border border-black/5 shadow-xl z-50">
+              <div className="user-dropdown-container absolute right-0 top-full mt-2 w-60 glass-panel-heavy rounded-2xl p-3 border border-black/5 shadow-xl z-50">
                 {/* User Section - only when logged in */}
                 {status === "authenticated" && (
                   <div className="pb-2 mb-2 border-b border-black/5">
@@ -200,31 +240,31 @@ export function Navbar() {
                 )}
                 
                 <div className="space-y-1">
-                  {/* Currency - vertical */}
-                  <div className="flex flex-col gap-1 px-2 py-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-black/30">Currency</span>
-                    <CurrencySelector />
-                  </div>
-                  
-                  {/* Language - vertical */}
-                  <div className="flex flex-col gap-1 px-2 py-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-black/30">Language</span>
-                    <LanguageSelector />
+                  {/* Currency & Language - horizontal row */}
+                  <div className="flex flex-row gap-2 px-2 py-1">
+                    <div className="flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black/30 block mb-1">Currency</span>
+                      <CurrencySelector />
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black/30 block mb-1">Language</span>
+                      <LanguageSelector />
+                    </div>
                   </div>
                   
                   {/* User links - only when logged in */}
                   {status === "authenticated" && (
                     <>
                       <div className="my-1 h-px bg-black/5" />
-                      <Link href="/account" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg">
+                      <button type="button" onClick={() => { setUserMenuOpen(false); window.location.href = "/account"; }} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg w-full">
                         Dashboard
-                      </Link>
-                      <Link href="/account/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg">
+                      </button>
+                      <button type="button" onClick={() => { setUserMenuOpen(false); window.location.href = "/account/orders"; }} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg w-full">
                         Orders
-                      </Link>
-                      <Link href="/account/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg">
+                      </button>
+                      <button type="button" onClick={() => { setUserMenuOpen(false); window.location.href = "/account/profile"; }} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg w-full">
                         Profile
-                      </Link>
+                      </button>
                     </>
                   )}
                   
@@ -242,6 +282,20 @@ export function Navbar() {
                       </span>
                     )}
                   </Link>
+
+                  {/* Sign Out - only when logged in */}
+                  {status === "authenticated" && (
+                    <button 
+                      type="button"
+                      onClick={async () => { 
+                        setUserMenuOpen(false); 
+                        await signOut({ callbackUrl: "/" });
+                      }} 
+                      className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg w-full cursor-pointer"
+                    >
+                      Sign Out
+                    </button>
+                  )}
                 </div>
               </div>
             )}
