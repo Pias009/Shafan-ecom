@@ -75,17 +75,21 @@ export default function ProductsClient({ initialProducts, category, brand: initi
     return products.filter((p) => {
       // Check if product has a valid price for user's country
       let hasValidPrice = false;
-      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
-        const countryPrice = p.countryPrices.find((cp: any) =>
-          cp.country.toUpperCase() === userCountry.toUpperCase()
-        );
-        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
-      } else if (!isCountrySupported) {
-        // For unsupported countries, hide products entirely
-        hasValidPrice = false;
+      
+      // If product has country-specific prices, check user's country
+      if (p.countryPrices && p.countryPrices.length > 0) {
+        if (isCountrySupported) {
+          const countryPrice = p.countryPrices.find((cp: any) =>
+            cp.country.toUpperCase() === userCountry.toUpperCase()
+          );
+          hasValidPrice = countryPrice && countryPrice.priceCents > 0;
+        } else {
+          // For unsupported countries, use base price if available
+          hasValidPrice = p.priceCents > 0 || p.regularPriceCents > 0;
+        }
       } else {
-        // For supported countries without country prices, hide the product
-        hasValidPrice = false;
+        // If no country prices, use base price
+        hasValidPrice = p.priceCents > 0 || p.regularPriceCents > 0;
       }
       
       if (!hasValidPrice) return false;
