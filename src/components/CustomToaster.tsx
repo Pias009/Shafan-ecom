@@ -81,15 +81,15 @@ export function CustomToast({ toast: toastObj, message, onClose }: CustomToastPr
       animate="animate"
       exit="exit"
       whileHover="hover"
-      className={`bg-gradient-to-r ${getBackgroundGradient()} backdrop-blur-xl rounded-2xl px-6 py-4 flex items-center gap-4 shadow-2xl border max-w-md pointer-events-auto group`}
+      className={`bg-gradient-to-r ${getBackgroundGradient()} backdrop-blur-xl rounded-2xl px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-2 sm:gap-4 shadow-2xl border w-full sm:max-w-md pointer-events-auto group`}
     >
       {/* Icon Container */}
-      <div className="flex-shrink-0 flex items-center justify-center w-6 h-6">
+      <div className="flex-shrink-0 flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6">
         {getIcon()}
       </div>
 
       {/* Message */}
-      <p className={`text-sm font-medium ${getTextColor()} flex-1 leading-relaxed`}>
+      <p className={`text-xs sm:text-sm font-medium ${getTextColor()} flex-1 leading-relaxed line-clamp-2`}>
         {message}
       </p>
 
@@ -99,7 +99,7 @@ export function CustomToast({ toast: toastObj, message, onClose }: CustomToastPr
           toast.dismiss(toastObj.id);
           onClose?.();
         }}
-        className="flex-shrink-0 text-white/40 hover:text-white/80 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+        className="flex-shrink-0 text-white/40 hover:text-white/80 transition-colors duration-200"
       >
         <X className="w-4 h-4" />
       </button>
@@ -112,54 +112,43 @@ interface CustomToasterProps {
 }
 
 export function CustomToaster({ position = "bottom-center" }: CustomToasterProps) {
+  const getToastPosition = () => {
+    const base = "fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-[calc(100%-2rem)] sm:max-w-md px-4 pointer-events-auto";
+    
+    if (position.includes("top") && !position.includes("bottom")) {
+      return base.replace("bottom-8", "top-8").replace("bottom: 24", "top: 24");
+    }
+    if (position.includes("left") && position.includes("bottom")) {
+      return base.replace("left-1/2 -translate-x-1/2", "left-4 right-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
+    }
+    if (position.includes("right") && position.includes("bottom")) {
+      return base.replace("left-1/2 -translate-x-1/2", "right-4 left-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
+    }
+    return base;
+  };
+  
   return (
     <Toaster
       position={position}
-      containerStyle={{
-        top: position.includes("top") ? 20 : "auto",
-        bottom: position.includes("bottom") ? 20 : "auto",
-        left: position.includes("left") ? 20 : "auto",
-        right: position.includes("right") ? 20 : "auto",
-      }}
       toastOptions={{
-        custom: {
-          duration: 4000,
-          style: {
-            padding: 0,
-            background: "transparent",
-          },
+        style: {
+          background: "transparent",
+          boxShadow: "none",
+          padding: 0,
         },
-        success: {
-          duration: 4000,
-          style: {
-            padding: 0,
-            background: "transparent",
-          },
-        },
-        error: {
-          duration: 5000,
-          style: {
-            padding: 0,
-            background: "transparent",
-          },
-        },
-        loading: {
-          duration: Infinity,
-          style: {
-            padding: 0,
-            background: "transparent",
-          },
-        },
+        duration: 4000,
       }}
     >
       {(t) => (
         <AnimatePresence mode="popLayout">
           {t.visible && (
-            <CustomToast
-              toast={t}
-              message={typeof t.message === "string" ? t.message : ""}
-              onClose={() => {}}
-            />
+            <div className={getToastPosition()}>
+              <CustomToast
+                toast={t}
+                message={typeof t.message === "string" ? t.message : ""}
+                onClose={() => {}}
+              />
+            </div>
           )}
         </AnimatePresence>
       )}

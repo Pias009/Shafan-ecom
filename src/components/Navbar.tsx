@@ -39,7 +39,6 @@ export function Navbar() {
     { href: "/products?category=Fragrances", label: t.nav.fragrances },
     { href: "/offers", label: "🎉 Offers" },
     { href: "/products", label: t.nav.products },
-    { href: "/announcements", label: t.nav.offers },
   ];
 
   const [visible, setVisible] = useState(true);
@@ -152,7 +151,7 @@ export function Navbar() {
             <div className="glass-panel rounded-full px-6 py-2 max-w-3xl">
               <div className="flex items-center gap-1 md:gap-2">
                 {navLinks.map((link) => {
-                  const isOffers = link.href === "/announcements";
+                  const isOffers = link.href === "/offers";
                   return (
                     <Link
                       key={link.href}

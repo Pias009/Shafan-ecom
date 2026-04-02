@@ -70,41 +70,35 @@ export function AdminSidebar() {
             );
           })}
 
-          <div className="pt-8 space-y-4">
-             <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">Promotions</div>
-             <Link
-                href="/ueadmin/discounts"
-                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-             >
-                <Tag size={18} /> Discounts & Coupons
-             </Link>
-             <Link
-                href="/ueadmin/offer-banners"
-                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-             >
-                <Tag size={18} /> Promotional Banners
-             </Link>
+           <div className="pt-8 space-y-4">
+              <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">Promotions</div>
+              <Link
+                 href="/ueadmin/discounts"
+                 className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+              >
+                 <Tag size={18} /> Discounts & Coupons
+              </Link>
+              <Link
+                 href="/ueadmin/banners"
+                 className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+              >
+                 <ImageIcon size={18} /> Hero Banners
+              </Link>
 
-             <div className="pt-8 space-y-4">
-                <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">System Configuration</div>
-                <Link
-                   href="/ueadmin/blog"
-                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-                >
-                   <BookOpen size={18} /> Announcements
-                </Link>
-                <Link
-                   href="/ueadmin/banners"
-                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-                >
-                   <ImageIcon size={18} /> Hero Banners
-                </Link>
-                <Link
-                 href="/ueadmin/email-test"
-                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-                >
-                   <Terminal size={18} /> Email Test
-                </Link>
+              <div className="pt-8 space-y-4">
+                 <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">System Configuration</div>
+                 <Link
+                    href="/ueadmin/blog"
+                    className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                 >
+                    <BookOpen size={18} /> Announcements
+                 </Link>
+                 <Link
+                   href="/ueadmin/email-test"
+                    className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                 >
+                    <Terminal size={18} /> Email Test
+                 </Link>
               </div>
            </div>
         </nav>

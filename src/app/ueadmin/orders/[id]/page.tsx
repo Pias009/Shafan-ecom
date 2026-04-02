@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, ShieldCheck, Info } from 'lucide-react';
+import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, ShieldCheck, Info, Download } from 'lucide-react';
 import OrderStatusActions from './OrderStatusActions';
 import { OrderStatus } from '@prisma/client';
 
@@ -187,57 +187,57 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
         {/* Sidebar: Payment & Financials */}
         <div className="space-y-6 md:space-y-8">
-          <section className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-black/5 shadow-2xl bg-black text-white lg:sticky lg:top-24">
+          <section className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-black/5 shadow-2xl bg-white lg:sticky lg:top-24">
             <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 bg-white/10 rounded-xl text-white"><CreditCard size={18} /></div>
-              <h3 className="font-black uppercase tracking-widest text-xs text-white/90">Financials</h3>
+              <div className="p-2 bg-black/5 rounded-xl text-black/40"><CreditCard size={18} /></div>
+              <h3 className="font-black uppercase tracking-widest text-xs text-black">Financials</h3>
             </div>
             
             <div className="space-y-4 md:space-y-5">
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/30">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-black/40">
                 <span>Subtotal</span>
                 <span>{formatPrice(order.subtotalCents, order.currency)}</span>
               </div>
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/30">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-black/40">
                 <span>Shipping</span>
                 <span>{formatPrice(order.shippingCents || 0, order.currency)}</span>
               </div>
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/30">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-black/40">
                 <span>Discount</span>
                 <span>-{formatPrice(order.discountCents || 0, order.currency)}</span>
               </div>
-              <div className="pt-6 md:pt-8 border-t border-white/10 flex justify-between items-end">
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Grand Total</span>
-                <span className="text-3xl md:text-4xl font-black">{formatPrice(order.totalCents, order.currency)}</span>
+              <div className="pt-6 md:pt-8 border-t border-black/5 flex justify-between items-end">
+                <span className="text-[10px] font-black uppercase tracking-widest text-black/40 mb-1">Grand Total</span>
+                <span className="text-3xl md:text-4xl font-black text-black">{formatPrice(order.totalCents, order.currency)}</span>
               </div>
             </div>
 
-            <div className="mt-8 pt-8 border-t border-white/10 space-y-6">
-               <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
-                 <div className="p-3 bg-white/10 rounded-xl"><ShieldCheck size={18} /></div>
+            <div className="mt-8 pt-8 border-t border-black/5 space-y-6">
+               <div className="flex items-center gap-4 bg-black/5 p-4 rounded-2xl border border-black/5">
+                 <div className="p-3 bg-black/10 rounded-xl text-black/40"><ShieldCheck size={18} /></div>
                  <div>
-                    <div className="text-[8px] font-black uppercase tracking-widest text-white/30">Integrity</div>
-                     <div className="font-bold text-[9px] uppercase tracking-widest bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full inline-block mt-1">
-                       {['ORDER_CONFIRMED', 'PROCESSING', 'DELIVERED'].includes(order.status) ? 'Verified' : 'Review'}
+                    <div className="text-[8px] font-black uppercase tracking-widest text-black/30">Integrity</div>
+                     <div className="font-bold text-[9px] uppercase tracking-widest bg-green-500/20 text-green-600 px-2 py-0.5 rounded-full inline-block mt-1">
+                      {['ORDER_CONFIRMED', 'PROCESSING', 'DELIVERED'].includes(order.status) ? 'Verified' : 'Review'}
                      </div>
                  </div>
                </div>
 
                <div className="grid grid-cols-2 gap-4">
                  <div>
-                   <div className="text-[8px] font-black uppercase tracking-widest text-white/20">Method</div>
-                   <div className="font-bold text-[10px] uppercase tracking-widest mt-1 truncate">{order.paymentMethodTitle || 'N/A'}</div>
+                   <div className="text-[8px] font-black uppercase tracking-widest text-black/20">Method</div>
+                   <div className="font-bold text-[10px] uppercase tracking-widest mt-1 truncate text-black">{order.paymentMethodTitle || 'N/A'}</div>
                  </div>
                  <div>
-                   <div className="text-[8px] font-black uppercase tracking-widest text-white/20">Slug</div>
-                   <div className="font-bold text-[10px] uppercase tracking-widest mt-1 text-white/60 truncate">{order.paymentMethod}</div>
+                   <div className="text-[8px] font-black uppercase tracking-widest text-black/20">Slug</div>
+                   <div className="font-bold text-[10px] uppercase tracking-widest mt-1 text-black/60 truncate">{order.paymentMethod}</div>
                  </div>
                </div>
 
                {order.stripePaymentIntentId && (
                  <div>
-                    <div className="text-[8px] font-black uppercase tracking-widest text-white/20 mb-2">Transaction ID</div>
-                    <div className="font-mono text-[9px] break-all bg-white/5 p-3 rounded-xl border border-white/5 text-white/60">
+                    <div className="text-[8px] font-black uppercase tracking-widest text-black/20 mb-2">Transaction ID</div>
+                    <div className="font-mono text-[9px] break-all bg-black/5 p-3 rounded-xl border border-black/5 text-black/60">
                       {order.stripePaymentIntentId}
                     </div>
                  </div>
@@ -245,12 +245,46 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </div>
           </section>
 
-          <section className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-start gap-3">
-             <div className="p-2 bg-black/5 rounded-xl text-black/20 shrink-0"><Info size={16} /></div>
-             <p className="text-[9px] font-bold text-black/30 leading-relaxed uppercase tracking-widest">
-                Data via MongoDB powered by Prisma.
-             </p>
-          </section>
+<section className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-start gap-3">
+              <div className="p-2 bg-black/5 rounded-xl text-black/20 shrink-0"><Info size={16} /></div>
+              <div className="flex-1">
+                <p className="text-[9px] font-bold text-black/30 leading-relaxed uppercase tracking-widest">
+                   Order Details
+                </p>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <div className="text-[8px] font-black uppercase tracking-widest text-black/20">Order ID</div>
+                    <div className="font-bold text-xs text-black mt-1">{order.id}</div>
+                  </div>
+                  <div>
+                    <div className="text-[8px] font-black uppercase tracking-widest text-black/20">Created</div>
+                    <div className="font-bold text-xs text-black mt-1">{new Date(order.createdAt).toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-[8px] font-black uppercase tracking-widest text-black/20">Payment</div>
+                    <div className="font-bold text-xs text-black mt-1">{order.paymentMethodTitle || order.paymentMethod}</div>
+                  </div>
+                  <div>
+                    <div className="text-[8px] font-black uppercase tracking-widest text-black/20">Currency</div>
+                    <div className="font-bold text-xs text-black mt-1">{order.currency}</div>
+                  </div>
+                </div>
+              </div>
+           </section>
+
+           {/* Invoice Download */}
+           <a
+             href={`/api/admin/orders/${order.id}/invoice`}
+             target="_blank"
+             rel="noopener noreferrer"
+             className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-center gap-4 hover:bg-black/5 transition-colors cursor-pointer"
+           >
+              <div className="p-3 bg-black rounded-xl text-white"><Download size={18} /></div>
+              <div className="flex-1">
+                  <p className="text-xs font-black uppercase tracking-widest text-black">Download Invoice</p>
+                  <p className="text-[9px] font-bold text-black/40 uppercase tracking-widest">PDF format</p>
+              </div>
+           </a>
         </div>
       </div>
     </div>

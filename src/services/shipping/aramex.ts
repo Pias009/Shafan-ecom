@@ -172,7 +172,7 @@ export class AramexService {
       return {
         status: data.TrackingResult.CurrentStatus || "Unknown",
         statusCode: data.TrackingResult.StatusCode || "",
-        events: (data.TrackingResult.Events || []).map((event: any) => ({
+        events: (data.TrackingResult.Events || []).map((event: { Time: string; Location: string; Description: string }) => ({
           date: event.Time,
           location: event.Location,
           description: event.Description,

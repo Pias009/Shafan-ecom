@@ -28,6 +28,9 @@ function formatPriceSimple(amount: number, currencyCode: string): string {
 }
 
 function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, isCents, userCountry, currentCurrency }: PriceProps & { userCountry: string; currentCurrency: { code: string } }) {
+  if (amount == null) {
+    return <span className={className}>-</span>;
+  }
   let displayAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(displayAmount)) displayAmount = 0;
 
