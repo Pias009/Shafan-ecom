@@ -131,6 +131,7 @@ export async function PUT(
       uses,
       productIds,
       categoryIds,
+      countries,
     } = body;
 
     // Check if discount exists
@@ -140,6 +141,18 @@ export async function PUT(
 
     if (!existingDiscount) {
       return NextResponse.json({ error: "Discount not found" }, { status: 404 });
+    }
+
+    // Validate countries if provided
+    const validCountries = ["AE", "KW", "BH", "SA", "OM", "QA"];
+    if (countries && countries.length > 0) {
+      const invalidCountries = countries.filter((c: string) => !validCountries.includes(c));
+      if (invalidCountries.length > 0) {
+        return NextResponse.json(
+          { error: `Invalid countries: ${invalidCountries.join(", ")}` },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate value if provided
@@ -196,9 +209,16 @@ export async function PUT(
     if (startDateObj !== undefined) updateData.startDate = startDateObj;
     if (endDateObj !== undefined) updateData.endDate = endDateObj;
     if (maxUses !== undefined) updateData.maxUses = maxUses;
-    if (active !== undefined) updateData.active = active;
+    if (active !== undefined) {
+      updateData.active = active;
+      updateData.status = active ? "ACTIVE" : "DRAFT";
+      if (active && !existingDiscount.publishedAt) {
+        updateData.publishedAt = new Date();
+      }
+    }
     if (autoApply !== undefined) updateData.autoApply = autoApply;
     if (uses !== undefined) updateData.uses = uses;
+    if (countries !== undefined) updateData.countries = countries.length > 0 ? countries : validCountries;
 
     // Handle product connections if provided
     let productConnectDisconnect: any = undefined;

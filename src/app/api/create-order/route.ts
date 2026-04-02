@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
+import { COUNTRY_CONFIG } from "@/lib/address-config";
 
 // Delivery fee configuration by country
 interface DeliveryConfig {
@@ -21,23 +22,12 @@ const DELIVERY_CONFIG: Record<string, DeliveryConfig> = {
 
 // Helper function to determine courier based on shipping address
 function determineCourier(shippingAddress: any): string {
-  if (!shippingAddress || !shippingAddress.country) {
-    return "GLOBAL"; // Default to global courier
-  }
-
-  const country = shippingAddress.country.toString().toLowerCase().trim();
-  
-  // Check if the order is from Kuwait
-  if (country === "kuwait" || country === "kw") {
-    return "KUWAIT_COURIER";
-  }
-  
   return "GLOBAL_COURIER";
 }
 
 // Helper function to generate tracking code
-function generateTrackingCode(courier: string): string {
-  const prefix = courier === "KUWAIT_COURIER" ? "KW" : "GL";
+function generateTrackingCode(): string {
+  const prefix = "GL";
   const random = Math.random().toString(36).substring(2, 10).toUpperCase();
   return `${prefix}-${random}-${Date.now().toString().slice(-6)}`;
 }
@@ -143,6 +133,121 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
   return { priceCents: 0, source: 'none' };
 }
 
+// Validate and apply discount from coupon code
+async function applyDiscount(
+  couponCode: string | undefined,
+  countryCode: string,
+  subtotalCents: number,
+  userId?: string,
+  userEmail?: string
+): Promise<{ discountCents: number; discountCodeUsed?: string; error?: string }> {
+  if (!couponCode) {
+    return { discountCents: 0 };
+  }
+
+  try {
+    // Find discount by code
+    const discount = await (prisma as any).discount.findUnique({
+      where: { code: couponCode.toUpperCase() },
+    });
+
+    if (!discount) {
+      console.warn(`Discount code not found: ${couponCode}`);
+      return { discountCents: 0, error: "Code not found" };
+    }
+
+    // Check if discount is active
+    if (!discount.active || discount.status !== "ACTIVE") {
+      console.warn(`Discount code is not active: ${couponCode}`);
+      return { discountCents: 0, error: "Code not active" };
+    }
+
+    // Check if discount is valid for the country
+    if (discount.countries && discount.countries.length > 0 && !discount.countries.includes(countryCode)) {
+      console.warn(`Discount code not valid for country: ${countryCode}`);
+      return { discountCents: 0, error: "Not valid for this country" };
+    }
+
+    // Check if discount is within valid date range
+    const now = new Date();
+    if (discount.startDate && new Date(discount.startDate) > now) {
+      console.warn(`Discount code not yet valid: ${couponCode}`);
+      return { discountCents: 0, error: "Code not yet valid" };
+    }
+    if (discount.endDate && new Date(discount.endDate) < now) {
+      console.warn(`Discount code expired: ${couponCode}`);
+      return { discountCents: 0, error: "Code has expired" };
+    }
+
+    // Check minimum order value
+    if (discount.minimumOrderValue && subtotalCents < discount.minimumOrderValue) {
+      console.warn(`Order doesn't meet minimum for discount: ${couponCode}`);
+      return { discountCents: 0, error: `Minimum order ${(discount.minimumOrderValue / 100).toFixed(2)} required` };
+    }
+
+    // Check max total uses (global limit)
+    if (discount.maxUses) {
+      const totalUsageCount = await (prisma as any).discountUsage.count({
+        where: { discountId: discount.id },
+      });
+      if (totalUsageCount >= discount.maxUses) {
+        console.warn(`Discount code has reached max total uses: ${couponCode}`);
+        return { discountCents: 0, error: "Code usage limit reached" };
+      }
+    }
+
+    // Check per-user usage limits (SINGLE_USE or MULTI_USE)
+    const usageType = discount.usageType || "MULTI_USE";
+    
+    if (userId || userEmail) {
+      // Check user's usage count for this discount
+      const userUsageCount = await (prisma as any).discountUsage.count({
+        where: {
+          discountId: discount.id,
+          OR: userId ? [{ userId }] : [{ email: userEmail }],
+        },
+      });
+
+      // Check maxUsesPerUser limit
+      if (discount.maxUsesPerUser && userUsageCount >= discount.maxUsesPerUser) {
+        console.warn(`User has reached max uses for this discount: ${couponCode}`);
+        return { discountCents: 0, error: `You can only use this code ${discount.maxUsesPerUser} time(s)` };
+      }
+
+      // For SINGLE_USE coupons - only one use per user ever
+      if (usageType === "SINGLE_USE" && userUsageCount > 0) {
+        console.warn(`SINGLE_USE coupon already used by user: ${couponCode}`);
+        return { discountCents: 0, error: "This code can only be used once per customer" };
+      }
+    }
+
+    // Check max uses per order (usually 1)
+    if (discount.maxUsesPerOrder && discount.maxUsesPerOrder > 1) {
+      console.log(`Coupon allows up to ${discount.maxUsesPerOrder} uses per order`);
+    }
+
+    // Calculate discount amount
+    let discountCents = 0;
+    if (discount.discountType === "PERCENTAGE") {
+      discountCents = Math.round((subtotalCents * discount.value) / 100);
+    } else if (discount.discountType === "FIXED_AMOUNT") {
+      discountCents = Math.round(discount.value * 100); // Value stored as float, convert to cents
+    } else if (discount.discountType === "FREE_SHIPPING") {
+      discountCents = 0;
+    }
+
+    // Cap discount at subtotal
+    discountCents = Math.min(discountCents, subtotalCents);
+
+    console.log(`Applied discount ${couponCode}: ${discountCents} cents (type: ${usageType})`);
+
+    return { discountCents, discountCodeUsed: discount.id };
+  } catch (error) {
+    console.error("Error applying discount:", error);
+    return { discountCents: 0 };
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerAuthSession();
@@ -151,6 +256,22 @@ export async function POST(req: Request) {
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+    }
+
+    // Get normalized country code for validation - prioritize direct country param, then shipping, then billing
+    const countryCode = normalizeCountryCode(country || shipping?.country || billing?.country);
+    
+    // Validate that the country accepts orders
+    const selectedCountry = COUNTRY_CONFIG[countryCode];
+    if (!selectedCountry || !selectedCountry.active) {
+      return NextResponse.json(
+        {
+          error: `Unfortunately, we do not currently accept orders from ${selectedCountry?.name || countryCode}. Please select a different delivery country.`,
+          countryNotAllowed: true,
+          requestedCountry: countryCode,
+        },
+        { status: 400 }
+      );
     }
 
     // Fetch user's address if not provided in request
@@ -182,8 +303,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // Get normalized country code for pricing - prioritize direct country param, then shipping, then billing
-    const countryCode = normalizeCountryCode(country || shipping?.country || billing?.country);
+    // Get currency for the country
     const currency = getCurrencyForCountry(countryCode);
 
     // Calculate totals with improved price lookup
@@ -218,6 +338,14 @@ export async function POST(req: Request) {
         throw new Error(`Product not found: ${item.productId}`);
       }
 
+      // Check stock availability
+      if (product.stockQuantity !== null && product.stockQuantity <= 0) {
+        throw new Error(`Product "${product.name}" is out of stock. Please remove it from your cart.`);
+      }
+      if (product.stockQuantity !== null && product.stockQuantity < item.quantity) {
+        throw new Error(`Not enough stock for "${product.name}". Available: ${product.stockQuantity}`);
+      }
+
       // Determine which store this product belongs to
       let productStoreId = product.storeId;
       let productStoreCode = product.store?.code;
@@ -230,12 +358,6 @@ export async function POST(req: Request) {
 
       // Track store for validation
       if (productStoreId) {
-        if (productStoreCode === 'KUW') {
-          const shippingCountry = shipping?.country?.toString().toLowerCase().trim();
-          if (!shippingCountry || (shippingCountry !== 'kuwait' && shippingCountry !== 'kw')) {
-            throw new Error('Kuwait products can only be ordered from Kuwait addresses');
-          }
-        }
       }
 
       // Use price from cart item if provided, otherwise lookup from database
@@ -305,11 +427,20 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    const totalCents = subtotalCents + shippingCents;
+    // Apply discount from coupon code
+    const { discountCents } = await applyDiscount(
+      couponCode,
+      countryCode,
+      subtotalCents,
+      session?.user?.id || undefined,
+      session?.user?.email || undefined
+    );
+
+    const totalCents = subtotalCents + shippingCents - discountCents;
 
     // Determine courier based on shipping address
     const courier = determineCourier(shipping);
-    const trackingCode = generateTrackingCode(courier);
+    const trackingCode = generateTrackingCode();
 
     // Create the order in Prisma
     const order = await prisma.order.create({
@@ -320,7 +451,7 @@ export async function POST(req: Request) {
         currency: currency.toLowerCase(),
         subtotalCents,
         shippingCents,
-        discountCents: 0,
+        discountCents,
         totalCents,
         billingAddress: billing || {},
         shippingAddress: shipping || {},
@@ -336,9 +467,7 @@ export async function POST(req: Request) {
           create: {
             courier,
             trackingCode,
-            trackingUrl: courier === "KUWAIT_COURIER"
-              ? `https://kuwait-courier.com/track/${trackingCode}`
-              : `https://global-courier.com/track/${trackingCode}`,
+            trackingUrl: `https://global-courier.com/track/${trackingCode}`,
             status: "Created"
           }
         }
@@ -348,6 +477,21 @@ export async function POST(req: Request) {
         shipment: true
       }
     });
+
+    // Decrement stock for each ordered item
+    for (const item of items) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId }
+      });
+      if (product && product.stockQuantity !== null) {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: {
+            stockQuantity: Math.max(0, product.stockQuantity - item.quantity)
+          }
+        });
+      }
+    }
 
     return NextResponse.json({
       orderId: order.id,

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CreditCard, User, MapPin, CheckCircle2, ShoppingBag } from "lucide-react";
 import OrderActions from "./OrderActions";
+import { InvoiceDownloader } from "@/components/InvoiceDownloader";
 import { OrderStatus } from "@prisma/client";
 
 function formatPrice(amountCents: number, currency: string): string {
@@ -180,6 +181,15 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
            <CheckCircle2 size={20} className="text-green-400 shrink-0" />
            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-center md:text-left">Transaction Verified and Secured</p>
         </div>
+      </section>
+
+      {/* Dynamic Actions: Cancel (30m) or Refund (Delivered) */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-3 border-b border-black/5 pb-4">
+          <div className="p-2 bg-black/5 rounded-xl"><ShoppingBag size={16} /></div>
+          <h3 className="font-black uppercase tracking-widest text-xs">Invoice</h3>
+        </div>
+        <InvoiceDownloader orderId={order.id} />
       </section>
 
       {/* Dynamic Actions: Cancel (30m) or Refund (Delivered) */}

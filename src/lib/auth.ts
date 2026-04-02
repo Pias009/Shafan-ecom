@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -35,6 +36,11 @@ export const authOptions: NextAuthOptions = {
     },
   },
   providers: [
+    // Google OAuth Provider
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
     Credentials({
       id: "mfa",
       name: "MFA Token",

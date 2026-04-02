@@ -42,45 +42,19 @@ export async function getAdminStoreAccess(): Promise<AdminStoreAccess | null> {
     };
   }
 
-  // ADMIN role - check country assignment
+  // ADMIN role - all admins now have global access
   if (userRole === 'ADMIN') {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { country: true }
-    });
-
-    if (!user?.country) {
-      // Admin without country assignment - no access
-      return {
-        storeIds: [],
-        isSuperAdmin: false,
-        isGlobalAdmin: false,
-        allowedStores: [],
-        userCountry: undefined
-      };
-    }
-
-    const normalizedCountry = user.country.toUpperCase();
-    
-    // Find stores in the admin's country
-    const stores = await prisma.store.findMany({
-      where: { 
-        country: normalizedCountry,
-        active: true 
-      },
+    const allStores = await prisma.store.findMany({
+      where: { active: true },
       select: { id: true, code: true, country: true }
     });
-
-    // All admins (including UAE) are restricted to their own country stores only
-    // UAE admins can only see UAE products, Kuwait admins can only see Kuwait products
-    const isGlobalAdmin = false; // No global admins - each admin restricted to their country
-
+    
     return {
-      storeIds: stores.map(s => s.id),
+      storeIds: allStores.map(s => s.id),
       isSuperAdmin: false,
-      isGlobalAdmin,
-      allowedStores: stores.map(s => s.code),
-      userCountry: normalizedCountry
+      isGlobalAdmin: true,
+      allowedStores: allStores.map(s => s.code),
+      userCountry: undefined
     };
   }
 
@@ -119,14 +93,6 @@ export async function getAdminCountry(): Promise<string | null> {
 }
 
 /**
- * Check if admin is a global admin (UAE admin)
- */
-export async function isGlobalAdmin(): Promise<boolean> {
-  const access = await getAdminStoreAccess();
-  return access?.isGlobalAdmin || false;
-}
-
-/**
  * Server-side guard to ensure admin has access to a specific store
  * Redirects to unauthorized page if access is denied
  */
@@ -139,17 +105,13 @@ export async function requireStoreAccess(storeCode: string): Promise<void> {
 }
 
 /**
- * Server-side guard to ensure admin has access to Kuwait store
- */
-export async function requireKuwaitAccess(): Promise<void> {
-  await requireStoreAccess('KUW');
-}
-
-/**
- * Server-side guard to ensure admin has access to UAE store
+ * Server-side guard - validates admin role (global access)
  */
 export async function requireUAEAccess(): Promise<void> {
-  await requireStoreAccess('UAE');
+  const session = await getServerAuthSession();
+  if (!session?.user || !['ADMIN', 'SUPERADMIN'].includes((session.user as any)?.role)) {
+    redirect('/ueadmin/unauthorized');
+  }
 }
 
 /**
@@ -167,7 +129,7 @@ export async function getAccessibleStore(storeCode: string) {
     where: {
       code: {
         equals: storeCode,
-        mode: 'insensitive' // Case-insensitive search
+        mode: 'insensitive'
       }
     }
   });

@@ -59,15 +59,11 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       );
     }
 
-    const kuwaitInv = (product as any).storeInventories?.find((i: any) => i.store?.code === 'KUW');
-    
     const productWithGlobal = {
       ...product,
       categories: product.productCategories.map((pc: any) => pc.category),
       skinTones: product.productSkinTones.map((ps: any) => ps.skinTone),
       skinConcerns: product.productSkinConcerns.map((sc: any) => sc.skinConcern),
-      kuwaitPrice: kuwaitInv?.price || 0,
-      kuwaitStock: kuwaitInv?.quantity || 0,
       allInventories: (product as any).storeInventories || [],
       isSuper
     };

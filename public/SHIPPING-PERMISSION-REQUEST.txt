@@ -1,0 +1,126 @@
+================================================================================
+                    SHIPPING INTEGRATION PERMISSION REQUEST
+================================================================================
+
+Date: April 2026
+From: [Your Company Name]
+To: [Client Name]
+
+================================================================================
+                         PROPOSED SHIPPING INTEGRATION
+================================================================================
+
+We are planning to integrate automated shipping services into your e-commerce 
+platform to provide customers with real-time shipping rates and automated 
+shipment tracking.
+
+Three integration options are available:
+
+--------------------------------------------------------------------------------
+OPTION 1: EASYSHIP (RECOMMENDED)
+--------------------------------------------------------------------------------
+• 550+ carrier connections including Aramex & Naqel
+• Free plan available for small businesses
+• Easy API integration
+• Automatic rate comparison
+• Built-in tracking
+
+API Required: Easyship API Key
+Cost: Free plan (up to 50 shipments/month)
+
+
+--------------------------------------------------------------------------------
+OPTION 2: CLICKPOST
+--------------------------------------------------------------------------------
+• 600+ carrier connections
+• Strong MENA region support
+• Both Aramex & Naqel available
+• Multi-carrier tracking API
+
+API Required: ClickPost API Key
+Cost: Contact for pricing
+
+
+--------------------------------------------------------------------------------
+OPTION 3: DIRECT API (NO MIDDLEMAN)
+--------------------------------------------------------------------------------
+• Direct connection to Aramex + Naqel
+• No additional monthly fees
+• Full control over integration
+
+APIs Required:
+• Aramex API credentials
+• Naqel Express API credentials
+
+Cost: Per-shipment fees only (no monthly cost)
+
+
+================================================================================
+                         INFORMATION NEEDED FROM CLIENT
+================================================================================
+
+To proceed with integration, we need the following:
+
+FOR ALL OPTIONS:
+□ Business registration documents
+□ Preferred shipping carriers
+□ Estimated monthly shipment volume
+
+FOR DIRECT API (Option 3):
+□ Aramex Account Number
+□ Aramex User Name & Password
+□ Aramex Account PIN
+□ Naqel User Name & Password  
+□ Naqel API Key
+□ Shipper address details (warehouse location)
+
+================================================================================
+                         BENEFITS AFTER INTEGRATION
+================================================================================
+
+✓ Real-time shipping rates at checkout
+✓ Automatic carrier selection based on destination
+✓ Automated tracking number generation
+✓ Customer email/SMS notifications
+✓ Live shipment tracking on your website
+✓ Reduced manual shipping work
+✓ Professional delivery experience
+
+
+================================================================================
+                         APPROVAL REQUEST
+================================================================================
+
+Please select your preferred option:
+
+[ ] Option 1: Easyship (Recommended)
+[ ] Option 2: ClickPost
+[ ] Option 3: Direct APIs (Aramex + Naqel)
+
+Please provide the following information:
+
+Company Name: _________________________________
+
+Business Registration Number: ____________________
+
+Estimated Monthly Orders: _____________________
+
+Preferred Option: _____________________________
+
+Signature: ___________________________________
+
+Date: ________________________________________
+
+
+================================================================================
+                         CONTACT FOR QUESTIONS
+================================================================================
+
+If you have any questions about this integration, please contact us.
+
+Email: [Your Email]
+Phone: [Your Phone]
+
+================================================================================
+Thank you for your consideration.
+================================================================================

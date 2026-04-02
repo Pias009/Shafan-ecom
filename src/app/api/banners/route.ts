@@ -6,9 +6,19 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const banners = await prisma.banner.findMany({
-      where: { active: true },
-      select: { id: true, imageUrl: true, title: true, link: true },
-      orderBy: { createdAt: 'desc' },
+      where: { active: true, status: 'ACTIVE' },
+      select: { 
+        id: true, 
+        imageUrl: true, 
+        title: true, 
+        description: true,
+        ctaLink: true,
+        ctaText: true,
+        position: true,
+        backgroundColor: true,
+        textColor: true,
+      },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
     });
 
     return NextResponse.json(banners);

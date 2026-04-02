@@ -6,7 +6,17 @@ import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
 
-// Saudi Arabia regions for Arriyadh services
+// Country list for MENA region
+const COUNTRIES = [
+  "United Arab Emirates (UAE)",
+  "Saudi Arabia",
+  "Kuwait",
+  "Bahrain",
+  "Qatar",
+  "Oman"
+];
+
+// Saudi Arabia regions
 const SAUDI_REGIONS = [
   "Riyadh", "Dammam", "Jeddah", "Mecca", "Medina", "Khobar", "Dhahran",
   "Al Khobar", "Qatif", "Hail", "Tabuk", "Bisha", "Najran", "Abha",
@@ -14,6 +24,36 @@ const SAUDI_REGIONS = [
   "Al Ahsa", "Al Bahah", "Al Qunfudhah", "Sabya", "Abu Arish", "Samtah",
   "Jazan", "Makkah", "Taif", "Al Baha", "Rafha", "Dawadmi", "Al Kharj",
   "Az Zulfi", "Al Majma'ah", "Al Aflaj", "Al Quwayiyah", "Riyadh Province"
+];
+
+// UAE cities
+const UAE_CITIES = [
+  "Dubai", "Abu Dhabi", "Sharjah", "Ajman", "Al Ain", "Fujairah", 
+  "Ras Al Khaimah", "Umm Al Quwain", "Khor Fakkan", "Kalba"
+];
+
+// Kuwait cities
+const KUWAIT_CITIES = [
+  "Kuwait City", "Al Ahmadi", "Al Farwaniyah", "Al Asema", "Al Jahra", 
+  "Hawally", "Mubarak Al Kabeer", "Salmiya", "Salwa", "Rawda"
+];
+
+// Bahrain cities
+const BAHRAIN_CITIES = [
+  "Manama", "Muharraq", "Riffa", "Hamad Town", "Isa Town", 
+  "Sitra", "Budaiya", "Jidhafs", "Al Malikiyah", "Zinj"
+];
+
+// Qatar cities
+const QATAR_CITIES = [
+  "Doha", "Al Rayyan", "Al Wakrah", "Al Khor", "Al Shahaniya",
+  "Umm Salal", "Al Daayen", "Al Shamal", "Dukhan", " Lusail"
+];
+
+// Oman cities
+const OMAN_CITIES = [
+  "Muscat", "Seeb", "Salalah", "Bawshar", "Sohar", "Ibri",
+  "Nizwa", "Suri", "Barka", "Rustaq", "Mahdah", "Khasab"
 ];
 
 // City suggestions
@@ -51,10 +91,26 @@ export default function AddressForm() {
     postalCode: "",
   });
 
-  // Filter regions based on search
-  const filteredRegions = SAUDI_REGIONS.filter(r => 
-    r.toLowerCase().includes(formData.country.toLowerCase()) ||
+  // Get cities based on selected country
+  const getCitiesForCountry = (country: string): string[] => {
+    if (country.includes("UAE") || country.includes("United Arab Emirates")) return UAE_CITIES;
+    if (country.includes("Kuwait")) return KUWAIT_CITIES;
+    if (country.includes("Bahrain")) return BAHRAIN_CITIES;
+    if (country.includes("Qatar")) return QATAR_CITIES;
+    if (country.includes("Oman")) return OMAN_CITIES;
+    return SAUDI_REGIONS;
+  };
+
+  // Filter countries based on search
+  const filteredCountries = COUNTRIES.filter(c => 
+    c.toLowerCase().includes(formData.country.toLowerCase()) ||
     formData.country === ""
+  );
+
+  // Filter regions based on search
+  const filteredRegions = getCitiesForCountry(formData.country).filter(r => 
+    r.toLowerCase().includes(formData.city.toLowerCase()) ||
+    formData.city === ""
   );
 
   // Auto-suggest cities based on city input
@@ -258,16 +314,19 @@ export default function AddressForm() {
             </button>
             {showRegionDropdown && (
               <div className="absolute z-[100] w-full mt-12 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                {filteredRegions.map(region => (
+                {filteredCountries.map(country => (
                   <button
-                    key={region}
+                    key={country}
                     type="button"
-                    onClick={() => selectRegion(region)}
+                    onClick={() => {
+                      setFormData({...formData, country, city: ""});
+                      setShowRegionDropdown(false);
+                    }}
                     className={`w-full px-5 py-3 text-left font-semibold hover:bg-black/5 transition ${
-                      formData.country === region ? "bg-black text-white" : "text-black"
+                      formData.country === country ? "bg-black text-white" : "text-black"
                     }`}
                   >
-                    {region}
+                    {country}
                   </button>
                 ))}
               </div>
@@ -281,16 +340,19 @@ export default function AddressForm() {
               <input 
                 required
                 value={formData.city}
-                onChange={e => setFormData({...formData, city: e.target.value})}
+                onChange={e => {
+                  setFormData({...formData, city: e.target.value});
+                  if (e.target.value.length >= 2) setShowCityDropdown(true);
+                }}
                 onFocus={() => formData.city.length >= 2 && setShowCityDropdown(true)}
-                placeholder="Type to search cities"
+                placeholder={formData.country ? "Type to search cities" : "Select country first"}
                 className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white pr-10"
               />
               <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-black/30" />
             </div>
-            {showCityDropdown && citySuggestions.length > 0 && (
+            {showCityDropdown && filteredRegions.length > 0 && (
               <div className="absolute z-[100] w-full mt-1 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
-                {citySuggestions.map(city => (
+                {filteredRegions.map(city => (
                   <button
                     key={city}
                     type="button"

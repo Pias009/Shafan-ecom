@@ -65,7 +65,7 @@ export function Footer() {
     <footer className="w-full bg-black text-white font-body selection:bg-white selection:text-black mt-auto">
 
       {/* Newsletter Section */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-12 md:py-20 lg:py-24">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12 lg:py-16">
         <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-8 lg:gap-16 xl:gap-20">
           
           {/* Logo Section */}
@@ -119,13 +119,13 @@ export function Footer() {
       <div className="border-t border-white/10" />
 
       {/* Main Footer Links — Desktop */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-14 hidden md:grid md:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-10 hidden md:grid md:grid-cols-4 gap-8">
         {sections.map((section) => (
           <div key={section.id}>
-            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-6 pb-3 border-b border-white/10">
+            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4 pb-2 border-b border-white/10">
               {section.title}
             </h3>
-            <div className="flex flex-col gap-3.5">
+            <div className="flex flex-col gap-2.5">
               {section.links.map((link) => (
                 <Link
                   key={link.label}
@@ -184,7 +184,7 @@ export function Footer() {
       <div className="border-t border-white/10" />
 
       {/* Bottom Bar - Updated according to feedback */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-4">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-6 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-4">
 
         {/* Social Media on LEFT side */}
         <div className="flex items-center gap-5 order-2 md:order-1">

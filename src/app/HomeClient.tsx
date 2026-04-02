@@ -25,6 +25,7 @@ import { useCurrencyStore } from "@/lib/currency-store";
 import { useUserCountry } from "@/lib/country-detection";
 import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 import HomeBannerSlider from "@/components/HomeBannerSlider";
+import { GoogleReviewsSection } from "@/components/GoogleReviewsSection";
 
 export default function HomeClient({ initialProducts, newArrivals = [] }: { initialProducts: any[], newArrivals?: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
@@ -71,21 +72,11 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
 
         // Map country codes to store codes
         const countryToStore: Record<string, string> = {
-          'KW': 'KUW',
           'AE': 'UAE',
-          'BH': 'BHR',
-          'SA': 'SAU',
-          'OM': 'OMN',
-          'QA': 'QAT',
         };
 
         const countryToCurrency: Record<string, string> = {
-          'KW': 'KWD',
           'AE': 'AED',
-          'BH': 'BHD',
-          'SA': 'SAR',
-          'OM': 'OMR',
-          'QA': 'QAR',
         };
 
         // Determine the country to use
@@ -93,12 +84,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         if (storeCode) {
           // Map store code back to country code
           const storeToCountry: Record<string, string> = {
-            'KUW': 'KW',
             'UAE': 'AE',
-            'BHR': 'BH',
-            'SAU': 'SA',
-            'OMN': 'OM',
-            'QAT': 'QA',
           };
           country = storeToCountry[storeCode] || country;
         }
@@ -530,6 +516,9 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
 
       {/* Brand Slider Section - Moved above footer */}
       <BrandMarquee />
+
+      {/* Google Reviews Section */}
+      <GoogleReviewsSection />
 
       <ProductQuickViewModal
         product={quickView ? {

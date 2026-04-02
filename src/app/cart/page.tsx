@@ -22,6 +22,21 @@ function isValidImageUrl(url: any): boolean {
 function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, applyCoupon, removeCoupon, subtotalCents, discountCents, totalCents, shippingCents, freeDelivery, t, userCountry }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
+  const [couponInput, setCouponInput] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
+  async function handleApplyCoupon() {
+    if (!couponInput.trim()) return;
+    setApplyingCoupon(true);
+    const result = await applyCoupon(couponInput);
+    if (result.success) {
+      toast.success(t.cart.couponApplied);
+      setCouponInput("");
+    } else {
+      toast.error(result.error || t.cart.invalidCoupon);
+    }
+    setApplyingCoupon(false);
+  }
 
   async function handleCheckout() {
     if (!hasAddress) {
@@ -177,6 +192,27 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
             <h3 className="font-black text-xl md:text-2xl text-black mb-6 md:mb-8">{t.cart.summary}</h3>
 
             <div className="space-y-4 pt-1">
+              {/* Coupon Input */}
+              {!couponCode && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    placeholder={t.cart.enterCoupon || "Enter coupon code"}
+                    className="flex-1 px-3 py-2 text-xs font-bold uppercase tracking-wider border border-black/10 rounded-lg focus:outline-none focus:border-black/30"
+                    onKeyDown={(e) => e.key === "Enter" && applyCoupon(couponInput)}
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    disabled={applyingCoupon || !couponInput.trim()}
+                    className="px-4 py-2 bg-black text-white text-xs font-black uppercase tracking-wider rounded-lg hover:bg-black/80 disabled:opacity-50"
+                  >
+                    {applyingCoupon ? "..." : t.cart.apply || "Apply"}
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-black/40 font-bold uppercase tracking-wider">
                 <div>{t.cart.subtotal}</div>
                 <Price amount={subtotalCents / 100} className="text-black font-black" />

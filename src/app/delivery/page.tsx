@@ -1,12 +1,35 @@
 import { Metadata } from 'next';
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
-import { Truck, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Truck, MapPin, Clock, CheckCircle, AlertCircle, ExternalLink, Package } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Delivery Information | Shafan',
   description: 'Fast and reliable delivery across GCC countries. Free delivery on orders above minimum value.',
 };
+
+const courierPartners = [
+  {
+    name: 'Aramex',
+    website: 'https://www.aramex.com',
+    trackingUrl: 'https://www.aramex.com/na/en/track',
+    description: 'Global logistics leader with express delivery to 190+ countries',
+    coverage: 'UAE, GCC, Global',
+    features: ['Real-time tracking', '600+ drop-off locations', 'Express delivery 2-5 days', 'Professional handling'],
+    logo: '📦',
+    color: 'from-blue-500 to-blue-600',
+  },
+  {
+    name: 'Naqel Express',
+    website: 'https://www.naqelexpress.com',
+    trackingUrl: 'https://www.naqelexpress.com/en/Track',
+    description: 'Leading Saudi logistics provider with strong GCC presence',
+    coverage: 'Saudi Arabia, Kuwait, GCC',
+    features: ['Express delivery 2-4 days', 'Cash on Delivery (COD)', 'International road freight', 'Competitive domestic rates'],
+    logo: '🚚',
+    color: 'from-green-500 to-green-600',
+  },
+];
 
 const deliveryData = [
   {

@@ -22,8 +22,6 @@ const UpdateSchema = z.object({
   images: z.union([z.string(), z.array(z.string())]).optional(),
   mainImage: z.string().optional(),
   variants: z.any().optional(),
-  kuwaitPrice: z.number().optional(),
-  kuwaitStock: z.number().optional(),
 });
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -182,34 +180,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
     const updated = await prisma.product.update({ where: { id: id }, data: updates });
-
-    // Handle Kuwait inventory update
-    const kuwaitPrice = (parsed.data as any).kuwaitPrice;
-    const kuwaitStock = (parsed.data as any).kuwaitStock;
-
-    if (kuwaitPrice !== undefined || kuwaitStock !== undefined) {
-      const kuwStore = await prisma.store.findFirst({ where: { code: 'KUW' } });
-      if (kuwStore) {
-        await prisma.storeInventory.upsert({
-          where: {
-            storeId_productId: {
-              storeId: kuwStore.id,
-              productId: id
-            }
-          },
-          update: {
-            price: kuwaitPrice !== undefined ? kuwaitPrice : undefined,
-            quantity: kuwaitStock !== undefined ? kuwaitStock : undefined,
-          },
-          create: {
-            storeId: kuwStore.id,
-            productId: id,
-            price: kuwaitPrice || 0,
-            quantity: kuwaitStock || 0,
-          }
-        });
-      }
-    }
 
     try {
       await prisma.auditLog.create({

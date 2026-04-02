@@ -4,54 +4,38 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3, Store, Users, Package,
-  Settings, ShieldAlert, BookOpen,
+  BarChart3, Users, Package,
+  BookOpen,
   Tag, Image as ImageIcon, Briefcase,
-  Terminal, LayoutGrid, Layers, GitBranch, Palette
+  Terminal
 } from "lucide-react";
 
 export function AdminSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  const isSuper = session?.user?.email === "pvs178380@gmail.com";
-  const isKuwaitContext = pathname?.startsWith("/ueadmin/kuwait");
-
-  // Filter links based on role and path context
   const links = [
     { 
-      label: "Global Overview", 
+      label: "Dashboard", 
       href: "/ueadmin/dashboard", 
       icon: BarChart3, 
-      show: !isKuwaitContext 
+      show: true
     },
     { 
-      label: "Kuwait Terminal", 
-      href: "/ueadmin/kuwait", 
-      icon: Store, 
-      show: isKuwaitContext 
-    },
-    { 
-      label: "User Base", 
+      label: "Users", 
       href: "/ueadmin/users", 
       icon: Users, 
-      show: !isKuwaitContext 
+      show: true 
     },
     { 
-      label: "Global Catalog", 
+      label: "Products", 
       href: "/ueadmin/products", 
       icon: Package, 
-      show: !isKuwaitContext 
+      show: true 
     },
     { 
-      label: isKuwaitContext ? "Local Inventory" : "Global Inventory", 
-      href: isKuwaitContext ? "/ueadmin/kuwait/inventory" : "/ueadmin/products", 
-      icon: Package, 
-      show: isKuwaitContext 
-    },
-    { 
-      label: "Orders Flow", 
-      href: isKuwaitContext ? "/ueadmin/kuwait/orders" : "/ueadmin/orders", 
+      label: "Orders", 
+      href: "/ueadmin/orders", 
       icon: Briefcase, 
       show: true 
     },
@@ -63,7 +47,7 @@ export function AdminSidebar() {
           <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-2xl shadow-black/20 group-hover:rotate-12 transition-transform">S</div>
           <div>
             <h2 className="font-black text-xs uppercase tracking-widest text-black">Shafan Admin</h2>
-            <p className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em]">{isKuwaitContext ? "Kuwait Hub" : "Global Control"}</p>
+            <p className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em]">Admin Panel</p>
           </div>
        </div>
 
@@ -87,12 +71,12 @@ export function AdminSidebar() {
           })}
 
           <div className="pt-8 space-y-4">
-             <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">System Configuration</div>
+             <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">Promotions</div>
              <Link
-                href="/ueadmin/blog"
+                href="/ueadmin/discounts"
                 className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
              >
-                <BookOpen size={18} /> Announcements
+                <Tag size={18} /> Discounts & Coupons
              </Link>
              <Link
                 href="/ueadmin/offer-banners"
@@ -100,18 +84,28 @@ export function AdminSidebar() {
              >
                 <Tag size={18} /> Promotional Banners
              </Link>
-             <Link
-                href="/ueadmin/banners"
-                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-             >
-                <ImageIcon size={18} /> Hero Banners
-             </Link>
-             <Link
-              href="/ueadmin/email-test"
-                className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-             >
-                <Terminal size={18} /> Email Test
-             </Link>
+
+             <div className="pt-8 space-y-4">
+                <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">System Configuration</div>
+                <Link
+                   href="/ueadmin/blog"
+                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                >
+                   <BookOpen size={18} /> Announcements
+                </Link>
+                <Link
+                   href="/ueadmin/banners"
+                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                >
+                   <ImageIcon size={18} /> Hero Banners
+                </Link>
+                <Link
+                 href="/ueadmin/email-test"
+                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                >
+                   <Terminal size={18} /> Email Test
+                </Link>
+              </div>
            </div>
         </nav>
 

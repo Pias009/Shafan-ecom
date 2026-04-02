@@ -36,7 +36,7 @@ interface CartState {
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       items: [],
       couponCode: null,
       couponDiscount: 0,
@@ -60,23 +60,27 @@ export const useCartStore = create<CartState>()(
             item.id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
           ),
         })),
-      applyCoupon: (code) =>
-        set(() => {
-          // Dummy coupon validation logic
-          if (code.toUpperCase() === "DISCOUNT10") {
-            return { couponCode: code, couponDiscount: 0.1 };
+      applyCoupon: async (code: string) => {
+        try {
+          const res = await fetch("/api/coupons/validate?code=" + code);
+          const data = await res.json();
+          if (data.valid && data.discount) {
+            set({ couponCode: code, couponDiscount: data.discount });
+            return { success: true };
           }
-          if (code.toUpperCase() === "SAVE20") {
-            return { couponCode: code, couponDiscount: 0.2 };
-          }
-          return { couponCode: null, couponDiscount: 0 };
-        }),
+          set({ couponCode: null, couponDiscount: 0 });
+          return { success: false, error: data.error || "Invalid coupon" };
+        } catch {
+          set({ couponCode: null, couponDiscount: 0 });
+          return { success: false, error: "Failed to validate coupon" };
+        }
+      },
       removeCoupon: () => set({ couponCode: null, couponDiscount: 0 }),
       clearCart: () => set({ items: [], couponCode: null, couponDiscount: 0 }),
       hasAddress: false,
       setHasAddress: (val) => set({ hasAddress: val }),
       getCountryPrice: (productId: string) => {
-        return null; // Placeholder - actual implementation depends on country price lookup
+        return null;
       },
     }),
     {

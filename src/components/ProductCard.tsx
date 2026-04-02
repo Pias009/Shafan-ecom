@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ShoppingBag, Star, Package, ShoppingCart } from "lucide-react";
+import { ShoppingBag, Star, Package, ShoppingCart, Truck } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -24,6 +24,7 @@ interface ProductCardProps {
     ratingCount?: number;
     stockQuantity?: number;
     totalSales?: number;
+    freeDelivery?: boolean;
     countryPrices?: Array<{
       country: string;
       priceCents: number;
@@ -49,6 +50,11 @@ export function ProductCard({
   // Safely get the display price
   const price = product.discountPrice ?? product.price;
   const hasDiscount = !!product.discountPrice && product.discountPrice < product.price;
+  
+  // Calculate discount percentage
+  const discountPercentage = hasDiscount 
+    ? Math.round(((product.price - product.discountPrice!) / product.price) * 100)
+    : 0;
 
   // Safely get the brand name as a string
   const brandName = typeof product.brand === "string"
@@ -98,10 +104,26 @@ export function ProductCard({
                 {t.home.trendingNow}
               </span>
             )}
+          </div>
+
+          {/* Right Side Badges - Discount & Free Delivery */}
+          <div className="absolute top-2 right-2 flex flex-col gap-1.5 z-20">
+            {/* Discount Badge - Red */}
             {hasDiscount && (
-              <span className="bg-white/90 backdrop-blur-md text-black text-[8px] px-2 py-1 font-black uppercase tracking-widest rounded-full shadow-lg border border-black/5">
-                Sale
-              </span>
+              <div className="bg-red-600 text-white rounded-lg px-2.5 py-1.5 shadow-lg flex flex-col items-center justify-center">
+                <span className="text-[10px] sm:text-[11px] font-black leading-none">
+                  -{discountPercentage}%
+                </span>
+                <span className="text-[7px] sm:text-[8px] font-semibold leading-tight">OFF</span>
+              </div>
+            )}
+            
+            {/* Free Delivery Badge */}
+            {product.freeDelivery && (
+              <div className="bg-emerald-600 text-white rounded-lg px-2.5 py-1.5 shadow-lg flex items-center justify-center gap-1 whitespace-nowrap">
+                <Truck size={12} />
+                <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-tight">FREE</span>
+              </div>
             )}
           </div>
         </button>

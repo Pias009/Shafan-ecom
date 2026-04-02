@@ -46,6 +46,16 @@ model Store {
   courierServices  CourierService[] @relation("StoreCouriers")
   products         Product[]        @relation("StoreProducts")
   storeInventories StoreInventory[] @relation("StoreInventories")
+  paymentSettings  Json?
+  contactInfo      Json?
+}
+
+model AppSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
@@ -403,12 +413,25 @@ model Discount {
   // Validity
   startDate DateTime?
   endDate   DateTime?
-  maxUses   Int? // Maximum number of uses
+  maxUses   Int? // Maximum total uses (for all users)
   uses      Int       @default(0) // Current usage count
+
+  // Per-user limits
+  usageType         String  @default("MULTI_USE") // SINGLE_USE (one-time per user) or MULTI_USE (multiple users)
+  maxUsesPerUser    Int?    // Max times a single user can use this coupon
+  maxUsesPerOrder   Int?    // Max times this coupon can be used in single order (usually 1)
 
   // Status
   active    Boolean @default(true)
   autoApply Boolean @default(false) // Auto-apply to eligible products
+  status    String  @default("DRAFT") // DRAFT, ACTIVE, ARCHIVED
+
+  // Country support
+  countries String[] // Array of country codes [AE, KW, BH, SA, OM, QA]
+
+  // Publishing
+  publishedAt DateTime? // When discount was published
+  createdBy   String?   // Admin who created the discount
 
   // Relationships
   productDiscounts  ProductDiscount[]
@@ -421,6 +444,8 @@ model Discount {
   updatedAt DateTime @updatedAt
 
   @@index([active, startDate, endDate])
+  @@index([status])
+  @@index([createdBy])
 }
 
 model ProductDiscount {
@@ -497,13 +522,51 @@ model AuditLog {
 }
 
 model Banner {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  imageUrl  String   @unique
-  title     String?
-  link      String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  description     String?
+  imageUrl        String   // Banner image URL from Cloudinary
+  ctaText         String?  // Call-to-action button text
+  ctaLink         String?  // CTA button link
+  backgroundColor String?  // Hex color for background
+  textColor       String?  // Hex color for text
+  
+  // Positioning and display
+  position        String   @default("MIDDLE") // TOP, MIDDLE, BOTTOM
+  displayOn       String   @default("BOTH") // HOME, PRODUCTS, BOTH
+  
+  // Country targeting
+  countries       String[] // Array of country codes [AE, KW, BH, SA, OM, QA]
+  
+  // Scheduling
+  startDate       DateTime?
+  endDate         DateTime?
+  active          Boolean  @default(true)
+  status          String   @default("DRAFT") // DRAFT, ACTIVE, ARCHIVED
+  publishedAt     DateTime? // When banner was published
+  
+  // Display order
+  sortOrder       Int      @default(0)
+  priority        Int      @default(1) // 1=Low, 2=Medium, 3=High
+  
+  // Responsive settings
+  desktopHeight   Int?     // Height in pixels
+  mobileHeight    Int?
+  
+  // Tracking
+  clicks          Int      @default(0)
+  impressions     Int      @default(0)
+  
+  // Metadata
+  createdBy       String?  // Admin who created banner
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([active, startDate, endDate])
+  @@index([status])
+  @@index([displayOn])
+  @@index([sortOrder])
 }
 
 model BlogPost {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
 import { OrderStatus } from '@prisma/client';
+import CourierServices from '@/components/CourierServices';
 
 export default function OrderStatusActions({ orderId, currentStatus }: { orderId: string, currentStatus: string }) {
   const [status, setStatus] = useState(currentStatus);
@@ -45,6 +46,16 @@ export default function OrderStatusActions({ orderId, currentStatus }: { orderId
 
   return (
     <div className="space-y-6">
+      {/* Courier Services Button */}
+      <div className="flex items-center justify-between border-b border-black/5 pb-4">
+        <div className="text-[10px] font-black uppercase tracking-widest text-black/30">Fulfilment Actions</div>
+        <CourierServices 
+          orderId={orderId} 
+          currentStatus={currentStatus} 
+          onSent={() => window.location.reload()}
+        />
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="text-[10px] font-black uppercase tracking-widest text-black/30">Order Control</div>
         <button

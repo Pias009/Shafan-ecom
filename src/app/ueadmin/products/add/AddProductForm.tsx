@@ -53,20 +53,13 @@ export function AddProductForm({
 
   const [loading, setLoading] = useState(false);
   
-  // Initialize country prices - only Kuwait for Kuwait admins, all countries for super admin
-  const initialCountryPrices = adminStoreCode === 'KUW'
-    ? [{
-        country: 'KUW' as CountryCode,
-        priceCents: 0,
-        currency: 'KWD',
-        active: true
-      }]
-    : SUPPORTED_COUNTRIES.map(country => ({
-        country: country.code as CountryCode,
-        priceCents: 0,
-        currency: country.currency,
-        active: true
-      }));
+  // Initialize country prices for all supported countries
+  const initialCountryPrices = SUPPORTED_COUNTRIES.map(country => ({
+      country: country.code as CountryCode,
+      priceCents: 0,
+      currency: country.currency,
+      active: true
+    }));
 
   const [formData, setFormData] = useState({
     name: '',
@@ -506,17 +499,15 @@ export function AddProductForm({
         {/* Country-Specific Pricing */}
         <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
           <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
-            <Globe size={14} /> {adminStoreCode === 'KUW' ? 'Kuwait Pricing' : 'Country-Specific Pricing (All 6 Countries)'}
+            <Globe size={14} /> Country-Specific Pricing (All 6 Countries)
           </h3>
             
             <div className="space-y-4">
               <div className="mb-4">
                 <p className="text-xs font-bold text-black/60">
-                  {adminStoreCode === 'KUW'
-                    ? 'Set the price for Kuwait market in KWD'
-                    : 'Define prices for all supported countries in regular currency'}
+                  Define prices for all supported countries in regular currency
                 </p>
-                <p className="text-[10px] text-black/40 mt-1">Enter whole numbers only (e.g., 10 for 10 KWD)</p>
+                <p className="text-[10px] text-black/40 mt-1">Enter whole numbers only (e.g., 10 for 10 USD)</p>
               </div>
 
               <div className="space-y-3">
@@ -569,41 +560,30 @@ export function AddProductForm({
                 })}
               </div>
               
-              {adminStoreCode === 'KUW' ? (
-                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                  <p className="text-xs text-emerald-700">
-                    <strong>Kuwait Market:</strong> Products added here will only be visible to Kuwait customers.
-                    Set the price in Kuwaiti Dinar (KWD). Other countries cannot access these products.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                    <p className="text-xs text-blue-700">
-                      <strong>System Configuration:</strong> All 6 countries are required. Prices are in whole numbers only (e.g., 10 for $10).
-                      Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
-                      Products will only be visible to users in countries where a price is set.
-                    </p>
-                  </div>
+              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p className="text-xs text-blue-700">
+                  <strong>System Configuration:</strong> All 6 countries are required. Prices are in whole numbers only (e.g., 10 for $10).
+                  Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
+                  Products will only be visible to users in countries where a price is set.
+                </p>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-xs">
-                    <div className="p-3 bg-green-50 rounded-xl border border-green-100">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span className="font-bold text-green-700">Price Set</span>
-                      </div>
-                      <p className="text-green-600 mt-1">Country has a specific price configured</p>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                        <span className="font-bold text-gray-700">No Price Set</span>
-                      </div>
-                      <p className="text-gray-600 mt-1">Product will not be visible in this country</p>
-                    </div>
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="p-3 bg-green-50 rounded-xl border border-green-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="font-bold text-green-700">Price Set</span>
                   </div>
-                </>
-              )}
+                  <p className="text-green-600 mt-1">Country has a specific price configured</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                    <span className="font-bold text-gray-700">No Price Set</span>
+                  </div>
+                  <p className="text-gray-600 mt-1">Product will not be visible in this country</p>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -623,7 +603,6 @@ export function AddProductForm({
                   className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
                 >
                   <option value="GLOBAL">Global Store</option>
-                  <option value="KUW">Kuwait Store</option>
                 </select>
               </div>
               <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">

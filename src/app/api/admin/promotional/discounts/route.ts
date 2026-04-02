@@ -164,6 +164,7 @@ export async function POST(req: NextRequest) {
       autoApply = false,
       productIds = [],
       categoryIds = [],
+      countries = [],
     } = body;
 
     // Validate required fields
@@ -179,6 +180,18 @@ export async function POST(req: NextRequest) {
         { error: "value is required" },
         { status: 400 }
       );
+    }
+
+    // Validate countries
+    const validCountries = ["AE", "KW", "BH", "SA", "OM", "QA"];
+    if (countries.length > 0) {
+      const invalidCountries = countries.filter((c: string) => !validCountries.includes(c));
+      if (invalidCountries.length > 0) {
+        return NextResponse.json(
+          { error: `Invalid countries: ${invalidCountries.join(", ")}` },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate value based on discount type
@@ -237,6 +250,10 @@ export async function POST(req: NextRequest) {
         active,
         autoApply,
         uses: 0,
+        countries: countries.length > 0 ? countries : validCountries,
+        status: active ? "ACTIVE" : "DRAFT",
+        publishedAt: active ? new Date() : null,
+        createdBy: (session.user as any)?.email,
         // Connect products using join table if provided
         productDiscounts: {
           create: productIds.map((id: string) => ({ productId: id })),

@@ -27,35 +27,9 @@ export default function AdminRoot() {
       return;
     }
 
-    // For regular ADMINs, redirect based on their country assignment
-    // We need to fetch the user's country from the API
+    // For regular ADMINs, redirect to dashboard
     if (userRole === 'ADMIN') {
-      fetch('/api/auth/admin-country')
-        .then(res => res.json())
-        .then(data => {
-          if (data.country) {
-            const country = data.country.toUpperCase();
-            // Map country codes to admin panel routes
-            const countryToRoute: Record<string, string> = {
-              'KW': '/ueadmin/kuwait',
-              'AE': '/ueadmin/dashboard', // UAE uses global dashboard
-              'BH': '/ueadmin/bahrain',
-              'SA': '/ueadmin/saudi',
-              'OM': '/ueadmin/oman',
-              'QA': '/ueadmin/qatar',
-            };
-            
-            const targetRoute = countryToRoute[country] || '/ueadmin/dashboard';
-            router.replace(targetRoute);
-          } else {
-            // No country assigned, redirect to setup or unauthorized
-            router.replace('/ueadmin/setup');
-          }
-        })
-        .catch(() => {
-          // On error, default to dashboard
-          router.replace('/ueadmin/dashboard');
-        });
+      router.replace('/ueadmin/dashboard');
     } else {
       // Not an admin, redirect to login
       router.replace('/ueadmin/login');

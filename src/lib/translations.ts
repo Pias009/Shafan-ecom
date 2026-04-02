@@ -141,6 +141,10 @@ export const translations = {
       promo: "Promo",
       remove: "remove",
       creatingOrder: "Creating your order...",
+      enterCoupon: "Enter coupon code",
+      apply: "Apply",
+      invalidCoupon: "Invalid coupon code",
+      couponApplied: "Coupon applied!",
     },
     common: {
       selectCurrency: "Select Currency",
@@ -291,6 +295,10 @@ export const translations = {
       promo: "عرض",
       remove: "إزالة",
       creatingOrder: "جاري إنشاء طلبك...",
+      enterCoupon: "أدخل رمز الكوبون",
+      apply: "تطبيق",
+      invalidCoupon: "كوبون غير صالح",
+      couponApplied: "تم تطبيق الكوبون!",
     },
     common: {
       selectCurrency: "اختر العملة",

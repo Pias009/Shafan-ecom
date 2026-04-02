@@ -9,6 +9,36 @@ export async function GET() {
   }
 
   try {
+    // Get all completed/delivered orders for revenue calculation (always in AED)
+    const revenueOrders = await prisma.order.findMany({
+      where: {
+        status: {
+          in: ['DELIVERED', 'ORDER_CONFIRMED', 'PROCESSING', 'READY_FOR_PICKUP', 'ORDER_PICKED_UP', 'IN_TRANSIT']
+        }
+      },
+      select: {
+        totalCents: true,
+        currency: true
+      }
+    });
+
+    // Calculate revenue in AED (convert from different currencies if needed)
+    let totalRevenueAED = 0;
+    const conversionRates: Record<string, number> = {
+      'AED': 1,
+      'USD': 3.67,
+      'SAR': 0.98,
+      'KWD': 12.0,
+      'BHD': 9.75,
+      'QAR': 1.01,
+      'OMR': 9.55,
+    };
+
+    revenueOrders.forEach(order => {
+      const rate = conversionRates[order.currency?.toUpperCase()] || 1;
+      totalRevenueAED += (order.totalCents / 100) * rate;
+    });
+
     const [usersCount, productsCount, bannersCount, ordersCount, ordersByStatus] = await Promise.all([
       prisma.user.count(),
       prisma.product.count(),
@@ -38,6 +68,15 @@ export async function GET() {
       }
     });
 
+    // Get total products out of stock
+    const outOfStockCount = await prisma.product.count({
+      where: {
+        stockQuantity: {
+          lte: 0
+        }
+      }
+    });
+
     return new Response(
       JSON.stringify({
         users: usersCount,
@@ -45,6 +84,11 @@ export async function GET() {
         banners: bannersCount,
         orders: ordersCount,
         ordersByStatus: counts,
+        revenue: {
+          totalAED: Math.round(totalRevenueAED * 100) / 100,
+          currency: 'AED'
+        },
+        outOfStock: outOfStockCount
       }),
       {
         headers: { "Content-Type": "application/json" },
