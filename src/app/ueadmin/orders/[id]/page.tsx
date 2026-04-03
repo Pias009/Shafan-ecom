@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, ShieldCheck, Info, Download } from 'lucide-react';
+import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, ShieldCheck, Info } from 'lucide-react';
 import OrderStatusActions from './OrderStatusActions';
+import InvoiceDownload from './_components/InvoiceDownload';
 import { OrderStatus } from '@prisma/client';
 
 function formatPrice(amountCents: number, currency: string): string {
@@ -273,18 +274,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
            </section>
 
            {/* Invoice Download */}
-           <a
-             href={`/api/admin/orders/${order.id}/invoice`}
-             target="_blank"
-             rel="noopener noreferrer"
-             className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-center gap-4 hover:bg-black/5 transition-colors cursor-pointer"
-           >
-              <div className="p-3 bg-black rounded-xl text-white"><Download size={18} /></div>
-              <div className="flex-1">
-                  <p className="text-xs font-black uppercase tracking-widest text-black">Download Invoice</p>
-                  <p className="text-[9px] font-bold text-black/40 uppercase tracking-widest">PDF format</p>
-              </div>
-           </a>
+           <InvoiceDownload orderId={order.id} />
         </div>
       </div>
     </div>

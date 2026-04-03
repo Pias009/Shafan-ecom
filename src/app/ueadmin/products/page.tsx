@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { Plus, Tag } from 'lucide-react';
-import { getAdminStoreAccess, getAccessibleStoreIds } from '@/lib/admin-store-guard';
+import { getAdminStoreAccess, getAccessibleStoreIds } from '@/lib/admin-session';
 import { DeleteProductButton } from './_components/DeleteProductButton';
 
 export const dynamic = 'force-dynamic';

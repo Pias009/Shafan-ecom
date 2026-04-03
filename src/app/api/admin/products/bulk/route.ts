@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getServerAuthSession } from '@/lib/auth';
+import { getAdminApiSession } from '@/lib/admin-session';
 import { z } from 'zod';
 import { uploadFromUrl } from '@/lib/cloudinary';
 
@@ -19,8 +19,8 @@ const BulkUpdateSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
   try {

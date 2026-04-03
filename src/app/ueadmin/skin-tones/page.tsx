@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useAdminSession } from "../_components/useAdminSession";
 import { useRouter } from "next/navigation";
 import { 
   Plus, Edit, Trash2, Palette, Package, 
@@ -22,7 +22,7 @@ interface SkinTone {
 }
 
 export default function SkinTonesPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAdminSession();
   const router = useRouter();
   const [skinTones, setSkinTones] = useState<SkinTone[]>([]);
   const [loading, setLoading] = useState(true);

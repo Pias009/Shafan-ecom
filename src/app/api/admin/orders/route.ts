@@ -1,10 +1,9 @@
 import { prisma } from '@/lib/prisma';
-import { getServerAuthSession } from '@/lib/auth';
-import { getAccessibleStoreIds } from '@/lib/admin-store-guard';
+import { getAdminApiSession, getAccessibleStoreIds } from '@/lib/admin-session';
 
 export async function GET() {
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
 

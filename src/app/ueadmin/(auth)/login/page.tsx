@@ -1,6 +1,5 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import React, { useState } from "react";
 
 export default function AdminLogin() {
@@ -9,26 +8,23 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleMasterAdminLogin() {
+  async function handleLogin(formEmail: string, formPassword: string) {
     setLoading(true);
     setError("");
-    
-    const masterEmail = "pvs178380@gmail.com";
-    const masterPassword = "pias900";
-    
+
     try {
-      const res = await signIn("credentials", {
-        email: masterEmail,
-        password: masterPassword,
-        redirect: false,
-      }, { 
-        authErrorRedirect: "/ueadmin/login?error=AuthError",
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formEmail, password: formPassword }),
       });
-      
-      if (res?.ok) {
+
+      const data = await res.json();
+
+      if (res.ok) {
         window.location.href = "/ueadmin/dashboard";
       } else {
-        setError("Login failed. Please try again.");
+        setError(data.error || "Invalid credentials");
       }
     } catch (err: any) {
       setError(err.message || "Login failed");
@@ -39,28 +35,7 @@ export default function AdminLogin() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const res = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      }, {
-        authErrorRedirect: "/ueadmin/login?error=AuthError",
-      });
-
-      if (res?.ok) {
-        window.location.href = "/ueadmin";
-      } else {
-        setError("Invalid email or password");
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    await handleLogin(email, password);
   }
 
   return (
@@ -105,24 +80,6 @@ export default function AdminLogin() {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
-          
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white/5 px-4 text-xs text-gray-500 uppercase tracking-wider">or</span>
-            </div>
-          </div>
-          
-          <button
-            onClick={handleMasterAdminLogin}
-            disabled={loading}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-sm tracking-wider hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-          >
-            <span className="text-lg">👑</span>
-            {loading ? "Accessing..." : "Master Admin Access"}
-          </button>
         </div>
         
         <p className="text-center text-gray-600 text-xs mt-6">

@@ -13,6 +13,7 @@ function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams?.get("session_id");
   const orderId = searchParams?.get("order_id");
+  const isCOD = searchParams?.get("cod") === "true";
   const clearCart = useCartStore(state => state.clearCart);
 
   useEffect(() => {
@@ -29,8 +30,12 @@ function SuccessContent() {
             <CheckCircle2 className="w-12 h-12 md:w-16 md:h-16 text-green-500" />
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-black text-black mb-3 md:mb-4 tracking-tight">Order Received!</h1>
-          <p className="text-base md:text-lg text-black/60 font-medium mb-1">Your order has been received and is being processed.</p>
+          <h1 className="text-3xl md:text-4xl font-black text-black mb-3 md:mb-4 tracking-tight">Order Confirmed!</h1>
+          <p className="text-base md:text-lg text-black/60 font-medium mb-1">
+            {isCOD 
+              ? "Your order has been placed. Pay with cash when delivered." 
+              : "Your order has been received and is being processed."}
+          </p>
           {(orderId || sessionId) && (
             <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/20 mb-6 md:mb-8">Ref: {orderId ? `#${orderId}` : sessionId?.slice(0, 20)}</p>
           )}

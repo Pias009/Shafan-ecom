@@ -24,6 +24,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
   const hasAddress = useCartStore(state => state.hasAddress);
   const [couponInput, setCouponInput] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("stripe");
 
   async function handleApplyCoupon() {
     if (!couponInput.trim()) return;
@@ -51,7 +52,6 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
     toast.loading(t.cart.creatingOrder, { id: "checkout" });
     
     try {
-      // Fetch user's saved address
       const addressRes = await fetch("/api/account/address");
       let billing = null;
       let shipping = null;
@@ -59,13 +59,11 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       if (addressRes.ok) {
         const addressData = await addressRes.json();
         if (addressData) {
-          // Use the same address for both billing and shipping
           billing = addressData;
           shipping = addressData;
         }
       }
 
-      // Calculate prices matching cart summary calculation
       const orderItems = items.map((i: any) => {
         const countryPrice = i.countryPrices?.find((cp: any) =>
           cp.country.toUpperCase() === userCountry.toUpperCase()
@@ -79,6 +77,10 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
           unitPriceCents
         };
       });
+
+      const paymentMethodData = paymentMethod === "cod" 
+        ? { payment_method: "cod", payment_method_title: "Cash on Delivery" }
+        : { payment_method: "stripe", payment_method_title: "Credit Card (Stripe)" };
       
       const orderRes = await fetch("/api/create-order", {
         method: "POST",
@@ -88,16 +90,19 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
           couponCode,
           billing,
           shipping,
-          payment_method: "stripe",
-          payment_method_title: "Credit Card (Stripe)",
-          country: userCountry
+          country: userCountry,
+          ...paymentMethodData
         }),
       });
       
       const data = await orderRes.json();
       if (data.orderId) {
         toast.success("Order created!", { id: "checkout" });
-        router.push(`/checkout/payment/${data.orderId}`);
+        if (paymentMethod === "cod") {
+          router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
+        } else {
+          router.push(`/checkout/payment/${data.orderId}`);
+        }
       } else {
         toast.error(data.error || "Checkout failed", { id: "checkout" });
       }
@@ -243,6 +248,34 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
               <div className="flex items-center justify-between pt-6 border-t border-black/5">
                 <div className="font-black text-xs md:text-sm uppercase tracking-widest">{t.cart.total}</div>
                 <Price amount={totalCents / 100} className="text-2xl md:text-3xl font-black text-black" />
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-black/5">
+                <div className="text-[10px] md:text-xs font-black uppercase tracking-widest text-black/40 mb-3">Payment Method</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("stripe")}
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${
+                      paymentMethod === "stripe" 
+                        ? "border-black bg-black text-white" 
+                        : "border-black/20 text-black/60 hover:border-black/40"
+                    }`}
+                  >
+                    💳 Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("cod")}
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${
+                      paymentMethod === "cod" 
+                        ? "border-black bg-black text-white" 
+                        : "border-black/20 text-black/60 hover:border-black/40"
+                    }`}
+                  >
+                    💵 COD
+                  </button>
+                </div>
               </div>
             </div>
 

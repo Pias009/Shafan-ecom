@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminApiSession } from "@/lib/admin-session";
 
 // GET all pending login approvals
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAdminApiSession();
     
-    if (!session?.user || (session.user as any).role !== "SUPERADMIN") {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -38,9 +37,9 @@ export async function GET() {
 // POST to approve/reject a login request
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAdminApiSession();
     
-    if (!session?.user || (session.user as any).role !== "SUPERADMIN") {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

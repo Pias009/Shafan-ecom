@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.paymentMethod && order.paymentMethod !== "cod") {
+    if (order.paymentMethod && order.paymentMethod !== "cod" && order.paymentMethod !== "stripe") {
       return NextResponse.json({ error: "Order already has a payment method" }, { status: 400 });
     }
 

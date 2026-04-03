@@ -2,13 +2,13 @@ import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
 import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock } from 'lucide-react';
 import { OrderStatus } from "@prisma/client";
-import { requireUAEAccess, getAccessibleStoreIds } from "@/lib/admin-store-guard";
+import { requireAdminSession, getAccessibleStoreIds } from "@/lib/admin-session";
 
 export const dynamic = 'force-dynamic';
 
 export default async function Dashboard() {
-  // Enforce strict access control - only UAE admins can access this page
-  await requireUAEAccess();
+  // Check admin session (not user session)
+  await requireAdminSession();
 
   // Get only UAE store IDs for data filtering
   const accessibleStoreIds = await getAccessibleStoreIds();

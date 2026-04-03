@@ -1,12 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { getServerAuthSession } from '@/lib/auth';
+import { getAdminApiSession } from '@/lib/admin-session';
 
 const UserCreateSchema = z.object({ email: z.string().email(), name: z.string().optional(), password: z.string().min(6), role: z.enum(['USER','ADMIN','SUPERADMIN']).optional() });
 
 export async function GET() {
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
   const users = await (prisma as any).user.findMany({ select: { id: true, email: true, name: true, role: true, createdAt: true } , orderBy: { createdAt: 'desc' } });
@@ -14,8 +14,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
   try {

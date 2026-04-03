@@ -89,7 +89,7 @@ async function getSkinConcerns() {
 
 async function getStoreAccess() {
   try {
-    const { getAdminStoreAccess } = await import('@/lib/admin-store-guard');
+    const { getAdminStoreAccess } = await import('@/lib/admin-session');
     return await getAdminStoreAccess();
   } catch {
     return null;

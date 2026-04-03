@@ -14,7 +14,8 @@ export type EmailTemplate =
   | 'payment-receipt'
   | 'account-verification'
   | 'newsletter-welcome'
-  | 'abandoned-cart';
+  | 'abandoned-cart'
+  | 'order-status-update';
 
 export interface EmailRecipient {
   email: string;

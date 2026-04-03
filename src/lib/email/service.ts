@@ -19,6 +19,7 @@ import { WelcomeTemplate } from './templates/WelcomeTemplate';
 import { OrderConfirmationTemplate } from './templates/OrderConfirmationTemplate';
 import { AdminLoginAlertTemplate } from './templates/AdminLoginAlertTemplate';
 import { PasswordResetTemplate } from './templates/PasswordResetTemplate';
+import { OrderStatusUpdateTemplate } from './templates/OrderStatusUpdateTemplate';
 
 export class EmailService {
   private resend: Resend | null = null;
@@ -206,6 +207,9 @@ export class EmailService {
         break;
       case 'password-reset':
         reactComponent = PasswordResetTemplate(data);
+        break;
+      case 'order-status-update':
+        reactComponent = OrderStatusUpdateTemplate(data);
         break;
       default:
         throw new Error(`Unsupported email template: ${template}`);
@@ -424,11 +428,10 @@ export const sendUserSignupAlertEmail = async (
   signupTime: string,
   source: string = 'website'
 ) => {
-  // This would use a different template, but for now we'll use admin login alert format
   return emailService.sendEmail({
     to: { email: process.env.ADMIN_EMAIL || 'admin@shafan-store.com', name: 'Admin' },
     subject: `New User Signup: ${userEmail}`,
-    template: 'admin-login-alert', // TODO: Create user signup alert template
+    template: 'admin-login-alert',
     data: {
       adminEmail: process.env.ADMIN_EMAIL || 'admin@shafan-store.com',
       adminName: 'Admin',
@@ -436,6 +439,71 @@ export const sendUserSignupAlertEmail = async (
       ipAddress: 'N/A',
       userAgent: `Signup Source: ${source}`,
       location: 'Signup',
+    },
+  });
+};
+
+export const sendOrderStatusEmail = async (
+  orderId: string,
+  customerEmail: string,
+  customerName: string,
+  status: string,
+  items: Array<{ nameSnapshot: string; quantity: number; unitPriceCents: number }>,
+  totalCents: number,
+  currency: string,
+  shippingAddress?: any
+) => {
+  const statusMessages: Record<string, { subject: string; message: string }> = {
+    ORDER_CONFIRMED: {
+      subject: `Order Confirmed: #${orderId}`,
+      message: 'Your order has been confirmed and will be processed shortly.',
+    },
+    PROCESSING: {
+      subject: `Order Processing: #${orderId}`,
+      message: 'Your order is being prepared for shipment.',
+    },
+    READY_FOR_PICKUP: {
+      subject: `Ready for Pickup: #${orderId}`,
+      message: 'Your order is ready for pickup.',
+    },
+    ORDER_PICKED_UP: {
+      subject: `Order Shipped: #${orderId}`,
+      message: 'Your order has been picked up and is on its way.',
+    },
+    IN_TRANSIT: {
+      subject: `Order In Transit: #${orderId}`,
+      message: 'Your order is on its way to you.',
+    },
+    DELIVERED: {
+      subject: `Order Delivered: #${orderId}`,
+      message: 'Your order has been delivered. Thank you for shopping with us!',
+    },
+    CANCELLED: {
+      subject: `Order Cancelled: #${orderId}`,
+      message: 'Your order has been cancelled.',
+    },
+    REFUNDED: {
+      subject: `Order Refunded: #${orderId}`,
+      message: 'Your order has been refunded. The refund will be processed shortly.',
+    },
+  };
+
+  const statusInfo = statusMessages[status] || { subject: `Order Update: #${orderId}`, message: 'Your order status has been updated.' };
+
+  return emailService.sendEmail({
+    to: { email: customerEmail, name: customerName },
+    subject: statusInfo.subject,
+    template: 'order-status-update',
+    data: {
+      orderId,
+      customerName,
+      status,
+      message: statusInfo.message,
+      items,
+      totalCents,
+      currency,
+      shippingAddress,
+      trackingUrl: `https://shafan-store.com/account/orders/${orderId}`,
     },
   });
 };

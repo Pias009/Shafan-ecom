@@ -1,24 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 // Helper function to check admin authorization
 async function checkAdminAuth() {
-  console.log("[DEBUG] checkAdminAuth: Checking session...");
-  const session = await getServerSession(authOptions);
-  console.log("[DEBUG] checkAdminAuth: Session found?", !!session);
-  if (session) {
-    console.log("[DEBUG] checkAdminAuth: User role:", (session.user as any)?.role);
-    console.log("[DEBUG] checkAdminAuth: User ID:", (session.user as any)?.id);
-  }
-  if (!session || !["ADMIN", "SUPERADMIN"].includes((session.user as any)?.role)) {
-    console.log("[DEBUG] checkAdminAuth: Access denied - no session or insufficient role");
+  const session = await getAdminApiSession();
+  if (!session) {
     return null;
   }
-  console.log("[DEBUG] checkAdminAuth: Access granted");
   return session;
 }
 

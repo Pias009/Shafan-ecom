@@ -84,7 +84,11 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
   }, []);
 
   const handleInputChange = (field: keyof DiscountFormData, value: any) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    if (field === "value" && value === "") {
+      setForm((prev) => ({ ...prev, [field]: 0 }));
+    } else {
+      setForm((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleAddProduct = (productId: string) => {
@@ -279,7 +283,7 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
             <input
               type="number"
               min="0"
-              value={form.minimumOrderValue || ""}
+              value={form.minimumOrderValue ?? ""}
               onChange={(e) => handleInputChange("minimumOrderValue", e.target.value ? parseInt(e.target.value) : undefined)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="0"
@@ -295,7 +299,7 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
             <input
               type="number"
               min="1"
-              value={form.maxUses || ""}
+              value={form.maxUses ?? ""}
               onChange={(e) => handleInputChange("maxUses", e.target.value ? parseInt(e.target.value) : undefined)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Unlimited"

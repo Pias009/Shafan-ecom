@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getServerAuthSession } from '@/lib/auth';
+import { getAdminApiSession } from '@/lib/admin-session';
 import { z } from 'zod';
 import { uploadFromUrl } from '@/lib/cloudinary';
 
@@ -26,8 +26,8 @@ const UpdateSchema = z.object({
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
   const product = await prisma.product.findUnique({
@@ -55,8 +55,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
   try {
@@ -202,9 +202,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getServerAuthSession();
+  const session = await getAdminApiSession();
   
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
 

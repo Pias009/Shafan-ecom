@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { OrderStatus } from '@prisma/client';
 import { OrderFilter } from './_components/OrderFilter';
-import { getAdminStoreAccess } from '@/lib/admin-store-guard';
+import { getAdminStoreAccess } from '@/lib/admin-session';
 
 function formatPrice(amountCents: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';

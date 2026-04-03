@@ -1,21 +1,20 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useAdminSession } from "./useAdminSession";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function SuperGuard({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAdminSession();
   const router = useRouter();
 
   useEffect(() => {
     if (status === "loading") return;
     
-    // Strict role and email check for super admin
-    const isSuper = session?.user?.role === "SUPERADMIN";
+    const isSuper = session?.role === "SUPERADMIN";
     
     if (!isSuper) {
-      router.push("/ueadmin/dashboard"); // Send to regular admin if not super
+      router.push("/ueadmin/dashboard");
     }
   }, [session, status, router]);
 
@@ -30,7 +29,7 @@ export default function SuperGuard({ children }: { children: React.ReactNode }) 
     );
   }
 
-  const isSuper = session?.user?.role === "SUPERADMIN";
+  const isSuper = session?.role === "SUPERADMIN";
   if (!isSuper) return null;
 
   return <>{children}</>;

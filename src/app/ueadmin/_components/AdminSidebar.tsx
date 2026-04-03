@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useAdminSession } from "./useAdminSession";
 import { usePathname } from "next/navigation";
 import {
   BarChart3, Users, Package,
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 export function AdminSidebar() {
-  const { data: session } = useSession();
+  const { data: session } = useAdminSession();
   const pathname = usePathname();
 
   const links = [
@@ -107,8 +107,8 @@ export function AdminSidebar() {
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center font-black text-[10px]">P</div>
              <div className="min-w-0">
-                <div className="font-black text-[10px] uppercase tracking-tighter truncate">{session?.user?.email}</div>
-                <div className="text-[8px] font-bold text-black/30 uppercase">{session?.user?.role}</div>
+                 <div className="font-black text-[10px] uppercase tracking-tighter truncate">{session?.email}</div>
+                 <div className="text-[8px] font-bold text-black/30 uppercase">{session?.role}</div>
              </div>
           </div>
        </div>

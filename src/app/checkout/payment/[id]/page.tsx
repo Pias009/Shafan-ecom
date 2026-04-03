@@ -151,6 +151,12 @@ export default function CustomPaymentPage() {
         if (orderData.error) throw new Error(orderData.error);
         setOrder(orderData);
 
+        // If order already has COD, redirect to success
+        if (orderData.paymentMethod === "cod") {
+          router.push(`/checkout/success?orderId=${id}&cod=true`);
+          return;
+        }
+
         const stripeData = await stripeRes.json();
         if (stripeData.error) throw new Error(stripeData.error);
         setClientSecret(stripeData.clientSecret);

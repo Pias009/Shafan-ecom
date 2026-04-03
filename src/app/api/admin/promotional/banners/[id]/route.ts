@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
-import { Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 // Helper function to check admin authorization
 async function checkAdminAuth() {
-  const session = await getServerSession(authOptions);
-  const userRole = (session?.user as any)?.role as Role | undefined;
-  if (!session || !userRole || !["ADMIN", "SUPERADMIN"].includes(userRole)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return null;
   }
   return session;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useAdminSession } from "../_components/useAdminSession";
 import { useRouter } from "next/navigation";
 import { 
   Plus, Edit, Trash2, ChevronDown, ChevronUp, 
@@ -25,7 +25,7 @@ interface Category {
 }
 
 export default function CategoriesPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAdminSession();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);

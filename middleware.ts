@@ -74,65 +74,21 @@ export async function middleware(req: NextRequest) {
                        pathname.startsWith('/ueadmin/setup')
 
     if (!isAuthPage) {
-      // Use admin-specific cookie name
-      const token = await getToken({
-        req,
-        secret: process.env.NEXTAUTH_SECRET,
-        cookieName: process.env.NODE_ENV === 'production'
-          ? '__Secure-next-auth.admin-session-token'
-          : 'next-auth.admin-session-token'
-      })
+      // Check admin session cookie
+      const adminCookie = req.cookies.get('admin-session');
       
-      // Debug logging
       console.log('MIDDLEWARE: Admin route accessed', {
         pathname,
-        hasToken: !!token,
-        tokenKeys: token ? Object.keys(token) : null,
-        role: token?.role,
-        mfaVerified: token?.mfaVerified,
-        masterAdminBypass: token?.masterAdminBypass,
-        NODE_ENV: process.env.NODE_ENV,
-        NEXTAUTH_URL: process.env.NEXTAUTH_URL?.substring(0, 20) + '...',
-        cookieName: process.env.NODE_ENV === 'production'
-          ? '__Secure-next-auth.session-token'
-          : 'next-auth.session-token',
-        VERCEL_ENV: process.env.VERCEL_ENV,
-        VERCEL_URL: process.env.VERCEL_URL
+        hasAdminCookie: !!adminCookie,
       })
       
-      if (!token) {
-        console.log('MIDDLEWARE: No token found, redirecting to login')
+      if (!adminCookie) {
+        console.log('MIDDLEWARE: No admin cookie found, redirecting to login')
         url.pathname = '/ueadmin/login'
         return NextResponse.redirect(url)
       }
-
-      const role = token.role as string
-      if (role !== 'ADMIN' && role !== 'SUPERADMIN') {
-        console.log('MIDDLEWARE: Invalid role', role)
-        return new NextResponse("Unauthorized Access", { status: 401 })
-      }
-
-      // Allow SUPERADMIN to bypass MFA in both development and production for now
-      // This fixes the redirect loop issue in production
-      const isSuperAdmin = role === 'SUPERADMIN';
       
-      // Check for master admin bypass flag in token
-      const isMasterAdminBypass = token.masterAdminBypass === true;
-      
-      // Superadmins can bypass MFA in both dev and prod
-      // Regular admins still need MFA
-      if (!token.mfaVerified && !isSuperAdmin && !isMasterAdminBypass) {
-         console.log('MIDDLEWARE: MFA not verified', {
-           mfaVerified: token.mfaVerified,
-           isSuperAdmin,
-           masterAdminBypass: isMasterAdminBypass,
-           role
-         })
-         url.pathname = '/ueadmin/login'
-         return NextResponse.redirect(url)
-      }
-      
-      console.log('MIDDLEWARE: Admin access granted for', role, { masterAdminBypass: isMasterAdminBypass })
+      console.log('MIDDLEWARE: Admin access granted')
     }
   }
 

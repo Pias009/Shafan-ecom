@@ -1,10 +1,9 @@
-import { getServerAuthSession } from "@/lib/auth";
+import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const session = await getServerAuthSession();
-  const isAdmin = session && ["ADMIN", "SUPERADMIN"].includes((session.user as any)?.role);
-  if (!session || !isAdmin) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response("Unauthorized", { status: 401 });
   }
 

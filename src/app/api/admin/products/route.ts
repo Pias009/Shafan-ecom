@@ -1,8 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { getServerAuthSession } from '@/lib/auth';
 import { uploadFromUrl } from '@/lib/cloudinary';
-import { getAdminStoreAccess } from '@/lib/admin-store-guard';
+import { getAdminApiSession, getAdminStoreAccess } from '@/lib/admin-session';
 import { SUPPORTED_COUNTRIES, isValidCountryCode, getCurrencyForCountry } from '@/lib/countries';
 
 /**
@@ -108,8 +107,8 @@ const ProductCreateSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getServerAuthSession();
-    if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+    const session = await getAdminApiSession();
+    if (!session) {
       return new Response('Unauthorized', { status: 401 });
     }
 
@@ -188,13 +187,9 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerAuthSession();
+    const session = await getAdminApiSession();
     console.log('POST /api/admin/products - Session:', session ? 'present' : 'missing');
-    if (session) {
-      console.log('Session user:', session.user);
-      console.log('Session user role:', (session.user as any)?.role);
-    }
-    if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+    if (!session) {
       console.log('Unauthorized: no session or invalid role');
       return new Response('Unauthorized', { status: 401 });
     }

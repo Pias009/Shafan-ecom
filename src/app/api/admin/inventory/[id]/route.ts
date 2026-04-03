@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerAuthSession } from '@/lib/auth';
+import { getAdminApiSession } from '@/lib/admin-session';
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
 

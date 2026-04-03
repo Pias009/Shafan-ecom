@@ -49,7 +49,18 @@ export default function DiscountsPage() {
         params.append("search", searchTerm);
       }
 
-      const res = await fetch(`/api/admin/promotional/discounts?${params}`);
+      const res = await fetch(`/api/admin/promotional/discounts?${params}`, {
+        credentials: 'include'
+      });
+      
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = '/ueadmin/login';
+          return;
+        }
+        throw new Error('Failed to fetch discounts');
+      }
+      
       const data = await res.json();
       setDiscounts(data.discounts || []);
       setTotal(data.pagination?.total || 0);

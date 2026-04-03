@@ -92,7 +92,7 @@ export function AuthModal({
         }
       }
 
-      const res = await signIn("credentials", {
+      const res = await signIn("user-login", {
         email,
         password,
         redirect: false,

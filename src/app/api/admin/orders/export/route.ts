@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getServerAuthSession } from '@/lib/auth';
+import { getAdminApiSession } from '@/lib/admin-session';
 
 function toCSV(rows: any[]) {
   if (!rows.length) return '';
@@ -9,8 +9,8 @@ function toCSV(rows: any[]) {
 }
 
 export async function GET() {
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
   const orders = await (prisma as any).order.findMany({

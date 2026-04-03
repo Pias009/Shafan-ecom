@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getServerAuthSession } from '@/lib/auth';
+import { getAdminApiSession } from '@/lib/admin-session';
 import { z } from 'zod';
 import { sendOrderEmail } from '@/lib/email';
 
@@ -7,8 +7,8 @@ const EmailSchema = z.object({ type: z.enum(['confirm','shipping']) });
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getServerAuthSession();
-  if (!session || !['ADMIN','SUPERADMIN'].includes((session.user as any)?.role)) {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
   try {

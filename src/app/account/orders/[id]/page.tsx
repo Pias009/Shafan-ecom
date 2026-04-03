@@ -6,6 +6,7 @@ import { ArrowLeft, CreditCard, User, MapPin, CheckCircle2, ShoppingBag } from "
 import OrderActions from "./OrderActions";
 import { InvoiceDownloader } from "@/components/InvoiceDownloader";
 import { OrderStatus } from "@prisma/client";
+import OrderStatusBadge from "./OrderStatusBadge";
 
 function formatPrice(amountCents: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
@@ -71,9 +72,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
         <div className="text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-2">
             <h1 className="text-3xl md:text-5xl font-black tracking-tighter">Receipt #{order.id.substring(0, 8)}</h1>
-            <span className="bg-black text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">
-              {order.status}
-            </span>
+            <OrderStatusBadge orderId={order.id} initialStatus={order.status} />
           </div>
           <p className="text-[10px] md:text-xs font-bold text-black/30 uppercase tracking-widest">
             {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

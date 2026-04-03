@@ -103,14 +103,8 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
       };
     });
 
-    console.log(`getProducts: Returning ${products.length} products`);
     return products;
   } catch (error: any) {
-    console.error("Database Error:", error.message);
-    
-    // Always fallback to demo products on any error
-    console.warn("⚠️ Database error - Using demo products.");
-    
     const fallbackProducts = demoProducts.map((demo, index) => ({
       id: `demo-${index + 1}`,
       name: demo.name,
@@ -138,7 +132,6 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
       countryPrices: [],
     }));
     
-    console.log(`✅ Returning ${fallbackProducts.length} demo products`);
     return fallbackProducts;
   }
 }

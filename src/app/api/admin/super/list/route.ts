@@ -1,10 +1,9 @@
 import { prisma } from '@/lib/prisma';
-import { getServerAuthSession } from '@/lib/auth';
+import { getAdminApiSession } from '@/lib/admin-session';
 
 export async function GET() {
-  const session = await getServerAuthSession();
-  // Super Admin gate
-  if (!session || session.user?.role !== 'SUPERADMIN') {
+  const session = await getAdminApiSession();
+  if (!session) {
     return new Response('Unauthorized', { status: 401 });
   }
   const admins = await prisma.user.findMany({
