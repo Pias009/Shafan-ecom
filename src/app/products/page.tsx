@@ -43,7 +43,7 @@ function getCountryCodeFromStore(storeCode: string | null): string {
 
 function getPriceFromCountryPrices(countryPrices: any[], countryCode: string) {
   if (!countryPrices || countryPrices.length === 0) return null;
-  const cp = countryPrices.find(c => c.country === countryCode && c.active);
+  const cp = countryPrices.find(c => c.country === countryCode);
   return cp?.priceCents || null;
 }
 
@@ -65,28 +65,22 @@ export default async function ProductsPage({
     // Try to get country-specific price first
     const countryPrice = getPriceFromCountryPrices(p.countryPrices, countryCode);
     
-    // Determine prices: sale price takes priority, then country price, then regular price
-    const salePrice = p.salePriceCents ? p.salePriceCents / 100 : null;
-    const regularPrice = p.regularPriceCents / 100;
+    // Use country price or base price
+    const salePrice = p.salePrice || p.salePriceCents || null;
+    const regularPrice = p.regularPrice || p.regularPriceCents || p.priceCents || 0;
     
     // Calculate final prices in display format
-    const displayPrice = countryPrice 
-      ? countryPrice / 100 
-      : (salePrice || regularPrice);
-    const originalPrice = countryPrice 
-      ? (salePrice || regularPrice) 
-      : regularPrice;
+    const displayPrice = countryPrice || salePrice || regularPrice;
+    const originalPrice = countryPrice ? (salePrice || regularPrice) : regularPrice;
     
     return {
       ...p,
       price: displayPrice,
       discountPrice: displayPrice < originalPrice ? originalPrice : undefined,
       priceCents: countryPrice || p.salePriceCents || p.regularPriceCents,
-      regularPriceCents: originalPrice * 100,
-      salePriceCents: salePrice ? salePrice * 100 : null,
       brandName: p.brand?.name || "Generic",
       categoryName: p.category?.name || "General",
-      imageUrl: p.mainImage || "/placeholder-product.png",
+      imageUrl: p.mainImage,
       images: p.images || []
     };
   });

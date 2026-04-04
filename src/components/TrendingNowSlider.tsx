@@ -45,7 +45,7 @@ export function TrendingNowSlider({
                 <HomeProductCard
                   product={{
                     ...product,
-                    price: product.priceCents / 100,
+                    price: product.price || product.priceCents || 0,
                     imageUrl: product.mainImage,
                     brand: product.brand?.name,
                     averageRating: product.averageRating,

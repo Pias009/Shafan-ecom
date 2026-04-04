@@ -17,13 +17,20 @@ interface EditProductFormProps {
 export function EditProductForm({ product: initialProduct, categories, subCategories, skinTones, skinConcerns }: EditProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [product, setProduct] = useState({
+  
+  // Ensure numeric fields are properly converted to numbers
+  const normalizedProduct = {
     ...initialProduct,
+    priceCents: Number(initialProduct.priceCents) || 0,
+    discountCents: Number(initialProduct.discountCents) || 0,
+    stockQuantity: Number(initialProduct.stockQuantity) || 0,
     categoryIds: initialProduct.categories?.map((c: any) => c.id) || [],
     subCategoryIds: initialProduct.subCategory?.id ? [initialProduct.subCategory.id] : [],
     skinToneIds: initialProduct.skinTones?.map((s: any) => s.id) || [],
     skinConcernIds: initialProduct.skinConcerns?.map((sc: any) => sc.id) || [],
-  });
+  };
+  
+  const [product, setProduct] = useState(normalizedProduct);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -121,32 +128,41 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     
     setLoading(true);
     try {
+      // Ensure all numeric values are proper numbers before sending
+      const safeCountryPrices = (product.countryPrices || []).map((cp: any) => ({
+        ...cp,
+        priceCents: typeof cp.priceCents === 'number' ? cp.priceCents : Number(cp.priceCents) || 0,
+      }));
+      
+      const payload = {
+        name: product.name,
+        sku: product.sku || null,
+        description: product.description,
+        shortDescription: product.shortDescription,
+        benefits: product.benefits,
+        ingredients: product.ingredients,
+        howToUse: product.howToUse,
+        priceCents: typeof product.priceCents === 'number' ? product.priceCents : Number(product.priceCents) || 0,
+        discountCents: typeof product.discountCents === 'number' ? product.discountCents : Number(product.discountCents) || 0,
+        stockQuantity: typeof product.stockQuantity === 'number' ? product.stockQuantity : Number(product.stockQuantity) || 0,
+        active: product.active,
+        mainImage: product.mainImage || '',
+        images: product.images || [],
+        brandName: product.brand?.name,
+        categoryIds: product.categoryIds,
+        skinToneIds: product.skinToneIds,
+        skinConcernIds: product.skinConcernIds,
+        subCategoryIds: product.subCategoryIds,
+        subCategoryId: product.subCategoryIds?.[0] || null,
+        tags: product.tags || [],
+        countryPrices: safeCountryPrices,
+      };
+      console.log("Edit form payload:", JSON.stringify(payload, null, 2));
+      
       const res = await fetch(`/api/admin/products/${product.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: product.name,
-          sku: product.sku || null,
-          description: product.description,
-          shortDescription: product.shortDescription,
-          benefits: product.benefits,
-          ingredients: product.ingredients,
-          howToUse: product.howToUse,
-          priceCents: Math.round((product.priceCents || 0)),
-          discountCents: Math.round((product.discountCents || 0)),
-          stockQuantity: parseInt(product.stockQuantity || 0),
-          active: product.active,
-          mainImage: product.mainImage || '',
-          images: product.images || [],
-          brandName: product.brand?.name,
-          categoryIds: product.categoryIds,
-          skinToneIds: product.skinToneIds,
-          skinConcernIds: product.skinConcernIds,
-          subCategoryIds: product.subCategoryIds,
-          subCategoryId: product.subCategoryIds?.[0] || null,
-          tags: product.tags || [],
-          countryPrices: product.countryPrices || [],
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -402,11 +418,13 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                     <div className="col-span-6">
                       <input
                         type="number"
-                        value={cp?.priceCents ? cp.priceCents / 100 : ''}
+                        value={cp?.priceCents ? cp.priceCents : ''}
                         onChange={(e) => {
+                          const rawValue = e.target.value;
+                          const priceCents = rawValue === '' ? 0 : Math.round(parseFloat(rawValue));
                           const newPrices = product.countryPrices?.map((c: any) => 
                             c.country === countryCode 
-                              ? { ...c, priceCents: Math.round(parseFloat(e.target.value || '0') * 100) }
+                              ? { ...c, priceCents: isNaN(priceCents) ? 0 : priceCents }
                               : c
                           ) || [];
                           setProduct({ ...product, countryPrices: newPrices });

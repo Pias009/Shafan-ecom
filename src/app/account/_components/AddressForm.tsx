@@ -102,10 +102,12 @@ export default function AddressForm() {
   };
 
   // Filter countries based on search
-  const filteredCountries = COUNTRIES.filter(c => 
-    c.toLowerCase().includes(formData.country.toLowerCase()) ||
-    formData.country === ""
-  );
+  const filteredCountries = showRegionDropdown 
+    ? COUNTRIES // Show all countries when dropdown is open
+    : COUNTRIES.filter(c => 
+        c.toLowerCase().includes(formData.country.toLowerCase()) ||
+        formData.country === ""
+      );
 
   // Filter regions based on search
   const filteredRegions = getCitiesForCountry(formData.country).filter(r => 

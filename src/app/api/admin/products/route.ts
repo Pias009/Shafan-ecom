@@ -201,14 +201,33 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log("API Request Body:", JSON.stringify(body, null, 2));
     
-    const parsed = ProductCreateSchema.safeParse(body);
+    // Pre-process to convert string numbers to actual numbers
+    const processedBody = { ...body };
+    if (processedBody.priceCents !== undefined && processedBody.priceCents !== null) {
+      processedBody.priceCents = Number(processedBody.priceCents);
+    }
+    if (processedBody.discountCents !== undefined && processedBody.discountCents !== null) {
+      processedBody.discountCents = Number(processedBody.discountCents);
+    }
+    if (processedBody.stockQuantity !== undefined && processedBody.stockQuantity !== null) {
+      processedBody.stockQuantity = Number(processedBody.stockQuantity);
+    }
+    if (processedBody.countryPrices && Array.isArray(processedBody.countryPrices)) {
+      processedBody.countryPrices = processedBody.countryPrices.map((cp: any) => ({
+        ...cp,
+        priceCents: typeof cp.priceCents === 'string' ? parseInt(cp.priceCents, 10) : (Number(cp.priceCents) || 0),
+      }));
+    }
+    
+    const parsed = ProductCreateSchema.safeParse(processedBody);
     if (!parsed.success) {
       console.error("Validation Error Details:", JSON.stringify(parsed.error.issues, null, 2));
-      console.error("Raw body that failed:", body);
+      console.error("Raw body that failed:", JSON.stringify(body, null, 2));
       return new Response(JSON.stringify({
         error: 'Invalid payload',
         details: parsed.error.issues,
-        message: 'Validation failed. Check that all numeric fields are numbers, not strings.'
+        // Include the first issue for quick debugging
+        firstIssue: parsed.error.issues[0],
       }), { status: 400 });
     }
     const data = parsed.data;

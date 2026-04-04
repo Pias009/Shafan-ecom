@@ -26,6 +26,7 @@ import { useUserCountry } from "@/lib/country-detection";
 import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 import HomeBannerSlider from "@/components/HomeBannerSlider";
 import { GoogleReviewsSection } from "@/components/GoogleReviewsSection";
+import { hasValidPrice } from "@/lib/product-utils";
 
 export default function HomeClient({ initialProducts, newArrivals = [] }: { initialProducts: any[], newArrivals?: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
@@ -48,9 +49,6 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   // Actual country detection happens after mount
   const userCountry = useUserCountry();
   const [effectiveCountry, setEffectiveCountry] = useState("AE");
-  
-  // Check if user's country is supported
-  const isCountrySupported = SUPPORTED_COUNTRIES.some(c => c.code === effectiveCountry);
 
   useEffect(() => {
     // Mark as mounted after first render
@@ -153,24 +151,9 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return products.filter((p) => {
-      // Check if product has a valid price for user's country
-      let hasValidPrice = false;
-      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
-        const countryPrice = p.countryPrices.find((cp: any) =>
-          cp.country.toUpperCase() === effectiveCountry.toUpperCase()
-        );
-        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
-      } else if (!isCountrySupported) {
-        // For unsupported countries, hide products entirely
-        hasValidPrice = false;
-      } else {
-        // For supported countries without country prices, hide the product
-        hasValidPrice = false;
-      }
+      if (!hasValidPrice(p, effectiveCountry)) return false;
       
-      if (!hasValidPrice) return false;
-      
-      const price = p.priceCents / 100;
+      const price = p.price || 0;
       if (price > maxPrice) return false;
       if (category !== "All" && p.category?.name !== category) return false;
       if (brand !== "All" && p.brand?.name !== brand) return false;
@@ -181,49 +164,19 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         p.category?.name?.toLowerCase().includes(query)
       );
     });
-  }, [q, category, brand, maxPrice, products, effectiveCountry, isCountrySupported]);
+  }, [q, category, brand, maxPrice, products, effectiveCountry]);
 
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
   
   // Filter newArrivals based on country support
   const filteredNewArrivals = useMemo(() => {
-    return newArrivals.filter((p) => {
-      let hasValidPrice = false;
-      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
-        const countryPrice = p.countryPrices.find((cp: any) =>
-          cp.country.toUpperCase() === effectiveCountry.toUpperCase()
-        );
-        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
-      } else if (!isCountrySupported) {
-        // For unsupported countries, hide products entirely
-        hasValidPrice = false;
-      } else {
-        // For supported countries without country prices, hide the product
-        hasValidPrice = false;
-      }
-      return hasValidPrice;
-    });
-  }, [newArrivals, effectiveCountry, isCountrySupported]);
+    return newArrivals.filter((p) => hasValidPrice(p, effectiveCountry));
+  }, [newArrivals, effectiveCountry]);
   
   // Filter hot products based on country support
   const filteredHot = useMemo(() => {
-    return hot.filter((p) => {
-      let hasValidPrice = false;
-      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
-        const countryPrice = p.countryPrices.find((cp: any) =>
-          cp.country.toUpperCase() === effectiveCountry.toUpperCase()
-        );
-        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
-      } else if (!isCountrySupported) {
-        // For unsupported countries, hide products entirely
-        hasValidPrice = false;
-      } else {
-        // For supported countries without country prices, hide the product
-        hasValidPrice = false;
-      }
-      return hasValidPrice;
-    });
-  }, [hot, effectiveCountry, isCountrySupported]);
+    return hot.filter((p) => hasValidPrice(p, effectiveCountry));
+  }, [hot, effectiveCountry]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -231,7 +184,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       name: product.name,
       brand: product.brand?.name || product.brand || "Generic",
       category: product.category?.name || product.category || "General",
-      price: product.price ?? product.priceCents / 100,
+      price: product.price || product.priceCents || 0,
       imageUrl: product.mainImage || product.imageUrl || "/placeholder-product.png",
       countryPrices: product.countryPrices,
     };
@@ -328,8 +281,8 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                       key={product.id}
                       product={{
                         ...product,
-                        price: product.regularPriceCents / 100,
-                        discountPrice: product.salePriceCents ? product.salePriceCents / 100 : undefined,
+                        price: product.regularPrice || product.regularPriceCents || product.price || product.priceCents || 0,
+                        discountPrice: product.salePrice || product.salePriceCents || undefined,
                         imageUrl: product.mainImage,
                         brand: product.brand?.name,
                         averageRating: product.averageRating,
@@ -469,8 +422,8 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                       key={p.id}
                       product={{
                         ...p,
-                        price: p.regularPriceCents / 100,
-                        discountPrice: p.salePriceCents ? p.salePriceCents / 100 : undefined,
+                        price: p.regularPrice || p.regularPriceCents || p.price || p.priceCents || 0,
+                        discountPrice: p.salePrice || p.salePriceCents || undefined,
                         imageUrl: p.mainImage,
                         brand: p.brand?.name,
                         averageRating: p.averageRating,
@@ -523,7 +476,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       <ProductQuickViewModal
         product={quickView ? {
           ...quickView,
-          price: quickView.priceCents / 100,
+          price: quickView.price || quickView.priceCents || 0,
           imageUrl: quickView.mainImage,
           brand: quickView.brand?.name
         } : null}

@@ -66,31 +66,31 @@ export default async function OffersPage() {
       discount.productDiscounts.forEach((pd: any) => {
         const product = pd.product;
         if (!productsMap.has(product.id)) {
-          const basePriceCents = product.priceCents || Math.round(product.price * 100);
-          let discountedPrice = basePriceCents;
+          const basePrice = product.price || product.priceCents || 0;
+          let discountedPrice = basePrice;
 
           if (discount.discountType === "PERCENTAGE") {
-            discountedPrice = Math.round(basePriceCents * (1 - discount.value / 100));
+            discountedPrice = Math.round(basePrice * (1 - discount.value / 100));
           } else if (discount.discountType === "FIXED_AMOUNT") {
-            discountedPrice = Math.max(0, basePriceCents - discount.value);
+            discountedPrice = Math.max(0, basePrice - discount.value);
           }
 
           productsMap.set(product.id, {
             id: product.id,
             name: product.name,
             brand: product.brand,
-            price: basePriceCents / 100,
+            price: basePrice,
             imageUrl: product.images?.[0] || "/placeholder-product.png",
             hot: product.hot,
             averageRating: product.averageRating,
             ratingCount: product.ratingCount,
             stockQuantity: product.stockQuantity,
             countryPrices: product.countryPrices,
-            discountPrice: discountedPrice / 100,
+            discountPrice: discountedPrice,
             discountPercentage:
               discount.discountType === "PERCENTAGE"
                 ? discount.value
-                : Math.round(((basePriceCents - discountedPrice) / basePriceCents) * 100),
+                : Math.round(((basePrice - discountedPrice) / basePrice) * 100),
             discountCode: discount.code,
             freeDelivery: discount.discountType === "FREE_SHIPPING",
           });

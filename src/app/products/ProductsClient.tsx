@@ -16,7 +16,6 @@ import { useRouter } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useUserCountry } from "@/lib/country-detection";
-import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 
 export default function ProductsClient({ initialProducts, category, brand: initialBrand, banners = [] }: { initialProducts: any[], category?: string, brand?: string, banners?: any[] }) {
   const [products] = useState<any[]>(initialProducts);
@@ -25,7 +24,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
   const [selectedCategory, setSelectedCategory] = useState(category || "All");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
   const [selectedSkinTone, setSelectedSkinTone] = useState("All");
-  const [maxPrice, setMaxPrice] = useState(5000);
+  const [maxPrice, setMaxPrice] = useState(100000);
   const [quickView, setQuickView] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -34,11 +33,9 @@ export default function ProductsClient({ initialProducts, category, brand: initi
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
   const userCountry = useUserCountry();
-  
-  // Check if user's country is supported
-  const isCountrySupported = SUPPORTED_COUNTRIES.some(c => c.code === userCountry);
 
   const brands = useMemo(() => {
+    console.log('ProductsClient - products:', products.length, products.map(p => p.id));
     const set = new Set(products.map(p => p.brandName).filter(Boolean));
     return [t.product.all, ...Array.from(set).sort()];
   }, [products, t.product.all]);
@@ -73,30 +70,9 @@ export default function ProductsClient({ initialProducts, category, brand: initi
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
-      // Check if product has a valid price for user's country
-      let hasValidPrice = false;
-      
-      // If product has country-specific prices, check user's country
-      if (p.countryPrices && p.countryPrices.length > 0) {
-        if (isCountrySupported) {
-          const countryPrice = p.countryPrices.find((cp: any) =>
-            cp.country.toUpperCase() === userCountry.toUpperCase()
-          );
-          hasValidPrice = countryPrice && countryPrice.priceCents > 0;
-        } else {
-          // For unsupported countries, use base price if available
-          hasValidPrice = p.priceCents > 0 || p.regularPriceCents > 0;
-        }
-      } else {
-        // If no country prices, use base price
-        hasValidPrice = p.priceCents > 0 || p.regularPriceCents > 0;
-      }
-      
-      if (!hasValidPrice) return false;
-      
-      const price = p.discountPrice ?? p.price;
-      const matchesSearch = p.name.toLowerCase().includes(q.toLowerCase()) ||
-        p.brandName.toLowerCase().includes(q.toLowerCase());
+      const price = p.discountPrice ?? p.price ?? 0;
+      const matchesSearch = !q || p.name.toLowerCase().includes(q.toLowerCase()) ||
+        (p.brandName || '').toLowerCase().includes(q.toLowerCase());
       const matchesBrand = brand === t.product.all || p.brandName === brand;
       const matchesPrice = price <= maxPrice;
       const matchesCategory = selectedCategory === t.product.all || p.categoryName === selectedCategory;
@@ -106,7 +82,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
       
       return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone;
     });
-  }, [q, brand, maxPrice, products, t.product.all, userCountry, isCountrySupported, selectedCategory, selectedSubCategory, selectedSkinTone]);
+  }, [q, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -166,8 +142,8 @@ export default function ProductsClient({ initialProducts, category, brand: initi
   }
 
   return (
-    <div className="min-h-screen bg-cream text-black flex flex-col">
-      <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 flex-1">
+    <div className="min-h-screen bg-cream text-black">
+      <div className="max-w-7xl mx-auto px-6 pt-32 pb-20">
         <ProductsSlider />
 
         {/* Product Page Banners */}
@@ -305,8 +281,8 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                     <input
                       type="range"
                       min="0"
-                      max="5000"
-                      step="10"
+                      max="100000"
+                      step="100"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(Number(e.target.value))}
                       className="flex-1 h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
@@ -368,7 +344,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                   setSelectedCategory(t.product.all);
                   setSelectedSubCategory('All');
                   setSelectedSkinTone('All');
-                  setMaxPrice(5000); 
+                  setMaxPrice(100000); 
                 }} 
                 className="mt-8 text-black underline font-bold underline-offset-4"
             >
@@ -376,7 +352,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
             </button>
           </div>
         )}
-      </main>
+      </div>
 
       <ProductQuickViewModal
         product={quickView}

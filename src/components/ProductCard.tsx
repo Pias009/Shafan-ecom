@@ -88,14 +88,22 @@ export function ProductCard({
           onClick={() => onQuickView(product)}
           className="w-full h-full relative block"
         >
-          <Image
-            src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 200px, (max-width: 768px) 290px, 360px"
-            className="object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
-            priority={false}
-          />
+          {product.imageUrl ? (
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 200px, (max-width: 768px) 290px, 360px"
+              className="object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
+              priority={false}
+              unoptimized={true}
+              key={product.id}
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+              <Package size={40} />
+            </div>
+          )}
 
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">

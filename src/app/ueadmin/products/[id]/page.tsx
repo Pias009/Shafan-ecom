@@ -66,7 +66,13 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       skinTones: product.productSkinTones.map((ps: any) => ps.skinTone),
       skinConcerns: product.productSkinConcerns.map((sc: any) => sc.skinConcern),
       allInventories: (product as any).storeInventories || [],
-      countryPrices: (product as any).countryPrices || [],
+      countryPrices: (product as any).countryPrices?.map((cp: any) => ({
+        ...cp,
+        priceCents: Number(cp.priceCents) || 0,
+      })) || [],
+      priceCents: Number(product.priceCents) || 0,
+      discountCents: Number(product.discountCents) || 0,
+      stockQuantity: Number(product.stockQuantity) || 0,
       isSuper
     };
 

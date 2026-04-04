@@ -17,7 +17,7 @@ import { translations } from "@/lib/translations";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUserCountry } from "@/lib/country-detection";
-import { SUPPORTED_COUNTRIES } from "@/lib/countries";
+import { hasValidPrice } from "@/lib/product-utils";
 
 interface ProductPageClientProps {
   product: any;
@@ -30,9 +30,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
   const userCountry = useUserCountry();
-  
-  // Check if user's country is supported
-  const isCountrySupported = SUPPORTED_COUNTRIES.some(c => c.code === userCountry);
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
@@ -52,21 +49,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
   
   // Filter recommendations based on country support
   const filteredRecommendations = useMemo(() => {
-    return recommendations.filter((p) => {
-      let hasValidPrice = false;
-      if (isCountrySupported && p.countryPrices && p.countryPrices.length > 0) {
-        const countryPrice = p.countryPrices.find((cp: any) =>
-          cp.country.toUpperCase() === userCountry.toUpperCase()
-        );
-        hasValidPrice = countryPrice && countryPrice.priceCents > 0;
-      } else if (!isCountrySupported) {
-        hasValidPrice = false;
-      } else {
-        hasValidPrice = p.priceCents > 0;
-      }
-      return hasValidPrice;
-    });
-  }, [recommendations, userCountry, isCountrySupported]);
+    return recommendations.filter((p) => hasValidPrice(p, userCountry));
+  }, [recommendations, userCountry]);
 
   // Combine images
   const allImages = [
@@ -90,7 +74,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       name: p.name,
       brand: p.brand?.name,
       category: p.category?.name,
-      price: (p.salePriceCents || p.priceCents) / 100,
+      price: p.salePrice || p.salePriceCents || p.price || p.priceCents || 0,
       imageUrl: p.mainImage,
       countryPrices: p.countryPrices,
     }, 1);
@@ -141,8 +125,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     }
   }
 
-  const displayPrice = (product.salePriceCents || product.priceCents) / 100;
-  const originalPrice = product.regularPriceCents / 100;
+  const displayPrice = product.salePrice || product.salePriceCents || product.price || product.priceCents || 0;
+  const originalPrice = product.regularPrice || product.regularPriceCents || product.price || product.priceCents || 0;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-black">
@@ -413,8 +397,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   key={rec.id}
                   product={{
                     ...rec,
-                    price: rec.priceCents / 100,
-                    discountPrice: rec.salePriceCents ? rec.salePriceCents / 100 : undefined,
+                    price: rec.price || rec.priceCents || 0,
+                    discountPrice: rec.salePrice || rec.salePriceCents || undefined,
                     imageUrl: rec.mainImage,
                     brand: rec.brand?.name,
                     averageRating: rec.averageRating,

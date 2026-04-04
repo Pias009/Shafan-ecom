@@ -76,6 +76,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const form = await request.formData();
       data = Object.fromEntries(form.entries());
     }
+    
+    // Pre-process to convert string numbers to actual numbers
+    if (data.priceCents) data.priceCents = Number(data.priceCents);
+    if (data.discountCents) data.discountCents = Number(data.discountCents);
+    if (data.stockQuantity) data.stockQuantity = Number(data.stockQuantity);
+    if (data.countryPrices && Array.isArray(data.countryPrices)) {
+      data.countryPrices = data.countryPrices.map((cp: any) => ({
+        ...cp,
+        priceCents: typeof cp.priceCents === 'string' ? parseInt(cp.priceCents, 10) : (Number(cp.priceCents) || 0),
+      }));
+    }
+    
     const parsed = UpdateSchema.safeParse(data);
     if (!parsed.success) {
       return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { 'Content-Type': 'application/json' } });

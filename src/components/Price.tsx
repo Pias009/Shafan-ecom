@@ -3,6 +3,7 @@
 import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
 import { useEffect, useState } from "react";
 import { useUserCountry } from "@/lib/country-detection";
+import { getDisplayPrice } from "@/lib/product-utils";
 
 interface PriceProps {
   amount: number | string;
@@ -17,9 +18,10 @@ interface PriceProps {
   isCents?: boolean;
 }
 
-function formatPriceSimple(amount: number, currencyCode: string): string {
+function formatPriceSimple(amount: number, currencyCode: string, isRawPrice: boolean = false): string {
   const code = currencyCode?.toUpperCase() || 'USD';
-  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
+  // For raw prices from admin, show 0 decimals
+  const decimals = isRawPrice ? 0 : (["KWD", "BHD", "OMR"].includes(code) ? 3 : 2);
   const symbol = code;
   return `${symbol} ${amount.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
@@ -34,89 +36,31 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
   let displayAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(displayAmount)) displayAmount = 0;
 
-  if (isCents) {
-    displayAmount = displayAmount / 100;
-  }
-
-  if (currency) {
-    const currencyCode = currency.toUpperCase();
-    const productCurrency = SUPPORTED_CURRENCIES.find(c => c.code === currencyCode);
-    const targetCurrency = currentCurrency;
-    
-    let finalAmount = displayAmount;
-    let finalCurrency = currencyCode;
-    
-    if (productCurrency && targetCurrency) {
-      const amountInAED = displayAmount / productCurrency.rate;
-      finalAmount = amountInAED * targetCurrency.rate;
-      finalCurrency = targetCurrency.code;
-    }
-    
-    const formatted = formatPriceSimple(finalAmount, finalCurrency);
-    
-    if (showSymbolSmall) {
-      const symbol = finalCurrency;
-      return (
-        <span className={className}>
-          <span className="text-[0.6em] mr-0.5 opacity-90 font-bold">{symbol}</span>
-          {formatted.replace(symbol, '').trim()}
-        </span>
-      );
-    }
-    
-    return <span className={className}>{formatted}</span>;
-  }
-
   let displayCurrency = currentCurrency.code;
-  let convertedAmount = displayAmount;
+  let isRawPrice = false;
 
   if (countryPrices && countryPrices.length > 0) {
-    const countryPrice = countryPrices.find(cp =>
-      cp.country.toUpperCase() === userCountry.toUpperCase()
-    );
-    
-    if (countryPrice && countryPrice.priceCents > 0) {
-      const countryCurrency = countryPrice.currency.toUpperCase();
-      const productAmount = countryPrice.priceCents / 100;
-      
-      const productCurrency = SUPPORTED_CURRENCIES.find(c => c.code === countryCurrency);
-      const targetCurrency = currentCurrency;
-      
-      if (productCurrency && targetCurrency) {
-        const amountInAED = productAmount / productCurrency.rate;
-        convertedAmount = amountInAED * targetCurrency.rate;
-        displayCurrency = targetCurrency.code;
-      } else {
-        convertedAmount = productAmount;
-        displayCurrency = countryCurrency;
-      }
-    } else {
-      const productCurrency = SUPPORTED_CURRENCIES.find(c => c.code === currentCurrency.code);
-      if (productCurrency) {
-        const amountInAED = displayAmount / productCurrency.rate;
-        convertedAmount = amountInAED * productCurrency.rate;
-      }
+    const { price, currency: priceCurrency } = getDisplayPrice({ countryPrices }, userCountry);
+    if (price > 0) {
+      displayAmount = price;
+      displayCurrency = priceCurrency;
+      isRawPrice = true;
     }
-  } else {
-    const productCurrency = SUPPORTED_CURRENCIES.find(c => c.code === currentCurrency.code);
-    if (productCurrency) {
-      const amountInAED = displayAmount / productCurrency.rate;
-      convertedAmount = amountInAED * productCurrency.rate;
-    }
+  } else if (currency) {
+    displayCurrency = currency.toUpperCase();
   }
 
-  const formatted = formatPriceSimple(convertedAmount, displayCurrency);
+  const formatted = formatPriceSimple(displayAmount, displayCurrency, isRawPrice);
   
   if (showSymbolSmall) {
-    const symbol = displayCurrency;
     return (
       <span className={className}>
-        <span className="text-[0.6em] mr-0.5 opacity-90 font-bold">{symbol}</span>
-        {formatted.replace(symbol, '').trim()}
+        <span className="text-[0.6em] mr-0.5 opacity-90 font-bold">{displayCurrency}</span>
+        {formatted.replace(displayCurrency, '').trim()}
       </span>
     );
   }
-
+  
   return <span className={className}>{formatted}</span>;
 }
 

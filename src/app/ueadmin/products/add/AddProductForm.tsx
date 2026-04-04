@@ -190,6 +190,16 @@ export function AddProductForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.name.trim()) {
+      toast.error('Product name is required');
+      return;
+    }
+    
+    if (!formData.sku.trim()) {
+      toast.error('SKU is required. Please add a stock keeping unit.');
+      return;
+    }
+    
     if (formData.stockQuantity === 0) {
       toast.error('Stock cannot be 0. Please add stock quantity.');
       return;
@@ -219,8 +229,8 @@ export function AddProductForm({
 
       const payload = {
         name: formData.name,
-        sku: formData.sku || null,
-        description: formData.description,
+        sku: formData.sku || undefined,
+        description: formData.description || undefined,
         shortDescription: formData.shortDescription,
         benefits: formData.benefits,
         ingredients: formData.ingredients,
@@ -242,6 +252,8 @@ export function AddProductForm({
         features: formData.features,
         tags: formData.tags,
       };
+
+      console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
       const res = await fetch('/api/admin/products', {
         method: 'POST',
@@ -541,11 +553,12 @@ export function AddProductForm({
                         <input
                           type="number"
                           step="1"
-                          value={cp.priceCents === 0 ? '' : (cp.priceCents / 100)}
+                          value={cp.priceCents === 0 ? '' : cp.priceCents}
                           onChange={(e) => {
                             const newPrices = [...formData.countryPrices];
-                            const numValue = parseFloat(e.target.value);
-                            newPrices[index].priceCents = isNaN(numValue) ? 0 : Math.round(numValue * 100);
+                            const rawValue = e.target.value;
+                            const numValue = rawValue === '' ? 0 : parseFloat(rawValue);
+                            newPrices[index].priceCents = isNaN(numValue) ? 0 : Math.round(numValue);
                             setFormData(prev => ({ ...prev, countryPrices: newPrices }));
                           }}
                           className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"

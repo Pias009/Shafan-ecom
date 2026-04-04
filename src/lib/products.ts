@@ -8,6 +8,18 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
+// Check if a product has a valid price for display
+export function hasValidPrice(product: any, userCountry?: string): boolean {
+  if (product.countryPrices && product.countryPrices.length > 0) {
+    const countryPrice = product.countryPrices.find((cp: any) =>
+      cp.country.toUpperCase() === (userCountry || '').toUpperCase()
+    );
+    const priceToUse = countryPrice || product.countryPrices.find((cp: any) => cp.priceCents > 0);
+    return priceToUse && priceToUse.priceCents > 0;
+  }
+  return product.price > 0 || product.priceCents > 0;
+}
+
 /**
  * Get products with MongoDB connection fallback to demo data
  * This prevents the application from crashing when MongoDB Atlas is unavailable
@@ -37,7 +49,8 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
           select: {
             country: true,
             priceCents: true,
-            currency: true
+            currency: true,
+            active: true
           }
         },
       },
@@ -48,26 +61,19 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
     });
 
     const products = dbProducts.map((p: any) => {
-      const regularPrice = p.priceCents / 100;
-      const salePrice = p.discountCents ? (p.priceCents - p.discountCents) / 100 : null;
-      
       const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
       const galleryImages = (p.images || []).filter(isValidImageUrl);
 
-      // Safely handle currency field
       const currency = p.currency ? p.currency.toUpperCase() : 'USD';
 
-      // Extract category names
       const categoryNames = p.productCategories?.map((pc: any) => pc.category?.name).filter(Boolean) || [];
       const primaryCategory = categoryNames[0] || "General";
 
-      // Extract skin tones
       const skinTones = p.productSkinTones?.map((pst: any) => ({
         name: pst.skinTone?.name,
         hexColor: pst.skinTone?.hexColor
       })).filter((t: any) => t.name) || [];
 
-      // Extract subcategory
       const subCategoryName = p.subCategory?.name;
 
       return {
@@ -85,9 +91,9 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         averageRating: p.averageRating || 0,
         ratingCount: p.ratingCount || 0,
         totalSales: p.totalSales || 0,
-        priceCents: p.discountCents ? (p.priceCents - p.discountCents) : p.priceCents,
-        regularPriceCents: p.priceCents,
-        salePriceCents: p.discountCents ? (p.priceCents - p.discountCents) : null,
+        price: p.priceCents || 0,
+        regularPrice: p.priceCents || 0,
+        salePrice: p.discountCents ? (p.priceCents - p.discountCents) : null,
         currency: currency,
         active: p.active,
         hot: p.hot,
@@ -146,6 +152,7 @@ export async function getProduct(id: string) {
         productSkinTones: { include: { skinTone: true } },
         productSkinConcerns: { include: { skinConcern: true } },
         subCategory: { include: { category: true } },
+        countryPrices: true,
       },
     });
 
@@ -169,9 +176,9 @@ export async function getProduct(id: string) {
       averageRating: p.averageRating || 0,
       ratingCount: p.ratingCount || 0,
       totalSales: p.totalSales || 0,
-      priceCents: p.discountCents ? (p.priceCents - p.discountCents) : p.priceCents,
-      regularPriceCents: p.priceCents,
-      salePriceCents: p.discountCents ? (p.priceCents - p.discountCents) : null,
+      price: p.priceCents || 0,
+      regularPrice: p.priceCents || 0,
+      salePrice: p.discountCents ? (p.priceCents - p.discountCents) : null,
       currency: p.currency.toUpperCase(),
       active: p.active,
       hot: p.hot,
@@ -182,6 +189,7 @@ export async function getProduct(id: string) {
       subCategory: p.subCategory ? { name: p.subCategory.name, category: p.subCategory.category?.name } : null,
       skinTones: p.productSkinTones?.map((pst: any) => ({ name: pst.skinTone.name, hexColor: pst.skinTone.hexColor })) || [],
       skinConcerns: p.productSkinConcerns?.map((psc: any) => psc.skinConcern.name) || [],
+      countryPrices: p.countryPrices || [],
       related_ids: [],
     };
 
@@ -289,9 +297,6 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
     }
 
     const products = dbProducts.map((p: any) => {
-      const regularPrice = p.priceCents / 100;
-      const salePrice = p.discountCents ? (p.priceCents - p.discountCents) / 100 : null;
-      
       const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
       const galleryImages = (p.images || []).filter(isValidImageUrl);
 
@@ -319,10 +324,10 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
         averageRating: p.averageRating || 0,
         ratingCount: p.ratingCount || 0,
         totalSales: p.totalSales || 0,
-        priceCents: p.discountCents ? (p.priceCents - p.discountCents) : p.priceCents,
-        regularPriceCents: p.priceCents,
-        salePriceCents: p.discountCents ? (p.priceCents - p.discountCents) : null,
-        currency: p.currency.toUpperCase(),
+        price: p.priceCents || 0,
+        regularPrice: p.priceCents || 0,
+        salePrice: p.discountCents ? (p.priceCents - p.discountCents) : null,
+        currency: p.currency?.toUpperCase() || 'USD',
         active: p.active,
         hot: p.hot,
         trending: p.trending,

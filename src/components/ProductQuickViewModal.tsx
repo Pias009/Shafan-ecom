@@ -26,6 +26,8 @@ interface QuickViewProduct {
   priceCents?: number;
   regularPriceCents?: number;
   salePriceCents?: number;
+  regularPrice?: number;
+  salePrice?: number;
   countryPrices?: Array<{
     country: string;
     priceCents: number;
@@ -100,22 +102,20 @@ export function ProductQuickViewModal({
   let originalPrice = 0;
   
   if (product.countryPrices && product.countryPrices.length > 0) {
-    // Find active country price matching user's country
     const countryPrice = product.countryPrices.find(cp => 
       cp.country.toUpperCase() === userCountry.toUpperCase() && cp.active !== false
     );
     
     if (countryPrice && countryPrice.priceCents > 0) {
-      displayPrice = countryPrice.priceCents / 100;
-      // Use salePriceCents if available for original price, otherwise use the same
-      originalPrice = product.salePriceCents ? product.salePriceCents / 100 : displayPrice;
+      displayPrice = countryPrice.priceCents;
+      originalPrice = product.salePrice || product.salePriceCents || displayPrice;
     } else {
-      displayPrice = product.salePriceCents ? product.salePriceCents / 100 : (product.discountPrice ?? product.price);
-      originalPrice = product.regularPriceCents ? product.regularPriceCents / 100 : (product.price);
+      displayPrice = product.salePrice || product.salePriceCents || (product.discountPrice ?? product.price);
+      originalPrice = product.regularPrice || product.regularPriceCents || product.price;
     }
   } else {
-    displayPrice = product.salePriceCents ? product.salePriceCents / 100 : (product.discountPrice ?? product.price);
-    originalPrice = product.regularPriceCents ? product.regularPriceCents / 100 : (product.price);
+    displayPrice = product.salePrice || product.salePriceCents || (product.discountPrice ?? product.price);
+    originalPrice = product.regularPrice || product.regularPriceCents || product.price;
   }
 
   return (
