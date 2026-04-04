@@ -8,9 +8,23 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
-export async function GET() {
-  const banners = await (prisma as any).offerBanner.findMany({
-    where: { active: true },
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const isHero = searchParams.get('isHero');
+  const activeOnly = searchParams.get('active');
+
+  const where: any = {};
+  
+  if (isHero === 'true') {
+    where.priority = 2;
+  }
+  
+  if (activeOnly === 'true') {
+    where.active = true;
+  }
+
+  const banners = await prisma.enhancedOfferBanner.findMany({
+    where,
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
 

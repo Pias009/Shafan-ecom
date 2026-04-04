@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, ShieldCheck, Info } from 'lucide-react';
 import OrderStatusActions from './OrderStatusActions';
 import InvoiceDownload from './_components/InvoiceDownload';
+import ShippingPanel from './_components/ShippingPanel';
 import { OrderStatus } from '@prisma/client';
 
 function formatPrice(amountCents: number, currency: string): string {
@@ -36,6 +37,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           }
         },
         user: true,
+        shipment: true,
       }
     }) as any;
 
@@ -182,6 +184,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   <div className="italic text-black/30">No shipping address provided</div>
                 )}
               </div>
+            </section>
+
+            {/* Shipping Management */}
+            <section className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] border border-black/5 shadow-sm bg-white">
+              <ShippingPanel 
+                orderId={order.id} 
+                shippingAddress={shipping}
+                existingShipment={order.shipment}
+              />
             </section>
           </div>
         </div>

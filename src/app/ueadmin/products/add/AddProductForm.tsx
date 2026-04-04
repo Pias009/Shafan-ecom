@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { SUPPORTED_COUNTRIES, getCurrencyForCountry, type CountryCode } from '@/lib/countries';
@@ -63,6 +63,7 @@ export function AddProductForm({
 
   const [formData, setFormData] = useState({
     name: '',
+    sku: '',
     brandName: brands[0]?.name || '',
     categoryIds: [] as string[],
     subCategoryId: '',
@@ -76,7 +77,7 @@ export function AddProductForm({
     features: [] as string[],
     priceCents: 0, // Base price 0
     discountCents: 0,
-    stockQuantity: 0,
+    stockQuantity: 10,
     mainImage: '',
     images: [] as string[],
     hot: false,
@@ -84,6 +85,7 @@ export function AddProductForm({
     storeId: initialStoreId, // Set based on admin's access
     countryPrices: initialCountryPrices,
     subCategoryIds: [] as string[],
+    tags: [] as string[],
   });
 
   // Filter sub-categories based on selected categories (first category) - now showing all
@@ -217,6 +219,7 @@ export function AddProductForm({
 
       const payload = {
         name: formData.name,
+        sku: formData.sku || null,
         description: formData.description,
         shortDescription: formData.shortDescription,
         benefits: formData.benefits,
@@ -237,6 +240,7 @@ export function AddProductForm({
         mainImage: formData.mainImage,
         images: formData.images,
         features: formData.features,
+        tags: formData.tags,
       };
 
       const res = await fetch('/api/admin/products', {
@@ -305,7 +309,6 @@ export function AddProductForm({
                   className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
                 />
               </div>
-
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -594,28 +597,103 @@ export function AddProductForm({
             </div>
           </section>
 
-          {/* Store Availability */}
+          {/* Stock & SKU */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
-              <Store size={14} /> Store Availability
+              <Box size={14} /> Stock & SKU
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Primary Store</label>
-                <select
-                  name="storeId"
-                  value={formData.storeId}
-                  onChange={handleChange}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
-                >
-                  <option value="GLOBAL">Global Store</option>
-                </select>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Stock Quantity</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="stockQuantity"
+                    value={formData.stockQuantity}
+                    onChange={handleChange}
+                    min="0"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                  />
+                  <Package className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                </div>
               </div>
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
-                 <div className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">
-                    Note: Product will be added to this store&apos;s active inventory immediately.
-                  </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">SKU (Stock Keeping Unit)</label>
+                <div className="relative">
+                  <input
+                    name="sku"
+                    value={formData.sku}
+                    onChange={handleChange}
+                    placeholder="e.g. LDS-001-BLK"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                  />
+                  <Hash className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+              <p className="text-xs text-blue-700">
+                <strong>SKU Tip:</strong> Use a consistent format like <code>BRAND-COLOR-SIZE</code> for easy inventory tracking.
+              </p>
+            </div>
+          </section>
+
+          {/* SEO Tags */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+              <Search size={14} /> SEO Tags
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Tags (Press Enter to add)</label>
+                <div className="relative">
+                  <input
+                    placeholder="Type a tag and press Enter"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const input = e.target as HTMLInputElement;
+                        const tag = input.value.trim();
+                        if (tag && !formData.tags.includes(tag)) {
+                          setFormData(prev => ({ ...prev, tags: [...prev.tags, tag] }));
+                          input.value = '';
+                        }
+                      }
+                    }}
+                  />
+                  <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                </div>
+              </div>
+
+              {formData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags.map((tag, idx) => (
+                    <span 
+                      key={idx} 
+                      className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full text-xs font-bold"
+                    >
+                      {tag}
+                      <button 
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, tags: prev.tags.filter((_, i) => i !== idx) }))}
+                        className="hover:text-red-400 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100">
+                <p className="text-xs text-purple-700">
+                  <strong>SEO Tip:</strong> Add relevant tags for better search visibility. Examples: <code>anti-aging</code>, <code>moisturizer</code>, <code>vegan</code>, <code>organic</code>
+                </p>
               </div>
             </div>
           </section>

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { EmailService } from "@/lib/email/service";
 
 export async function inviteAdmin(formData: FormData) {
   const session = await getServerAuthSession();
@@ -18,11 +19,28 @@ export async function inviteAdmin(formData: FormData) {
   // Check if user already exists
   const existing = await prisma.user.findUnique({ where: { email } });
   
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const setupUrl = `${baseUrl}/ueadmin/setup?email=${encodeURIComponent(email)}`;
+  
   if (existing) {
     // If it exists but is not an admin, we can upgrade it
     await prisma.user.update({
       where: { email },
       data: { role: 'ADMIN' }
+    });
+    
+    // Send invitation email
+    const emailService = new EmailService();
+    await emailService.sendEmail({
+      to: { email },
+      subject: "You've been invited to Shafan Store Admin",
+      template: 'admin-invite',
+      data: {
+        email,
+        inviterName: session.user.name || session.user.email || 'Super Admin',
+        setupUrl,
+        role: 'ADMIN'
+      }
     });
   } else {
     // Create a new "Invited" user
@@ -32,6 +50,20 @@ export async function inviteAdmin(formData: FormData) {
         email,
         role: 'ADMIN',
         isVerified: false,
+      }
+    });
+    
+    // Send invitation email
+    const emailService = new EmailService();
+    await emailService.sendEmail({
+      to: { email },
+      subject: "You've been invited to Shafan Store Admin",
+      template: 'admin-invite',
+      data: {
+        email,
+        inviterName: session.user.name || session.user.email || 'Super Admin',
+        setupUrl,
+        role: 'ADMIN'
       }
     });
   }

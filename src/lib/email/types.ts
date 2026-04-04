@@ -15,7 +15,8 @@ export type EmailTemplate =
   | 'account-verification'
   | 'newsletter-welcome'
   | 'abandoned-cart'
-  | 'order-status-update';
+  | 'order-status-update'
+  | 'admin-invite';
 
 export interface EmailRecipient {
   email: string;
@@ -96,10 +97,17 @@ export interface AdminLoginAlertData {
 }
 
 export interface UserSignupAlertData {
-  userEmail: string;
-  userName: string;
+  email: string;
+  name?: string;
   signupTime: string;
-  source: string;
+  ipAddress?: string;
+}
+
+export interface AdminInviteData {
+  email: string;
+  inviterName?: string;
+  setupUrl: string;
+  role: string;
 }
 
 export interface EmailConfig {

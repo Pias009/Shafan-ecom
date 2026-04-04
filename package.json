@@ -43,6 +43,7 @@
     "react-email": "^5.2.10",
     "react-hot-toast": "^2.6.0",
     "resend": "^6.9.4",
+    "shippo": "^2.18.0",
     "stripe": "^20.4.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"

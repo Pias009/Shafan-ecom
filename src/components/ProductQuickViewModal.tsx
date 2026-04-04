@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import { useUserCountry } from "@/lib/country-detection";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -22,6 +23,15 @@ interface QuickViewProduct {
   skinConcerns?: string[];
   price: number;
   discountPrice?: number;
+  priceCents?: number;
+  regularPriceCents?: number;
+  salePriceCents?: number;
+  countryPrices?: Array<{
+    country: string;
+    priceCents: number;
+    currency: string;
+    active?: boolean;
+  }>;
   imageUrl: string;
   images?: string[];
   details?: string;
@@ -48,6 +58,7 @@ export function ProductQuickViewModal({
 }) {
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
+  const userCountry = useUserCountry();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
@@ -84,7 +95,28 @@ export function ProductQuickViewModal({
   const skinTones = product.skinTones || [];
   const skinConcerns = product.skinConcerns || [];
 
-  const displayPrice = product.discountPrice ?? product.price;
+  // Get price - use user's country to find the correct country-specific price
+  let displayPrice = 0;
+  let originalPrice = 0;
+  
+  if (product.countryPrices && product.countryPrices.length > 0) {
+    // Find active country price matching user's country
+    const countryPrice = product.countryPrices.find(cp => 
+      cp.country.toUpperCase() === userCountry.toUpperCase() && cp.active !== false
+    );
+    
+    if (countryPrice && countryPrice.priceCents > 0) {
+      displayPrice = countryPrice.priceCents / 100;
+      // Use salePriceCents if available for original price, otherwise use the same
+      originalPrice = product.salePriceCents ? product.salePriceCents / 100 : displayPrice;
+    } else {
+      displayPrice = product.salePriceCents ? product.salePriceCents / 100 : (product.discountPrice ?? product.price);
+      originalPrice = product.regularPriceCents ? product.regularPriceCents / 100 : (product.price);
+    }
+  } else {
+    displayPrice = product.salePriceCents ? product.salePriceCents / 100 : (product.discountPrice ?? product.price);
+    originalPrice = product.regularPriceCents ? product.regularPriceCents / 100 : (product.price);
+  }
 
   return (
     <AnimatePresence>
@@ -237,8 +269,8 @@ export function ProductQuickViewModal({
 
                 <div className="flex items-baseline gap-3">
                   <Price amount={displayPrice} className="text-2xl md:text-4xl font-black text-black" />
-                  {product.discountPrice && product.discountPrice < product.price ? (
-                    <Price amount={product.price} className="text-base md:text-lg text-red-500 line-through font-bold" />
+                  {displayPrice < originalPrice ? (
+                    <Price amount={originalPrice} className="text-base md:text-lg text-red-500 line-through font-bold" />
                   ) : null}
                 </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -126,6 +126,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: product.name,
+          sku: product.sku || null,
           description: product.description,
           shortDescription: product.shortDescription,
           benefits: product.benefits,
@@ -143,6 +144,8 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
           skinConcernIds: product.skinConcernIds,
           subCategoryIds: product.subCategoryIds,
           subCategoryId: product.subCategoryIds?.[0] || null,
+          tags: product.tags || [],
+          countryPrices: product.countryPrices || [],
         }),
       });
 
@@ -379,6 +382,132 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                   </div>
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* Country-Specific Pricing */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+              <Globe size={14} /> Country-Specific Pricing
+            </h3>
+            
+            <div className="space-y-3">
+              {['AE', 'SA', 'KW', 'BH', 'OM', 'QA'].map((countryCode) => {
+                const cp = product.countryPrices?.find((c: any) => c.country === countryCode);
+                return (
+                  <div key={countryCode} className="grid grid-cols-12 gap-3 items-center p-4 bg-black/5 rounded-2xl border border-black/10">
+                    <div className="col-span-3">
+                      <div className="text-sm font-bold">{countryCode}</div>
+                    </div>
+                    <div className="col-span-6">
+                      <input
+                        type="number"
+                        value={cp?.priceCents ? cp.priceCents / 100 : ''}
+                        onChange={(e) => {
+                          const newPrices = product.countryPrices?.map((c: any) => 
+                            c.country === countryCode 
+                              ? { ...c, priceCents: Math.round(parseFloat(e.target.value || '0') * 100) }
+                              : c
+                          ) || [];
+                          setProduct({ ...product, countryPrices: newPrices });
+                        }}
+                        className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold"
+                        placeholder="Price"
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <span className="text-xs text-black/40">{cp?.currency || 'USD'}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Stock & SKU */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+              <Box size={14} /> Stock & SKU
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Stock Quantity</label>
+                <div className="relative">
+                  <input
+                    name="stockQuantity"
+                    type="number"
+                    value={product.stockQuantity || 0}
+                    onChange={handleChange}
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold"
+                  />
+                  <Package className="absolute right-5 top-1/2 -translate-y-1/2 text-black/20" size={16} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">SKU</label>
+                <div className="relative">
+                  <input
+                    name="sku"
+                    value={product.sku || ''}
+                    onChange={handleChange}
+                    placeholder="e.g. LDS-001-BLK"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold"
+                  />
+                  <Hash className="absolute right-5 top-1/2 -translate-y-1/2 text-black/20" size={16} />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SEO Tags */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+              <Search size={14} /> SEO Tags
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Tags (Press Enter to add)</label>
+                <div className="relative">
+                  <input
+                    placeholder="Type a tag and press Enter"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const input = e.target as HTMLInputElement;
+                        const tag = input.value.trim();
+                        if (tag && !(product.tags || []).includes(tag)) {
+                          setProduct({ ...product, tags: [...(product.tags || []), tag] });
+                          input.value = '';
+                        }
+                      }
+                    }}
+                  />
+                  <Tag className="absolute right-5 top-1/2 -translate-y-1/2 text-black/20" size={16} />
+                </div>
+              </div>
+
+              {(product.tags || []).length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {product.tags.map((tag: string, idx: number) => (
+                    <span 
+                      key={idx} 
+                      className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full text-xs font-bold"
+                    >
+                      {tag}
+                      <button 
+                        type="button"
+                        onClick={() => setProduct({ ...product, tags: product.tags.filter((_: any, i: number) => i !== idx) })}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         </div>

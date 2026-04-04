@@ -20,6 +20,7 @@ import { OrderConfirmationTemplate } from './templates/OrderConfirmationTemplate
 import { AdminLoginAlertTemplate } from './templates/AdminLoginAlertTemplate';
 import { PasswordResetTemplate } from './templates/PasswordResetTemplate';
 import { OrderStatusUpdateTemplate } from './templates/OrderStatusUpdateTemplate';
+import { AdminInviteTemplate } from './templates/AdminInviteTemplate';
 
 export class EmailService {
   private resend: Resend | null = null;
@@ -210,6 +211,9 @@ export class EmailService {
         break;
       case 'order-status-update':
         reactComponent = OrderStatusUpdateTemplate(data);
+        break;
+      case 'admin-invite':
+        reactComponent = AdminInviteTemplate(data);
         break;
       default:
         throw new Error(`Unsupported email template: ${template}`);

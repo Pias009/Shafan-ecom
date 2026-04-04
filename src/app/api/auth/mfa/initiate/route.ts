@@ -182,6 +182,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ mfaRequired: false });
   } catch (err) {
     console.error("MFA_INITIATE_ERROR:", err);
-    return NextResponse.json({ error: "Interal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

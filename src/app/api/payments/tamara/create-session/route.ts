@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { TamaraService, TamaraRegion, TamaraCurrency } from "@/services/payments/tamara";
-
-const prisma = new PrismaClient();
 
 const COUNTRY_TO_REGION: Record<string, { region: TamaraRegion; currency: TamaraCurrency }> = {
   AE: { region: "UAE", currency: "AED" },

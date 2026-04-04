@@ -7,7 +7,7 @@ import {
   BarChart3, Users, Package,
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
-  Terminal
+  Terminal, Bell as BellIcon, Settings as SettingsIcon
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -78,28 +78,52 @@ export function AdminSidebar() {
               >
                  <Tag size={18} /> Discounts & Coupons
               </Link>
-              <Link
-                 href="/ueadmin/banners"
-                 className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-              >
-                 <ImageIcon size={18} /> Hero Banners
-              </Link>
+               <Link
+                  href="/ueadmin/banners"
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+               >
+                  <ImageIcon size={18} /> Hero Banners
+               </Link>
+               <Link
+                  href="/ueadmin/banners/slider"
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+               >
+                  <ImageIcon size={18} /> Products Slider
+               </Link>
+               <Link
+                  href="/ueadmin/banners/products"
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+               >
+                  <ImageIcon size={18} /> Products Banners
+               </Link>
+               <Link
+                  href="/ueadmin/notices"
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+               >
+                  <BellIcon size={18} /> Notice Board
+               </Link>
 
-              <div className="pt-8 space-y-4">
-                 <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">System Configuration</div>
-                 <Link
-                    href="/ueadmin/blog"
-                    className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-                 >
-                    <BookOpen size={18} /> Announcements
-                 </Link>
-                 <Link
-                   href="/ueadmin/email-test"
-                    className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
-                 >
-                    <Terminal size={18} /> Email Test
-                 </Link>
-              </div>
+               <div className="pt-8 space-y-4">
+                  <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">System Configuration</div>
+                  <Link
+                     href="/ueadmin/settings/shipping"
+                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                  >
+                     <SettingsIcon size={18} /> Shipping Settings
+                  </Link>
+                  <Link
+                     href="/ueadmin/blog"
+                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                  >
+                     <BookOpen size={18} /> Announcements
+                  </Link>
+                  <Link
+                    href="/ueadmin/email-test"
+                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                  >
+                     <Terminal size={18} /> Email Test
+                  </Link>
+               </div>
            </div>
         </nav>
 

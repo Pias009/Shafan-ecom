@@ -4,9 +4,25 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const isHero = searchParams.get('isHero');
+    const activeOnly = searchParams.get('active');
+
+    const where: any = {};
+    
+    if (isHero === 'true') {
+      // Filter for slider banners (priority = 2)
+      where.priority = 2;
+    }
+    
+    if (activeOnly === 'true') {
+      where.active = true;
+    }
+
     const banners = await prisma.enhancedOfferBanner.findMany({
+      where,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       select: {
         id: true,

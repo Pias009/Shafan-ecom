@@ -5,6 +5,7 @@ import { uploadFromUrl } from '@/lib/cloudinary';
 
 const UpdateSchema = z.object({
   name: z.string().optional(),
+  sku: z.string().optional(),
   description: z.string().optional(),
   shortDescription: z.string().optional(),
   benefits: z.string().optional(),
@@ -22,6 +23,13 @@ const UpdateSchema = z.object({
   images: z.union([z.string(), z.array(z.string())]).optional(),
   mainImage: z.string().optional(),
   variants: z.any().optional(),
+  tags: z.array(z.string()).optional(),
+  countryPrices: z.array(z.object({
+    country: z.string(),
+    priceCents: z.number(),
+    currency: z.string().optional(),
+    active: z.boolean().optional(),
+  })).optional(),
 });
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -78,6 +86,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     const updates: any = {};
     if (typeof parsed.data.name !== 'undefined') updates.name = parsed.data.name;
+    if (typeof parsed.data.sku !== 'undefined') updates.sku = parsed.data.sku || null;
     if (typeof parsed.data.description !== 'undefined') updates.description = parsed.data.description;
     if (typeof parsed.data.shortDescription !== 'undefined') updates.shortDescription = parsed.data.shortDescription;
     if (typeof parsed.data.benefits !== 'undefined') updates.benefits = parsed.data.benefits;
@@ -169,6 +178,34 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             skinConcernId: concernId
           }))
         });
+      }
+    }
+
+    // Handle tags
+    if (parsed.data.tags !== undefined) {
+      updates.tags = parsed.data.tags;
+    }
+
+    // Handle country prices
+    if (parsed.data.countryPrices !== undefined) {
+      const countryPrices = parsed.data.countryPrices;
+      // Delete existing country prices
+      await prisma.countryPrice.deleteMany({ where: { productId: id } });
+      // Create new country prices
+      if (countryPrices.length > 0) {
+        await Promise.all(
+          countryPrices.map(cp =>
+            prisma.countryPrice.create({
+              data: {
+                productId: id,
+                country: cp.country,
+                priceCents: cp.priceCents,
+                currency: cp.currency || 'USD',
+                active: cp.active !== false,
+              }
+            })
+          )
+        );
       }
     }
 

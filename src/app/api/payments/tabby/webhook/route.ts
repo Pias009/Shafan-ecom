@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { TabbyService } from "@/services/payments/tabby";
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,10 +12,10 @@ export async function POST(request: NextRequest) {
 
     console.log("Tabby webhook received:", webhookPayload);
 
-    const eventType = webhookPayload.event.type;
-    const paymentStatus = webhookPayload.payload.status;
-    const paymentId = webhookPayload.payload.id;
-    const orderId = webhookPayload.payload.order_id || webhookPayload.payload.payment_id;
+    const eventType = webhookPayload?.event?.type;
+    const paymentStatus = webhookPayload?.payload?.status;
+    const paymentId = webhookPayload?.payload?.id;
+    const orderId = webhookPayload?.payload?.order_id || webhookPayload?.payload?.payment_id;
 
     if (!orderId) {
       return NextResponse.json({ error: "Order ID not found in webhook" }, { status: 400 });

@@ -3,21 +3,45 @@
 import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 
-export function NoticeBoard() {
+interface Notice {
+  id: string;
+  text: string;
+  active: boolean;
+  sortOrder: number;
+}
+
+export function NoticeBoard({ onClose }: { onClose?: () => void }) {
   const [isVisible, setIsVisible] = useState(true);
-
-  // Sample notices - in production, these would come from API
-  const notices = [
-    { id: 1, text: "🎁 Special Offer: Get 20% off on all skincare products!" },
-    { id: 2, text: "🚚 Free shipping on orders above AED 200" },
-    { id: 3, text: "✨ New Arrivals: Check out our latest products" },
-  ];
-
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentNoticeIndex, setCurrentNoticeIndex] = useState(0);
+
+  // Fetch notices from API
+  useEffect(() => {
+    async function fetchNotices() {
+      try {
+        const res = await fetch("/api/admin/notices");
+        if (res.ok) {
+          const data = await res.json();
+          const activeNotices = data.filter((n: Notice) => n.active);
+          setNotices(activeNotices);
+        }
+      } catch (error) {
+        // Fallback to default notices
+        setNotices([
+          { id: "1", text: "🎁 Special Offer: Get 20% off on all skincare products!", active: true, sortOrder: 1 },
+          { id: "2", text: "🚚 Free shipping on orders above AED 200", active: true, sortOrder: 2 },
+          { id: "3", text: "✨ New Arrivals: Check out our latest products", active: true, sortOrder: 3 },
+        ]);
+      }
+      setLoading(false);
+    }
+    fetchNotices();
+  }, []);
 
   // Auto-rotate notices every 5 seconds
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || notices.length <= 1) return;
     
     const interval = setInterval(() => {
       setCurrentNoticeIndex((prev) => (prev + 1) % notices.length);
@@ -26,7 +50,7 @@ export function NoticeBoard() {
     return () => clearInterval(interval);
   }, [isVisible, notices.length]);
 
-  if (!isVisible) return null;
+  if (!isVisible || loading || notices.length === 0) return null;
 
   return (
     <div className="w-full bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 py-2 px-3 md:px-4 fixed top-0 left-0 right-0 z-[60]">
@@ -69,7 +93,10 @@ export function NoticeBoard() {
 
         {/* Close button - Better positioned for mobile */}
         <button
-          onClick={() => setIsVisible(false)}
+          onClick={() => {
+            setIsVisible(false);
+            onClose?.();
+          }}
           className="text-amber-500 hover:text-amber-700 p-1 shrink-0"
           aria-label="Close notice board"
         >

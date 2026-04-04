@@ -84,8 +84,17 @@ const PRODUCT_DETAIL_SELECT = {
   features: true,
   images: true,
   sku: true,
+  tags: true,
   metaTitle: true,
   metaDescription: true,
+  countryPrices: {
+    select: {
+      country: true,
+      priceCents: true,
+      currency: true,
+      active: true,
+    }
+  },
 };
 
 function isValidImageUrl(url: any): boolean {
@@ -315,9 +324,33 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
       return null;
     }
 
-    // Transform product
-    const priceCents = product.storePrice ? Math.round(product.storePrice * 100) : product.priceCents;
+    // Get user's country from store code mapping
+    const countryMap: Record<string, string> = {
+      'UAE': 'AE',
+      'KUWAIT': 'KW',
+      'SAUDI': 'SA',
+      'BAHRAIN': 'BH',
+      'OMAN': 'OM',
+      'QATAR': 'QA',
+    };
+    const userCountry = storeCode ? (countryMap[storeCode.toUpperCase()] || 'AE') : 'AE';
+
+    // Get price from country-specific prices if available
+    let priceCents = product.priceCents || 0;
+    if (product.countryPrices && product.countryPrices.length > 0) {
+      const countryPrice = product.countryPrices.find((cp: any) => cp.country === userCountry && cp.active);
+      if (countryPrice && countryPrice.priceCents > 0) {
+        priceCents = countryPrice.priceCents;
+      }
+    }
+
+    // If no country-specific price, use store inventory price
+    if (priceCents === 0 && product.storePrice) {
+      priceCents = Math.round(product.storePrice * 100);
+    }
+
     const discountCents = product.discountCents || 0;
+    // Calculate sale price: if there's a discount, apply it to the price
     const salePriceCents = discountCents > 0 ? priceCents - discountCents : null;
 
     const transformedProduct = {
@@ -351,8 +384,10 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
         slug: product.productCategories[0].category.name?.toLowerCase().replace(/\s+/g, '-'),
       } : null,
       sku: product.sku,
+      tags: product.tags || [],
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
+      countryPrices: product.countryPrices || [],
       store: product.store,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

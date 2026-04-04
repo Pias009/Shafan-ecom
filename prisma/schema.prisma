@@ -79,6 +79,15 @@ model User {
   approvedBySuperAdmin Boolean @default(false)
   lastLoginAttempt DateTime?
   
+  // Store Assignment (UAE, KUWAIT, etc.)
+  assignedStore String?
+  
+  // Permissions (JSON for granular access)
+  permissions Json?
+  
+  // Activity tracking
+  lastActivityAt DateTime?
+  
   accounts       Account[]
   sessions       Session[]
   orders         Order[]
@@ -87,8 +96,27 @@ model User {
   mfaTokens      MfaToken[]
   discountUsages DiscountUsage[]
   loginApprovals LoginApproval[]
+  activityLogs   AdminActivityLog[]
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
+}
+
+model AdminActivityLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      String   // LOGIN, LOGOUT, CREATE, UPDATE, DELETE, etc.
+  resource    String?  // Product, Order, User, etc.
+  resourceId  String?
+  details     Json?    // Additional details about the action
+  ipAddress   String?
+  userAgent   String?
+  storeCode   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 model MfaToken {

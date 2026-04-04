@@ -29,6 +29,7 @@ const CountryPriceSchema = z.object({
 
 const ProductCreateSchema = z.object({
   name: z.string().min(1, { message: "Product name is required" }),
+  sku: z.string().optional(),
   description: z.string().optional(),
   shortDescription: z.string().optional(),
   benefits: z.string().optional(),
@@ -47,7 +48,8 @@ const ProductCreateSchema = z.object({
   skinConcernIds: z.array(z.string()).optional().default([]),
   subCategoryId: z.string().nullable().optional(),
   hot: z.boolean().optional(),
-  storeId: z.string().optional(), // Store code for product assignment
+  storeId: z.string().optional(),
+  tags: z.array(z.string()).optional().default([]),
   countryPrices: z.array(CountryPriceSchema)
     .optional()
     .default([])
@@ -67,17 +69,6 @@ const ProductCreateSchema = z.object({
       { message: "Invalid country code detected" }
     ),
 }).refine(
-  (data) => {
-    if (data.stockQuantity !== undefined && data.stockQuantity === 0) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: "Stock cannot be 0. Please add stock quantity.",
-    path: ["stockQuantity"],
-  }
-).refine(
   (data) => {
     if (data.countryPrices && data.countryPrices.length > 0) {
       const validPrices = data.countryPrices.filter(cp => cp.priceCents > 0);
@@ -370,7 +361,8 @@ export async function POST(req: Request) {
 
     const dbProductData = {
       name: productData.name,
-      slug: generateSlug(productData.name), // Generate unique slug
+      slug: generateSlug(productData.name),
+      sku: productData.sku || null,
       description: productData.description || '',
       shortDescription: productData.shortDescription || null,
       benefits: productData.benefits || null,
@@ -386,7 +378,8 @@ export async function POST(req: Request) {
       brandId,
       subCategoryId,
       storeId,
-      currency: 'USD', // Default currency as per schema
+      currency: 'USD',
+      tags: productData.tags ?? [],
     };
     console.log('[DEBUG] dbProductData.slug:', dbProductData.slug);
 

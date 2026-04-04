@@ -45,9 +45,12 @@ export interface ShipmentResponse {
   success: boolean;
   trackingNumber?: string;
   labelUrl?: string;
+  trackingUrl?: string;
   carrier: string;
   service: string;
   estimatedDelivery?: string;
+  labelPdf?: string;
+  commercialInvoice?: string;
   error?: string;
 }
 

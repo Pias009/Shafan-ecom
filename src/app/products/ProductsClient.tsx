@@ -18,8 +18,8 @@ import { translations } from "@/lib/translations";
 import { useUserCountry } from "@/lib/country-detection";
 import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 
-export default function ProductsClient({ initialProducts, category, brand: initialBrand }: { initialProducts: any[], category?: string, brand?: string }) {
-  const [products] = useState<any[]>(initialProducts || []);
+export default function ProductsClient({ initialProducts, category, brand: initialBrand, banners = [] }: { initialProducts: any[], category?: string, brand?: string, banners?: any[] }) {
+  const [products] = useState<any[]>(initialProducts);
   const [q, setQ] = useState("");
   const [brand, setBrand] = useState(initialBrand || "All");
   const [selectedCategory, setSelectedCategory] = useState(category || "All");
@@ -169,6 +169,43 @@ export default function ProductsClient({ initialProducts, category, brand: initi
     <div className="min-h-screen bg-cream text-black flex flex-col">
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-20 flex-1">
         <ProductsSlider />
+
+        {/* Product Page Banners */}
+        {banners.length > 0 && (
+          <div className="mt-8 mb-6 space-y-4">
+            {banners.filter(b => b.position === 'TOP' || b.position === 'MIDDLE').map((banner: any) => (
+              <a
+                key={banner.id}
+                href={banner.ctaLink || '#'}
+                className="block relative rounded-2xl overflow-hidden min-h-[120px]"
+                style={{ backgroundColor: banner.backgroundColor || '#000' }}
+              >
+                {banner.imageUrl && (
+                  <div className="relative w-full h-32 md:h-48">
+                    <img
+                      src={banner.imageUrl}
+                      alt={banner.title}
+                      className="absolute inset-0 w-full h-full object-contain"
+                    />
+                  </div>
+                )}
+                {(banner.title || banner.description) && (
+                  <div className="absolute inset-0 flex items-center justify-center p-6" style={{ color: banner.textColor || '#fff' }}>
+                    <div className="text-center">
+                      {banner.title && <h3 className="text-xl md:text-2xl font-black">{banner.title}</h3>}
+                      {banner.description && <p className="text-sm mt-1 opacity-90">{banner.description}</p>}
+                      {banner.ctaText && (
+                        <span className="inline-block mt-3 px-4 py-2 bg-white text-black text-xs font-black uppercase tracking-widest rounded-full">
+                          {banner.ctaText}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </a>
+            ))}
+          </div>
+        )}
 
         <div className="flex justify-center mt-12 mb-8">
           <button

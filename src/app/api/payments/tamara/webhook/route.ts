@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { TamaraService } from "@/services/payments/tamara";
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,10 +12,10 @@ export async function POST(request: NextRequest) {
 
     console.log("Tamara webhook received:", webhookPayload);
 
-    const eventType = webhookPayload.eventType;
-    const orderId = webhookPayload.orderId;
-    const orderReferenceId = webhookPayload.orderReferenceId;
-    const status = webhookPayload.status;
+    const eventType = webhookPayload?.eventType;
+    const orderId = webhookPayload?.orderId;
+    const orderReferenceId = webhookPayload?.orderReferenceId;
+    const status = webhookPayload?.status;
 
     const order = await prisma.order.findFirst({
       where: {

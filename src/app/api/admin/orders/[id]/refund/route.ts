@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getAdminApiSession } from '@/lib/admin-session';
+import { getAdminApiSession } from '@/lib/admin-api-session';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -8,10 +8,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return new Response('Unauthorized', { status: 401 });
   }
   try {
-    const updated = await (prisma as any).order.update({ where: { id: id }, data: { status: 'REFUNDED' } });
-    await (prisma as any).auditLog.create({ data: { action: 'ORDER_REFUNDED', actorId: (session.user as any).id, subjectId: id } });
+    const updated = await prisma.order.update({ where: { id: id }, data: { status: 'REFUNDED' } });
+    await prisma.auditLog.create({ data: { action: 'ORDER_REFUNDED', actorId: session.user.id, subjectId: id } });
     return new Response(JSON.stringify(updated), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  } catch {
-    return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });
+  } catch (error: any) {
+    console.error('Refund error:', error);
+    return new Response(JSON.stringify({ error: error.message || 'Server error' }), { status: 500 });
   }
 }

@@ -15,7 +15,7 @@ import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { Logo } from "./Logo";
 
-export function Navbar() {
+export function Navbar({ NoticeBoardVisible = false }: { NoticeBoardVisible?: boolean }) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const [authOpen, setAuthOpen] = useState(false);
@@ -133,7 +133,7 @@ export function Navbar() {
   return (
     <>
       <header
-      className={`fixed top-12 left-0 right-0 z-40 transition-all duration-300 transform ${
+      className={`fixed ${NoticeBoardVisible ? 'top-8' : 'top-12'} left-0 right-0 z-40 transition-all duration-300 transform ${
         scrolled ? "glass-nav shadow-md" : "bg-transparent"
       } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >

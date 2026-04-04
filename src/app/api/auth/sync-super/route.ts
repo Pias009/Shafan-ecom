@@ -2,7 +2,19 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-export async function GET() {
+const SYNC_SUPER_SECRET = process.env.SYNC_SUPER_SECRET || "shafan-sync-secret-2024";
+
+function verifySyncSecret(req: Request): boolean {
+  const secret = req.headers.get("x-sync-secret");
+  return secret === SYNC_SUPER_SECRET;
+}
+
+export async function GET(req: Request) {
+  // Verify secret key
+  if (!verifySyncSecret(req)) {
+    return NextResponse.json({ error: "Unauthorized - invalid secret key" }, { status: 401 });
+  }
+  
   try {
     // Use environment variables for super admin credentials
     const email = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
