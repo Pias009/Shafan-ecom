@@ -185,6 +185,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       brand: product.brand?.name || product.brand || "Generic",
       category: product.category?.name || product.category || "General",
       price: product.price || product.priceCents || 0,
+      discountPrice: product.salePrice || product.salePriceCents || undefined,
       imageUrl: product.mainImage || product.imageUrl || "/placeholder-product.png",
       countryPrices: product.countryPrices,
     };
@@ -212,7 +213,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       );
       const unitPriceCents = countryPrice && countryPrice.priceCents > 0
         ? countryPrice.priceCents
-        : (product.discountPrice ?? product.price) * 100;
+        : (product.discountPrice ?? product.price);
 
       const res = await fetch("/api/create-order", {
         method: "POST",

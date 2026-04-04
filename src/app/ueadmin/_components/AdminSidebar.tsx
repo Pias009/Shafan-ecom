@@ -47,7 +47,7 @@ export function AdminSidebar() {
           <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-2xl shadow-black/20 group-hover:rotate-12 transition-transform">S</div>
           <div>
             <h2 className="font-black text-xs uppercase tracking-widest text-black">Shafan Admin</h2>
-            <p className="text-[10px] font-bold text-black/30 uppercase tracking-[0.2em]">Admin Panel</p>
+            <p className="text-[10px] font-bold text-black/60 uppercase tracking-[0.2em]">Admin Panel</p>
           </div>
        </div>
 
@@ -57,13 +57,13 @@ export function AdminSidebar() {
             const active = pathname === link.href;
             
             return (
-              <Link 
-                key={link.href} 
-                href={link.href}
-                className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
-                  active ? "bg-black text-white shadow-xl shadow-black/10 scale-105" : "hover:bg-black/5 text-black/40 hover:text-black"
-                }`}
-              >
+              <Link
+                 key={link.href}
+                 href={link.href}
+                 className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
+                   active ? "bg-black text-white shadow-xl shadow-black/10 scale-105" : "hover:bg-black/5 text-black/70 hover:text-black"
+                 }`}
+               >
                 <Icon size={18} />
                 {link.label}
               </Link>
@@ -71,55 +71,55 @@ export function AdminSidebar() {
           })}
 
            <div className="pt-8 space-y-4">
-              <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">Promotions</div>
+              <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/50">Promotions</div>
               <Link
                  href="/ueadmin/discounts"
-                 className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                 className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/70 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
               >
                  <Tag size={18} /> Discounts & Coupons
               </Link>
                <Link
                   href="/ueadmin/banners"
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/70 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
                >
                   <ImageIcon size={18} /> Hero Banners
                </Link>
                <Link
                   href="/ueadmin/banners/slider"
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/70 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
                >
                   <ImageIcon size={18} /> Products Slider
                </Link>
                <Link
                   href="/ueadmin/banners/products"
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/70 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
                >
                   <ImageIcon size={18} /> Products Banners
                </Link>
                <Link
                   href="/ueadmin/notices"
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/70 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
                >
                   <BellIcon size={18} /> Notice Board
                </Link>
 
                <div className="pt-8 space-y-4">
-                  <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/20">System Configuration</div>
+                  <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-black/50">System Configuration</div>
                   <Link
                      href="/ueadmin/settings/shipping"
-                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/70 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
                   >
                      <SettingsIcon size={18} /> Shipping Settings
                   </Link>
                   <Link
                      href="/ueadmin/blog"
-                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/70 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
                   >
                      <BookOpen size={18} /> Announcements
                   </Link>
                   <Link
                     href="/ueadmin/email-test"
-                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/40 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
+                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-black/70 hover:text-black transition-all font-black text-[11px] uppercase tracking-widest"
                   >
                      <Terminal size={18} /> Email Test
                   </Link>
@@ -132,7 +132,7 @@ export function AdminSidebar() {
              <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center font-black text-[10px]">P</div>
              <div className="min-w-0">
                  <div className="font-black text-[10px] uppercase tracking-tighter truncate">{session?.email}</div>
-                 <div className="text-[8px] font-bold text-black/30 uppercase">{session?.role}</div>
+                 <div className="text-[8px] font-bold text-black/60 uppercase">{session?.role}</div>
              </div>
           </div>
        </div>

@@ -45,7 +45,7 @@ export default async function ProductsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black tracking-tight text-black">Inventory</h1>
-          <p className="text-sm font-medium text-black/30 mt-1 uppercase tracking-[0.2em]">Manage your products</p>
+          <p className="text-sm font-medium text-black/60 mt-1 uppercase tracking-[0.2em]">Manage your products</p>
         </div>
         <Link 
           href="/ueadmin/products/add" 

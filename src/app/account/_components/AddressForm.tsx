@@ -6,9 +6,9 @@ import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
 
-// Country list for MENA region
+// Country list for MENA region (countries with pricing configured)
 const COUNTRIES = [
-  "United Arab Emirates (UAE)",
+  "United Arab Emirates",
   "Saudi Arabia",
   "Kuwait",
   "Bahrain",

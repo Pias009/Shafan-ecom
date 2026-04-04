@@ -108,7 +108,7 @@ export function ProductQuickViewModal({
     
     if (countryPrice && countryPrice.priceCents > 0) {
       displayPrice = countryPrice.priceCents;
-      originalPrice = product.salePrice || product.salePriceCents || displayPrice;
+      originalPrice = product.salePrice || product.salePriceCents || countryPrice.priceCents;
     } else {
       displayPrice = product.salePrice || product.salePriceCents || (product.discountPrice ?? product.price);
       originalPrice = product.regularPrice || product.regularPriceCents || product.price;

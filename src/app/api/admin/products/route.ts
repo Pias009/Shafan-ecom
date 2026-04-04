@@ -389,6 +389,7 @@ export async function POST(req: Request) {
       howToUse: productData.howToUse || null,
       features: productData.features ?? [],
       images: (productData.images as string[]) ?? [],
+      mainImage: mainImageUrl || ((productData.images as string[])?.[0] || null),
       priceCents: productData.priceCents,
       discountCents: productData.discountCents || 0,
       stockQuantity: productData.stockQuantity ?? 0,

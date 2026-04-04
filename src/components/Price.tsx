@@ -36,6 +36,11 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
   let displayAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(displayAmount)) displayAmount = 0;
 
+  // Convert cents to regular amount if isCents is true
+  if (isCents) {
+    displayAmount = displayAmount / 100;
+  }
+
   let displayCurrency = currentCurrency.code;
   let isRawPrice = false;
 
@@ -44,7 +49,7 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
     if (price > 0) {
       displayAmount = price;
       displayCurrency = priceCurrency;
-      isRawPrice = true;
+      isRawPrice = false;
     }
   } else if (currency) {
     displayCurrency = currency.toUpperCase();

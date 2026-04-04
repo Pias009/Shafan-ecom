@@ -35,7 +35,6 @@ export default function ProductsClient({ initialProducts, category, brand: initi
   const userCountry = useUserCountry();
 
   const brands = useMemo(() => {
-    console.log('ProductsClient - products:', products.length, products.map(p => p.id));
     const set = new Set(products.map(p => p.brandName).filter(Boolean));
     return [t.product.all, ...Array.from(set).sort()];
   }, [products, t.product.all]);
@@ -91,6 +90,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
       brand: product.brandName,
       category: product.categoryName,
       price: product.price,
+      discountPrice: product.salePrice || undefined,
       imageUrl: product.imageUrl,
       countryPrices: product.countryPrices,
     };
@@ -113,7 +113,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
       );
       const unitPriceCents = countryPrice && countryPrice.priceCents > 0
         ? countryPrice.priceCents
-        : (product.discountPrice ?? product.price) * 100;
+        : (product.discountPrice ?? product.price);
 
       const res = await fetch("/api/create-order", {
         method: "POST",
@@ -320,7 +320,10 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                       >
                         <ProductCard
                           product={product}
-                          onQuickView={(p) => setQuickView(p)}
+                          onQuickView={(p) => {
+                            console.log('QuickView product:', p.id, 'imageUrl:', p.imageUrl);
+                            setQuickView(p);
+                          }}
                           onAddToCart={(p) => addToCart(p)}
                           onOrderNow={(p) => orderNow(p)}
                         />

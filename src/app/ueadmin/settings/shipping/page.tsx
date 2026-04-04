@@ -161,7 +161,7 @@ export default function ShippoSettingsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-black">Shippo Settings</h1>
-            <p className="text-sm text-black/50">Configure your shipping integration</p>
+            <p className="text-sm text-black/70">Configure your shipping integration</p>
           </div>
         </div>
         
@@ -180,7 +180,7 @@ export default function ShippoSettingsPage() {
             <div className={`w-3 h-3 rounded-full ${connectionStatus === "success" ? "bg-green-500" : connectionStatus === "error" ? "bg-red-500" : "bg-gray-300"}`} />
             <div>
               <div className="font-bold">API Status</div>
-              <div className="text-xs text-black/50">
+              <div className="text-xs text-black/70">
                 {connectionStatus === "success" ? "Connected" : connectionStatus === "error" ? "Failed" : "Not tested"}
               </div>
             </div>
@@ -206,7 +206,7 @@ export default function ShippoSettingsPage() {
             </div>
             <div>
               <div className="font-bold">Test Mode</div>
-              <div className="text-xs text-black/50">Use Shippo test API (no real charges)</div>
+              <div className="text-xs text-black/70">Use Shippo test API (no real charges)</div>
             </div>
           </div>
           <button
@@ -221,13 +221,13 @@ export default function ShippoSettingsPage() {
       {/* Shipper Address */}
       <div className="bg-white rounded-2xl border border-black/10 p-6 space-y-4">
         <div className="flex items-center gap-2 mb-4">
-          <MapPin size={18} className="text-black/50" />
+          <MapPin size={18} className="text-black/70" />
           <h3 className="font-bold">Warehouse Address (Ship From)</h3>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="text-xs font-bold uppercase text-black/50">Business Name</label>
+            <label className="text-xs font-bold uppercase text-black/70">Business Name</label>
             <input
               value={settings.shipperName}
               onChange={(e) => setSettings({ ...settings, shipperName: e.target.value })}
@@ -237,7 +237,7 @@ export default function ShippoSettingsPage() {
           </div>
           
           <div className="md:col-span-2">
-            <label className="text-xs font-bold uppercase text-black/50">Street Address</label>
+            <label className="text-xs font-bold uppercase text-black/70">Street Address</label>
             <input
               value={settings.shipperAddress}
               onChange={(e) => setSettings({ ...settings, shipperAddress: e.target.value })}
@@ -247,7 +247,7 @@ export default function ShippoSettingsPage() {
           </div>
           
           <div>
-            <label className="text-xs font-bold uppercase text-black/50">City</label>
+            <label className="text-xs font-bold uppercase text-black/70">City</label>
             <input
               value={settings.shipperCity}
               onChange={(e) => setSettings({ ...settings, shipperCity: e.target.value })}
@@ -257,7 +257,7 @@ export default function ShippoSettingsPage() {
           </div>
           
           <div>
-            <label className="text-xs font-bold uppercase text-black/50">State/Region</label>
+            <label className="text-xs font-bold uppercase text-black/70">State/Region</label>
             <input
               value={settings.shipperState}
               onChange={(e) => setSettings({ ...settings, shipperState: e.target.value })}
@@ -267,7 +267,7 @@ export default function ShippoSettingsPage() {
           </div>
           
           <div>
-            <label className="text-xs font-bold uppercase text-black/50">Postal Code</label>
+            <label className="text-xs font-bold uppercase text-black/70">Postal Code</label>
             <input
               value={settings.shipperZip}
               onChange={(e) => setSettings({ ...settings, shipperZip: e.target.value })}
@@ -277,7 +277,7 @@ export default function ShippoSettingsPage() {
           </div>
           
           <div>
-            <label className="text-xs font-bold uppercase text-black/50">Country Code</label>
+            <label className="text-xs font-bold uppercase text-black/70">Country Code</label>
             <input
               value={settings.shipperCountry}
               onChange={(e) => setSettings({ ...settings, shipperCountry: e.target.value.toUpperCase() })}
@@ -288,7 +288,7 @@ export default function ShippoSettingsPage() {
           </div>
           
           <div>
-            <label className="text-xs font-bold uppercase text-black/50">Phone</label>
+            <label className="text-xs font-bold uppercase text-black/70">Phone</label>
             <input
               value={settings.shipperPhone}
               onChange={(e) => setSettings({ ...settings, shipperPhone: e.target.value })}

@@ -128,7 +128,7 @@ export default function NoticesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Notice Board</h1>
-          <p className="text-sm text-black/50 mt-1">Manage announcements shown at the top of homepage</p>
+          <p className="text-sm text-black/70 mt-1">Manage announcements shown at the top of homepage</p>
         </div>
         <button
           onClick={() => { setFormText(""); setEditingId(null); setShowForm(!showForm); }}
@@ -143,7 +143,7 @@ export default function NoticesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-bold">Notice Board Visibility</h3>
-            <p className="text-sm text-black/50">Show/hide the announcement bar on homepage</p>
+            <p className="text-sm text-black/70">Show/hide the announcement bar on homepage</p>
           </div>
           <button
             onClick={() => {

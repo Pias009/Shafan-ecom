@@ -23,6 +23,7 @@ export function OffersClient({ products }: { products: any[] }) {
       brand: product.brandName,
       category: product.categoryName,
       price: product.price,
+      discountPrice: product.salePrice || undefined,
       imageUrl: product.imageUrl,
       countryPrices: product.countryPrices,
     };
@@ -44,7 +45,7 @@ export function OffersClient({ products }: { products: any[] }) {
       );
       const unitPriceCents = countryPrice && countryPrice.priceCents > 0
         ? countryPrice.priceCents
-        : (product.discountPrice ?? product.price) * 100;
+        : (product.discountPrice ?? product.price);
 
       const res = await fetch("/api/create-order", {
         method: "POST",
@@ -102,10 +103,8 @@ export function OffersClient({ products }: { products: any[] }) {
                 <ProductCard
                   product={{
                     ...product,
-                    price: product.price * 100,
-                    discountPrice: product.discountPrice
-                      ? product.discountPrice * 100
-                      : undefined,
+                    price: product.price,
+                    discountPrice: product.salePrice || undefined,
                   }}
                   onQuickView={(p) => setQuickView(p)}
                   onAddToCart={(p) => addToCart(p)}

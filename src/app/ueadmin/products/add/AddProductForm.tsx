@@ -288,7 +288,7 @@ export function AddProductForm({
           </Link>
           <div>
             <h1 className="text-3xl font-black text-black">New Product</h1>
-            <p className="text-xs font-bold text-black/30 uppercase tracking-widest mt-1">Add to store inventory</p>
+            <p className="text-xs font-bold text-black/60 uppercase tracking-widest mt-1">Add to store inventory</p>
           </div>
         </div>
         <button
@@ -304,14 +304,14 @@ export function AddProductForm({
       <form id="product-form" onSubmit={handleSubmit} className="space-y-8">
         {/* General Information */}
         <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-          <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+          <h3 className="text-sm font-black uppercase tracking-widest text-black/50 flex items-center gap-2">
             <Package size={14} /> General Info
           </h3>
           
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Product Name</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Product Name</label>
                 <input
                   required
                   name="name"
@@ -325,7 +325,7 @@ export function AddProductForm({
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Brand</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Brand</label>
                 <div className="relative">
                   <select
                     name="brandName"
@@ -337,13 +337,13 @@ export function AddProductForm({
                       <option key={b.name} value={b.name}>{b.name}</option>
                     ))}
                   </select>
-                  <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                  <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
                 </div>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Description</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -355,7 +355,7 @@ export function AddProductForm({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Short Description</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Short Description</label>
               <textarea
                 name="shortDescription"
                 value={formData.shortDescription}
@@ -367,7 +367,7 @@ export function AddProductForm({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Benefits</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Benefits</label>
               <textarea
                 name="benefits"
                 value={formData.benefits}
@@ -379,7 +379,7 @@ export function AddProductForm({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Ingredients</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Ingredients</label>
               <textarea
                 name="ingredients"
                 value={formData.ingredients}
@@ -391,7 +391,7 @@ export function AddProductForm({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">How to Use</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">How to Use</label>
               <textarea
                 name="howToUse"
                 value={formData.howToUse}
@@ -404,7 +404,7 @@ export function AddProductForm({
 
             {/* Categories */}
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Categories</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 mb-2">Categories</h4>
               <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
                 <div className="flex flex-wrap gap-2">
                   {categories.map(cat => (
@@ -431,7 +431,7 @@ export function AddProductForm({
 
             {/* Sub-categories */}
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Sub-categories</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 mb-2">Sub-categories</h4>
               <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
                 <div className="flex flex-wrap gap-2">
                   {subCategories.map((subCat) => (
@@ -458,7 +458,7 @@ export function AddProductForm({
 
             {/* Skin Tones */}
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Skin Tones</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 mb-2">Skin Tones</h4>
               <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
                 <div className="flex flex-wrap gap-2">
                   {skinTones.map((tone) => (
@@ -491,7 +491,7 @@ export function AddProductForm({
 
             {/* Skin Concerns */}
             <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Skin Concerns</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 mb-2">Skin Concerns</h4>
               <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
                 <div className="flex flex-wrap gap-2">
                   {skinConcerns.map((concern) => (
@@ -520,25 +520,25 @@ export function AddProductForm({
 
         {/* Country-Specific Pricing */}
         <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-          <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+          <h3 className="text-sm font-black uppercase tracking-widest text-black/50 flex items-center gap-2">
             <Globe size={14} /> Country-Specific Pricing (All 6 Countries)
           </h3>
             
-            <div className="space-y-4">
-              <div className="mb-4">
-                <p className="text-xs font-bold text-black/60">
-                  Define prices for all supported countries in regular currency
-                </p>
-                <p className="text-[10px] text-black/40 mt-1">Enter whole numbers only (e.g., 10 for 10 USD)</p>
-              </div>
+          <div className="space-y-4">
+            <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+              <p className="text-xs text-blue-700">
+                <strong>Enter prices as simple numbers:</strong> Just type the price (e.g., 56 for 56 AED, 10 for 10 KWD).
+                That's it - no decimals needed!
+              </p>
+            </div>
 
-              <div className="space-y-3">
+            <div className="space-y-3">
                 {formData.countryPrices.map((cp, index) => {
                   const countryConfig = SUPPORTED_COUNTRIES.find(c => c.code === cp.country);
                   return (
                     <div key={cp.country} className="grid grid-cols-12 gap-3 items-center p-4 bg-black/5 rounded-2xl border border-black/10">
                       <div className="col-span-3 space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Country</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Country</label>
                         <div className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold">
                           <div className="flex items-center justify-between">
                             <span className="font-bold">{countryConfig?.name}</span>
@@ -549,28 +549,33 @@ export function AddProductForm({
                         </div>
                       </div>
                       <div className="col-span-6 space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Price (KWD)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Price ({cp.currency})</label>
                         <input
                           type="number"
                           step="1"
+                          min="0"
+                          placeholder="0"
                           value={cp.priceCents === 0 ? '' : cp.priceCents}
                           onChange={(e) => {
+                            const rawValue = e.target.value.trim();
                             const newPrices = [...formData.countryPrices];
-                            const rawValue = e.target.value;
-                            const numValue = rawValue === '' ? 0 : parseFloat(rawValue);
-                            newPrices[index].priceCents = isNaN(numValue) ? 0 : Math.round(numValue);
+                            if (rawValue === '') {
+                              newPrices[index].priceCents = 0;
+                            } else {
+                              const numValue = parseInt(rawValue, 10);
+                              newPrices[index].priceCents = isNaN(numValue) || numValue < 0 ? 0 : numValue;
+                            }
                             setFormData(prev => ({ ...prev, countryPrices: newPrices }));
                           }}
                           className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                          min="0"
                         />
-                        <p className="text-[8px] text-black/20 px-2">Enter whole number price (e.g., 10 for 10 KWD)</p>
+                        <p className="text-[8px] text-black/50 px-2">Example: type "56" for 56 AED</p>
                       </div>
                       <div className="col-span-3 space-y-1.5">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Currency</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Currency</label>
                         <div className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold flex items-center justify-between">
                           <span>{cp.currency}</span>
-                          <span className="text-[10px] text-black/40">{countryConfig?.currencySymbol}</span>
+                          <span className="text-[10px] text-black/70">{countryConfig?.currencySymbol}</span>
                         </div>
                       </div>
                       <div className="col-span-3 flex justify-center items-center">
@@ -581,44 +586,44 @@ export function AddProductForm({
                     </div>
                   );
                 })}
-              </div>
-              
-              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                <p className="text-xs text-blue-700">
-                  <strong>System Configuration:</strong> All 6 countries are required. Prices are in whole numbers only (e.g., 10 for $10).
-                  Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
-                  Products will only be visible to users in countries where a price is set.
-                </p>
-              </div>
+            </div>
+            
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+              <p className="text-xs text-blue-700">
+                <strong>System Configuration:</strong> All 6 countries are required. Prices are simple whole numbers (e.g., 10 for $10).
+                Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
+                Products will only be visible to users in countries where a price is set.
+              </p>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="p-3 bg-green-50 rounded-xl border border-green-100">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="font-bold text-green-700">Price Set</span>
-                  </div>
-                  <p className="text-green-600 mt-1">Country has a specific price configured</p>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div className="p-3 bg-green-50 rounded-xl border border-green-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="font-bold text-green-700">Price Set</span>
                 </div>
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                    <span className="font-bold text-gray-700">No Price Set</span>
-                  </div>
-                  <p className="text-gray-600 mt-1">Product will not be visible in this country</p>
+                <p className="text-green-600 mt-1">Country has a specific price configured</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                  <span className="font-bold text-gray-700">No Price Set</span>
                 </div>
+                <p className="text-gray-600 mt-1">Product will not be visible in this country</p>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
           {/* Stock & SKU */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/50 flex items-center gap-2">
               <Box size={14} /> Stock & SKU
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Stock Quantity</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Stock Quantity</label>
                 <div className="relative">
                   <input
                     type="number"
@@ -628,12 +633,12 @@ export function AddProductForm({
                     min="0"
                     className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
                   />
-                  <Package className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                  <Package className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">SKU (Stock Keeping Unit)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">SKU (Stock Keeping Unit)</label>
                 <div className="relative">
                   <input
                     name="sku"
@@ -642,7 +647,7 @@ export function AddProductForm({
                     placeholder="e.g. LDS-001-BLK"
                     className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
                   />
-                  <Hash className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                  <Hash className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
                 </div>
               </div>
             </div>
@@ -656,13 +661,13 @@ export function AddProductForm({
 
           {/* SEO Tags */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/50 flex items-center gap-2">
               <Search size={14} /> SEO Tags
             </h3>
             
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Tags (Press Enter to add)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Tags (Press Enter to add)</label>
                 <div className="relative">
                   <input
                     placeholder="Type a tag and press Enter"
@@ -679,7 +684,7 @@ export function AddProductForm({
                       }
                     }}
                   />
-                  <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                  <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
                 </div>
               </div>
 
@@ -713,14 +718,14 @@ export function AddProductForm({
 
           {/* Media Assets */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/50 flex items-center gap-2">
               <ImageIcon size={14} /> Media Assets
             </h3>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Main Image */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Main Image</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Main Image</label>
                 <div className="relative group">
                   {formData.mainImage ? (
                     <div className="aspect-square rounded-2xl bg-black/5 overflow-hidden border border-black/5 relative">
@@ -735,8 +740,8 @@ export function AddProductForm({
                     </div>
                   ) : (
                     <label className="aspect-square rounded-2xl bg-black/5 border-2 border-dashed border-black/10 hover:border-black/20 transition-all flex flex-col items-center justify-center cursor-pointer group">
-                      <ImageIcon className="text-black/20 mb-2 group-hover:scale-110 transition-transform" size={24} />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-black/40">Upload Main</span>
+                      <ImageIcon className="text-black/50 mb-2 group-hover:scale-110 transition-transform" size={24} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black/70">Upload Main</span>
                       <input 
                         type="file" 
                         className="hidden" 
@@ -769,7 +774,7 @@ export function AddProductForm({
 
               {/* Gallery */}
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Gallery</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Gallery</label>
                 <div className="grid grid-cols-3 gap-3">
                   {formData.images.map((img, idx) => (
                     <div key={idx} className="aspect-square rounded-xl bg-black/5 overflow-hidden border border-black/5 relative group">
@@ -788,8 +793,8 @@ export function AddProductForm({
                     </div>
                   ))}
                   <label className="aspect-square rounded-xl bg-black/5 border-2 border-dashed border-black/10 hover:border-black/20 transition-all flex flex-col items-center justify-center cursor-pointer group">
-                    <ImageIcon className="text-black/20 mb-1 group-hover:scale-110 transition-transform" size={16} />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-black/40">Add</span>
+                    <ImageIcon className="text-black/50 mb-1 group-hover:scale-110 transition-transform" size={16} />
+                    <span className="text-[8px] font-black uppercase tracking-widest text-black/70">Add</span>
                     <input 
                       type="file" 
                       className="hidden" 
@@ -823,7 +828,7 @@ export function AddProductForm({
 
           {/* Visibility */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-black/20">Status & Vibes</h3>
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/50">Status & Vibes</h3>
             
             <div className="space-y-4">
               <label className="flex items-center justify-between p-4 bg-black/5 rounded-2xl cursor-pointer group">

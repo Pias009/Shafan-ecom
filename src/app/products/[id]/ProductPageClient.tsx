@@ -74,7 +74,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       name: p.name,
       brand: p.brand?.name,
       category: p.category?.name,
-      price: p.salePrice || p.salePriceCents || p.price || p.priceCents || 0,
+      price: p.price || p.priceCents || 0,
+      discountPrice: p.salePrice || p.salePriceCents || undefined,
       imageUrl: p.mainImage,
       countryPrices: p.countryPrices,
     }, 1);

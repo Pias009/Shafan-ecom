@@ -314,28 +314,44 @@ export async function POST(req: Request) {
 
     for (const item of items) {
       const productId = item.productId;
-      
-      // Sanity check: Ensure productId is a valid MongoDB ObjectId (24 chars hex)
-      if (!/^[0-9a-fA-F]{24}$/.test(productId)) {
-        console.warn(`Skipping invalid product ID: ${productId}`);
-        continue;
-      }
+      const productSlug = item.slug;
 
-      // Get product with all relations
-      const product = await prisma.product.findUnique({
-        where: { id: productId },
-        include: {
-          store: true,
-          storeInventories: {
-            include: {
-              store: true
+      console.log('Processing item:', JSON.stringify(item));
+
+      let product = null;
+
+      // Try to find product by productId (MongoDB ObjectId)
+      if (productId && /^[0-9a-fA-F]{24}$/.test(productId)) {
+        product = await prisma.product.findUnique({
+          where: { id: productId },
+          include: {
+            store: true,
+            storeInventories: {
+              include: {
+                store: true
+              }
             }
           }
-        }
-      });
+        });
+      }
+
+      // If not found by productId, try by slug
+      if (!product && productSlug) {
+        product = await prisma.product.findUnique({
+          where: { slug: productSlug },
+          include: {
+            store: true,
+            storeInventories: {
+              include: {
+                store: true
+              }
+            }
+          }
+        });
+      }
 
       if (!product) {
-        throw new Error(`Product not found: ${item.productId}`);
+        throw new Error(`Product not found: ${productId || productSlug}`);
       }
 
       // Check stock availability

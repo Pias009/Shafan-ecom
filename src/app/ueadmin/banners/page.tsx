@@ -179,7 +179,7 @@ export default function AdminHeroBannersPage() {
             <div className="p-2 bg-black rounded-xl text-white"><ImageIcon size={20} /></div>
             <div>
               <h1 className="text-2xl font-bold">Hero Banners</h1>
-              <p className="text-sm text-black/50 mt-1">Manage hero banners shown on the homepage</p>
+              <p className="text-sm text-black/70 mt-1">Manage hero banners shown on the homepage</p>
             </div>
           </div>
         </div>
@@ -198,14 +198,14 @@ export default function AdminHeroBannersPage() {
 
           {/* Image section */}
           <div>
-            <label className="block text-xs font-bold text-black/50 mb-2 uppercase tracking-widest">Banner Image *</label>
+            <label className="block text-xs font-bold text-black/70 mb-2 uppercase tracking-widest">Banner Image *</label>
             <div className="flex gap-1 mb-3 bg-black/5 rounded-xl p-1 w-fit">
               <button onClick={() => setImageTab("url")}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${imageTab === "url" ? "bg-white shadow text-black" : "text-black/50 hover:text-black"}`}>
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${imageTab === "url" ? "bg-white shadow text-black" : "text-black/70 hover:text-black"}`}>
                 <LinkIcon size={12} /> URL
               </button>
               <button onClick={() => setImageTab("upload")}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${imageTab === "upload" ? "bg-white shadow text-black" : "text-black/50 hover:text-black"}`}>
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${imageTab === "upload" ? "bg-white shadow text-black" : "text-black/70 hover:text-black"}`}>
                 <Upload size={12} /> Upload
               </button>
             </div>
@@ -223,14 +223,14 @@ export default function AdminHeroBannersPage() {
                 {uploading ? (
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-8 h-8 rounded-full border-4 border-black/10 border-t-black animate-spin" />
-                    <span className="text-sm font-bold text-black/50">Uploading…</span>
+                    <span className="text-sm font-bold text-black/70">Uploading…</span>
                   </div>
                 ) : (
                   <>
-                    <Upload size={28} className="text-black/30" />
+                    <Upload size={28} className="text-black/50" />
                     <div className="text-center">
-                      <p className="font-bold text-sm text-black/60">Click to upload image</p>
-                      <p className="text-xs text-black/40 mt-1">JPG, PNG, WebP or GIF · Max 5MB</p>
+                      <p className="font-bold text-sm text-black/70">Click to upload image</p>
+                      <p className="text-xs text-black/60 mt-1">JPG, PNG, WebP or GIF · Max 5MB</p>
                     </div>
                   </>
                 )}
@@ -240,7 +240,7 @@ export default function AdminHeroBannersPage() {
             {/* Preview */}
             {previewSrc && (
               <div className="mt-3">
-                <p className="text-xs font-bold text-black/40 mb-1.5 uppercase tracking-widest">Preview</p>
+                <p className="text-xs font-bold text-black/70 mb-1.5 uppercase tracking-widest">Preview</p>
                 <div className="relative aspect-[21/6] w-full rounded-xl overflow-hidden bg-black/5">
                   <Image src={previewSrc} alt="preview" fill className="object-cover" unoptimized={previewSrc.startsWith("/")} />
                 </div>
@@ -250,22 +250,22 @@ export default function AdminHeroBannersPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Title</label>
+              <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">Title</label>
               <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
                 className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="Summer Sale" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Subtitle</label>
+              <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">Subtitle</label>
               <input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                 className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="Up to 50% off" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Link URL</label>
+              <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">Link URL</label>
               <input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })}
                 className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="/products or https://..." />
             </div>
             <div>
-              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Sort Order (lower = first)</label>
+              <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">Sort Order (lower = first)</label>
               <input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
                 className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" />
             </div>
@@ -274,17 +274,17 @@ export default function AdminHeroBannersPage() {
           {/* Enhanced fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Offer Text</label>
+              <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">Offer Text</label>
               <input value={form.offerText} onChange={(e) => setForm({ ...form, offerText: e.target.value })}
                 className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="70% OFF or $50 OFF" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">CTA Button Text</label>
+              <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">CTA Button Text</label>
               <input value={form.ctaText} onChange={(e) => setForm({ ...form, ctaText: e.target.value })}
                 className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="Shop Now or Learn More" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Background Color</label>
+              <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">Background Color</label>
               <div className="flex gap-2">
                 <input value={form.backgroundColor} onChange={(e) => setForm({ ...form, backgroundColor: e.target.value })}
                   className="flex-1 border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="#FFFFFF" />
@@ -292,7 +292,7 @@ export default function AdminHeroBannersPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Text Color</label>
+              <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">Text Color</label>
               <div className="flex gap-2">
                 <input value={form.textColor} onChange={(e) => setForm({ ...form, textColor: e.target.value })}
                   className="flex-1 border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="#000000" />

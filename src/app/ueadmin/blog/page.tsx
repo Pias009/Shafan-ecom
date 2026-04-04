@@ -123,7 +123,7 @@ export default function AdminBlogPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Blog & Announcements</h1>
-          <p className="text-sm text-black/50 mt-1">Manage published blog posts & offers</p>
+          <p className="text-sm text-black/70 mt-1">Manage published blog posts & offers</p>
         </div>
         <button
           onClick={() => { setForm(emptyForm); setEditing(null); setShowForm(!showForm); setImageTab("url"); }}
@@ -140,14 +140,14 @@ export default function AdminBlogPage() {
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Title *</label>
+            <label className="block text-xs font-bold text-black/70 mb-1 uppercase tracking-widest">Title *</label>
             <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
               className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/20" placeholder="Post title" />
           </div>
 
           {/* Cover Image */}
           <div>
-            <label className="block text-xs font-bold text-black/50 mb-2 uppercase tracking-widest">Cover Image</label>
+            <label className="block text-xs font-bold text-black/70 mb-2 uppercase tracking-widest">Cover Image</label>
             {/* Tabs */}
             <div className="flex gap-1 mb-3 bg-black/5 rounded-xl p-1 w-fit">
               <button onClick={() => setImageTab("url")}

@@ -407,38 +407,61 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
               <Globe size={14} /> Country-Specific Pricing
             </h3>
             
-            <div className="space-y-3">
-              {['AE', 'SA', 'KW', 'BH', 'OM', 'QA'].map((countryCode) => {
-                const cp = product.countryPrices?.find((c: any) => c.country === countryCode);
-                return (
-                  <div key={countryCode} className="grid grid-cols-12 gap-3 items-center p-4 bg-black/5 rounded-2xl border border-black/10">
-                    <div className="col-span-3">
-                      <div className="text-sm font-bold">{countryCode}</div>
+            <div className="space-y-4">
+              <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p className="text-xs text-blue-700">
+                  <strong>Enter prices as simple numbers:</strong> Just type the price (e.g., 56 for 56 AED, 10 for 10 KWD).
+                  That's it - no decimals needed!
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {['AE', 'SA', 'KW', 'BH', 'OM', 'QA'].map((countryCode) => {
+                  const cp = product.countryPrices?.find((c: any) => c.country === countryCode);
+                  const displayPrice = cp?.priceCents ? cp.priceCents : 0;
+                  return (
+                    <div key={countryCode} className="grid grid-cols-12 gap-3 items-center p-4 bg-black/5 rounded-2xl border border-black/10">
+                      <div className="col-span-4 space-y-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Country & Currency</label>
+                        <div className="text-sm font-bold flex items-center gap-2">
+                          {countryCode}
+                          <span className="text-xs text-black/40">({cp?.currency || 'AED'})</span>
+                        </div>
+                      </div>
+                      <div className="col-span-5 space-y-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Price</label>
+                        <input
+                          type="number"
+                          step="1"
+                          min="0"
+                          placeholder="0"
+                          value={displayPrice === 0 ? '' : displayPrice}
+                          onChange={(e) => {
+                            const rawValue = e.target.value.trim();
+                            const newPrices = product.countryPrices?.map((c: any) => {
+                              if (c.country === countryCode) {
+                                if (rawValue === '') {
+                                  return { ...c, priceCents: 0 };
+                                }
+                                const numValue = parseInt(rawValue, 10);
+                                return { ...c, priceCents: isNaN(numValue) || numValue < 0 ? 0 : numValue };
+                              }
+                              return c;
+                            }) || [];
+                            setProduct({ ...product, countryPrices: newPrices });
+                          }}
+                          className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                        />
+                      </div>
+                      <div className="col-span-3 flex justify-end">
+                        <div className={`w-3 h-3 rounded-full ${cp?.priceCents && cp.priceCents > 0 ? 'bg-green-500' : 'bg-gray-300'}`}
+                             title={cp?.priceCents && cp.priceCents > 0 ? 'Price set' : 'No price set'}>
+                        </div>
+                      </div>
                     </div>
-                    <div className="col-span-6">
-                      <input
-                        type="number"
-                        value={cp?.priceCents ? cp.priceCents : ''}
-                        onChange={(e) => {
-                          const rawValue = e.target.value;
-                          const priceCents = rawValue === '' ? 0 : Math.round(parseFloat(rawValue));
-                          const newPrices = product.countryPrices?.map((c: any) => 
-                            c.country === countryCode 
-                              ? { ...c, priceCents: isNaN(priceCents) ? 0 : priceCents }
-                              : c
-                          ) || [];
-                          setProduct({ ...product, countryPrices: newPrices });
-                        }}
-                        className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold"
-                        placeholder="Price"
-                      />
-                    </div>
-                    <div className="col-span-3">
-                      <span className="text-xs text-black/40">{cp?.currency || 'USD'}</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </section>
 

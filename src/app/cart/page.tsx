@@ -19,7 +19,7 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
-function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, removeCoupon, subtotalCents, discountCents, totalCents, shippingCents, freeDelivery, t, userCountry, applyCoupon }: any) {
+function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, removeCoupon, subtotal, discount, total, shipping, freeDelivery, t, userCountry, applyCoupon }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
   const [couponInput, setCouponInput] = useState("");
@@ -68,13 +68,13 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         const countryPrice = i.countryPrices?.find((cp: any) =>
           cp.country.toUpperCase() === userCountry.toUpperCase()
         );
-        const unitPriceCents = countryPrice && countryPrice.priceCents > 0
-          ? countryPrice.priceCents
-          : (i.discountPrice ?? i.price) * 100;
+        const unitPrice = countryPrice && countryPrice.price > 0
+          ? countryPrice.price
+          : (i.discountPrice ?? i.price);
         return {
           productId: i.id,
           quantity: i.quantity,
-          unitPriceCents
+          unitPrice
         };
       });
 
@@ -150,6 +150,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                     </div>
                     <Price
                       amount={price}
+                      isCents={false}
                       countryPrices={item.countryPrices}
                       className="font-body font-black text-black text-sm md:text-lg shrink-0"
                     />
@@ -221,7 +222,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
 
               <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-black/40 font-bold uppercase tracking-wider">
                 <div>{t.cart.subtotal}</div>
-                <Price amount={subtotalCents / 100} className="text-black font-black" />
+                <Price amount={subtotal} isCents={false} className="text-black font-black" />
               </div>
 
               {couponCode && (
@@ -230,7 +231,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                     {t.cart.promo} ({couponCode})
                     <button onClick={removeCoupon} className="text-[9px] underline">({t.cart.remove})</button>
                   </div>
-                  <div className="font-black">- <Price amount={discountCents / 100} /></div>
+                  <div className="font-black">- <Price amount={discount} isCents={false} /></div>
                 </div>
               )}
 
@@ -240,14 +241,14 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                   {freeDelivery ? (
                     <span className="text-green-600 font-black">FREE</span>
                   ) : (
-                    <Price amount={shippingCents / 100} />
+                    <Price amount={shipping} isCents={false} />
                   )}
                 </div>
               </div>
 
               <div className="flex items-center justify-between pt-6 border-t border-black/5">
                 <div className="font-black text-xs md:text-sm uppercase tracking-widest">{t.cart.total}</div>
-                <Price amount={totalCents / 100} className="text-2xl md:text-3xl font-black text-black" />
+                <Price amount={total} isCents={false} className="text-2xl md:text-3xl font-black text-black" />
               </div>
 
               <div className="mt-6 pt-4 border-t border-black/5">
@@ -325,39 +326,35 @@ export default function CartPage() {
   }, []);
 
   if (!mounted) return null;
-  
-  const subtotalCents = items.reduce(
+
+  // Calculate subtotal using regular prices (not cents)
+  const subtotal = items.reduce(
     (acc, item) => {
-      // Find country-specific price for user's country
       const countryPrice = item.countryPrices?.find(cp =>
         cp.country.toUpperCase() === userCountry.toUpperCase()
       );
-      
-      // Use country price if available, otherwise fallback to base price
-      const priceCents = countryPrice && countryPrice.priceCents > 0
-        ? countryPrice.priceCents
-        : (item.discountPrice ?? item.price) * 100;
-        
-      return acc + priceCents * item.quantity;
+      const price = countryPrice && countryPrice.price > 0
+        ? countryPrice.price
+        : (item.discountPrice ?? item.price);
+      return acc + price * item.quantity;
     },
     0
   );
-  
-  const discountCents = Math.round(subtotalCents * couponDiscount);
-  
-  // Delivery fee calculation based on country
-  const DELIVERY_CONFIG: Record<string, { minOrderCents: number; deliveryFeeCents: number; freeDeliveryCents: number }> = {
-    AE: { minOrderCents: 8000, deliveryFeeCents: 1500, freeDeliveryCents: 15000 },
-    KW: { minOrderCents: 12000, deliveryFeeCents: 1500, freeDeliveryCents: 18000 },
-    SA: { minOrderCents: 15900, deliveryFeeCents: 1900, freeDeliveryCents: 35900 },
-    BH: { minOrderCents: 1300, deliveryFeeCents: 199, freeDeliveryCents: 1800 },
-    OM: { minOrderCents: 1600, deliveryFeeCents: 190, freeDeliveryCents: 2200 },
-    QA: { minOrderCents: 12900, deliveryFeeCents: 1900, freeDeliveryCents: 29900 },
+
+  const discount = Math.round(subtotal * couponDiscount);
+
+  // Delivery fee calculation based on country (using regular prices)
+  const DELIVERY_CONFIG: Record<string, { minOrder: number; deliveryFee: number; freeDelivery: number }> = {
+    AE: { minOrder: 80, deliveryFee: 15, freeDelivery: 150 },
+    KW: { minOrder: 120, deliveryFee: 15, freeDelivery: 180 },
+    SA: { minOrder: 159, deliveryFee: 19, freeDelivery: 359 },
+    BH: { minOrder: 13, deliveryFee: 1.99, freeDelivery: 18 },
+    OM: { minOrder: 16, deliveryFee: 1.9, freeDelivery: 22 },
+    QA: { minOrder: 129, deliveryFee: 19, freeDelivery: 299 },
   };
-  
   const deliveryConfig = DELIVERY_CONFIG[userCountry.toUpperCase()] || DELIVERY_CONFIG['AE'];
-  const shippingCents = subtotalCents >= deliveryConfig.freeDeliveryCents ? 0 : deliveryConfig.deliveryFeeCents;
-  const totalCents = subtotalCents - discountCents + shippingCents;
+  const shipping = subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee;
+  const total = subtotal - discount + shipping;
 
   if (items.length === 0) {
     return (
@@ -377,22 +374,22 @@ export default function CartPage() {
     );
   }
 
-    return (
-      <CartContent 
-        items={items}
-        removeItem={removeItem}
-        updateQuantity={updateQuantity}
-        couponCode={couponCode}
-        couponDiscount={couponDiscount}
-        removeCoupon={removeCoupon}
-        subtotalCents={subtotalCents}
-        discountCents={discountCents}
-        totalCents={totalCents}
-        shippingCents={shippingCents}
-        freeDelivery={shippingCents === 0}
-        applyCoupon={() => {}}
-        t={t}
-        userCountry={userCountry}
-      />
-    );
+  return (
+    <CartContent 
+      items={items}
+      removeItem={removeItem}
+      updateQuantity={updateQuantity}
+      couponCode={couponCode}
+      couponDiscount={couponDiscount}
+      removeCoupon={removeCoupon}
+      subtotal={subtotal}
+      discount={discount}
+      total={total}
+      shipping={shipping}
+      freeDelivery={shipping === 0}
+      applyCoupon={applyCoupon}
+      t={t}
+      userCountry={userCountry}
+    />
+  );
 }
