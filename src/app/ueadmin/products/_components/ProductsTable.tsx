@@ -53,13 +53,25 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
         body: JSON.stringify({ ids: Array.from(selectedIds) })
       });
       
+      const result = await res.json().catch(() => ({}));
+      
       if (res.ok) {
-        toast.success(`Deleted ${selectedIds.size} product(s)`);
-        setProducts(products.filter(p => !selectedIds.has(p.id)));
-        setSelectedIds(new Set());
-        setSelectAll(false);
+        const { deleted = 0, failed = 0 } = result;
+        if (failed > 0 && deleted === 0) {
+          toast.error(`Failed to delete products. Check server logs.`);
+        } else if (failed > 0) {
+          toast.error(`Deleted ${deleted}, but ${failed} failed. They may have pending orders.`);
+          setProducts(products.filter(p => !selectedIds.has(p.id)));
+          setSelectedIds(new Set());
+          setSelectAll(false);
+        } else {
+          toast.success(`Deleted ${deleted} product(s)`);
+          setProducts(products.filter(p => !selectedIds.has(p.id)));
+          setSelectedIds(new Set());
+          setSelectAll(false);
+        }
       } else {
-        toast.error('Failed to delete products');
+        toast.error(result?.error || 'Failed to delete products');
       }
     } catch (error) {
       toast.error('Failed to delete products');

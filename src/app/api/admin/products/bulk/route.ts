@@ -97,18 +97,19 @@ export async function DELETE(req: Request) {
     
     for (const id of ids) {
       try {
-        // Delete related records first
+        // Delete related records first (order matters — delete dependent relations before the product)
+        await (prisma as any).orderItem.deleteMany({ where: { productId: id } });
         await (prisma as any).countryPrice.deleteMany({ where: { productId: id } });
         await (prisma as any).productCategory.deleteMany({ where: { productId: id } });
         await (prisma as any).productSkinTone.deleteMany({ where: { productId: id } });
         await (prisma as any).productSkinConcern.deleteMany({ where: { productId: id } });
         await (prisma as any).productDiscount.deleteMany({ where: { productId: id } });
         await (prisma as any).storeInventory.deleteMany({ where: { productId: id } });
-        
+
         // Delete the product
         await (prisma as any).product.delete({ where: { id } });
         deletedCount++;
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Delete Failed for ${id}:`, err);
         failedCount++;
       }
