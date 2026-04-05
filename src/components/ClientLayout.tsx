@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
-
-const LoadingScreen = dynamic(() => import("./LoadingScreen"), {
-  ssr: false,
-  loading: () => null,
-});
+import LoadingScreen from "./LoadingScreen";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -15,9 +10,10 @@ interface ClientLayoutProps {
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Clear old session key to force show new loading
+    setMounted(true);
     sessionStorage.removeItem("shafan-loaded-v2");
     
     const timer = setTimeout(() => {
@@ -34,6 +30,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     setShowContent(true);
     sessionStorage.setItem("shafan-loaded-v2", "true");
   };
+
+  // Always render null on server to match client
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>

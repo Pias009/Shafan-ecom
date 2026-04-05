@@ -105,13 +105,16 @@ export function Navbar() {
   }, [lastScrollY]);
 
   // Sync address status
-  const setHasAddress = useCartStore(state => state.setHasAddress);
+  const setHasAddress = useCartStore((state) => state.setHasAddress);
+  const hasAddress = useCartStore((state) => state.hasAddress);
   const isUserAuthenticated = status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPERADMIN";
   
   useEffect(() => {
-    if (isUserAuthenticated) {
+    if (isUserAuthenticated && setHasAddress) {
         fetch("/api/account/address").then(r => r.json()).then(data => {
             setHasAddress(!!data);
+        }).catch(() => {
+            setHasAddress(false);
         });
     }
   }, [isUserAuthenticated, setHasAddress]);

@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useCountryStore } from "./country-store";
+
 export interface ProductSummary {
   id: string;
   name: string;
@@ -31,8 +33,20 @@ interface CartState {
   clearCart: () => void;
   hasAddress: boolean;
   setHasAddress: (val: boolean) => void;
-  getCountryPrice: (productId: string) => number | null;
+  refreshPrices: () => Promise<void>;
 }
+
+const getPriceForCountry = (product: ProductSummary, countryCode: string): number => {
+  if (product.countryPrices && product.countryPrices.length > 0) {
+    const countryPrice = product.countryPrices.find(
+      (cp) => cp.country.toUpperCase() === countryCode.toUpperCase()
+    );
+    if (countryPrice && countryPrice.price > 0) {
+      return countryPrice.price;
+    }
+  }
+  return 0;
+};
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -42,9 +56,11 @@ export const useCartStore = create<CartState>()(
       couponDiscount: 0,
       addItem: (product, quantity = 1) =>
         set((state) => {
-          // Cart Validation: Block items with zero or negative price
-          const unitPrice = product.discountPrice ?? product.price;
-          if (unitPrice <= 0) return state;
+          // STRICT: Only add if product has valid price for current country
+          const { selectedCountry } = useCountryStore.getState();
+          const validPrice = getPriceForCountry(product, selectedCountry);
+          
+          if (validPrice <= 0) return state;
           
           const existingItem = state.items.find((item) => item.id === product.id);
           if (existingItem) {
@@ -54,7 +70,7 @@ export const useCartStore = create<CartState>()(
               ),
             };
           }
-          return { items: [...state.items, { ...product, quantity }] };
+          return { items: [...state.items, { ...product, price: validPrice, quantity }] };
         }),
       removeItem: (productId) =>
         set((state) => ({ items: state.items.filter((item) => item.id !== productId) })),
@@ -83,8 +99,31 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [], couponCode: null, couponDiscount: 0 }),
       hasAddress: false,
       setHasAddress: (val) => set({ hasAddress: val }),
-      getCountryPrice: (productId: string) => {
-        return null;
+      refreshPrices: async () => {
+        const { items } = get();
+        const { selectedCountry } = useCountryStore.getState();
+        
+        // Fetch fresh prices from DB
+        try {
+          const productIds = items.map((item) => item.id);
+          const res = await fetch("/api/products/prices?ids=" + productIds.join(",") + "&country=" + selectedCountry);
+          const data = await res.json();
+          
+          if (data.prices) {
+            set((state) => ({
+              items: state.items.map((item) => {
+                const freshPrice = data.prices[item.id];
+                if (freshPrice && freshPrice > 0) {
+                  return { ...item, price: freshPrice };
+                }
+                // If no valid price for country, mark as unavailable
+                return { ...item, price: 0 };
+              }),
+            }));
+          }
+        } catch (error) {
+          console.error("Failed to refresh cart prices:", error);
+        }
       },
     }),
     {

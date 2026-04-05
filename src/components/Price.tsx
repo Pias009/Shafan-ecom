@@ -67,6 +67,7 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
   let displayAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
   if (isNaN(displayAmount)) displayAmount = 0;
 
+  // STRICT: Only use direct DB price - no multipliers or conversions
   let displayCurrency = selectedCurrency;
   let hasCountrySpecificPrice = false;
 
@@ -84,11 +85,10 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
     }
   }
 
+  // NO FALLBACK: If no country-specific price, show as unavailable
+  // No conversion or multiplier - DB is the only source of truth
   if (!hasCountrySpecificPrice) {
-    const baseCurrency = currency?.toUpperCase() || 'USD';
-    if (baseCurrency !== displayCurrency) {
-      displayAmount = convertCurrency(displayAmount, baseCurrency, displayCurrency);
-    }
+    displayAmount = 0;
   }
 
   const formatted = formatPriceWithIntl(displayAmount, displayCurrency, true);

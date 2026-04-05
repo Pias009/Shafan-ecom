@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 
 interface LoadingScreenProps {
@@ -14,8 +14,15 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
   const dropletRef = useRef<HTMLDivElement>(null);
   const rippleRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const ctx = gsap.context(() => {
       const tl = gsap.timeline();
 
@@ -101,7 +108,30 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
     }, containerRef);
 
     return () => ctx.revert();
-  }, [onLoadingComplete]);
+  }, [mounted, onLoadingComplete]);
+
+  if (!mounted) {
+    return (
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-neutral-950"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-neutral-50 via-white to-neutral-100 dark:from-neutral-900 dark:via-neutral-950 dark:to-black opacity-80" />
+        <div className="relative flex flex-col items-center">
+          <div className="w-24 h-24 relative flex items-center justify-center">
+            <div className="absolute inset-0 bg-neutral-900 dark:bg-white rounded-2xl shadow-2xl" />
+            <span className="relative text-5xl font-bold text-white dark:text-neutral-900 tracking-tight">
+              S
+            </span>
+          </div>
+          <div className="text-center mt-4">
+            <h1 className="text-2xl font-light tracking-[0.3em] text-neutral-800 dark:text-neutral-200">
+              SHANFA GLOBAL
+            </h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

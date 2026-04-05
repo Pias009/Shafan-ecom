@@ -86,8 +86,13 @@ function variantsFor(animation: Slide["animation"]) {
 }
 
 export function BannerSlider() {
+  const [mounted, setMounted] = useState(false);
   const [index, setIndex] = useState(0);
   const slide = slides[index];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setIndex((i) => (i + 1) % slides.length), 4200);
@@ -95,6 +100,28 @@ export function BannerSlider() {
   }, []);
 
   const v = useMemo(() => variantsFor(slide.animation), [slide.animation]);
+
+  if (!mounted) {
+    return (
+      <section className="mx-auto max-w-7xl px-6 pt-6">
+        <div className="glass-panel rounded-3xl overflow-hidden">
+          <div className={`relative bg-gradient-to-r ${accentBg[slides[0].accent]} p-6 md:p-8`}>
+            <div className="grid gap-2">
+              <div className={`text-xs font-body font-bold uppercase tracking-[0.25em] text-black/60`}>
+                Latest Updates
+              </div>
+              <div className={`font-display text-balance text-2xl font-bold md:text-3xl text-black`}>
+                {slides[0].title}
+              </div>
+              <div className={`font-body max-w-2xl text-pretty text-sm leading-6 md:text-base text-black/70 font-medium`}>
+                {slides[0].subtitle}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-7xl px-6 pt-6">

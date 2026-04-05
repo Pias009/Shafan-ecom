@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     const currency = getCurrencyForCountry(countryCode);
 
 
-    // 2. Calculate subtotals by fetching real products with country pricing (regular prices)
+    // 2. Calculate subtotals by fetching real products with country pricing (strict DB prices)
     let subtotal = 0;
     const orderItems = [];
 
@@ -73,18 +73,28 @@ export async function POST(req: Request) {
       });
       if (!product) throw new Error("Product not found: " + item.productId);
 
-      // Check for country-specific price first
+      // STRICT PRICE VALIDATION: Only use DB price for selected country
+      // No multipliers or conversions - database is the ONLY source of truth
       let price = 0;
       if (product.countryPrices && product.countryPrices.length > 0) {
         price = Number(product.countryPrices[0].price) || 0;
-      } else {
-        // Fall back to base price calculation
-        price = product.discountPrice ? (Number(product.price) - Number(product.discountPrice)) : Number(product.price) || 0;
+      }
+      
+      // If no country-specific price exists, reject the order
+      if (price <= 0) {
+        return NextResponse.json({ 
+          error: `Product "${product.name}" is not available for ${countryCode}. Please select a different shipping country.` 
+        }, { status: 400 });
       }
 
-      // If price is still 0, use the base price (in case country price wasn't set)
-      if (price <= 0) {
-        price = product.discountPrice ? (Number(product.price) - Number(product.discountPrice)) : Number(product.price) || 0;
+      // CRITICAL: Validate that the client-submitted price matches the DB price
+      // If user manipulated the price client-side, reject the transaction
+      const clientSubmittedPrice = item.unitPrice;
+      if (clientSubmittedPrice && Math.abs(clientSubmittedPrice - price) > 0.01) {
+        console.warn(`Price mismatch for product ${product.id}: client=${clientSubmittedPrice}, db=${price}`);
+        return NextResponse.json({ 
+          error: `Price validation failed for "${product.name}". Please refresh and try again.` 
+        }, { status: 400 });
       }
 
       subtotal += price * item.quantity;
