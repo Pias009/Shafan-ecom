@@ -23,6 +23,7 @@ export default function AccountDashboardClient() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const userCountry = useUserCountry();
 
   useEffect(() => {
     setMounted(true);
@@ -48,8 +49,6 @@ export default function AccountDashboardClient() {
     const priceToUse = item.discountPrice ?? item.price ?? 0;
     return acc + priceToUse * item.quantity;
   }, 0);
-
-  const userCountry = useUserCountry();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
