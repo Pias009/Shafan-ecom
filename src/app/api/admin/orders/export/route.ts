@@ -19,11 +19,11 @@ export async function GET() {
       createdAt: true,
       status: true,
       currency: true,
-      totalCents: true,
+      total: true,
       user: { select: { email: true, name: true } },
     },
   });
-  const rows = orders.map((o: any) => ({ id: o.id, date: o.createdAt, status: o.status, currency: o.currency, total: (o.totalCents ?? 0) / 100, customer: o.user?.name ?? o.user?.email }));
+  const rows = orders.map((o: any) => ({ id: o.id, date: o.createdAt, status: o.status, currency: o.currency, total: o.total ?? 0, customer: o.user?.name ?? o.user?.email }));
   const csv = toCSV(rows);
   return new Response(csv, { headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="orders.csv"' } });
 }

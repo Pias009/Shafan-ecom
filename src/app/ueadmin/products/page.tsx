@@ -13,7 +13,7 @@ interface Product {
   active: boolean;
   brand: { name: string } | null;
   productCategories: { category: { id: string; name: string } }[];
-  countryPrices: { country: string; priceCents: number; currency: string }[];
+  countryPrices: { country: string; price: number; currency: string }[];
 }
 
 export default async function ProductsPage() {

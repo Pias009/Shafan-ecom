@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       where: { id: id },
       include: {
         user: { select: { id: true, email: true, name: true } },
-        items: { select: { id: true, quantity: true, unitPriceCents: true, product: { select: { id: true, name: true } } } },
+        items: { select: { id: true, quantity: true, unitPrice: true, product: { select: { id: true, name: true } } } },
         shipment: true,
         coupon: true
       }

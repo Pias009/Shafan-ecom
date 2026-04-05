@@ -13,8 +13,8 @@ interface OrderStatusUpdateData {
   customerName: string;
   status: string;
   message: string;
-  items: Array<{ nameSnapshot: string; quantity: number; unitPriceCents: number }>;
-  totalCents: number;
+  items: Array<{ nameSnapshot: string; quantity: number; unitPrice: number }>;
+  total: number;
   currency: string;
   shippingAddress?: any;
   trackingUrl?: string;
@@ -26,7 +26,7 @@ const formatCurrency = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: (currency || 'USD').toUpperCase(),
-  }).format(amount / 100);
+  }).format(amount);
 };
 
 const getStatusEmoji = (status: string): string => {
@@ -64,7 +64,7 @@ export const OrderStatusUpdateTemplate = ({
   status,
   message,
   items,
-  totalCents,
+  total,
   currency,
   shippingAddress,
   trackingUrl,
@@ -121,7 +121,7 @@ export const OrderStatusUpdateTemplate = ({
                 <Text style={itemDetail}>Qty: {item.quantity}</Text>
               </Column>
               <Column style={itemColumn}>
-                <Text style={itemDetail}>{formatCurrency(item.unitPriceCents * item.quantity, currency)}</Text>
+                <Text style={itemDetail}>{formatCurrency(item.unitPrice * item.quantity, currency)}</Text>
               </Column>
             </Row>
           ))}
@@ -133,7 +133,7 @@ export const OrderStatusUpdateTemplate = ({
               <Text style={totalText}>Total Amount:</Text>
             </Column>
             <Column style={totalValue}>
-              <Text style={totalAmountStyle}>{formatCurrency(totalCents, currency)}</Text>
+              <Text style={totalAmountStyle}>{formatCurrency(total, currency)}</Text>
             </Column>
           </Row>
         </Section>

@@ -28,7 +28,7 @@ export default async function UserDetailsPage(props: { params: Promise<{ id: str
     );
   }
 
-  const totalSpent = userData.orders.reduce((acc: number, order: any) => acc + (order.totalCents || 0), 0);
+  const totalSpent = userData.orders.reduce((acc: number, order: any) => acc + (order.total || 0), 0);
   const totalOrders = userData.orders.length;
 
   return (
@@ -114,7 +114,7 @@ export default async function UserDetailsPage(props: { params: Promise<{ id: str
                          <div className="text-[10px] font-black uppercase tracking-widest text-white/30">Total Value</div>
                     </div>
                     <div>
-                        <h2 className="text-5xl font-black mb-1">${(totalSpent / 100).toFixed(2)}</h2>
+                        <h2 className="text-5xl font-black mb-1">${totalSpent.toFixed(2)}</h2>
                         <p className="text-[10px] uppercase font-black tracking-widest text-white/30">LTV (Life Time Value)</p>
                     </div>
                     <div className="grid grid-cols-2 pt-6 border-t border-white/10">
@@ -123,7 +123,7 @@ export default async function UserDetailsPage(props: { params: Promise<{ id: str
                              <p className="text-[8px] uppercase font-black tracking-widest text-white/20 mt-1">Total Orders</p>
                         </div>
                         <div className="text-right">
-                             <p className="text-2xl font-black leading-none">${totalOrders > 0 ? (totalSpent / 100 / totalOrders).toFixed(2) : '0.00'}</p>
+                             <p className="text-2xl font-black leading-none">${totalOrders > 0 ? (totalSpent / totalOrders).toFixed(2) : '0.00'}</p>
                              <p className="text-[8px] uppercase font-black tracking-widest text-white/20 mt-1">Avg Ticket</p>
                         </div>
                     </div>
@@ -209,7 +209,7 @@ export default async function UserDetailsPage(props: { params: Promise<{ id: str
                                             </td>
                                             <td className="px-8 py-6 text-right">
                                                 <div className="font-black text-black">
-                                                    ${(order.totalCents / 100).toFixed(2)}
+                                                    ${(order.total || 0).toFixed(2)}
                                                 </div>
                                             </td>
                                         </tr>

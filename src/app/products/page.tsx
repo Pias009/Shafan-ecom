@@ -65,14 +65,14 @@ export default async function ProductsPage({
     // Try to get country-specific price first
     const countryPrice = getPriceFromCountryPrices(p.countryPrices, countryCode);
     
-    const originalPrice = countryPrice || p.regularPrice || p.regularPriceCents || p.priceCents || 0;
-    const currentPrice = countryPrice || p.salePrice || p.salePriceCents || originalPrice;
+    const originalPrice = countryPrice || p.regularPrice || p.price || 0;
+    const currentPrice = countryPrice || p.salePrice || originalPrice;
     
     return {
       ...p,
       price: currentPrice,
       priceCents: currentPrice,
-      unitPriceCents: currentPrice,
+      unitPrice: currentPrice,
       regularPrice: originalPrice,
       regularPriceCents: originalPrice,
       discountPrice: currentPrice < originalPrice ? originalPrice : undefined,

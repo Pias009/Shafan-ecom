@@ -27,7 +27,7 @@ interface ProductCardProps {
     freeDelivery?: boolean;
     countryPrices?: Array<{
       country: string;
-      priceCents: number;
+      price: number;
       currency: string;
     }>;
   };

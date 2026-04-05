@@ -26,7 +26,7 @@ interface HomeProductCardProps {
     totalSales?: number;
     countryPrices?: Array<{
       country: string;
-      priceCents: number;
+      price: number;
       currency: string;
     }>;
   };

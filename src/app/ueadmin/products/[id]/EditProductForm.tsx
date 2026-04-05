@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { parseCommaSeparatedPriceInput, formatPriceForAdmin } from '@/lib/money';
 
 interface EditProductFormProps {
   product: any;
@@ -21,8 +22,8 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
   // Ensure numeric fields are properly converted to numbers
   const normalizedProduct = {
     ...initialProduct,
-    priceCents: Number(initialProduct.priceCents) || 0,
-    discountCents: Number(initialProduct.discountCents) || 0,
+    price: Number(initialProduct.price) || 0,
+    discountPrice: Number(initialProduct.discountPrice) || 0,
     stockQuantity: Number(initialProduct.stockQuantity) || 0,
     categoryIds: initialProduct.categories?.map((c: any) => c.id) || [],
     subCategoryIds: initialProduct.subCategory?.id ? [initialProduct.subCategory.id] : [],
@@ -44,6 +45,135 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     }
     
     setProduct((prev: any) => ({ ...prev, [name]: finalValue }));
+  };
+
+  const handlePriceInputChange = (countryCode: string, rawValue: string) => {
+    const cleanValue = rawValue.replace(/[^\d,.]/g, '');
+    const commaCount = (cleanValue.match(/,/g) || []).length;
+    const dotCount = (cleanValue.match(/\./g) || []).length;
+    
+    let allowedValue = cleanValue;
+    if (commaCount > 1) {
+      const lastComma = cleanValue.lastIndexOf(',');
+      allowedValue = cleanValue.substring(0, lastComma) + cleanValue.substring(lastComma + 1).replace(/,/g, '');
+    }
+    if (dotCount > 1) {
+      const lastDot = cleanValue.lastIndexOf('.');
+      allowedValue = cleanValue.substring(0, lastDot) + cleanValue.substring(lastDot + 1).replace(/\./g, '');
+    }
+    if (commaCount === 1 && dotCount === 1) {
+      const lastComma = cleanValue.lastIndexOf(',');
+      const lastDot = cleanValue.lastIndexOf('.');
+      if (lastComma > lastDot) {
+        allowedValue = cleanValue.replace(/\./g, '');
+      } else {
+        allowedValue = cleanValue.replace(/,/g, '');
+      }
+    }
+    
+    const newPrices = product.countryPrices?.map((c: any) => {
+      if (c.country === countryCode) {
+        if (allowedValue === '') {
+          return { ...c, price: 0 };
+        }
+        const parsed = parseCommaSeparatedPriceInput(allowedValue, c.currency || 'AED');
+        return { ...c, price: parsed || 0 };
+      }
+      return c;
+    }) || [];
+    setProduct({ ...product, countryPrices: newPrices });
+  };
+
+  const handlePriceInputBlur = (countryCode: string, currency: string) => {
+    const cp = product.countryPrices?.find((c: any) => c.country === countryCode);
+    if (cp && cp.price > 0) {
+      const formatted = formatPriceForAdmin(cp.price, currency || 'AED');
+      const newPrices = product.countryPrices?.map((c: any) => {
+        if (c.country === countryCode) {
+          return { ...c, _displayValue: formatted };
+        }
+        return c;
+      }) || [];
+      setProduct({ ...product, countryPrices: newPrices });
+    }
+  };
+
+  const handleBasePriceChange = (rawValue: string) => {
+    const cleanValue = rawValue.replace(/[^\d,.]/g, '');
+    const commaCount = (cleanValue.match(/,/g) || []).length;
+    const dotCount = (cleanValue.match(/\./g) || []).length;
+    
+    let allowedValue = cleanValue;
+    if (commaCount > 1) {
+      const lastComma = cleanValue.lastIndexOf(',');
+      allowedValue = cleanValue.substring(0, lastComma) + cleanValue.substring(lastComma + 1).replace(/,/g, '');
+    }
+    if (dotCount > 1) {
+      const lastDot = cleanValue.lastIndexOf('.');
+      allowedValue = cleanValue.substring(0, lastDot) + cleanValue.substring(lastDot + 1).replace(/\./g, '');
+    }
+    if (commaCount === 1 && dotCount === 1) {
+      const lastComma = cleanValue.lastIndexOf(',');
+      const lastDot = cleanValue.lastIndexOf('.');
+      if (lastComma > lastDot) {
+        allowedValue = cleanValue.replace(/\./g, '');
+      } else {
+        allowedValue = cleanValue.replace(/,/g, '');
+      }
+    }
+    
+    if (allowedValue === '') {
+      setProduct({ ...product, price: 0 });
+      return;
+    }
+    const parsed = parseCommaSeparatedPriceInput(allowedValue, product.currency || 'USD');
+    setProduct({ ...product, price: parsed || 0 });
+  };
+
+  const handleBasePriceBlur = () => {
+    if (product.price > 0) {
+      const formatted = formatPriceForAdmin(product.price, product.currency || 'USD');
+      setProduct({ ...product, _basePriceDisplay: formatted });
+    }
+  };
+
+  const handleDiscountChange = (rawValue: string) => {
+    const cleanValue = rawValue.replace(/[^\d,.]/g, '');
+    const commaCount = (cleanValue.match(/,/g) || []).length;
+    const dotCount = (cleanValue.match(/\./g) || []).length;
+    
+    let allowedValue = cleanValue;
+    if (commaCount > 1) {
+      const lastComma = cleanValue.lastIndexOf(',');
+      allowedValue = cleanValue.substring(0, lastComma) + cleanValue.substring(lastComma + 1).replace(/,/g, '');
+    }
+    if (dotCount > 1) {
+      const lastDot = cleanValue.lastIndexOf('.');
+      allowedValue = cleanValue.substring(0, lastDot) + cleanValue.substring(lastDot + 1).replace(/\./g, '');
+    }
+    if (commaCount === 1 && dotCount === 1) {
+      const lastComma = cleanValue.lastIndexOf(',');
+      const lastDot = cleanValue.lastIndexOf('.');
+      if (lastComma > lastDot) {
+        allowedValue = cleanValue.replace(/\./g, '');
+      } else {
+        allowedValue = cleanValue.replace(/,/g, '');
+      }
+    }
+    
+    if (allowedValue === '') {
+      setProduct({ ...product, discountPrice: 0 });
+      return;
+    }
+    const parsed = parseCommaSeparatedPriceInput(allowedValue, product.currency || 'USD');
+    setProduct({ ...product, discountPrice: parsed || 0 });
+  };
+
+  const handleDiscountBlur = () => {
+    if (product.discountPrice > 0) {
+      const formatted = formatPriceForAdmin(product.discountPrice, product.currency || 'USD');
+      setProduct({ ...product, _discountDisplay: formatted });
+    }
   };
 
   const handleCategoryToggle = (categoryId: string) => {
@@ -120,7 +250,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
       return;
     }
     
-    const validCountryPrices = (product.countryPrices || []).filter((cp: any) => cp.priceCents > 0);
+    const validCountryPrices = (product.countryPrices || []).filter((cp: any) => Number(cp.price) > 0);
     if (validCountryPrices.length === 0) {
       toast.error('At least one country price must be set. Product will not be visible without prices.');
       return;
@@ -131,7 +261,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
       // Ensure all numeric values are proper numbers before sending
       const safeCountryPrices = (product.countryPrices || []).map((cp: any) => ({
         ...cp,
-        priceCents: typeof cp.priceCents === 'number' ? cp.priceCents : Number(cp.priceCents) || 0,
+        price: typeof cp.price === 'number' ? cp.price : Number(cp.price) || 0,
       }));
       
       const payload = {
@@ -142,8 +272,8 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
         benefits: product.benefits,
         ingredients: product.ingredients,
         howToUse: product.howToUse,
-        priceCents: typeof product.priceCents === 'number' ? product.priceCents : Number(product.priceCents) || 0,
-        discountCents: typeof product.discountCents === 'number' ? product.discountCents : Number(product.discountCents) || 0,
+        price: typeof product.price === 'number' ? product.price : Number(product.price) || 0,
+        discountPrice: typeof product.discountPrice === 'number' ? product.discountPrice : Number(product.discountPrice) || 0,
         stockQuantity: typeof product.stockQuantity === 'number' ? product.stockQuantity : Number(product.stockQuantity) || 0,
         active: product.active,
         mainImage: product.mainImage || '',
@@ -418,7 +548,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
               <div className="space-y-3">
                 {['AE', 'SA', 'KW', 'BH', 'OM', 'QA'].map((countryCode) => {
                   const cp = product.countryPrices?.find((c: any) => c.country === countryCode);
-                  const displayPrice = cp?.priceCents ? cp.priceCents : 0;
+                  const displayValue = cp?._displayValue || (cp?.price ? formatPriceForAdmin(cp.price, cp.currency || 'AED') : '');
                   return (
                     <div key={countryCode} className="grid grid-cols-12 gap-3 items-center p-4 bg-black/5 rounded-2xl border border-black/10">
                       <div className="col-span-4 space-y-1">
@@ -431,31 +561,17 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                       <div className="col-span-5 space-y-1">
                         <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Price</label>
                         <input
-                          type="number"
-                          step="1"
-                          min="0"
+                          type="text"
                           placeholder="0"
-                          value={displayPrice === 0 ? '' : displayPrice}
-                          onChange={(e) => {
-                            const rawValue = e.target.value.trim();
-                            const newPrices = product.countryPrices?.map((c: any) => {
-                              if (c.country === countryCode) {
-                                if (rawValue === '') {
-                                  return { ...c, priceCents: 0 };
-                                }
-                                const numValue = parseInt(rawValue, 10);
-                                return { ...c, priceCents: isNaN(numValue) || numValue < 0 ? 0 : numValue };
-                              }
-                              return c;
-                            }) || [];
-                            setProduct({ ...product, countryPrices: newPrices });
-                          }}
+                          value={displayValue}
+                          onChange={(e) => handlePriceInputChange(countryCode, e.target.value)}
+                          onBlur={() => handlePriceInputBlur(countryCode, cp?.currency || 'AED')}
                           className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                         />
                       </div>
                       <div className="col-span-3 flex justify-end">
-                        <div className={`w-3 h-3 rounded-full ${cp?.priceCents && cp.priceCents > 0 ? 'bg-green-500' : 'bg-gray-300'}`}
-                             title={cp?.priceCents && cp.priceCents > 0 ? 'Price set' : 'No price set'}>
+                        <div className={`w-3 h-3 rounded-full ${cp?.price && Number(cp.price) > 0 ? 'bg-green-500' : 'bg-gray-300'}`}
+                             title={cp?.price && Number(cp.price) > 0 ? 'Price set' : 'No price set'}>
                         </div>
                       </div>
                     </div>

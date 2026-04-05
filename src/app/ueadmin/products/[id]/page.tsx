@@ -68,10 +68,10 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       allInventories: (product as any).storeInventories || [],
       countryPrices: (product as any).countryPrices?.map((cp: any) => ({
         ...cp,
-        priceCents: Number(cp.priceCents) || 0,
+        price: Number(cp.price) || 0,
       })) || [],
-      priceCents: Number(product.priceCents) || 0,
-      discountCents: Number(product.discountCents) || 0,
+      price: Number(product.price) || 0,
+      discountPrice: Number(product.discountPrice) || 0,
       stockQuantity: Number(product.stockQuantity) || 0,
       isSuper
     };

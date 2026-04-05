@@ -77,11 +77,11 @@ export async function POST(request: NextRequest) {
         sku: item.productId || `SKU-${index}`,
         name: item.nameSnapshot,
         type: "physical" as const,
-        unitPrice: { amount: (item.unitPriceCents / 100).toFixed(2), currency },
+        unitPrice: { amount: Number(item.unitPrice).toFixed(2), currency },
         quantity: item.quantity,
         imageUrl: item.imageSnapshot || undefined,
       })),
-      totalAmount: { amount: (order.totalCents / 100).toFixed(2), currency },
+      totalAmount: { amount: Number(order.total).toFixed(2), currency },
     });
 
     await prisma.order.update({

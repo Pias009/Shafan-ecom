@@ -5,8 +5,35 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { SUPPORTED_COUNTRIES, getCurrencyForCountry, type CountryCode } from '@/lib/countries';
 import { autoCompleteCountryPrices } from '@/lib/country-pricing';
+import { parseCommaSeparatedPriceInput, formatPriceForAdmin } from '@/lib/money';
+
+const SUPPORTED_COUNTRIES = ['AE', 'SA', 'KW', 'QA', 'BH', 'OM'];
+const COUNTRY_CODES = SUPPORTED_COUNTRIES;
+const CURRENCY_MAP: Record<string, string> = {
+  'AE': 'AED',
+  'KW': 'KWD',
+  'BH': 'BHD',
+  'SA': 'SAR',
+  'OM': 'OMR',
+  'QA': 'QAR'
+};
+const COUNTRY_NAMES: Record<string, string> = {
+  'AE': 'United Arab Emirates',
+  'KW': 'Kuwait',
+  'BH': 'Bahrain',
+  'SA': 'Saudi Arabia',
+  'OM': 'Oman',
+  'QA': 'Qatar'
+};
+const COUNTRY_FLAGS: Record<string, string> = {
+  'AE': '🇦🇪',
+  'KW': '🇰🇼',
+  'BH': '🇧🇭',
+  'SA': '🇸🇦',
+  'OM': '🇴🇲',
+  'QA': '🇶🇦'
+};
 
 interface AddProductFormProps {
   brands: { name: string }[];
@@ -29,7 +56,6 @@ interface AddProductFormProps {
   skinConcerns: {
     id: string;
     name: string;
-    description: string | null;
   }[];
   adminStoreCode: string | null;
   isSuperAdmin: boolean;
@@ -54,11 +80,12 @@ export function AddProductForm({
   const [loading, setLoading] = useState(false);
   
   // Initialize country prices for all supported countries
-  const initialCountryPrices = SUPPORTED_COUNTRIES.map(country => ({
-      country: country.code as CountryCode,
-      priceCents: 0,
-      currency: country.currency,
-      active: true
+  const initialCountryPrices = COUNTRY_CODES.map(code => ({
+      country: code,
+      price: 0,
+      currency: CURRENCY_MAP[code] || 'AED',
+      active: true,
+      _displayValue: ''
     }));
 
   const [formData, setFormData] = useState({
@@ -75,8 +102,8 @@ export function AddProductForm({
     ingredients: '',
     howToUse: '',
     features: [] as string[],
-    priceCents: 0, // Base price 0
-    discountCents: 0,
+    price: 0, // Base price 0
+    discountPrice: 0,
     stockQuantity: 10,
     mainImage: '',
     images: [] as string[],
@@ -205,13 +232,13 @@ export function AddProductForm({
       return;
     }
     
-    const validCountryPrices = formData.countryPrices.filter(cp => cp.priceCents > 0);
+    const validCountryPrices = formData.countryPrices.filter(cp => cp.price > 0);
     if (validCountryPrices.length === 0) {
       toast.error('At least one country price must be set. Product will not be visible without prices.');
       return;
     }
     
-    if (formData.discountCents > formData.priceCents) {
+    if (formData.discountPrice > formData.price) {
       toast.error('Discount cannot exceed product price');
       return;
     }
@@ -222,7 +249,7 @@ export function AddProductForm({
       // Prepare country prices data with auto-completed currencies
       const countryPrices = formData.countryPrices.map(cp => ({
         country: cp.country,
-        priceCents: cp.priceCents,
+        price: cp.price,
         currency: cp.currency,
         active: cp.active
       }));
@@ -235,8 +262,8 @@ export function AddProductForm({
         benefits: formData.benefits,
         ingredients: formData.ingredients,
         howToUse: formData.howToUse,
-        priceCents: formData.priceCents,
-        discountCents: formData.discountCents,
+        price: formData.price,
+        discountPrice: formData.discountPrice,
         stockQuantity: formData.stockQuantity,
         brandName: formData.brandName,
         categoryIds: formData.categoryIds,
@@ -527,21 +554,21 @@ export function AddProductForm({
           <div className="space-y-4">
             <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
               <p className="text-xs text-blue-700">
-                <strong>Enter prices as simple numbers:</strong> Just type the price (e.g., 56 for 56 AED, 10 for 10 KWD).
-                That's it - no decimals needed!
+                <strong>Enter prices with decimals:</strong> Type "56" → becomes "56,00" on blur.
+                Type "56,5" → becomes "56,50". Type "56,25" → stays "56,25".
               </p>
             </div>
 
             <div className="space-y-3">
-                {formData.countryPrices.map((cp, index) => {
-                  const countryConfig = SUPPORTED_COUNTRIES.find(c => c.code === cp.country);
+                {(formData.countryPrices || []).map((cp: any, index: number) => {
+                  const countryName = COUNTRY_NAMES[cp.country] || cp.country;
                   return (
                     <div key={cp.country} className="grid grid-cols-12 gap-3 items-center p-4 bg-black/5 rounded-2xl border border-black/10">
                       <div className="col-span-3 space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Country</label>
                         <div className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold">
                           <div className="flex items-center justify-between">
-                            <span className="font-bold">{countryConfig?.name}</span>
+                            <span className="font-bold">{countryName}</span>
                             <span className="text-[10px] bg-black/10 px-2 py-1 rounded-full font-black">
                               {cp.country}
                             </span>
@@ -551,36 +578,71 @@ export function AddProductForm({
                       <div className="col-span-6 space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Price ({cp.currency})</label>
                         <input
-                          type="number"
-                          step="1"
-                          min="0"
+                          type="text"
                           placeholder="0"
-                          value={cp.priceCents === 0 ? '' : cp.priceCents}
+                          value={cp._displayValue ?? ''}
                           onChange={(e) => {
-                            const rawValue = e.target.value.trim();
+                            const rawValue = e.target.value;
+                            const cleanValue = rawValue.replace(/[^\d,.]/g, '');
+                            const commaCount = (cleanValue.match(/,/g) || []).length;
+                            const dotCount = (cleanValue.match(/\./g) || []).length;
+                            
+                            let allowedValue = cleanValue;
+                            if (commaCount > 1) {
+                              const lastComma = cleanValue.lastIndexOf(',');
+                              allowedValue = cleanValue.substring(0, lastComma) + cleanValue.substring(lastComma + 1).replace(/,/g, '');
+                            }
+                            if (dotCount > 1) {
+                              const lastDot = cleanValue.lastIndexOf('.');
+                              allowedValue = cleanValue.substring(0, lastDot) + cleanValue.substring(lastDot + 1).replace(/\./g, '');
+                            }
+                            if (commaCount === 1 && dotCount === 1) {
+                              const lastComma = allowedValue.lastIndexOf(',');
+                              const lastDot = allowedValue.lastIndexOf('.');
+                              if (lastComma > lastDot) {
+                                allowedValue = allowedValue.replace(/\./g, '');
+                              } else {
+                                allowedValue = allowedValue.replace(/,/g, '');
+                              }
+                            }
+                            
                             const newPrices = [...formData.countryPrices];
-                            if (rawValue === '') {
-                              newPrices[index].priceCents = 0;
+                            if (allowedValue === '') {
+                              newPrices[index].price = 0;
+                              newPrices[index]._displayValue = '';
                             } else {
-                              const numValue = parseInt(rawValue, 10);
-                              newPrices[index].priceCents = isNaN(numValue) || numValue < 0 ? 0 : numValue;
+                              const parsed = parseCommaSeparatedPriceInput(allowedValue, cp.currency);
+                              newPrices[index].price = parsed || 0;
+                              newPrices[index]._displayValue = allowedValue;
                             }
                             setFormData(prev => ({ ...prev, countryPrices: newPrices }));
                           }}
+                          onBlur={() => {
+                            const cp = formData.countryPrices[index];
+                            if (cp && cp.price > 0) {
+                              const formatted = formatPriceForAdmin(cp.price, cp.currency);
+                              const newPrices = [...formData.countryPrices];
+                              newPrices[index]._displayValue = formatted;
+                              setFormData(prev => ({ ...prev, countryPrices: newPrices }));
+                            } else if (cp && cp.price === 0) {
+                              const newPrices = [...formData.countryPrices];
+                              newPrices[index]._displayValue = '';
+                              setFormData(prev => ({ ...prev, countryPrices: newPrices }));
+                            }
+                          }}
                           className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                         />
-                        <p className="text-[8px] text-black/50 px-2">Example: type "56" for 56 AED</p>
+                        <p className="text-[8px] text-black/50 px-2">Example: type "56" or "56,5" for 56.50</p>
                       </div>
                       <div className="col-span-3 space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Currency</label>
                         <div className="w-full bg-white border-none rounded-xl px-3 py-2 text-sm font-bold flex items-center justify-between">
                           <span>{cp.currency}</span>
-                          <span className="text-[10px] text-black/70">{countryConfig?.currencySymbol}</span>
                         </div>
                       </div>
                       <div className="col-span-3 flex justify-center items-center">
-                        <div className={`w-3 h-3 rounded-full ${cp.priceCents > 0 ? 'bg-green-500' : 'bg-gray-300'}`}
-                             title={cp.priceCents > 0 ? 'Price set' : 'No price set'}>
+                        <div className={`w-3 h-3 rounded-full ${cp.price > 0 ? 'bg-green-500' : 'bg-gray-300'}`}
+                             title={cp.price > 0 ? 'Price set' : 'No price set'}>
                         </div>
                       </div>
                     </div>
@@ -590,7 +652,7 @@ export function AddProductForm({
             
             <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
               <p className="text-xs text-blue-700">
-                <strong>System Configuration:</strong> All 6 countries are required. Prices are simple whole numbers (e.g., 10 for $10).
+                <strong>System Configuration:</strong> All 6 countries are required. Prices are decimal numbers (e.g., 10.50 for $10.50).
                 Currencies are automatically detected based on country (AED for UAE, SAR for Saudi Arabia, etc.).
                 Products will only be visible to users in countries where a price is set.
               </p>
@@ -690,7 +752,7 @@ export function AddProductForm({
 
               {formData.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {formData.tags.map((tag, idx) => (
+                    {(formData.tags || []).map((tag, idx) => (
                     <span 
                       key={idx} 
                       className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full text-xs font-bold"
@@ -776,7 +838,7 @@ export function AddProductForm({
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Gallery</label>
                 <div className="grid grid-cols-3 gap-3">
-                  {formData.images.map((img, idx) => (
+                    {(formData.images || []).map((img, idx) => (
                     <div key={idx} className="aspect-square rounded-xl bg-black/5 overflow-hidden border border-black/5 relative group">
                       <img src={img} alt="Gallery" className="w-full h-full object-cover" />
                       <button 

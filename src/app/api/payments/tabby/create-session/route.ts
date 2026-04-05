@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const divisor = getCurrencyDivisor(order.currency || currency);
     
     const session = await tabbyService.createSession({
-      amount: Number(order.totalCents) / divisor,
+      amount: Number(order.total),
       currency,
       orderId: order.id,
       orderReferenceId: order.id,
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         title: item.nameSnapshot,
         description: item.nameSnapshot,
         quantity: item.quantity,
-        unitPrice: (Number(item.unitPriceCents) / divisor).toFixed(divisor === 1000 ? 3 : 2),
+        unitPrice: Number(item.unitPrice).toFixed(2),
         imageUrl: item.imageSnapshot || undefined,
       })),
       metadata: {

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 export default function BulkEdit() {
   const [ids, setIds] = useState("");
-  const [updates, setUpdates] = useState({ priceCents: '', stockQuantity: '', categoryName: '', brandName: '', active: true as any, name: '', images: '', variants: '' });
+  const [updates, setUpdates] = useState({ price: '', stockQuantity: '', categoryName: '', brandName: '', active: true as any, name: '', images: '', variants: '' });
   const [status, setStatus] = useState(null as string | null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -12,8 +12,8 @@ export default function BulkEdit() {
       ids: ids.split(',').map(s => s.trim()).filter(Boolean),
       updates: {
         name: updates['name'] || undefined,
-        priceCents: updates['priceCents'] ? Number(updates['priceCents']) : undefined,
-        discountCents: undefined,
+        price: updates['price'] ? Number(updates['price']) : undefined,
+        discountPrice: undefined,
         active: updates['active'] !== undefined ? updates['active'] : undefined,
         stockQuantity: updates['stockQuantity'] ? Number(updates['stockQuantity']) : undefined,
         images: updates['images'] ? updates['images'] : undefined,
@@ -38,8 +38,8 @@ export default function BulkEdit() {
       <form onSubmit={onSubmit} className="grid gap-3 max-w-xl">
         <label>Product IDs (comma-separated)</label>
         <input className="border p-2 rounded" value={ids} onChange={(e)=>setIds(e.target.value)} onInput={(e)=>setIds((e.target as HTMLInputElement).value)} />
-        <label>Price (cents) - optional</label>
-        <input className="border p-2 rounded" placeholder="e.g. 1999" onChange={(e)=>setUpdates({...updates, priceCents: e.target.value})} />
+        <label>Price - optional</label>
+        <input className="border p-2 rounded" placeholder="e.g. 1999" onChange={(e)=>setUpdates({...updates, price: e.target.value})} />
         <label>Stock Quantity - optional</label>
         <input className="border p-2 rounded" placeholder="e.g. 25" onChange={(e)=>setUpdates({...updates, stockQuantity: e.target.value})} />
         <label>Brand Name - optional</label>

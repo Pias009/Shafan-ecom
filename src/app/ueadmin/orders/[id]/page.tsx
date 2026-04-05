@@ -134,12 +134,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                       {it.nameSnapshot || it.product?.name}
                     </div>
                     <div className="text-[10px] md:text-xs font-bold text-black/40 mt-1 uppercase tracking-widest">
-                      Qty: {it.quantity} × {formatPrice(it.unitPriceCents, order.currency)}
+                      Qty: {it.quantity} × {formatPrice(it.unitPrice, order.currency)}
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="font-black text-black text-sm md:text-lg">
-                      {formatPrice(it.unitPriceCents * it.quantity, order.currency)}
+                      {formatPrice(Number(it.unitPrice) * it.quantity, order.currency)}
                     </div>
                   </div>
                 </div>
@@ -209,19 +209,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <div className="space-y-4 md:space-y-5">
               <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-black/40">
                 <span>Subtotal</span>
-                <span>{formatPrice(order.subtotalCents, order.currency)}</span>
+                <span>{formatPrice(order.subtotal, order.currency)}</span>
               </div>
               <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-black/40">
                 <span>Shipping</span>
-                <span>{formatPrice(order.shippingCents || 0, order.currency)}</span>
+                <span>{formatPrice(order.shipping || 0, order.currency)}</span>
               </div>
               <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-black/40">
                 <span>Discount</span>
-                <span>-{formatPrice(order.discountCents || 0, order.currency)}</span>
+                <span>-{formatPrice(order.discountAmount || 0, order.currency)}</span>
               </div>
               <div className="pt-6 md:pt-8 border-t border-black/5 flex justify-between items-end">
                 <span className="text-[10px] font-black uppercase tracking-widest text-black/40 mb-1">Grand Total</span>
-                <span className="text-3xl md:text-4xl font-black text-black">{formatPrice(order.totalCents, order.currency)}</span>
+                <span className="text-3xl md:text-4xl font-black text-black">{formatPrice(order.total, order.currency)}</span>
               </div>
             </div>
 

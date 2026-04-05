@@ -7,16 +7,16 @@ import { SUPPORTED_COUNTRIES, getCountryByCode, getCurrencyForCountry, isValidCo
 
 export interface CountryPrice {
   country: CountryCode;
-  priceCents: number;
+  price: number;
   currency: string;
   active: boolean;
 }
 
 export interface ProductWithCountryPrices {
   id: string;
-  priceCents: number;
-  regularPriceCents: number;
-  salePriceCents?: number | null;
+  price: number;
+  regularPrice: number;
+  salePrice?: number | null;
   currency: string;
   countryPrices: CountryPrice[];
 }
@@ -25,16 +25,16 @@ export interface ProductWithCountryPrices {
  * Get the price for a product based on country
  * @param product Product with country prices
  * @param countryCode Country code (must be one of the 6 supported countries)
- * @returns Object with priceCents and currency
+ * @returns Object with price and currency
  */
 export function getPriceForCountry(
   product: ProductWithCountryPrices,
   countryCode: CountryCode | string
-): { priceCents: number; currency: string; isCountrySpecific: boolean } {
+): { price: number; currency: string; isCountrySpecific: boolean } {
   if (!countryCode || !isValidCountryCode(countryCode)) {
     // Return default price if invalid country
     return {
-      priceCents: product.salePriceCents || product.priceCents,
+      price: product.salePrice || product.price,
       currency: product.currency,
       isCountrySpecific: false
     };
@@ -46,7 +46,7 @@ export function getPriceForCountry(
 
   if (countryPrice) {
     return {
-      priceCents: countryPrice.priceCents,
+      price: countryPrice.price,
       currency: countryPrice.currency,
       isCountrySpecific: true
     };
@@ -54,7 +54,7 @@ export function getPriceForCountry(
 
   // Fall back to default price
   return {
-    priceCents: product.salePriceCents || product.priceCents,
+    price: product.salePrice || product.price,
     currency: product.currency,
     isCountrySpecific: false
   };
@@ -68,8 +68,8 @@ export function formatCountryPrice(
   countryCode: CountryCode | string,
   formatFn: (amount: number, currency: string) => string
 ): string {
-  const { priceCents, currency } = getPriceForCountry(product, countryCode);
-  return formatFn(priceCents, currency);
+  const { price, currency } = getPriceForCountry(product, countryCode);
+  return formatFn(price, currency);
 }
 
 /**
@@ -85,10 +85,10 @@ export function getAvailableCountries(product: ProductWithCountryPrices): Countr
  * Get default country price configuration for all 6 countries
  * Used to initialize country prices in admin forms
  */
-export function getDefaultCountryPrices(basePriceCents: number): Omit<CountryPrice, 'active'>[] {
+export function getDefaultCountryPrices(basePrice: number): Omit<CountryPrice, 'active'>[] {
   return SUPPORTED_COUNTRIES.map(country => ({
     country: country.code as CountryCode,
-    priceCents: basePriceCents,
+    price: basePrice,
     currency: country.currency
   }));
 }
@@ -120,7 +120,7 @@ export function validateCountryPrices(countryPrices: any[]): { valid: boolean; e
     }
     seenCountries.add(cp.country);
     
-    if (typeof cp.priceCents !== 'number' || cp.priceCents < 0) {
+    if (typeof cp.price !== 'number' || cp.price < 0) {
       errors.push(`Invalid price for country ${cp.country}: must be non-negative number`);
     }
     
@@ -155,7 +155,7 @@ export function autoCompleteCountryPrices(countryPrices: any[]): CountryPrice[] 
     
     return {
       country: countryCode as CountryCode,
-      priceCents: typeof cp.priceCents === 'number' ? cp.priceCents : 0,
+      price: typeof cp.price === 'number' ? cp.price : 0,
       currency,
       active: cp.active !== false // Default to true if not specified
     };
@@ -172,7 +172,7 @@ export function autoCompleteCountryPrices(countryPrices: any[]): CountryPrice[] 
  */
 export function validateProductCountryPricing(
   productData: {
-    priceCents: number;
+    price: number;
     currency: string;
     countryPrices?: any[];
   }
@@ -181,8 +181,8 @@ export function validateProductCountryPricing(
   const warnings: string[] = [];
 
   // Validate default price
-  if (typeof productData.priceCents !== 'number' || productData.priceCents < 0) {
-    errors.push(`Invalid default price: ${productData.priceCents}`);
+  if (typeof productData.price !== 'number' || productData.price < 0) {
+    errors.push(`Invalid default price: ${productData.price}`);
   }
 
   // Validate default currency
@@ -210,10 +210,10 @@ export function validateProductCountryPricing(
     }
 
     // Check for price consistency (warning if country price differs significantly from default)
-    const defaultPrice = productData.priceCents;
+    const defaultPrice = productData.price;
     productData.countryPrices.forEach((cp: any) => {
-      if (cp.priceCents && Math.abs(cp.priceCents - defaultPrice) / defaultPrice > 0.5) {
-        warnings.push(`Country price for ${cp.country} differs significantly from default price (${cp.priceCents} vs ${defaultPrice})`);
+      if (cp.price && Math.abs(cp.price - defaultPrice) / defaultPrice > 0.5) {
+        warnings.push(`Country price for ${cp.country} differs significantly from default price (${cp.price} vs ${defaultPrice})`);
       }
     });
   }
@@ -231,7 +231,7 @@ export function validateProductCountryPricing(
  */
 export function ensureCountryPriceIntegrity(
   countryPrices: any[],
-  basePriceCents: number
+  basePrice: number
 ): CountryPrice[] {
   const validated = validateCountryPrices(countryPrices);
   if (!validated.valid) {
@@ -248,7 +248,7 @@ export function ensureCountryPriceIntegrity(
   const missingCountries = allCountries.filter(code => !presentCountries.has(code));
   const defaultPrices = missingCountries.map(countryCode => ({
     country: countryCode,
-    priceCents: basePriceCents,
+    price: basePrice,
     currency: getCurrencyForCountry(countryCode) || 'AED',
     active: true
   }));

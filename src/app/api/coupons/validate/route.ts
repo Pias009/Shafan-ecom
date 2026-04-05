@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     // Return discount info
     const discountValue = discount.discountType === "PERCENTAGE" 
       ? discount.value / 100 
-      : discount.value / 100;
+      : discount.value;
 
     return NextResponse.json({
       valid: true,

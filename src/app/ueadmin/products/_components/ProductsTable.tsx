@@ -13,7 +13,7 @@ interface Product {
   active: boolean;
   brand: { name: string } | null;
   productCategories: { category: { id: string; name: string } }[];
-  countryPrices: { country: string; priceCents: number; currency: string }[];
+  countryPrices: { country: string; price: number; currency: string }[];
 }
 
 export function ProductsTable({ initialProducts }: { initialProducts: Product[] }) {
@@ -173,8 +173,8 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
                       <div className="font-black text-sm">
                         {p.countryPrices.map((cp, idx) => (
                           <div key={cp.country} className={idx > 0 ? 'text-[10px] text-black/40' : ''}>
-                            {cp.currency} {cp.priceCents > 0 ? Number(cp.priceCents).toLocaleString(undefined, { 
-                              minimumFractionDigits: ["KWD", "BHD", "OMR"].includes(cp.currency) ? 3 : 0,
+                            {cp.currency} {cp.price > 0 ? Number(cp.price).toLocaleString(undefined, { 
+                              minimumFractionDigits: ["KWD", "BHD", "OMR"].includes(cp.currency) ? 3 : 2,
                               maximumFractionDigits: ["KWD", "BHD", "OMR"].includes(cp.currency) ? 3 : 2
                             }) : '—'}
                           </div>

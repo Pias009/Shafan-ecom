@@ -8,9 +8,9 @@ export interface CountryConfig {
   name: string;
   active: boolean;
   currency: string;
-  minOrderCents: number;
-  deliveryFeeCents: number;
-  freeDeliveryCents: number;
+  minOrder: number;
+  deliveryFee: number;
+  freeDelivery: number;
   estimatedDays: number;
   regions?: string[];
 }
@@ -25,9 +25,9 @@ export const COUNTRY_CONFIG: Record<string, CountryConfig> = {
     name: 'United Arab Emirates',
     active: true,
     currency: 'AED',
-    minOrderCents: 80,
-    deliveryFeeCents: 15,
-    freeDeliveryCents: 150,
+    minOrder: 80,
+    deliveryFee: 15,
+    freeDelivery: 150,
     estimatedDays: 2,
     regions: ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain'],
   },
@@ -36,9 +36,9 @@ export const COUNTRY_CONFIG: Record<string, CountryConfig> = {
     name: 'Kuwait',
     active: true,
     currency: 'KWD',
-    minOrderCents: 12,
-    deliveryFeeCents: 1.5,
-    freeDeliveryCents: 18,
+    minOrder: 12,
+    deliveryFee: 1.5,
+    freeDelivery: 18,
     estimatedDays: 3,
     regions: ['Kuwait City', 'Farwaniya', 'Hawalli', 'Salwa', 'Jabra', 'Salmiya'],
   },
@@ -47,9 +47,9 @@ export const COUNTRY_CONFIG: Record<string, CountryConfig> = {
     name: 'Bahrain',
     active: true,
     currency: 'BHD',
-    minOrderCents: 13,
-    deliveryFeeCents: 1.99,
-    freeDeliveryCents: 18,
+    minOrder: 13,
+    deliveryFee: 1.99,
+    freeDelivery: 18,
     estimatedDays: 2,
     regions: ['Manama', 'Muharraq', 'Riffa', 'Hamad Town', 'Sitra'],
   },
@@ -58,9 +58,9 @@ export const COUNTRY_CONFIG: Record<string, CountryConfig> = {
     name: 'Saudi Arabia',
     active: true,
     currency: 'SAR',
-    minOrderCents: 159,
-    deliveryFeeCents: 19,
-    freeDeliveryCents: 359,
+    minOrder: 159,
+    deliveryFee: 19,
+    freeDelivery: 359,
     estimatedDays: 4,
     regions: ['Riyadh', 'Jeddah', 'Dammam', 'Medina', 'Mecca', 'Khobar', 'Taif', 'Abha'],
   },
@@ -69,9 +69,9 @@ export const COUNTRY_CONFIG: Record<string, CountryConfig> = {
     name: 'Oman',
     active: true,
     currency: 'OMR',
-    minOrderCents: 16,
-    deliveryFeeCents: 1.9,
-    freeDeliveryCents: 22,
+    minOrder: 16,
+    deliveryFee: 1.9,
+    freeDelivery: 22,
     estimatedDays: 3,
     regions: ['Muscat', 'Salalah', 'Nizwa', 'Sohar', 'Barka'],
   },
@@ -80,9 +80,9 @@ export const COUNTRY_CONFIG: Record<string, CountryConfig> = {
     name: 'Qatar',
     active: true,
     currency: 'QAR',
-    minOrderCents: 129,
-    deliveryFeeCents: 19,
-    freeDeliveryCents: 299,
+    minOrder: 129,
+    deliveryFee: 19,
+    freeDelivery: 299,
     estimatedDays: 2,
     regions: ['Doha', 'Al Rayyan', 'Al Wakrah', 'Al Khor', 'Umm Salal'],
   },

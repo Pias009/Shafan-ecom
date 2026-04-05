@@ -177,7 +177,7 @@ async function main() {
       slug: 'premium-giloy-ayurvedic-supplement',
       description: 'High-quality Giloy supplement for immune support',
       features: ['Natural', 'Ayurvedic', 'Immune Support'],
-      priceCents: 2999,
+      price: 29.99,
       currency: 'USD',
       active: true,
       hot: true,
@@ -187,7 +187,7 @@ async function main() {
       slug: 'organic-ashwagandha-root',
       description: 'Premium organic Ashwagandha for stress relief',
       features: ['Organic', 'Stress Relief', 'Energy Boost'],
-      priceCents: 2499,
+      price: 24.99,
       currency: 'USD',
       active: true,
       trending: true,
@@ -212,7 +212,7 @@ async function main() {
       slug: 'kuwait-exclusive-herbal-tea',
       description: 'Special blend of herbs popular in Kuwait',
       features: ['Local Favorite', 'Herbal', 'Refreshing'],
-      priceCents: 1500,
+      price: 15.00,
       currency: 'KWD',
       active: true,
       hot: true,
@@ -236,7 +236,7 @@ async function main() {
       slug: 'uae-premium-dates-collection',
       description: 'Premium dates sourced from UAE farms',
       features: ['Premium Quality', 'Local Sourcing', 'Natural'],
-      priceCents: 3999,
+      price: 39.99,
       currency: 'AED',
       active: true,
       trending: true,
@@ -272,7 +272,7 @@ async function main() {
       storeId: uaeStore.id,
       productId: uaeExclusiveProduct1.id,
       quantity: 100,
-      price: uaeExclusiveProduct1.priceCents,
+      price: uaeExclusiveProduct1.price,
     },
   });
   console.log(`  ✅ Added ${uaeExclusiveProduct1.name} to UAE store only`);
@@ -291,7 +291,7 @@ async function main() {
       storeId: kuwaitStore.id,
       productId: kuwaitExclusiveProduct1.id,
       quantity: 50,
-      price: kuwaitExclusiveProduct1.priceCents,
+        price: kuwaitExclusiveProduct1.price,
     },
   });
   console.log(`  ✅ Added ${kuwaitExclusiveProduct1.name} to Kuwait store only`);
@@ -310,7 +310,7 @@ async function main() {
         storeId: kuwaitStore.id,
         productId: product.id,
         quantity: 75,
-        price: product.priceCents,
+        price: product.price,
       },
     });
     console.log(`  ✅ Added ${product.name} to Kuwait store only`);
@@ -330,7 +330,7 @@ async function main() {
         storeId: uaeStore.id,
         productId: product.id,
         quantity: 80,
-        price: product.priceCents,
+        price: product.price,
       },
     });
     console.log(`  ✅ Added ${product.name} to UAE store only`);
@@ -374,8 +374,8 @@ async function main() {
       email: kuwaitUser.email,
       status: 'ORDER_CONFIRMED',
       currency: 'KWD',
-      subtotalCents: 1500,
-      totalCents: 1650,
+      subtotal: 15.00,
+      total: 16.50,
       paymentMethod: 'KNET',
       paymentMethodTitle: 'KNET Payment',
       billingAddress: {
@@ -410,8 +410,8 @@ async function main() {
       email: uaeUser.email,
       status: 'PROCESSING',
       currency: 'AED',
-      subtotalCents: 3999,
-      totalCents: 4199,
+      subtotal: 39.99,
+      total: 41.99,
       paymentMethod: 'card',
       paymentMethodTitle: 'Credit Card',
       billingAddress: {

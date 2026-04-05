@@ -26,12 +26,12 @@ export async function GET() {
     const orders = dbOrders.map((o) => ({
       id: o.id,
       status: o.status.toLowerCase(),
-      totalCents: o.totalCents,
+      total: o.total,
       createdAt: o.createdAt.toISOString(),
       items: o.items.map((it) => ({
         name: it.nameSnapshot,
         quantity: it.quantity,
-        total: (it.unitPriceCents * it.quantity / 100).toFixed(2),
+        total: (Number(it.unitPrice) * it.quantity).toFixed(2),
       }))
     }));
 

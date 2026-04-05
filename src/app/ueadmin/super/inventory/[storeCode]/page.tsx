@@ -46,7 +46,7 @@ export default async function StoreInventoryDetailPage({ params }: StoreInventor
 
   const lowStock = inventory.filter(i => i.quantity < 10);
   const outOfStock = inventory.filter(i => i.quantity === 0);
-  const totalValue = inventory.reduce((acc, i) => acc + (i.quantity * i.price), 0);
+  const totalValue = inventory.reduce((acc, i) => acc + (i.quantity * (Number(i.price) || 0)), 0);
 
   return (
     <SuperGuard>
@@ -145,7 +145,7 @@ export default async function StoreInventoryDetailPage({ params }: StoreInventor
                 </thead>
                 <tbody className="divide-y divide-black/5 font-medium">
                   {inventory.map((inv) => {
-                    const stockValue = inv.quantity * inv.price;
+                    const stockValue = inv.quantity * (Number(inv.price) || 0);
                     let status = "healthy";
                     let statusColor = "text-emerald-500";
                     
@@ -188,7 +188,7 @@ export default async function StoreInventoryDetailPage({ params }: StoreInventor
                           </div>
                         </td>
                         <td className="px-8 py-5 text-right font-black text-sm">
-                          {inv.price.toFixed(2)} <span className="text-[9px] opacity-30">{store.currency.toUpperCase()}</span>
+                          {(Number(inv.price) || 0).toFixed(2)} <span className="text-[9px] opacity-30">{store.currency.toUpperCase()}</span>
                         </td>
                         <td className="px-8 py-5 text-right font-black text-sm">
                           {stockValue.toLocaleString('en-US', { 

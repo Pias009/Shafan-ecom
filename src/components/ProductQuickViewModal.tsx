@@ -30,7 +30,7 @@ interface QuickViewProduct {
   salePrice?: number;
   countryPrices?: Array<{
     country: string;
-    priceCents: number;
+    price: number;
     currency: string;
     active?: boolean;
   }>;
@@ -106,16 +106,16 @@ export function ProductQuickViewModal({
       cp.country.toUpperCase() === userCountry.toUpperCase() && cp.active !== false
     );
     
-    if (countryPrice && countryPrice.priceCents > 0) {
-      displayPrice = countryPrice.priceCents;
-      originalPrice = product.salePrice || product.salePriceCents || countryPrice.priceCents;
+    if (countryPrice && Number(countryPrice.price) > 0) {
+      displayPrice = Number(countryPrice.price);
+      originalPrice = product.salePrice || product.discountPrice || Number(countryPrice.price);
     } else {
-      displayPrice = product.salePrice || product.salePriceCents || (product.discountPrice ?? product.price);
-      originalPrice = product.regularPrice || product.regularPriceCents || product.price;
+      displayPrice = product.salePrice || product.discountPrice || (product.discountPrice ?? product.price);
+      originalPrice = product.regularPrice || product.price;
     }
   } else {
-    displayPrice = product.salePrice || product.salePriceCents || (product.discountPrice ?? product.price);
-    originalPrice = product.regularPrice || product.regularPriceCents || product.price;
+    displayPrice = product.salePrice || product.discountPrice || (product.discountPrice ?? product.price);
+    originalPrice = product.regularPrice || product.price;
   }
 
   return (

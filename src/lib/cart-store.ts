@@ -5,12 +5,12 @@ export interface ProductSummary {
   name: string;
   brand: string;
   category: string;
-  price: number; // Base price
+  price: number; // Base price (direct decimal)
   imageUrl: string;
   discountPrice?: number;
   countryPrices?: Array<{
     country: string;
-    priceCents: number;
+    price: number;
     currency: string;
   }>;
 }

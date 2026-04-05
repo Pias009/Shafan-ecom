@@ -36,7 +36,7 @@ export default async function Dashboard() {
       include: { user: true, store: true }
     }),
     prisma.order.aggregate({
-      _sum: { totalCents: true },
+      _sum: { total: true },
       where: { 
         storeId: { in: accessibleStoreIds },
         NOT: { status: OrderStatus.CANCELLED } 
@@ -44,7 +44,7 @@ export default async function Dashboard() {
     })
   ]);
 
-  const totalRevenue = (revenueData._sum.totalCents || 0) / 100;
+  const totalRevenue = revenueData._sum.total || 0;
   const currencySymbol = 'AED';
   
   const getStatusColor = (status: OrderStatus) => {
@@ -143,7 +143,7 @@ export default async function Dashboard() {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-right font-black text-sm">
-                      ${(o.totalCents / 100).toFixed(2)}
+                      ${(o.total || 0).toFixed(2)}
                     </td>
                   </tr>
                 ))}

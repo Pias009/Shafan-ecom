@@ -65,8 +65,8 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            priceCents: true,
-            discountCents: true,
+            price: true,
+            discountPrice: true,
             mainImage: true,
             active: true,
             stockQuantity: true,

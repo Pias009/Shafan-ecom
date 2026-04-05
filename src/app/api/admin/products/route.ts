@@ -22,7 +22,7 @@ const CountryPriceSchema = z.object({
     (code) => isValidCountryCode(code),
     { message: `Country must be one of: ${SUPPORTED_COUNTRIES.map(c => c.code).join(', ')}` }
   ),
-  priceCents: z.number().int().min(0, { message: "Country price must be 0 or more cents" }),
+  price: z.number().min(0, { message: "Country price must be 0 or more" }),
   currency: z.string().optional(),
   active: z.boolean().optional().default(true),
 });
@@ -39,8 +39,8 @@ const ProductCreateSchema = z.object({
   images: z.array(z.string()).optional(),
   mainImage: z.string().optional(),
   trending: z.boolean().optional(),
-  priceCents: z.number().int().min(0, { message: "Product price must be 0 or more cents" }),
-  discountCents: z.number().int().min(0).optional(),
+  price: z.number().min(0, { message: "Product price must be 0 or more" }),
+  discountPrice: z.number().min(0).optional(),
   stockQuantity: z.number().int().min(0).optional(),
   brandName: z.string().optional(),
   categoryIds: z.array(z.string()).optional().default([]),
@@ -71,7 +71,7 @@ const ProductCreateSchema = z.object({
 }).refine(
   (data) => {
     if (data.countryPrices && data.countryPrices.length > 0) {
-      const validPrices = data.countryPrices.filter(cp => cp.priceCents > 0);
+      const validPrices = data.countryPrices.filter(cp => cp.price > 0);
       if (validPrices.length === 0) {
         return false;
       }
@@ -85,14 +85,14 @@ const ProductCreateSchema = z.object({
 ).refine(
   (data) => {
     // Validate that discount doesn't exceed price
-    if (data.discountCents && data.discountCents > data.priceCents) {
+    if (data.discountPrice && data.discountPrice > data.price) {
       return false;
     }
     return true;
   },
   {
     message: "Discount cannot exceed product price",
-    path: ["discountCents"],
+    path: ["discountPrice"],
   }
 );
 
@@ -187,11 +187,11 @@ export async function POST(req: Request) {
     
     // Pre-process to convert string numbers to actual numbers
     const processedBody = { ...body };
-    if (processedBody.priceCents !== undefined && processedBody.priceCents !== null) {
-      processedBody.priceCents = Number(processedBody.priceCents);
+    if (processedBody.price !== undefined && processedBody.price !== null) {
+      processedBody.price = Number(processedBody.price);
     }
-    if (processedBody.discountCents !== undefined && processedBody.discountCents !== null) {
-      processedBody.discountCents = Number(processedBody.discountCents);
+    if (processedBody.discountPrice !== undefined && processedBody.discountPrice !== null) {
+      processedBody.discountPrice = Number(processedBody.discountPrice);
     }
     if (processedBody.stockQuantity !== undefined && processedBody.stockQuantity !== null) {
       processedBody.stockQuantity = Number(processedBody.stockQuantity);
@@ -199,7 +199,7 @@ export async function POST(req: Request) {
     if (processedBody.countryPrices && Array.isArray(processedBody.countryPrices)) {
       processedBody.countryPrices = processedBody.countryPrices.map((cp: any) => ({
         ...cp,
-        priceCents: typeof cp.priceCents === 'string' ? Math.round(parseFloat(cp.priceCents)) : (Math.round(Number(cp.priceCents)) || 0),
+        price: typeof cp.price === 'string' ? parseFloat(cp.price) : (Number(cp.price) || 0),
         active: true,
       }));
     }
@@ -375,8 +375,8 @@ export async function POST(req: Request) {
       features: productData.features ?? [],
       images: (productData.images as string[]) ?? [],
       mainImage: mainImageUrl || ((productData.images as string[])?.[0] || null),
-      priceCents: productData.priceCents,
-      discountCents: productData.discountCents || 0,
+      price: productData.price,
+      discountPrice: productData.discountPrice || 0,
       stockQuantity: productData.stockQuantity ?? 0,
       hot: productData.hot ?? false,
       trending: productData.trending ?? false,
@@ -472,13 +472,13 @@ export async function POST(req: Request) {
             },
             update: {
               quantity: productData.stockQuantity ?? 0,
-              price: productData.priceCents - (productData.discountCents || 0)
+              price: productData.price - (productData.discountPrice || 0)
             },
             create: {
               storeId: store.id,
               productId: product.id,
               quantity: productData.stockQuantity ?? 0,
-              price: productData.priceCents - (productData.discountCents || 0)
+              price: productData.price - (productData.discountPrice || 0)
             }
           });
           console.log('[DEBUG] Store inventory created/updated successfully');
@@ -523,7 +523,7 @@ export async function POST(req: Request) {
               data: {
                 productId: product.id,
                 country: countryPrice.country,
-                priceCents: countryPrice.priceCents,
+                price: countryPrice.price,
                 currency: countryPrice.currency,
                 active: countryPrice.active
               }

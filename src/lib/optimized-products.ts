@@ -26,8 +26,8 @@ const PRODUCT_LIST_SELECT = {
   ingredients: true,
   howToUse: true,
   mainImage: true,
-  priceCents: true,
-  discountCents: true,
+  price: true,
+  discountPrice: true,
   currency: true,
   active: true,
   hot: true,
@@ -90,7 +90,7 @@ const PRODUCT_DETAIL_SELECT = {
   countryPrices: {
     select: {
       country: true,
-      priceCents: true,
+      price: true,
       currency: true,
       active: true,
     }
@@ -138,19 +138,19 @@ export async function getOptimizedProducts(
     if (options.brand) where.brand = { name: options.brand };
     
     if (options.minPrice !== undefined || options.maxPrice !== undefined) {
-      where.priceCents = {};
-      if (options.minPrice !== undefined) where.priceCents.gte = options.minPrice;
-      if (options.maxPrice !== undefined) where.priceCents.lte = options.maxPrice;
+      where.price = {};
+      if (options.minPrice !== undefined) where.price.gte = options.minPrice;
+      if (options.maxPrice !== undefined) where.price.lte = options.maxPrice;
     }
 
     // Build orderBy
     let orderBy: any = { createdAt: 'desc' };
     switch (options.sortBy) {
       case 'price_asc':
-        orderBy = { priceCents: 'asc' };
+        orderBy = { price: 'asc' };
         break;
       case 'price_desc':
-        orderBy = { priceCents: 'desc' };
+        orderBy = { price: 'desc' };
         break;
       case 'newest':
         orderBy = { createdAt: 'desc' };
@@ -202,9 +202,9 @@ export async function getOptimizedProducts(
 
     // Transform products
     const products = dbProducts.map((p: any) => {
-      const priceCents = p.storePrice || p.priceCents;
-      const discountCents = p.discountCents || 0;
-      const salePriceCents = discountCents > 0 ? priceCents - discountCents : null;
+      const price = Number(p.storePrice) || Number(p.price) || 0;
+      const discountPrice = Number(p.discountPrice) || 0;
+      const salePrice = discountPrice > 0 ? price - discountPrice : null;
 
       const categoryNames = p.productCategories?.map((pc: any) => pc.category?.name).filter(Boolean) || [];
       const primaryCategory = categoryNames[0] || "General";
@@ -229,9 +229,14 @@ export async function getOptimizedProducts(
         averageRating: p.averageRating || 0,
         ratingCount: p.ratingCount || 0,
         totalSales: p.totalSales || 0,
-        priceCents: salePriceCents || priceCents,
-        regularPriceCents: priceCents,
-        salePriceCents,
+        price: salePrice || price,
+        priceCents: price,
+        regularPrice: price,
+        regularPriceCents: price,
+        salePrice: salePrice,
+        salePriceCents: salePrice,
+        discountPrice: discountPrice > 0 ? discountPrice : null,
+        discountCents: discountPrice > 0 ? discountPrice : null,
         currency: p.currency?.toUpperCase() || 'USD',
         active: p.active,
         hot: p.hot,
@@ -336,22 +341,22 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
     const userCountry = storeCode ? (countryMap[storeCode.toUpperCase()] || 'AE') : 'AE';
 
     // Get price from country-specific prices if available
-    let priceCents = product.priceCents || 0;
+    let price = Number(product.price) || 0;
     if (product.countryPrices && product.countryPrices.length > 0) {
       const countryPrice = product.countryPrices.find((cp: any) => cp.country === userCountry && cp.active);
-      if (countryPrice && countryPrice.priceCents > 0) {
-        priceCents = countryPrice.priceCents;
+      if (countryPrice && Number(countryPrice.price) > 0) {
+        price = Number(countryPrice.price);
       }
     }
 
     // If no country-specific price, use store inventory price
-    if (priceCents === 0 && product.storePrice) {
-      priceCents = product.storePrice;
+    if (price === 0 && product.storePrice) {
+      price = Number(product.storePrice);
     }
 
-    const discountCents = product.discountCents || 0;
+    const discountPrice = Number(product.discountPrice) || 0;
     // Calculate sale price: if there's a discount, apply it to the price
-    const salePriceCents = discountCents > 0 ? priceCents - discountCents : null;
+    const salePrice = discountPrice > 0 ? price - discountPrice : null;
 
     const transformedProduct = {
       id: product.id,
@@ -368,9 +373,14 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
       averageRating: product.averageRating || 0,
       ratingCount: product.ratingCount || 0,
       totalSales: product.totalSales || 0,
-      priceCents: salePriceCents || priceCents,
-      regularPriceCents: priceCents,
-      salePriceCents,
+      price: salePrice || price,
+      priceCents: price,
+      regularPrice: price,
+      regularPriceCents: price,
+      salePrice: salePrice,
+      salePriceCents: salePrice,
+      discountPrice: discountPrice > 0 ? discountPrice : null,
+      discountCents: discountPrice > 0 ? discountPrice : null,
       currency: product.currency?.toUpperCase() || 'USD',
       active: product.active,
       hot: product.hot,

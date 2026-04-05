@@ -11,8 +11,8 @@ const BulkUpdateSchema = z.object({
   ids: z.array(z.string()),
   updates: z.object({
     name: z.string().optional(),
-    priceCents: z.number().optional(),
-    discountCents: z.number().optional(),
+    price: z.number().optional(),
+    discountPrice: z.number().optional(),
     active: z.boolean().optional(),
     stockQuantity: z.number().optional(),
     images: z.union([z.string(), z.array(z.string())]).optional(),
@@ -41,8 +41,8 @@ export async function POST(req: Request) {
       try {
         const data: any = { };
         if (updates.name !== undefined) data.name = updates.name;
-        if (updates.priceCents !== undefined) data.priceCents = updates.priceCents;
-        if (updates.discountCents !== undefined) data.discountCents = updates.discountCents;
+        if (updates.price !== undefined) data.price = updates.price;
+        if (updates.discountPrice !== undefined) data.discountPrice = updates.discountPrice;
         if (updates.active !== undefined) data.active = updates.active;
         if (updates.stockQuantity !== undefined) data.stockQuantity = updates.stockQuantity;
         if (updates.images !== undefined) {

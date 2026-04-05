@@ -16,7 +16,7 @@ export async function GET() {
         }
       },
       select: {
-        totalCents: true,
+        total: true,
         currency: true
       }
     });
@@ -35,7 +35,7 @@ export async function GET() {
 
     revenueOrders.forEach(order => {
       const rate = conversionRates[order.currency?.toUpperCase()] || 1;
-      totalRevenueAED += Number(order.totalCents) * rate;
+      totalRevenueAED += Number(order.total) * rate;
     });
 
     const [usersCount, productsCount, bannersCount, ordersCount, ordersByStatus] = await Promise.all([
@@ -86,7 +86,7 @@ export async function GET() {
         orders: ordersCount,
         ordersByStatus: counts,
         revenue: {
-          totalAED: Math.round(totalRevenueAED * 100) / 100,
+          totalAED: Number(totalRevenueAED.toFixed(2)),
           currency: 'AED'
         },
         outOfStock: outOfStockCount

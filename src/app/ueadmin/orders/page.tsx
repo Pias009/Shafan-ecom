@@ -147,7 +147,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
                       <div className="text-[9px] md:text-[10px] font-bold text-black/70 truncate max-w-[120px] md:max-w-[150px] uppercase tracking-tighter">{email}</div>
                     </td>
                     <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{paid}</td>
-                    <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{formatPrice(o.totalCents, o.currency)}</td>
+                    <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{formatPrice(o.total, o.currency)}</td>
                     <td className="px-4 md:px-6 py-4">
                       <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getStatusColor(o.status)}`}>
                         {o.status}

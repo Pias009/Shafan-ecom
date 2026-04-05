@@ -7,12 +7,12 @@ export async function GET() {
     return new Response('Unauthorized', { status: 401 });
   }
   // Aggregate top products by revenue from order items
-  const items = await (prisma as any).orderItem.findMany({ include: { product: true }, select: { product: { select: { id: true, name: true } }, quantity: true, unitPriceCents: true } });
+  const items = await (prisma as any).orderItem.findMany({ include: { product: true }, select: { product: { select: { id: true, name: true } }, quantity: true, unitPrice: true } });
   const map: Record<string, { name: string; revenue: number }> = {};
   for (const it of items) {
     const pid = it.product?.id ?? it.product?.name;
     const name = it.product?.name ?? 'Unknown';
-    const rev = (it.quantity ?? 0) * (it.unitPriceCents ?? 0);
+    const rev = (it.quantity ?? 0) * (Number(it.unitPrice) ?? 0);
     if (!map[pid]) map[pid] = { name, revenue: rev };
     else map[pid].revenue += rev;
   }

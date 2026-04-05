@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
 
     // 2. Calculate subtotals by fetching real products with country pricing (regular prices)
-    let subtotalCents = 0;
+    let subtotal = 0;
     const orderItems = [];
 
     for (const item of items) {
@@ -73,32 +73,32 @@ export async function POST(req: Request) {
       if (!product) throw new Error("Product not found: " + item.productId);
 
       // Check for country-specific price first
-      let priceCents = 0;
+      let price = 0;
       if (product.countryPrices && product.countryPrices.length > 0) {
-        priceCents = product.countryPrices[0].priceCents;
+        price = Number(product.countryPrices[0].price) || 0;
       } else {
         // Fall back to base price calculation
-        priceCents = product.discountCents ? (product.priceCents - product.discountCents) : product.priceCents;
+        price = product.discountPrice ? (Number(product.price) - Number(product.discountPrice)) : Number(product.price) || 0;
       }
 
       // If price is still 0, use the base price (in case country price wasn't set)
-      if (priceCents <= 0) {
-        priceCents = product.discountCents ? (product.priceCents - product.discountCents) : product.priceCents;
+      if (price <= 0) {
+        price = product.discountPrice ? (Number(product.price) - Number(product.discountPrice)) : Number(product.price) || 0;
       }
 
-      subtotalCents += priceCents * item.quantity;
+      subtotal += price * item.quantity;
       
       orderItems.push({
         productId: product.id,
         quantity: item.quantity,
-        unitPriceCents: priceCents,
+        unitPrice: price,
         nameSnapshot: product.name,
         imageSnapshot: product.mainImage
       });
     }
 
     // Validate total
-    if (subtotalCents <= 0) {
+    if (subtotal <= 0) {
       return NextResponse.json({ error: "Order total must be greater than 0. Please check product prices." }, { status: 400 });
     }
 
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
     const courier = determineCourier(shippingAddress);
     const trackingCode = generateTrackingCode();
 
-    const totalCents = subtotalCents;
+    const total = subtotal;
 
     // 3. Create Order with shipment
     const order = await prisma.order.create({
@@ -118,8 +118,8 @@ export async function POST(req: Request) {
         email: session.user.email,
         status: OrderStatus.ORDER_RECEIVED,
         currency: currency.toLowerCase(),
-        subtotalCents,
-        totalCents,
+        subtotal,
+        total,
         billingAddress: {
           first_name: address.fullName?.split(" ")[0] || "",
           last_name: address.fullName?.split(" ").slice(1).join(" ") || "",

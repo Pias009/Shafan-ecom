@@ -67,11 +67,11 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       }
 
       const orderItems = items.map((i: any) => {
-        const { price: itemPriceCents } = getDisplayPrice(i, userCountry);
+        const { price: itemPrice } = getDisplayPrice(i, userCountry);
         return {
           productId: i.id,
           quantity: i.quantity,
-          unitPriceCents: Math.round(itemPriceCents)
+          price: itemPrice
         };
       });
 
@@ -325,21 +325,21 @@ export default function CartPage() {
 
   if (!mounted) return null;
 
-  // Calculate subtotal using regular prices (keep in cents)
+  // Calculate subtotal using regular prices (direct decimal values)
   const subtotal = items.reduce(
     (acc, item) => {
-      const { price: itemPriceCents } = getDisplayPrice(item, userCountry);
-      return acc + (Number(itemPriceCents) * item.quantity);
+      const { price: itemPrice } = getDisplayPrice(item, userCountry);
+      return acc + (Number(itemPrice) * item.quantity);
     },
     0
   );
 
-  const discount = Math.round(subtotal * couponDiscount);
+  const discount = subtotal * couponDiscount;
 
   const deliveryConfig = COUNTRY_CONFIG[userCountry.toUpperCase()] || COUNTRY_CONFIG['AE'];
   
   // Use raw units for comparison as per user request
-  const shipping = subtotal >= deliveryConfig.freeDeliveryCents ? 0 : deliveryConfig.deliveryFeeCents;
+  const shipping = subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee;
   const total = subtotal - discount + shipping;
 
   if (items.length === 0) {

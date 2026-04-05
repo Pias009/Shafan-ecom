@@ -133,7 +133,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
                 <div className="text-[8px] font-black text-black/20 uppercase tracking-widest mt-1">Qty: {it.quantity}</div>
               </div>
                 <div className="text-right font-black text-xs shrink-0">
-                {formatPrice(it.unitPriceCents * it.quantity, order.currency)}
+                {formatPrice(Number(it.unitPrice) * it.quantity, order.currency)}
               </div>
             </div>
           ))}
@@ -158,7 +158,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
                     </Link>
                   </td>
                   <td className="px-8 py-6 text-center font-black text-black/40">{it.quantity}</td>
-                  <td className="px-8 py-6 text-right font-black text-sm">{formatPrice(it.unitPriceCents * it.quantity, order.currency)}</td>
+                  <td className="px-8 py-6 text-right font-black text-sm">{formatPrice(Number(it.unitPrice) * it.quantity, order.currency)}</td>
                 </tr>
               ))}
             </tbody>

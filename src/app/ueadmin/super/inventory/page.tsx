@@ -115,7 +115,7 @@ export default async function GlobalInventoryPage() {
                                 </div>
                              </td>
                              <td className="px-8 py-5 text-right font-black text-sm">
-                                {inv.price.toFixed(2)} <span className="text-[9px] opacity-30">{inv.store.currency.toUpperCase()}</span>
+                             {(Number(inv.price) || 0).toFixed(2)} <span className="text-[9px] opacity-30">{inv.store.currency.toUpperCase()}</span>
                              </td>
                              <td className="px-8 py-5 text-right">
                                 <Link href={`/ueadmin/products/${inv.productId}`} className="p-2 hover:bg-black rounded-xl text-black/10 hover:text-white transition-all inline-block">

@@ -378,8 +378,8 @@ export function ImprovedAddressForm({
             </p>
             <ul className="text-emerald-800 mt-2 space-y-1 text-xs">
               <li>✓ Estimated delivery: {currentCountry?.estimatedDays} business days</li>
-              <li>✓ Minimum order: {currentCountry && (currentCountry.minOrderCents / 100).toFixed(0)} {currentCountry?.currency}</li>
-              <li>✓ Free delivery on orders above {currentCountry && (currentCountry.freeDeliveryCents / 100).toFixed(0)} {currentCountry?.currency}</li>
+              <li>✓ Minimum order: {currentCountry && currentCountry.minOrder.toFixed(0)} {currentCountry?.currency}</li>
+              <li>✓ Free delivery on orders above {currentCountry && currentCountry.freeDelivery.toFixed(0)} {currentCountry?.currency}</li>
             </ul>
           </div>
         </div>

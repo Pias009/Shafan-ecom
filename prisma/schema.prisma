@@ -180,8 +180,8 @@ model Product {
   images        String[]
   mainImage     String?
   stockQuantity Int      @default(0)
-  priceCents    Int
-  discountCents Int?
+  price         Float?
+  discountPrice Float?
   active        Boolean  @default(true)
   hot           Boolean  @default(false)
   trending      Boolean  @default(false)
@@ -314,10 +314,10 @@ model Order {
   email                 String?
   status                OrderStatus     @default(ORDER_RECEIVED)
   currency              String          @default("usd")
-  subtotalCents         Int
-  shippingCents         Int             @default(0)
-  discountCents         Int             @default(0)
-  totalCents            Int
+  subtotal              Float?
+  shipping              Float?          @default(0)
+  discount              Float?          @default(0)
+  total                 Float?
   paymentMethod         String?
   paymentMethodTitle    String?
   billingAddress        Json?
@@ -327,8 +327,8 @@ model Order {
   tabbySessionId        String?
   tamaraCheckoutId      String?
   discountId            String?         @db.ObjectId // Applied discount
-  discount              Discount?       @relation(fields: [discountId], references: [id])
-  discountAmountCents   Int? // Amount saved from discount in cents
+  appliedDiscount       Discount?       @relation(fields: [discountId], references: [id])
+  discountAmount        Float? // Amount saved from discount
   items                 OrderItem[]
   shipment              Shipment?
   discountUsages        DiscountUsage[]
@@ -341,7 +341,7 @@ model OrderItem {
   orderId        String  @db.ObjectId
   productId      String  @db.ObjectId
   quantity       Int
-  unitPriceCents Int
+  unitPrice      Float?
   nameSnapshot   String
   imageSnapshot  String?
   order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -366,7 +366,7 @@ model StoreInventory {
   product   Product  @relation(fields: [productId], references: [id])
   productId String   @db.ObjectId
   quantity  Int
-  price     Float
+  price     Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -436,7 +436,7 @@ model Discount {
 
   // Application scope
   applyToAll        Boolean @default(false)
-  minimumOrderValue Int? // Minimum order amount in cents
+  minimumOrderValue Float? // Minimum order amount
 
   // Validity
   startDate DateTime?
@@ -506,7 +506,7 @@ model DiscountUsage {
   userId      String?  @db.ObjectId
   orderId     String?  @db.ObjectId
   email       String? // For guest users
-  amountSaved Int // Amount saved in cents
+  amountSaved Float // Amount saved
   usedAt      DateTime @default(now())
 
   discount Discount @relation(fields: [discountId], references: [id])
@@ -626,7 +626,7 @@ model CountryPrice {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   productId   String   @db.ObjectId
   country     String   // Country code like "US", "BD", "KW", etc.
-  priceCents  Int      // Price in cents for this country
+  price       Float?   // Price for this country
   currency    String   @default("USD") // Currency code for this country
   active      Boolean  @default(true)
   

@@ -11,8 +11,8 @@ const UpdateSchema = z.object({
   benefits: z.string().optional(),
   ingredients: z.string().optional(),
   howToUse: z.string().optional(),
-  priceCents: z.number().optional(),
-  discountCents: z.number().optional(),
+  price: z.number().optional(),
+  discountPrice: z.number().optional(),
   active: z.boolean().optional(),
   stockQuantity: z.number().optional(),
   brandName: z.string().optional(),
@@ -26,7 +26,7 @@ const UpdateSchema = z.object({
   tags: z.array(z.string()).optional(),
   countryPrices: z.array(z.object({
     country: z.string(),
-    priceCents: z.number(),
+    price: z.number(),
     currency: z.string().optional(),
     active: z.boolean().optional(),
   })).optional(),
@@ -78,14 +78,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     
     // Pre-process to convert string numbers to actual numbers
-    // Pre-process to convert string numbers to actual numbers (Whole numbers only as per user request)
-    if (data.priceCents) data.priceCents = Math.round(Number(data.priceCents));
-    if (data.discountCents) data.discountCents = Math.round(Number(data.discountCents));
+    if (data.price) data.price = Number(data.price);
+    if (data.discountPrice) data.discountPrice = Number(data.discountPrice);
     if (data.stockQuantity) data.stockQuantity = Number(data.stockQuantity);
     if (data.countryPrices && Array.isArray(data.countryPrices)) {
       data.countryPrices = data.countryPrices.map((cp: any) => ({
         ...cp,
-        priceCents: typeof cp.priceCents === 'string' ? Math.round(parseFloat(cp.priceCents)) : (Math.round(Number(cp.priceCents)) || 0),
+        price: typeof cp.price === 'string' ? parseFloat(cp.price) : (Number(cp.price) || 0),
         active: true
       }));
     }
@@ -107,8 +106,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (typeof parsed.data.benefits !== 'undefined') updates.benefits = parsed.data.benefits;
     if (typeof parsed.data.ingredients !== 'undefined') updates.ingredients = parsed.data.ingredients;
     if (typeof parsed.data.howToUse !== 'undefined') updates.howToUse = parsed.data.howToUse;
-    if (typeof parsed.data.priceCents !== 'undefined') updates.priceCents = parsed.data.priceCents;
-    if (typeof parsed.data.discountCents !== 'undefined') updates.discountCents = parsed.data.discountCents;
+    if (typeof parsed.data.price !== 'undefined') updates.price = parsed.data.price;
+    if (typeof parsed.data.discountPrice !== 'undefined') updates.discountPrice = parsed.data.discountPrice;
     if (typeof parsed.data.active !== 'undefined') updates.active = parsed.data.active;
     if (typeof (parsed.data as any).trending !== 'undefined') updates.trending = (parsed.data as any).trending;
     if (typeof parsed.data.stockQuantity !== 'undefined') updates.stockQuantity = parsed.data.stockQuantity;
@@ -214,7 +213,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
               data: {
                 productId: id,
                 country: cp.country,
-                priceCents: cp.priceCents,
+                price: cp.price,
                 currency: cp.currency || 'USD',
                 active: cp.active !== false,
               }

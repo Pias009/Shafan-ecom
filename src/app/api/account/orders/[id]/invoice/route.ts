@@ -91,16 +91,16 @@ export async function GET(
         productCode: item.product?.sku || 'N/A',
         productName: item.nameSnapshot || item.product?.name || 'Unknown Product',
         quantity: item.quantity,
-        unitPrice: formatPriceUnits(item.unitPriceCents, order.currency),
-        itemTotal: formatPriceUnits(item.unitPriceCents * item.quantity, order.currency),
+        unitPrice: formatPriceUnits(item.unitPrice, order.currency),
+        itemTotal: formatPriceUnits(item.unitPrice * item.quantity, order.currency),
         image: item.imageSnapshot || item.product?.images?.[0] || '/assets/placeholder.png',
       })),
       
       // Pricing
-      subtotal: formatPriceUnits(order.subtotalCents, order.currency),
-      shipping: formatPriceUnits(order.shippingCents || 0, order.currency),
-      discount: order.discountCents > 0 ? formatPriceUnits(order.discountCents, order.currency) : '0.00',
-      total: formatPriceUnits(order.totalCents, order.currency),
+      subtotal: formatPriceUnits(order.subtotal, order.currency),
+      shipping: formatPriceUnits(order.shipping || 0, order.currency),
+      discount: order.discount > 0 ? formatPriceUnits(order.discount, order.currency) : '0.00',
+      total: formatPriceUnits(order.total, order.currency),
       currency: order.currency,
       
       // Payment & Shipping

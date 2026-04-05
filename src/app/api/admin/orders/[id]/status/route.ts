@@ -47,7 +47,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         customerName,
         status,
         updatedOrder.items as any,
-        updatedOrder.totalCents,
+        updatedOrder.total || 0,
         updatedOrder.currency,
         shippingAddr
       );

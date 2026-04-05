@@ -40,16 +40,16 @@ function calculateDeliveryFee(countryCode: string, subtotal: number): { fee: num
   if (!config) {
     // Default to UAE config if country not found
     const defaultConfig = (DELIVERY_CONFIG as any)['AE'];
-    const fee = subtotal >= defaultConfig.freeDeliveryCents ? 0 : defaultConfig.deliveryFeeCents;
+    const fee = subtotal >= defaultConfig.freeDelivery ? 0 : defaultConfig.deliveryFee;
     return { fee: fee, freeDelivery: fee === 0 };
   }
   
   // Check if order qualifies for free delivery
-  if (subtotal >= config.freeDeliveryCents) {
+  if (subtotal >= config.freeDelivery) {
     return { fee: 0, freeDelivery: true };
   }
   
-  return { fee: config.deliveryFeeCents, freeDelivery: false };
+  return { fee: config.deliveryFee, freeDelivery: false };
 }
 
 // Normalize country code to 2-letter format
@@ -94,20 +94,20 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
     }
   });
   
-  if (countryPrice && Number(countryPrice.priceCents) > 0) {
-    return { price: Number(countryPrice.priceCents), source: 'country_price' };
+  if (countryPrice && Number(countryPrice.price) > 0) {
+    return { price: Number(countryPrice.price), source: 'country_price' };
   }
   
   // Finally use base product price
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    select: { priceCents: true, discountCents: true }
+    select: { price: true, discountPrice: true }
   });
   
   if (product) {
-    const basePrice = product.discountCents 
-      ? Number(product.priceCents) - Number(product.discountCents) 
-      : Number(product.priceCents);
+    const basePrice = product.discountPrice
+      ? Number(product.price) - Number(product.discountPrice)
+      : Number(product.price);
     return { price: basePrice, source: 'base_price' };
   }
   
@@ -118,12 +118,12 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
 async function applyDiscount(
   couponCode: string | undefined,
   countryCode: string,
-  subtotalCents: number,
+  subtotal: number,
   userId?: string,
   userEmail?: string
-): Promise<{ discountCents: number; discountCodeUsed?: string; error?: string }> {
+): Promise<{ discount: number; discountCodeUsed?: string; error?: string }> {
   if (!couponCode) {
-    return { discountCents: 0 };
+    return { discount: 0 };
   }
 
   try {
@@ -134,36 +134,36 @@ async function applyDiscount(
 
     if (!discount) {
       console.warn(`Discount code not found: ${couponCode}`);
-      return { discountCents: 0, error: "Code not found" };
+      return { discount: 0, error: "Code not found" };
     }
 
     // Check if discount is active
     if (!discount.active || discount.status !== "ACTIVE") {
       console.warn(`Discount code is not active: ${couponCode}`);
-      return { discountCents: 0, error: "Code not active" };
+      return { discount: 0, error: "Code not active" };
     }
 
     // Check if discount is valid for the country
     if (discount.countries && discount.countries.length > 0 && !discount.countries.includes(countryCode)) {
       console.warn(`Discount code not valid for country: ${countryCode}`);
-      return { discountCents: 0, error: "Not valid for this country" };
+      return { discount: 0, error: "Not valid for this country" };
     }
 
     // Check if discount is within valid date range
     const now = new Date();
     if (discount.startDate && new Date(discount.startDate) > now) {
       console.warn(`Discount code not yet valid: ${couponCode}`);
-      return { discountCents: 0, error: "Code not yet valid" };
+      return { discount: 0, error: "Code not yet valid" };
     }
     if (discount.endDate && new Date(discount.endDate) < now) {
       console.warn(`Discount code expired: ${couponCode}`);
-      return { discountCents: 0, error: "Code has expired" };
+      return { discount: 0, error: "Code has expired" };
     }
 
     // Check minimum order value
-    if (discount.minimumOrderValue && subtotalCents < discount.minimumOrderValue) {
+    if (discount.minimumOrderValue && subtotal < discount.minimumOrderValue) {
       console.warn(`Order doesn't meet minimum for discount: ${couponCode}`);
-      return { discountCents: 0, error: `Minimum order ${(discount.minimumOrderValue / 100).toFixed(2)} required` };
+      return { discount: 0, error: `Minimum order ${discount.minimumOrderValue.toFixed(2)} required` };
     }
 
     // Check max total uses (global limit)
@@ -173,7 +173,7 @@ async function applyDiscount(
       });
       if (totalUsageCount >= discount.maxUses) {
         console.warn(`Discount code has reached max total uses: ${couponCode}`);
-        return { discountCents: 0, error: "Code usage limit reached" };
+        return { discount: 0, error: "Code usage limit reached" };
       }
     }
 
@@ -192,13 +192,13 @@ async function applyDiscount(
       // Check maxUsesPerUser limit
       if (discount.maxUsesPerUser && userUsageCount >= discount.maxUsesPerUser) {
         console.warn(`User has reached max uses for this discount: ${couponCode}`);
-        return { discountCents: 0, error: `You can only use this code ${discount.maxUsesPerUser} time(s)` };
+        return { discount: 0, error: `You can only use this code ${discount.maxUsesPerUser} time(s)` };
       }
 
       // For SINGLE_USE coupons - only one use per user ever
       if (usageType === "SINGLE_USE" && userUsageCount > 0) {
         console.warn(`SINGLE_USE coupon already used by user: ${couponCode}`);
-        return { discountCents: 0, error: "This code can only be used once per customer" };
+        return { discount: 0, error: "This code can only be used once per customer" };
       }
     }
 
@@ -207,25 +207,25 @@ async function applyDiscount(
       console.log(`Coupon allows up to ${discount.maxUsesPerOrder} uses per order`);
     }
 
-    // Calculate discount amount (Using raw units)
+    // Calculate discount amount
     let discountAmount = 0;
     if (discount.discountType === "PERCENTAGE") {
-      discountAmount = (subtotalCents * discount.value) / 100;
+      discountAmount = (subtotal * discount.value) / 100;
     } else if (discount.discountType === "FIXED_AMOUNT") {
-      discountAmount = discount.value; // Stored as raw units
+      discountAmount = discount.value;
     } else if (discount.discountType === "FREE_SHIPPING") {
       discountAmount = 0;
     }
 
     // Cap discount at subtotal
-    discountAmount = Math.min(discountAmount, subtotalCents);
+    discountAmount = Math.min(discountAmount, subtotal);
 
     console.log(`Applied discount ${couponCode}: ${discountAmount} (type: ${usageType})`);
 
-    return { discountCents: discountAmount, discountCodeUsed: discount.id };
+    return { discount: discountAmount, discountCodeUsed: discount.id };
   } catch (error) {
     console.error("Error applying discount:", error);
-    return { discountCents: 0 };
+    return { discount: 0 };
   }
 }
 
@@ -288,7 +288,7 @@ export async function POST(req: Request) {
     const currency = getCurrencyForCountry(countryCode);
 
     // Calculate totals with improved price lookup
-    let subtotalCents = 0;
+    let subtotal = 0;
     const orderItemsData = [];
     let orderStoreId: string | null = null;
     let orderStoreCode: string | null | undefined = null;
@@ -359,29 +359,29 @@ export async function POST(req: Request) {
 
       // Determine the canonical price from the database (STRICT price checking)
       const dbPrice = await getProductPrice(product.id, countryCode, productStoreCode);
-      const canonicalPriceCents = dbPrice.price;
+      const canonicalPrice = dbPrice.price;
       const priceSource = dbPrice.source;
       
       // LOGGING: Getting the row data for price validation
-      console.log(`[PRICE_CHECK] Item: ${product.name} | DB Price: ${canonicalPriceCents} | Source: ${priceSource} | Request Price: ${item.unitPriceCents || 'N/A'}`);
+      console.log(`[PRICE_CHECK] Item: ${product.name} | DB Price: ${canonicalPrice} | Source: ${priceSource} | Request Price: ${item.price || 'N/A'}`);
       
-      if (item.unitPriceCents && item.unitPriceCents > 0 && item.unitPriceCents !== canonicalPriceCents) {
-        console.warn(`[PRICE_MISMATCH] Item: ${product.name} | Request: ${item.unitPriceCents} | DB: ${canonicalPriceCents}. USING DB PRICE.`);
+      if (item.price && item.price > 0 && item.price !== canonicalPrice) {
+        console.warn(`[PRICE_MISMATCH] Item: ${product.name} | Request: ${item.price} | DB: ${canonicalPrice}. USING DB PRICE.`);
       }
       
-      const unitPriceCents = canonicalPriceCents;
+      const unitPrice = canonicalPrice;
       
-      if (unitPriceCents <= 0) {
+      if (unitPrice <= 0) {
         throw new Error(`Invalid price for product ${product.name}. Please contact support.`);
       }
       
-      const itemTotal = unitPriceCents * item.quantity;
-      subtotalCents += itemTotal;
+      const itemTotal = unitPrice * item.quantity;
+      subtotal += itemTotal;
 
       orderItemsData.push({
         productId: product.id,
         quantity: item.quantity,
-        unitPriceCents: unitPriceCents,
+        unitPrice: unitPrice,
         nameSnapshot: product.name,
         imageSnapshot: product.mainImage,
       });
@@ -402,36 +402,36 @@ export async function POST(req: Request) {
     }
 
     // Validate total
-    if (subtotalCents <= 0) {
+    if (subtotal <= 0) {
       return NextResponse.json({ error: "Order total must be greater than 0. Please check product prices." }, { status: 400 });
     }
 
     // Calculate delivery fee based on country
-    const { fee: shippingCents, freeDelivery } = calculateDeliveryFee(countryCode, subtotalCents);
+    const { fee: shippingFee, freeDelivery } = calculateDeliveryFee(countryCode, subtotal);
     
     // Check if minimum order requirement is met
     const deliveryConfig = (DELIVERY_CONFIG as any)[countryCode.toUpperCase()];
-    if (deliveryConfig && subtotalCents < deliveryConfig.minOrderCents) {
+    if (deliveryConfig && subtotal < deliveryConfig.minOrder) {
       const currencySymbol = getCurrencyForCountry(countryCode);
-      const minOrder = deliveryConfig.minOrderCents;
-      return NextResponse.json({ 
-        error: `Minimum order value is ${currencySymbol} ${minOrder} for ${countryCode.toUpperCase()}. Current order: ${currencySymbol} ${subtotalCents}`,
+      const minOrder = deliveryConfig.minOrder;
+      return NextResponse.json({
+        error: `Minimum order value is ${currencySymbol} ${minOrder} for ${countryCode.toUpperCase()}. Current order: ${currencySymbol} ${subtotal}`,
         minOrderRequired: true,
-        minOrderCents: deliveryConfig.minOrderCents,
+        minOrder: deliveryConfig.minOrder,
         currency: getCurrencyForCountry(countryCode)
       }, { status: 400 });
     }
 
     // Apply discount from coupon code
-    const { discountCents } = await applyDiscount(
+    const { discount } = await applyDiscount(
       couponCode,
       countryCode,
-      subtotalCents,
+      subtotal,
       session?.user?.id || undefined,
       session?.user?.email || undefined
     );
 
-    const totalCents = subtotalCents + shippingCents - discountCents;
+    const total = subtotal + shippingFee - discount;
 
     // Determine courier based on shipping address
     const courier = determineCourier(shipping);
@@ -444,10 +444,10 @@ export async function POST(req: Request) {
         email: session?.user?.email || billing?.email || null,
         status: OrderStatus.ORDER_RECEIVED,
         currency: currency.toLowerCase(),
-        subtotalCents,
-        shippingCents,
-        discountCents,
-        totalCents,
+        subtotal,
+        shipping: shippingFee,
+        discount,
+        total,
         billingAddress: billing || {},
         shippingAddress: shipping || {},
         paymentMethod: payment_method || "stripe",
@@ -490,9 +490,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       orderId: order.id,
-      subtotal: subtotalCents,
-      shipping: shippingCents,
-      total: order.totalCents,
+      subtotal: subtotal,
+      shipping: shippingFee,
+      total: order.total,
       currency: order.currency,
       status: order.status,
       freeDelivery,

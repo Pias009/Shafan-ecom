@@ -10,13 +10,10 @@ function isValidImageUrl(url: any): boolean {
 // Check if a product has a valid price for display
 export function hasValidPrice(product: any, userCountry?: string): boolean {
   if (product.countryPrices && product.countryPrices.length > 0) {
-    const countryPrice = product.countryPrices.find((cp: any) =>
-      cp.country.toUpperCase() === (userCountry || '').toUpperCase()
-    );
-    const priceToUse = countryPrice || product.countryPrices.find((cp: any) => cp.priceCents > 0);
-    return priceToUse && priceToUse.priceCents > 0;
+    const hasValidPrice = product.countryPrices.some((cp: any) => cp.price > 0);
+    return hasValidPrice || product.price > 0;
   }
-  return product.price > 0 || product.priceCents > 0;
+  return product.price > 0;
 }
 
 /**
@@ -46,7 +43,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
           },
           select: {
             country: true,
-            priceCents: true,
+            price: true,
             currency: true,
             active: true
           }
@@ -89,12 +86,14 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         averageRating: p.averageRating || 0,
         ratingCount: p.ratingCount || 0,
         totalSales: p.totalSales || 0,
-        price: p.priceCents || 0,
-        priceCents: p.priceCents || 0,
-        regularPrice: p.priceCents || 0,
-        regularPriceCents: p.priceCents || 0,
-        salePrice: p.discountCents ? (p.priceCents - p.discountCents) : null,
-        salePriceCents: p.discountCents ? (p.priceCents - p.discountCents) : null,
+        price: Number(p.price) || 0,
+        priceCents: Number(p.price) || 0,
+        regularPrice: Number(p.price) || 0,
+        regularPriceCents: Number(p.price) || 0,
+        salePrice: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
+        salePriceCents: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
+        discountPrice: p.discountPrice ? Number(p.discountPrice) : null,
+        discountCents: p.discountPrice ? Number(p.discountPrice) : null,
         currency: currency,
         active: p.active,
         hot: p.hot,
@@ -151,9 +150,14 @@ export async function getProduct(id: string) {
       averageRating: p.averageRating || 0,
       ratingCount: p.ratingCount || 0,
       totalSales: p.totalSales || 0,
-      price: p.priceCents || 0,
-      regularPrice: p.priceCents || 0,
-      salePrice: p.discountCents ? (p.priceCents - p.discountCents) : null,
+      price: Number(p.price) || 0,
+      priceCents: Number(p.price) || 0,
+      regularPrice: Number(p.price) || 0,
+      regularPriceCents: Number(p.price) || 0,
+      salePrice: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
+      salePriceCents: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
+      discountPrice: p.discountPrice ? Number(p.discountPrice) : null,
+      discountCents: p.discountPrice ? Number(p.discountPrice) : null,
       currency: p.currency.toUpperCase(),
       active: p.active,
       hot: p.hot,
@@ -207,7 +211,9 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
       });
       dbProducts = inventories.map((inv: any) => ({
         ...inv.product,
-        priceCents: inv.price,
+        price: Number(inv.price) || 0,
+        priceCents: Number(inv.price) || 0,
+        discountPrice: null,
         discountCents: null,
         stockQuantity: inv.quantity
       })).filter((p: any) => p.active);
@@ -258,9 +264,14 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
         averageRating: p.averageRating || 0,
         ratingCount: p.ratingCount || 0,
         totalSales: p.totalSales || 0,
-        price: p.priceCents || 0,
-        regularPrice: p.priceCents || 0,
-        salePrice: p.discountCents ? (p.priceCents - p.discountCents) : null,
+        price: Number(p.price) || 0,
+        priceCents: Number(p.price) || 0,
+        regularPrice: Number(p.price) || 0,
+        regularPriceCents: Number(p.price) || 0,
+        salePrice: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
+        salePriceCents: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
+        discountPrice: p.discountPrice ? Number(p.discountPrice) : null,
+        discountCents: p.discountPrice ? Number(p.discountPrice) : null,
         currency: p.currency?.toUpperCase() || 'USD',
         active: p.active,
         hot: p.hot,

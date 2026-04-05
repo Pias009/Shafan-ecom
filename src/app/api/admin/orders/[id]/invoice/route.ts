@@ -34,10 +34,9 @@ export async function POST(
     const paymentMethod = order.paymentMethodTitle || order.paymentMethod || 'N/A';
     const paymentStatus = order.paymentStatus || 'PAID';
 
-    function formatPrice(amountCents: number, currency: string): string {
+    function formatPrice(amount: number, currency: string): string {
       const code = currency?.toUpperCase() || 'USD';
       const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
-      const amount = Number(amountCents);
       return `${code} ${amount.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
     }
 
@@ -47,11 +46,11 @@ export async function POST(
     dueDate.setDate(dueDate.getDate() + 30);
     const paymentDueDate = dueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    const subtotal = Number(order.subtotalCents);
-    const shippingCost = Number(order.shippingCents || 0);
-    const discount = Number(order.discountCents || 0);
-    const total = Number(order.totalCents);
-    const taxValue = (order.totalCents - order.subtotalCents - (order.shippingCents || 0) + (order.discountCents || 0));
+    const subtotal = Number(order.subtotal);
+    const shippingCost = Number(order.shipping || 0);
+    const discount = Number(order.discount || 0);
+    const total = Number(order.total);
+    const taxValue = (order.total - order.subtotal - (order.shipping || 0) + (order.discount || 0));
     const tax = taxValue.toFixed(2);
 
     const itemsHtml = order.items.map((item: any, index: number) => `
@@ -63,8 +62,8 @@ export async function POST(
           ${item.sku ? `<br><span style="color: #888; font-size: 9px;">SKU: ${item.sku}</span>` : ''}
         </td>
         <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 11px;">${item.quantity}</td>
-        <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;">${formatPrice(item.unitPriceCents, order.currency)}</td>
-        <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;"><strong>${formatPrice(item.unitPriceCents * item.quantity, order.currency)}</strong></td>
+        <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;">${formatPrice(item.unitPrice, order.currency)}</td>
+        <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;"><strong>${formatPrice(item.unitPrice * item.quantity, order.currency)}</strong></td>
       </tr>
     `).join('');
 
@@ -222,16 +221,16 @@ export async function POST(
       <div class="totals-table">
         <div class="totals-row">
           <span class="totals-label">Subtotal</span>
-          <span class="totals-value">${formatPrice(order.subtotalCents, order.currency)}</span>
+          <span class="totals-value">${formatPrice(order.subtotal, order.currency)}</span>
         </div>
         <div class="totals-row">
           <span class="totals-label">Shipping</span>
-          <span class="totals-value">${formatPrice(order.shippingCents || 0, order.currency)}</span>
+          <span class="totals-value">${formatPrice(order.shipping || 0, order.currency)}</span>
         </div>
         ${discount > 0 ? `
         <div class="totals-row">
           <span class="totals-label">Discount</span>
-          <span class="totals-value discount">-${formatPrice(order.discountCents || 0, order.currency)}</span>
+          <span class="totals-value discount">-${formatPrice(order.discount || 0, order.currency)}</span>
         </div>
         ` : ''}
         ${parseFloat(tax) > 0 ? `
@@ -242,7 +241,7 @@ export async function POST(
         ` : ''}
         <div class="totals-row final">
           <span class="totals-label">TOTAL</span>
-          <span class="totals-value">${formatPrice(order.totalCents, order.currency)}</span>
+          <span class="totals-value">${formatPrice(order.total, order.currency)}</span>
         </div>
       </div>
     </div>

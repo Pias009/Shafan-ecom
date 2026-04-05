@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
               select: {
                 id: true,
                 name: true,
-                priceCents: true,
+                price: true,
               },
             },
           },

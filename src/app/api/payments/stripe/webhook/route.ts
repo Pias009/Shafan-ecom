@@ -39,7 +39,7 @@ export async function POST(req: Request) {
             html: `
               <h1>Thank you for your order!</h1>
               <p>We've received your payment for order #${updatedOrder.id}.</p>
-              <p>Total Paid: ${updatedOrder.totalCents / 100} ${updatedOrder.currency.toUpperCase()}</p>
+              <p>Total Paid: ${(updatedOrder.total || 0).toFixed(2)} ${updatedOrder.currency.toUpperCase()}</p>
               <p>We are now processing your order and will ship it soon!</p>
             `
           }).catch(console.error);
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
           sendEmail({
             to: process.env.ADMIN_EMAIL,
             subject: `New PAID Order - #${updatedOrder.id}`,
-            html: `<p>New order paid. Customer: ${updatedOrder.user?.email || 'Guest'}. Amount: ${updatedOrder.totalCents / 100} ${updatedOrder.currency.toUpperCase()}</p>`
+            html: `<p>New order paid. Customer: ${updatedOrder.user?.email || 'Guest'}. Amount: ${(updatedOrder.total || 0).toFixed(2)} ${updatedOrder.currency.toUpperCase()}</p>`
           }).catch(console.error);
         }
       }

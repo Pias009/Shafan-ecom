@@ -452,8 +452,8 @@ export const sendOrderStatusEmail = async (
   customerEmail: string,
   customerName: string,
   status: string,
-  items: Array<{ nameSnapshot: string; quantity: number; unitPriceCents: number }>,
-  totalCents: number,
+  items: Array<{ nameSnapshot: string; quantity: number; unitPrice: number }>,
+  total: number,
   currency: string,
   shippingAddress?: any
 ) => {
@@ -504,7 +504,7 @@ export const sendOrderStatusEmail = async (
       status,
       message: statusInfo.message,
       items,
-      totalCents,
+      total,
       currency,
       shippingAddress,
       trackingUrl: `https://shafan-store.com/account/orders/${orderId}`,

@@ -101,9 +101,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       const countryPrice = p.countryPrices?.find((cp: any) =>
         cp.country.toUpperCase() === userCountry.toUpperCase()
       );
-      const unitPriceCents = countryPrice && countryPrice.priceCents > 0
-        ? countryPrice.priceCents
-        : (p.salePriceCents || p.priceCents);
+      const unitPrice = countryPrice && Number(countryPrice.price) > 0
+        ? Number(countryPrice.price)
+        : (p.salePrice || p.price);
 
       const res = await fetch("/api/create-order", {
         method: "POST",
@@ -112,7 +112,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
           items: [{ 
             productId: p.id, 
             quantity: 1,
-            unitPriceCents
+            unitPrice
           }],
           country: userCountry
         }),

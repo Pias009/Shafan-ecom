@@ -24,12 +24,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order is already paid or cancelled" }, { status: 400 });
     }
 
-    const amountInCents = order.totalCents || 0;
-    if (amountInCents <= 0) {
+    const totalAmount = order.total || 0;
+    if (totalAmount <= 0) {
       return NextResponse.json({ error: "Order total must be greater than 0" }, { status: 400 });
     }
 
-    const amount = amountInCents;
+    // Stripe expects amounts in cents (smallest currency unit)
+    const amount = Math.round(totalAmount * 100);
     const billing = (order.billingAddress as any) || {};
     const customerEmail = billing.email;
     const orderCurrency = order.currency || "usd";

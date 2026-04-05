@@ -44,7 +44,7 @@ export default async function OrdersPage() {
     
     orders = dbOrders.map((o: any) => ({
       id: String(o.id),
-      totalCents: o.totalCents,
+      total: o.total,
       currency: o.currency,
       status: o.status,
       createdAt: o.createdAt,
@@ -95,7 +95,7 @@ export default async function OrdersPage() {
                   <div className="space-y-3 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="text-2xl font-black text-black">
-                        {formatPrice(order.totalCents, order.currency)}
+                        {formatPrice(order.total, order.currency)}
                       </span>
                       <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
                         order.status === OrderStatus.DELIVERED ? 'bg-green-100 text-green-800 border-green-200' :
