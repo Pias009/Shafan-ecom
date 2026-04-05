@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { ShoppingBag, Star, Package, ShoppingCart, Truck } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { hasValidPrice } from "@/lib/product-utils";
-import { useCountryStore } from "@/lib/country-store";
+import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -46,9 +47,29 @@ export function ProductCard({
   onOrderNow,
   compact = false,
 }: ProductCardProps) {
+  const [mounted, setMounted] = useState(false);
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
+  const hasHydrated = useCountryStoreReady();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Wait for hydration - return placeholder to match server render
+  if (!mounted || !hasHydrated) {
+    return (
+      <div className="bg-white shadow-lg rounded-2xl overflow-hidden w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] mx-auto">
+        <div className="h-[150px] sm:h-[170px] md:h-[190px] bg-gray-100 animate-pulse" />
+        <div className="p-4 space-y-2">
+          <div className="h-4 bg-gray-200 rounded animate-pulse" />
+          <div className="h-3 bg-gray-200 rounded w-2/3 animate-pulse" />
+          <div className="h-5 bg-gray-200 rounded w-1/2 animate-pulse" />
+        </div>
+      </div>
+    );
+  }
 
   // Safety Guard: Hide products with zero price for selected country
   if (!hasValidPrice(product, selectedCountry)) {

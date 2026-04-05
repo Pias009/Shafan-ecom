@@ -10,7 +10,7 @@ const CURRENCY_TO_COUNTRY: Record<string, string> = {
   SAR: "SA",
   OMR: "OM",
   QAR: "QA",
-  BDT: "BD",
+  BDT: "KW",
   USD: "US",
 };
 
@@ -42,7 +42,10 @@ export const useCountryStore = create<CountryState>()(
       },
       setCurrency: (currencyCode: string) => {
         const upperCurrency = currencyCode.toUpperCase();
-        const country = CURRENCY_TO_COUNTRY[upperCurrency] || "KW";
+        let country = CURRENCY_TO_COUNTRY[upperCurrency] || "KW";
+        if (upperCurrency === "BDT") {
+          country = "KW";
+        }
         set({ 
           selectedCountry: country, 
           selectedCurrency: upperCurrency 

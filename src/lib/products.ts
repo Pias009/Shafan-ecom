@@ -1,13 +1,12 @@
-import { prisma } from "./prisma";
+import { prisma, prismaWithRetry } from "./prisma";
 
-export const revalidate = 60; // Revalidate every 60 seconds
+export const revalidate = 60;
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
   return url.startsWith('/') || url.startsWith('http');
 }
 
-// Check if a product has a valid price for display
 export function hasValidPrice(product: any, userCountry?: string): boolean {
   if (product.countryPrices && product.countryPrices.length > 0) {
     const hasValidPrice = product.countryPrices.some((cp: any) => cp.price > 0);
@@ -16,43 +15,24 @@ export function hasValidPrice(product: any, userCountry?: string): boolean {
   return product.price > 0;
 }
 
-/**
- * Get products from database only
- */
 export async function getProducts(storeCode?: string, page: number = 1, limit: number = 50) {
   try {
-    let dbProducts: any[] = [];
-    
-    // Always query products directly first, then filter by store if needed
-    dbProducts = await prisma.product.findMany({
-      where: {
-        active: true,
-      },
-      include: {
-        brand: true,
-        productCategories: {
-          include: { category: { select: { id: true, name: true } } }
-        },
-        productSkinTones: {
-          include: { skinTone: true }
-        },
-        subCategory: true,
-        countryPrices: {
-          where: {
-            active: true
+    const dbProducts = await prismaWithRetry(async () => {
+      return await prisma.product.findMany({
+        where: { active: true },
+        include: {
+          brand: true,
+          productCategories: { include: { category: { select: { id: true, name: true } } } },
+          productSkinTones: { include: { skinTone: true } },
+          subCategory: true,
+          countryPrices: {
+            where: { active: true },
+            select: { country: true, price: true, currency: true, active: true }
           },
-          select: {
-            country: true,
-            price: true,
-            currency: true,
-            active: true
-          }
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
     });
 
     const products = dbProducts.map((p: any) => {
@@ -190,24 +170,20 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
     let dbProducts: any[] = [];
     
     if (storeCode) {
-      const inventories = await (prisma as any).storeInventory.findMany({
-        where: {
-          store: { code: storeCode }
-        },
-        include: {
-          product: {
-            include: {
-              brand: true,
-              productCategories: { include: { category: true } },
-            },
-          }
-        },
-        orderBy: {
-          product: {
-            createdAt: 'desc',
+      const inventories = await prismaWithRetry(async () => {
+        return await (prisma as any).storeInventory.findMany({
+          where: { store: { code: storeCode } },
+          include: {
+            product: {
+              include: {
+                brand: true,
+                productCategories: { include: { category: true } },
+              },
+            }
           },
-        },
-        take: limit,
+          orderBy: { product: { createdAt: 'desc' } },
+          take: limit,
+        });
       });
       dbProducts = inventories.map((inv: any) => ({
         ...inv.product,
@@ -218,21 +194,19 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
         stockQuantity: inv.quantity
       })).filter((p: any) => p.active);
     } else {
-      dbProducts = await prisma.product.findMany({
-        where: {
-          active: true,
-        },
-        include: {
-          brand: true,
-          productCategories: { include: { category: true } },
-          productSkinTones: { include: { skinTone: true } },
-          productSkinConcerns: { include: { skinConcern: true } },
-          subCategory: { include: { category: true } },
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: limit,
+      dbProducts = await prismaWithRetry(async () => {
+        return await prisma.product.findMany({
+          where: { active: true },
+          include: {
+            brand: true,
+            productCategories: { include: { category: true } },
+            productSkinTones: { include: { skinTone: true } },
+            productSkinConcerns: { include: { skinConcern: true } },
+            subCategory: { include: { category: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+        });
       });
     }
 

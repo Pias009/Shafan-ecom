@@ -50,11 +50,9 @@ export function Footer() {
       id: "policies",
       title: t.footer.policies,
       links: [
-        { label: t.footer.termsConditions, href: "/info#terms" },
-        { label: t.footer.privacyPolicy, href: "/info#privacy" },
-        { label: t.footer.returnsPolicy, href: "/info#refund" },
-        { label: "Shipping Info", href: "/info#shipping" },
-        { label: "About Us", href: "/info#about" },
+        { label: t.footer.termsConditions, href: "/terms" },
+        { label: t.footer.privacyPolicy, href: "/privacy" },
+        { label: t.footer.returnsPolicy, href: "/returns-policy" },
       ],
     },
   ];

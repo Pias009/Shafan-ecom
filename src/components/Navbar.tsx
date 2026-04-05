@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search } from "lucide-react";
+import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useMemo, useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -10,20 +10,17 @@ import { AuthModal } from "./AuthModal";
 import { UserDropdown } from "./UserDropdown";
 import { CurrencySelector } from "./CurrencySelector";
 import { LanguageSelector } from "./LanguageSelector";
-import { SearchOverlay } from "./SearchOverlay";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { Logo } from "./Logo";
 import { useCountryStore } from "@/lib/country-store";
-import { getFlagForCountry } from "@/lib/currency-rates";
 
 export function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const [authOpen, setAuthOpen] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   
   // Safe pathname for SSR - use empty string if null
   const safePathname = pathname || "";
@@ -209,25 +206,13 @@ export function Navbar() {
           </div>
 
           {/* User + Actions dropdown */}
-          <div className="relative -ml-4 flex items-center gap-1">
-            {/* Single Reactive Flag - based on selectedCountry */}
-            {mounted && selectedCountry && (
-              <span className="text-lg" title={`${selectedCountry} - Click to change`}>
-                {getFlagForCountry(selectedCountry)}
-              </span>
+          <div className="relative -ml-4 flex items-center gap-2">
+            {/* Dynamic Flag - Clickable to open Currency Selector */}
+            {mounted && (
+              <CurrencySelector />
             )}
             
-            {/* Search Icon - Now a sibling, not nested */}
-            <button
-              type="button"
-              onClick={() => setShowSearch(true)}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/80 backdrop-blur-md border border-white/20 shadow-sm hover:bg-white/90 transition-all"
-              aria-label="Search products"
-            >
-              <Search size={18} className="text-black/70" />
-            </button>
-            
-            {/* User Button */}
+            {/* User Button - SEPARATE */}
             <button
               type="button"
               onClick={() => {
@@ -240,15 +225,10 @@ export function Navbar() {
               className="inline-flex h-16 items-center gap-2 rounded-full px-2 text-lg font-semibold text-black transition hover:bg-black/5"
               aria-label={userLabel ? "Open user menu" : "Sign in"}
             >
-              {/* Always show user icon */}
               <div className="relative flex items-center">
                 <UserRound size={24} />
               </div>
-              
-              {/* Always show user name */}
               <span className="uppercase tracking-wide">{userLabel ?? t.nav.signIn}</span>
-              
-              {/* Show cart icon with count when items in cart */}
               {mounted && cartCount > 0 && (
                 <div className="relative flex items-center ml-2">
                   <ShoppingBag size={24} />
@@ -418,11 +398,6 @@ export function Navbar() {
       )}
       
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
-      
-      {/* Search Overlay */}
-      {showSearch && (
-        <SearchOverlay onClose={() => setShowSearch(false)} />
-      )}
     </>
   );
 }

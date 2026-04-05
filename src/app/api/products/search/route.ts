@@ -17,25 +17,24 @@ export async function GET(req: Request) {
           contains: query,
           mode: "insensitive",
         },
-      },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        regularPrice: true,
-        salePrice: true,
-        mainImage: true,
-        images: true,
-        brand: {
-          select: {
-            name: true,
-          },
-        },
+        active: true,
       },
       take: limit,
     });
 
-    return NextResponse.json({ products });
+    const formattedProducts = products.map(p => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      price: p.price || 0,
+      discountPrice: p.discountPrice,
+      mainImage: p.mainImage,
+      imageUrl: p.mainImage,
+      brand: "Shafan",
+      brandName: "Shafan",
+    }));
+
+    return NextResponse.json({ products: formattedProducts });
   } catch (error) {
     console.error("Search API error:", error);
     return NextResponse.json({ products: [] }, { status: 500 });

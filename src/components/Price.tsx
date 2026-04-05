@@ -33,12 +33,25 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   GBP: '£',
 };
 
-function formatPriceWithIntl(amount: number, currencyCode: string): string {
+const CURRENCY_SYMBOLS_ASCII: Record<string, string> = {
+  AED: 'AED',
+  KWD: 'KWD',
+  BHD: 'BHD',
+  SAR: 'SAR',
+  OMR: 'OMR',
+  QAR: 'QAR',
+  BDT: 'BDT',
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+};
+
+function formatPriceWithIntl(amount: number, currencyCode: string, useAscii: boolean = true): string {
   const code = currencyCode?.toUpperCase() || 'USD';
   
-  const symbol = CURRENCY_SYMBOLS[code] || code;
+  const symbol = useAscii ? CURRENCY_SYMBOLS_ASCII[code] : CURRENCY_SYMBOLS[code] || code;
   
-  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 0;
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
   const formatted = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -78,7 +91,7 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
     }
   }
 
-  const formatted = formatPriceWithIntl(displayAmount, displayCurrency);
+  const formatted = formatPriceWithIntl(displayAmount, displayCurrency, true);
   
   if (showSymbolSmall) {
     return (
@@ -89,7 +102,7 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
     );
   }
   
-  return <span className={className}>{formatted}</span>;
+  return <span className={className} style={{ unicodeBidi: 'plaintext' }}>{formatted}</span>;
 }
 
 export function Price(props: PriceProps) {

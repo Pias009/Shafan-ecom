@@ -1,10 +1,11 @@
+import { NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const session = await getAdminApiSession();
   if (!session) {
-    return new Response("Unauthorized", { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -78,25 +79,20 @@ export async function GET() {
       }
     });
 
-    return new Response(
-      JSON.stringify({
-        users: usersCount,
-        products: productsCount,
-        banners: bannersCount,
-        orders: ordersCount,
-        ordersByStatus: counts,
-        revenue: {
-          totalAED: Number(totalRevenueAED.toFixed(2)),
-          currency: 'AED'
-        },
-        outOfStock: outOfStockCount
-      }),
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return NextResponse.json({
+      users: usersCount,
+      products: productsCount,
+      banners: bannersCount,
+      orders: ordersCount,
+      ordersByStatus: counts,
+      revenue: {
+        totalAED: Number(totalRevenueAED.toFixed(2)),
+        currency: 'AED'
+      },
+      outOfStock: outOfStockCount
+    });
   } catch (error) {
     console.error("Admin Dashboard Error:", error);
-    return new Response(JSON.stringify({ error: "Failed to fetch dashboard data" }), { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch dashboard data" }, { status: 500 });
   }
 }
