@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ProductsSlider } from "@/components/ProductsSlider";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
-import { CountrySelector } from "@/components/CountrySelector";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,24 +14,39 @@ import { Price } from "@/components/Price";
 import { useRouter } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { useUserCountry } from "@/lib/country-detection";
+import { useCountryStore } from "@/lib/country-store";
+import { hasValidPrice } from "@/lib/product-utils";
+import { useSearchStore } from "@/lib/search-store";
 
 export default function ProductsClient({ initialProducts, category, brand: initialBrand, banners = [] }: { initialProducts: any[], category?: string, brand?: string, banners?: any[] }) {
   const [products] = useState<any[]>(initialProducts);
-  const [q, setQ] = useState("");
   const [brand, setBrand] = useState(initialBrand || "All");
   const [selectedCategory, setSelectedCategory] = useState(category || "All");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
   const [selectedSkinTone, setSelectedSkinTone] = useState("All");
   const [maxPrice, setMaxPrice] = useState(100000);
-  const [quickView, setQuickView] = useState<any>(null);
+  const [searchInputuickView, setSearchInputuickView] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const { query: q, clearQuery } = useSearchStore();
+  const [searchInput, setSearchInput] = useState("");
+
+  useEffect(() => {
+    if (q) {
+      setSearchInput(q);
+    }
+  }, [q]);
+
+  useEffect(() => {
+    return () => {
+      clearQuery();
+    };
+  }, [clearQuery]);
 
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
-  const userCountry = useUserCountry();
+  const { selectedCountry } = useCountryStore();
 
   const brands = useMemo(() => {
     const set = new Set(products.map(p => p.brandName).filter(Boolean));
@@ -69,9 +83,11 @@ export default function ProductsClient({ initialProducts, category, brand: initi
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
+      if (!hasValidPrice(p, selectedCountry)) return false;
+      
       const price = p.discountPrice ?? p.price ?? 0;
-      const matchesSearch = !q || p.name.toLowerCase().includes(q.toLowerCase()) ||
-        (p.brandName || '').toLowerCase().includes(q.toLowerCase());
+      const matchesSearch = !searchInput || p.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+        (p.brandName || '').toLowerCase().includes(searchInput.toLowerCase());
       const matchesBrand = brand === t.product.all || p.brandName === brand;
       const matchesPrice = price <= maxPrice;
       const matchesCategory = selectedCategory === t.product.all || p.categoryName === selectedCategory;
@@ -81,7 +97,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
       
       return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone;
     });
-  }, [q, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone]);
+  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedCountry]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -109,7 +125,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
     try {
       // Calculate unit price matching cart calculation
       const countryPrice = product.countryPrices?.find((cp: any) =>
-        cp.country.toUpperCase() === userCountry.toUpperCase()
+        cp.country.toUpperCase() === selectedCountry.toUpperCase()
       );
       const unitPrice = countryPrice && Number(countryPrice.price) > 0
         ? Number(countryPrice.price)
@@ -121,10 +137,10 @@ export default function ProductsClient({ initialProducts, category, brand: initi
         body: JSON.stringify({ 
           items: [{ 
             productId: product.id, 
-            quantity: 1,
+            searchInputuantity: 1,
             unitPrice
           }],
-          country: userCountry
+          country: selectedCountry
         }),
       });
       const data = await res.json();
@@ -210,8 +226,8 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                   </label>
                   <input
                     type="text"
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                     placeholder={t.product.search + "…"}
                     className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none placeholder:text-black/20"
                   />
@@ -322,7 +338,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                           product={product}
                           onQuickView={(p) => {
                             console.log('QuickView product:', p.id, 'imageUrl:', p.imageUrl);
-                            setQuickView(p);
+                            setSearchInputuickView(p);
                           }}
                           onAddToCart={(p) => addToCart(p)}
                           onOrderNow={(p) => orderNow(p)}
@@ -342,7 +358,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
             <p className="text-black/50 mt-2">{t.product.tryAdjusting}</p>
             <button 
                 onClick={() => { 
-                  setQ(""); 
+                  setSearchInput(""); 
                   setBrand(t.product.all); 
                   setSelectedCategory(t.product.all);
                   setSelectedSubCategory('All');
@@ -358,15 +374,12 @@ export default function ProductsClient({ initialProducts, category, brand: initi
       </div>
 
       <ProductQuickViewModal
-        product={quickView}
-        onClose={() => setQuickView(null)}
+        product={searchInputuickView}
+        onClose={() => setSearchInputuickView(null)}
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
         onMoreDetails={(productId) => router.push(`/products/${productId}`)}
       />
-      
-      {/* Development Country Selector */}
-      <CountrySelector />
     </div>
   );
 }

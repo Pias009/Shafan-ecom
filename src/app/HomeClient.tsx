@@ -8,7 +8,6 @@ import { ProductCard } from "@/components/ProductCard";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
-import { CountrySelector } from "@/components/CountrySelector";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -22,6 +21,7 @@ import { BlogShowcase } from "@/components/BlogShowcase";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
+import { useCountryStore } from "@/lib/country-store";
 import { useUserCountry } from "@/lib/country-detection";
 import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 import HomeBannerSlider from "@/components/HomeBannerSlider";
@@ -39,24 +39,19 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   const [authOpen, setAuthOpen] = useState(false);
   const [banners, setBanners] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
-  const { status } = useSession();
-
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
   const { setCurrency } = useCurrencyStore();
-  
-  // Use fixed country for initial render to prevent hydration mismatch
-  // Actual country detection happens after mount
-  const userCountry = useUserCountry();
-  const [effectiveCountry, setEffectiveCountry] = useState("AE");
+  const { selectedCountry, selectedCurrency, setCountry, setDetectedCountry } = useCountryStore();
+  const hasHydrated = useCountryStore((state) => state._hasHydrated);
+
+  const { status } = useSession();
 
   useEffect(() => {
-    // Mark as mounted after first render
     setMounted(true);
     
     async function detectCountry() {
       try {
-        // 1. Check if store_code is already in cookies (set by middleware)
         const getCookie = (name: string) => {
           if (typeof document === 'undefined') return null;
           const value = `; ${document.cookie}`;
@@ -68,19 +63,21 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         const storeCode = getCookie('store_code');
         const cached = localStorage.getItem("user-country");
 
-        // Map country codes to store codes
         const countryToStore: Record<string, string> = {
           'AE': 'UAE',
         };
 
         const countryToCurrency: Record<string, string> = {
           'AE': 'AED',
+          'KW': 'KWD',
+          'SA': 'SAR',
+          'BH': 'BHD',
+          'OM': 'OMR',
+          'QA': 'QAR',
         };
 
-        // Determine the country to use
         let country = cached;
         if (storeCode) {
-          // Map store code back to country code
           const storeToCountry: Record<string, string> = {
             'UAE': 'AE',
           };
@@ -88,23 +85,21 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         }
 
         if (country && countryToCurrency[country]) {
+          setCountry(country);
           setCurrency(countryToCurrency[country]);
-          setEffectiveCountry(country);
           localStorage.setItem("user-country", country);
           return;
         }
 
-        // 2. If no country detected, use default currency
-        setCurrency("AED");
-        setEffectiveCountry("AE");
+        setCountry("KW");
+        setCurrency("KWD");
         
       } catch (err) {
-        // Silently fail, defaulting to initialProducts from server
         console.debug("Geo sync skipped", err);
       }
     }
     detectCountry();
-  }, [setCurrency]);
+  }, [setCurrency, setCountry]);
 
   // Fetch active banners
   useEffect(() => {
@@ -138,7 +133,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return products.filter((p) => {
-      if (!hasValidPrice(p, effectiveCountry)) return false;
+      if (!hasValidPrice(p, selectedCountry)) return false;
       
       const price = p.price || 0;
       if (price > maxPrice) return false;
@@ -151,19 +146,19 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         p.category?.name?.toLowerCase().includes(query)
       );
     });
-  }, [q, category, brand, maxPrice, products, effectiveCountry]);
+  }, [q, category, brand, maxPrice, products, selectedCountry, selectedCurrency]);
 
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
   
   // Filter newArrivals based on country support
   const filteredNewArrivals = useMemo(() => {
-    return newArrivals.filter((p) => hasValidPrice(p, effectiveCountry));
-  }, [newArrivals, effectiveCountry]);
+    return newArrivals.filter((p) => hasValidPrice(p, selectedCountry));
+  }, [newArrivals, selectedCountry, selectedCurrency]);
   
   // Filter hot products based on country support
   const filteredHot = useMemo(() => {
-    return hot.filter((p) => hasValidPrice(p, effectiveCountry));
-  }, [hot, effectiveCountry]);
+    return hot.filter((p) => hasValidPrice(p, selectedCountry));
+  }, [hot, selectedCountry, selectedCurrency]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -196,7 +191,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
     try {
       // Calculate unit price matching cart calculation
       const countryPrice = product.countryPrices?.find((cp: any) =>
-        cp.country.toUpperCase() === effectiveCountry.toUpperCase()
+        cp.country.toUpperCase() === selectedCountry.toUpperCase()
       );
       const unitPrice = countryPrice && Number(countryPrice.price) > 0
         ? Number(countryPrice.price)
@@ -211,7 +206,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
             quantity: 1,
             unitPrice 
           }],
-          country: effectiveCountry
+          country: selectedCountry
         }),
       });
       const data = await res.json();
@@ -475,9 +470,6 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       />
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
-      
-      {/* Development Country Selector */}
-      <CountrySelector />
     </div>
   );
 }

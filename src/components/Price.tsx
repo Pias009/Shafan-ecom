@@ -2,8 +2,9 @@
 
 import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
 import { useEffect, useState } from "react";
-import { useUserCountry } from "@/lib/country-detection";
+import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
+import { convertCurrency, getExchangeRate, EXCHANGE_RATES } from "@/lib/currency-rates";
 
 interface PriceProps {
   amount: number | string;
@@ -17,40 +18,67 @@ interface PriceProps {
   currency?: string;
 }
 
-function formatPriceSimple(amount: number, currencyCode: string): string {
+const GULF_COUNTRIES = ['AE', 'KW', 'BH', 'SA', 'OM', 'QA'];
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  AED: 'د.إ',
+  KWD: 'د.ك',
+  BHD: '.د.ب',
+  SAR: 'ر.س',
+  OMR: 'ر.ع.',
+  QAR: 'ر.ق',
+  BDT: '৳',
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+};
+
+function formatPriceWithIntl(amount: number, currencyCode: string): string {
   const code = currencyCode?.toUpperCase() || 'USD';
-  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
-  const symbol = code;
-  return `${symbol} ${amount.toLocaleString(undefined, {
+  
+  const symbol = CURRENCY_SYMBOLS[code] || code;
+  
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 0;
+  const formatted = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  })}`;
+  }).format(amount);
+  
+  return `${symbol} ${formatted}`;
 }
 
-function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, userCountry, currentCurrency }: PriceProps & { userCountry: string; currentCurrency: { code: string; rate: number } }) {
+function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, userCountry, selectedCurrency }: PriceProps & { userCountry: string; selectedCurrency: string }) {
   if (amount == null) {
     return <span className={className}>-</span>;
   }
   let displayAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
   if (isNaN(displayAmount)) displayAmount = 0;
 
-  let displayCurrency = currentCurrency.code;
+  let displayCurrency = selectedCurrency;
+  let hasCountrySpecificPrice = false;
 
-  // 1. Check if we have country-specific pricing
   if (countryPrices && countryPrices.length > 0) {
-    const { price, currency: priceCurrency } = getDisplayPrice({ countryPrices }, userCountry);
-    if (price > 0 || (Number(price) || 0) > 0) {
-      displayAmount = Number(price);
-      displayCurrency = priceCurrency;
-    }
-  } else {
-    // 2. Fallback to base amount - always raw (no cents)
-    if (currency) {
-      displayCurrency = currency.toUpperCase();
+    const countryUpper = userCountry.toUpperCase();
+    const isGulfCountry = GULF_COUNTRIES.includes(countryUpper);
+    
+    if (isGulfCountry) {
+      const { price, currency: priceCurrency } = getDisplayPrice({ countryPrices }, userCountry);
+      if (price > 0 || (Number(price) || 0) > 0) {
+        displayAmount = Number(price);
+        displayCurrency = priceCurrency;
+        hasCountrySpecificPrice = true;
+      }
     }
   }
 
-  const formatted = formatPriceSimple(displayAmount, displayCurrency);
+  if (!hasCountrySpecificPrice) {
+    const baseCurrency = currency?.toUpperCase() || 'USD';
+    if (baseCurrency !== displayCurrency) {
+      displayAmount = convertCurrency(displayAmount, baseCurrency, displayCurrency);
+    }
+  }
+
+  const formatted = formatPriceWithIntl(displayAmount, displayCurrency);
   
   if (showSymbolSmall) {
     return (
@@ -67,15 +95,18 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
 export function Price(props: PriceProps) {
   const { currentCurrency } = useCurrencyStore();
   const [mounted, setMounted] = useState(false);
-  const userCountry = useUserCountry();
+  const hasHydrated = useCountryStoreReady();
+  const { selectedCountry, selectedCurrency } = useCountryStore();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
+  if (!mounted || !hasHydrated) {
     return <span className={props.className}>...</span>;
   }
 
-  return <PriceContent {...props} userCountry={userCountry} currentCurrency={currentCurrency} />;
+  const effectiveCurrency = selectedCurrency || currentCurrency.code;
+
+  return <PriceContent {...props} userCountry={selectedCountry} selectedCurrency={effectiveCurrency} />;
 }

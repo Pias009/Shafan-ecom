@@ -50,13 +50,14 @@ function getPriceFromCountryPrices(countryPrices: any[], countryCode: string) {
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; brand?: string }>;
+  searchParams: Promise<{ category?: string; brand?: string; q?: string }>;
 }) {
   const storeCode = await getStoreCode();
   const products = await getProducts(storeCode);
   const params = await searchParams;
   const category = params.category;
   const brand = params.brand;
+  const searchQuery = params.q || "";
   const banners = await getBanners();
   
   const countryCode = getCountryCodeFromStore(storeCode);

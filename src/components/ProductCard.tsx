@@ -5,6 +5,8 @@ import { ShoppingBag, Star, Package, ShoppingCart, Truck } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import { hasValidPrice } from "@/lib/product-utils";
+import { useCountryStore } from "@/lib/country-store";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -46,8 +48,16 @@ export function ProductCard({
 }: ProductCardProps) {
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
+  const { selectedCountry } = useCountryStore();
+
+  // Safety Guard: Hide products with zero price for selected country
+  if (!hasValidPrice(product, selectedCountry)) {
+    return null;
+  }
 
   // Safely get the display price
+  const displayPrice = product.discountPrice ?? product.price;
+  const isNotAvailable = displayPrice <= 0;
   const price = product.discountPrice ?? product.price;
   const hasDiscount = !!product.discountPrice && product.discountPrice < product.price;
   
@@ -143,13 +153,14 @@ export function ProductCard({
           <div className="flex flex-col gap-2 sm:gap-3 transition-all duration-600 ease-out delay-200 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
             <button
               type="button"
+              disabled={isNotAvailable}
               onClick={(e) => {
                 e.stopPropagation();
                 onOrderNow?.(product);
               }}
-              className="bg-white text-emerald-600 px-3 sm:px-4 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 pointer-events-auto whitespace-nowrap"
+              className={`bg-white px-3 sm:px-4 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 pointer-events-auto whitespace-nowrap ${isNotAvailable ? 'text-gray-400 cursor-not-allowed' : 'text-emerald-600 hover:text-emerald-700'}`}
             >
-              {t.product.orderNow || "Order NOW"}
+              {isNotAvailable ? "Not Available" : (t.product.orderNow || "Order NOW")}
             </button>
             <button
               type="button"
@@ -213,14 +224,15 @@ export function ProductCard({
         <div className="flex justify-center flex-shrink-0">
           <button
             type="button"
+            disabled={isNotAvailable}
             onClick={(e) => {
               e.stopPropagation();
               onAddToCart(product);
             }}
-            className="add-to-cart-btn w-full max-w-full"
-            title={t.product.addToCart || "Add to Cart"}
+            className={`add-to-cart-btn w-full max-w-full ${isNotAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={isNotAvailable ? "Not Available" : (t.product.addToCart || "Add to Cart")}
           >
-            <span className="text">{t.product.addToCart || "Add to Cart"}</span>
+            <span className="text">{isNotAvailable ? "Not Available" : (t.product.addToCart || "Add to Cart")}</span>
             <span className="icon">
               <ShoppingCart size={14} />
             </span>

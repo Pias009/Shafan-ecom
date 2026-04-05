@@ -42,6 +42,10 @@ export const useCartStore = create<CartState>()(
       couponDiscount: 0,
       addItem: (product, quantity = 1) =>
         set((state) => {
+          // Cart Validation: Block items with zero or negative price
+          const unitPrice = product.discountPrice ?? product.price;
+          if (unitPrice <= 0) return state;
+          
           const existingItem = state.items.find((item) => item.id === product.id);
           if (existingItem) {
             return {

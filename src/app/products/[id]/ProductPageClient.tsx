@@ -10,7 +10,6 @@ import { Footer } from "@/components/Footer";
 import { Price } from "@/components/Price";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
-import { CountrySelector } from "@/components/CountrySelector";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -498,9 +497,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         onOrderNow={(p) => orderNow(p)}
         onMoreDetails={(productId) => router.push(`/products/${productId}`)}
       />
-      
-      {/* Development Country Selector */}
-      <CountrySelector />
     </div>
   );
 }

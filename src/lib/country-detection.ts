@@ -4,9 +4,26 @@ import { useState, useEffect } from "react";
 import { SUPPORTED_COUNTRIES } from "./countries";
 
 /**
- * Default country fallback (UAE)
+ * Default country fallback (Kuwait - for developer ease)
  */
-export const DEFAULT_COUNTRY = "AE";
+export const DEFAULT_COUNTRY = "KW";
+
+const GULF_COUNTRIES = ["AE", "SA", "KW", "QA", "BH", "OM"];
+
+export const COUNTRY_TO_CURRENCY: Record<string, string> = {
+  AE: "AED",
+  KW: "KWD",
+  BH: "BHD",
+  SA: "SAR",
+  OM: "OMR",
+  QA: "QAR",
+  BD: "BDT",
+  US: "USD",
+};
+
+export function getCurrencyForDetectedCountry(countryCode: string): string {
+  return COUNTRY_TO_CURRENCY[countryCode.toUpperCase()] || "USD";
+}
 
 /**
  * Detects user's country based on available methods:
@@ -48,9 +65,6 @@ export function detectUserCountry(): string {
     if (timezone.includes("Kuwait")) {
       return "KW";
     }
-    if (timezone.includes("Dhaka")) {
-      return "BD";
-    }
     if (timezone.includes("Muscat")) {
       return "OM";
     }
@@ -61,8 +75,30 @@ export function detectUserCountry(): string {
     // Timezone detection failed
   }
 
-  // 4. Default fallback
-  return DEFAULT_COUNTRY;
+  // 4. Default fallback - if detected country is not in Gulf, default to Kuwait
+  // But allow Bangladesh (BD) for BD users
+  let detectedCountry = DEFAULT_COUNTRY;
+  
+  // Check timezone for Bangladesh
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz.includes("Dhaka")) {
+      return "BD";
+    }
+  } catch (error) {
+    // Timezone detection failed
+  }
+  
+  // Check browser language for Bangladesh
+  const lang = navigator.language || "en-US";
+  if (lang.toLowerCase().includes("bn") || lang.toLowerCase().includes("bangla")) {
+    return "BD";
+  }
+  
+  if (!GULF_COUNTRIES.includes(detectedCountry)) {
+    return DEFAULT_COUNTRY; // KW
+  }
+  return detectedCountry;
 }
 
 /**
@@ -87,7 +123,7 @@ export function getUserCountry(): string {
  * React hook for country detection (to be used in components)
  */
 export function useUserCountry(): string {
-  const [country, setCountry] = useState(DEFAULT_COUNTRY);
+  const [country, setCountry] = useState("KW");
 
   useEffect(() => {
     setCountry(detectUserCountry());

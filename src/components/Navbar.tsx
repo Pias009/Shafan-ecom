@@ -1,24 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles } from "lucide-react";
+import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useMemo, useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthModal } from "./AuthModal";
 import { UserDropdown } from "./UserDropdown";
 import { CurrencySelector } from "./CurrencySelector";
 import { LanguageSelector } from "./LanguageSelector";
+import { SearchOverlay } from "./SearchOverlay";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { Logo } from "./Logo";
+import { useCountryStore } from "@/lib/country-store";
+import { getFlagForCountry } from "@/lib/currency-rates";
 
 export function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const [authOpen, setAuthOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   
   // Safe pathname for SSR - use empty string if null
   const safePathname = pathname || "";
@@ -28,8 +33,18 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const items = useCartStore((state) => state.items);
   const { currentLanguage } = useLanguageStore();
+  const { selectedCountry, detectedCountry, setDetectedCountry } = useCountryStore();
 
   const t = translations[currentLanguage.code as keyof typeof translations];
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !detectedCountry) {
+      import("@/lib/country-detection").then(({ detectUserCountry }) => {
+        const detected = detectUserCountry();
+        setDetectedCountry(detected);
+      });
+    }
+  }, [detectedCountry, setDetectedCountry]);
 
   const navLinks = [
     { href: "/", label: t.nav.home },
@@ -194,7 +209,25 @@ export function Navbar() {
           </div>
 
           {/* User + Actions dropdown */}
-          <div className="relative -ml-4">
+          <div className="relative -ml-4 flex items-center gap-1">
+            {/* Single Reactive Flag - based on selectedCountry */}
+            {mounted && selectedCountry && (
+              <span className="text-lg" title={`${selectedCountry} - Click to change`}>
+                {getFlagForCountry(selectedCountry)}
+              </span>
+            )}
+            
+            {/* Search Icon - Now a sibling, not nested */}
+            <button
+              type="button"
+              onClick={() => setShowSearch(true)}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/80 backdrop-blur-md border border-white/20 shadow-sm hover:bg-white/90 transition-all"
+              aria-label="Search products"
+            >
+              <Search size={18} className="text-black/70" />
+            </button>
+            
+            {/* User Button */}
             <button
               type="button"
               onClick={() => {
@@ -385,6 +418,11 @@ export function Navbar() {
       )}
       
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      
+      {/* Search Overlay */}
+      {showSearch && (
+        <SearchOverlay onClose={() => setShowSearch(false)} />
+      )}
     </>
   );
 }

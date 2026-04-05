@@ -1,11 +1,14 @@
 "use client";
 
 import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
+import { useCountryStore } from "@/lib/country-store";
 import { useState, useEffect, useRef } from "react";
 import { Globe, ChevronDown } from "lucide-react";
+import { getFlagForCountry } from "@/lib/currency-rates";
 
 export function CurrencySelector() {
   const { currentCurrency, setCurrency } = useCurrencyStore();
+  const { selectedCountry, selectedCurrency, setCurrency: setCountryCurrency } = useCountryStore();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -25,14 +28,20 @@ export function CurrencySelector() {
       <div className="glass-panel h-9 w-12 rounded-full animate-pulse bg-black/5" />
   );
 
+  const handleCurrencySelect = (currencyCode: string) => {
+    setCountryCurrency(currencyCode);
+    setCurrency(currencyCode);
+    setIsOpen(false);
+  };
+
   return (
     <div className="relative" ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="glass-panel flex h-9 items-center gap-2 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:bg-black/5 shadow-sm"
       >
-        <Globe size={14} className="text-black/40" />
-        <span>{currentCurrency.code}</span>
+        <span className="text-sm">{getFlagForCountry(selectedCountry)}</span>
+        <span>{selectedCurrency}</span>
         <ChevronDown size={10} className={`text-black/20 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
@@ -45,12 +54,9 @@ export function CurrencySelector() {
             {SUPPORTED_CURRENCIES.map((currency) => (
               <button
                 key={currency.code}
-                onClick={() => {
-                  setCurrency(currency.code);
-                  setIsOpen(false);
-                }}
+                onClick={() => handleCurrencySelect(currency.code)}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                  currentCurrency.code === currency.code
+                  selectedCurrency === currency.code
                     ? "bg-black/5 text-black border border-black/10 shadow-sm scale-[0.98]"
                     : "text-black/60 hover:bg-black/5 hover:text-black"
                 }`}
