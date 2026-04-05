@@ -272,7 +272,7 @@ async function main() {
       storeId: uaeStore.id,
       productId: uaeExclusiveProduct1.id,
       quantity: 100,
-      price: uaeExclusiveProduct1.priceCents / 100,
+      price: uaeExclusiveProduct1.priceCents,
     },
   });
   console.log(`  ✅ Added ${uaeExclusiveProduct1.name} to UAE store only`);
@@ -291,7 +291,7 @@ async function main() {
       storeId: kuwaitStore.id,
       productId: kuwaitExclusiveProduct1.id,
       quantity: 50,
-      price: kuwaitExclusiveProduct1.priceCents / 100,
+      price: kuwaitExclusiveProduct1.priceCents,
     },
   });
   console.log(`  ✅ Added ${kuwaitExclusiveProduct1.name} to Kuwait store only`);
@@ -310,7 +310,7 @@ async function main() {
         storeId: kuwaitStore.id,
         productId: product.id,
         quantity: 75,
-        price: product.priceCents / 100,
+        price: product.priceCents,
       },
     });
     console.log(`  ✅ Added ${product.name} to Kuwait store only`);
@@ -330,7 +330,7 @@ async function main() {
         storeId: uaeStore.id,
         productId: product.id,
         quantity: 80,
-        price: product.priceCents / 100,
+        price: product.priceCents,
       },
     });
     console.log(`  ✅ Added ${product.name} to UAE store only`);

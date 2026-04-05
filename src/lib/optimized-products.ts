@@ -139,8 +139,8 @@ export async function getOptimizedProducts(
     
     if (options.minPrice !== undefined || options.maxPrice !== undefined) {
       where.priceCents = {};
-      if (options.minPrice !== undefined) where.priceCents.gte = options.minPrice * 100;
-      if (options.maxPrice !== undefined) where.priceCents.lte = options.maxPrice * 100;
+      if (options.minPrice !== undefined) where.priceCents.gte = options.minPrice;
+      if (options.maxPrice !== undefined) where.priceCents.lte = options.maxPrice;
     }
 
     // Build orderBy
@@ -202,7 +202,7 @@ export async function getOptimizedProducts(
 
     // Transform products
     const products = dbProducts.map((p: any) => {
-      const priceCents = p.storePrice ? Math.round(p.storePrice * 100) : p.priceCents;
+      const priceCents = p.storePrice || p.priceCents;
       const discountCents = p.discountCents || 0;
       const salePriceCents = discountCents > 0 ? priceCents - discountCents : null;
 
@@ -346,7 +346,7 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
 
     // If no country-specific price, use store inventory price
     if (priceCents === 0 && product.storePrice) {
-      priceCents = Math.round(product.storePrice * 100);
+      priceCents = product.storePrice;
     }
 
     const discountCents = product.discountCents || 0;

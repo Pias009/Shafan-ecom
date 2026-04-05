@@ -1,5 +1,4 @@
 import { prisma } from "./prisma";
-import { demoProducts } from "./demo-data";
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -21,8 +20,7 @@ export function hasValidPrice(product: any, userCountry?: string): boolean {
 }
 
 /**
- * Get products with MongoDB connection fallback to demo data
- * This prevents the application from crashing when MongoDB Atlas is unavailable
+ * Get products from database only
  */
 export async function getProducts(storeCode?: string, page: number = 1, limit: number = 50) {
   try {
@@ -114,34 +112,8 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
 
     return products;
   } catch (error: any) {
-    const fallbackProducts = demoProducts.map((demo, index) => ({
-      id: `demo-${index + 1}`,
-      name: demo.name,
-      description: demo.details,
-      shortDescription: "",
-      benefits: "",
-      ingredients: "",
-      howToUse: "",
-      features: demo.features,
-      images: [demo.imageUrl],
-      mainImage: demo.imageUrl,
-      stockQuantity: 100,
-      averageRating: 4.5,
-      ratingCount: 42,
-      totalSales: 150,
-      priceCents: demo.price * 100,
-      regularPriceCents: demo.price * 100,
-      salePriceCents: demo.discountPrice ? demo.discountPrice * 100 : null,
-      currency: 'USD',
-      active: true,
-      hot: demo.hot || false,
-      trending: index < 3,
-      brand: { name: demo.brand },
-      category: { name: demo.category },
-      countryPrices: [],
-    }));
-    
-    return fallbackProducts;
+    console.error("Prisma Product Fetch Error:", error);
+    return [];
   }
 }
 
@@ -199,47 +171,6 @@ export async function getProduct(id: string) {
     return product;
   } catch (error: any) {
     console.error("Prisma Product Fetch Error:", error);
-    
-    // Check if it's a connection error
-    const isConnectionError = error.message?.includes('connection') ||
-                              error.message?.includes('timeout') ||
-                              error.message?.includes('TLS') ||
-                              error.message?.includes('SSL') ||
-                              error.message?.includes('Mongo');
-    
-    if (isConnectionError && demoProducts.length > 0) {
-      console.warn("⚠️ MongoDB Atlas connection failed. Returning first demo product.");
-      
-      // Return the first demo product as a fallback
-      const demo = demoProducts[0];
-      return {
-        id: 'demo-1',
-        name: demo.name,
-        description: demo.details,
-        shortDescription: "",
-        benefits: "",
-        ingredients: "",
-        howToUse: "",
-        features: demo.features,
-        images: [demo.imageUrl],
-        mainImage: demo.imageUrl,
-        stockQuantity: 100,
-        averageRating: 4.5,
-        ratingCount: 42,
-        totalSales: 150,
-        priceCents: demo.price * 100,
-        regularPriceCents: demo.price * 100,
-        salePriceCents: demo.discountPrice ? demo.discountPrice * 100 : null,
-        currency: 'USD',
-        active: true,
-        hot: demo.hot || false,
-        trending: true,
-        brand: { name: demo.brand },
-        category: { name: demo.category },
-        related_ids: [],
-      };
-    }
-    
     return null;
   }
 }
@@ -276,7 +207,7 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
       });
       dbProducts = inventories.map((inv: any) => ({
         ...inv.product,
-        priceCents: Math.round(inv.price * 100),
+        priceCents: inv.price,
         discountCents: null,
         stockQuantity: inv.quantity
       })).filter((p: any) => p.active);

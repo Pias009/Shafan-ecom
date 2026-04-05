@@ -69,7 +69,7 @@ export function formatCountryPrice(
   formatFn: (amount: number, currency: string) => string
 ): string {
   const { priceCents, currency } = getPriceForCountry(product, countryCode);
-  return formatFn(priceCents / 100, currency);
+  return formatFn(priceCents, currency);
 }
 
 /**
