@@ -139,33 +139,17 @@ export async function GET() {
       return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
     }
 
-    const products = await prisma.product.findMany({
+    const products = await (prisma as any).product.findMany({
       where: whereClause,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        priceCents: true,
-        discountCents: true,
-        hot: true,
-        active: true,
-        brand: { select: { name: true } },
+      include: {
+        brand: true,
         productCategories: { include: { category: { select: { name: true, id: true } } } },
         store: { select: { code: true, name: true } },
         storeInventories: {
           where: accessibleStoreIds.length > 0 ? { storeId: { in: accessibleStoreIds } } : undefined,
           select: { storeId: true, quantity: true, store: { select: { code: true } } }
         },
-        countryPrices: {
-          select: {
-            id: true,
-            country: true,
-            priceCents: true,
-            currency: true,
-            active: true
-          }
-        },
-        createdAt: true,
+        countryPrices: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -215,7 +199,7 @@ export async function POST(req: Request) {
     if (processedBody.countryPrices && Array.isArray(processedBody.countryPrices)) {
       processedBody.countryPrices = processedBody.countryPrices.map((cp: any) => ({
         ...cp,
-        priceCents: typeof cp.priceCents === 'string' ? parseInt(cp.priceCents, 10) : (Number(cp.priceCents) || 0),
+        priceCents: typeof cp.priceCents === 'string' ? Math.round(parseFloat(cp.priceCents)) : (Math.round(Number(cp.priceCents)) || 0),
         active: true,
       }));
     }

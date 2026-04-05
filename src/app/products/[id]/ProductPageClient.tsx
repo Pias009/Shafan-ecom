@@ -17,7 +17,7 @@ import { translations } from "@/lib/translations";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUserCountry } from "@/lib/country-detection";
-import { hasValidPrice } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice, formatPriceUnits } from "@/lib/product-utils";
 
 interface ProductPageClientProps {
   product: any;
@@ -69,17 +69,22 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
   function addToCart(productToAdd?: any) {
     const p = productToAdd || product;
+    if (!p) return;
+
+    // Use our utility to get the correct price for the user's country
+    const { price: itemPrice } = getDisplayPrice(p, userCountry);
+    
     addItem({
       id: p.id,
-      name: p.name,
-      brand: p.brand?.name,
-      category: p.category?.name,
-      price: p.price || p.priceCents || 0,
-      discountPrice: p.salePrice || p.salePriceCents || undefined,
-      imageUrl: p.mainImage,
+      name: p.name || 'Product',
+      brand: typeof p.brand === 'string' ? p.brand : (p.brand?.name || p.brandName),
+      category: typeof p.category === 'string' ? p.category : (p.category?.name || p.categoryName),
+      price: itemPrice,
+      imageUrl: p.mainImage || p.imageUrl,
       countryPrices: p.countryPrices,
     }, 1);
-    toast.success(`${p.name} added to cart`);
+    
+    toast.success(`${p.name || 'Product'} added to cart`);
   }
 
   async function orderNow(productToOrder?: any) {

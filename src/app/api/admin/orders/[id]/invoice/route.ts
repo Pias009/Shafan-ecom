@@ -37,7 +37,7 @@ export async function POST(
     function formatPrice(amountCents: number, currency: string): string {
       const code = currency?.toUpperCase() || 'USD';
       const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
-      const amount = amountCents / 100;
+      const amount = Number(amountCents);
       return `${code} ${amount.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
     }
 
@@ -47,11 +47,12 @@ export async function POST(
     dueDate.setDate(dueDate.getDate() + 30);
     const paymentDueDate = dueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    const subtotal = order.subtotalCents / 100;
-    const shippingCost = (order.shippingCents || 0) / 100;
-    const discount = (order.discountCents || 0) / 100;
-    const total = order.totalCents / 100;
-    const tax = ((order.totalCents - order.subtotalCents - (order.shippingCents || 0) + (order.discountCents || 0)) / 100).toFixed(2);
+    const subtotal = Number(order.subtotalCents);
+    const shippingCost = Number(order.shippingCents || 0);
+    const discount = Number(order.discountCents || 0);
+    const total = Number(order.totalCents);
+    const taxValue = (order.totalCents - order.subtotalCents - (order.shippingCents || 0) + (order.discountCents || 0));
+    const tax = taxValue.toFixed(2);
 
     const itemsHtml = order.items.map((item: any, index: number) => `
       <tr>
@@ -221,27 +222,27 @@ export async function POST(
       <div class="totals-table">
         <div class="totals-row">
           <span class="totals-label">Subtotal</span>
-          <span class="totals-value">${order.currency} ${subtotal.toFixed(2)}</span>
+          <span class="totals-value">${formatPrice(order.subtotalCents, order.currency)}</span>
         </div>
         <div class="totals-row">
           <span class="totals-label">Shipping</span>
-          <span class="totals-value">${order.currency} ${shippingCost.toFixed(2)}</span>
+          <span class="totals-value">${formatPrice(order.shippingCents || 0, order.currency)}</span>
         </div>
         ${discount > 0 ? `
         <div class="totals-row">
           <span class="totals-label">Discount</span>
-          <span class="totals-value discount">-${order.currency} ${discount.toFixed(2)}</span>
+          <span class="totals-value discount">-${formatPrice(order.discountCents || 0, order.currency)}</span>
         </div>
         ` : ''}
         ${parseFloat(tax) > 0 ? `
         <div class="totals-row">
           <span class="totals-label">VAT (5%)</span>
-          <span class="totals-value">${order.currency} ${tax}</span>
+          <span class="totals-value">${formatPrice(taxValue, order.currency)}</span>
         </div>
         ` : ''}
         <div class="totals-row final">
           <span class="totals-label">TOTAL</span>
-          <span class="totals-value">${order.currency} ${total.toFixed(2)}</span>
+          <span class="totals-value">${formatPrice(order.totalCents, order.currency)}</span>
         </div>
       </div>
     </div>
@@ -258,7 +259,7 @@ export async function POST(
       </div>
       <div class="payment-box">
         <h5>Amount Paid</h5>
-        <p>${order.currency} ${total.toFixed(2)}</p>
+        <p>${formatPrice(order.totalCents, order.currency)}</p>
       </div>
     </div>
     

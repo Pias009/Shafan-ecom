@@ -5,11 +5,12 @@ import OrderStatusActions from './OrderStatusActions';
 import InvoiceDownload from './_components/InvoiceDownload';
 import ShippingPanel from './_components/ShippingPanel';
 import { OrderStatus } from '@prisma/client';
+import { getCurrencyDivisor } from '@/lib/product-utils';
 
 function formatPrice(amountCents: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
   const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
-  const amount = amountCents / 100;
+  const amount = Number(amountCents);
   return `${code} ${amount.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

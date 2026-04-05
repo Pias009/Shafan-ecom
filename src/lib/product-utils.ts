@@ -34,3 +34,21 @@ export function getDisplayPrice(product: any, userCountry?: string): { price: nu
     currency: product?.currency || 'USD'
   };
 }
+
+// Helper to get correct divisor for raw price units (cents vs fils)
+export function getCurrencyDivisor(currencyCode: string): number {
+  const code = currencyCode?.toUpperCase() || 'AED';
+  return ["KWD", "BHD", "OMR"].includes(code) ? 1000 : 100;
+}
+
+// Format raw price units for display (e.g. 1000 -> 1000.000 for KWD)
+export function formatPriceUnits(amountCents: number, currencyCode: string): string {
+  const divisor = getCurrencyDivisor(currencyCode);
+  const decimals = ["KWD", "BHD", "OMR"].includes(currencyCode?.toUpperCase()) ? 3 : 2;
+  const value = Number(amountCents);
+  
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}

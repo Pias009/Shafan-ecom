@@ -52,10 +52,12 @@ export async function GET() {
     ]);
 
     const counts: Record<string, number> = {
-      PENDING_PAYMENT: 0,
-      PAID: 0,
+      ORDER_RECEIVED: 0,
+      ORDER_CONFIRMED: 0,
       PROCESSING: 0,
-      SHIPPED: 0,
+      READY_FOR_PICKUP: 0,
+      ORDER_PICKED_UP: 0,
+      IN_TRANSIT: 0,
       DELIVERED: 0,
       CANCELLED: 0,
       REFUNDED: 0,

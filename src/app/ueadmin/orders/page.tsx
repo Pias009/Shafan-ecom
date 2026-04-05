@@ -7,7 +7,7 @@ import { getAdminStoreAccess } from '@/lib/admin-session';
 function formatPrice(amountCents: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
   const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
-  const amount = amountCents / 100;
+  const amount = Number(amountCents);
   return `${code} ${amount.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

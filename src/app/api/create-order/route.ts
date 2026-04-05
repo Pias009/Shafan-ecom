@@ -357,22 +357,20 @@ export async function POST(req: Request) {
       if (productStoreId) {
       }
 
-      // Use price from cart item if provided, otherwise lookup from database
-      let unitPriceCents = 0;
-      let priceSource = 'cart_item';
+      // Determine the canonical price from the database (STRICT price checking)
+      const dbPrice = await getProductPrice(product.id, countryCode, productStoreCode);
+      const canonicalPriceCents = dbPrice.price;
+      const priceSource = dbPrice.source;
       
-      if (item.unitPriceCents && item.unitPriceCents > 0) {
-        // Use the price that was calculated in the cart
-        unitPriceCents = item.unitPriceCents;
-      } else {
-        // Fallback to database lookup
-        const dbPrice = await getProductPrice(productId, countryCode, productStoreCode);
-        unitPriceCents = dbPrice.price;
-        priceSource = dbPrice.source;
+      // LOGGING: Getting the row data for price validation
+      console.log(`[PRICE_CHECK] Item: ${product.name} | DB Price: ${canonicalPriceCents} | Source: ${priceSource} | Request Price: ${item.unitPriceCents || 'N/A'}`);
+      
+      if (item.unitPriceCents && item.unitPriceCents > 0 && item.unitPriceCents !== canonicalPriceCents) {
+        console.warn(`[PRICE_MISMATCH] Item: ${product.name} | Request: ${item.unitPriceCents} | DB: ${canonicalPriceCents}. USING DB PRICE.`);
       }
       
-      console.log(`Price for ${product.name}: ${unitPriceCents} cents (source: ${priceSource})`);
-
+      const unitPriceCents = canonicalPriceCents;
+      
       if (unitPriceCents <= 0) {
         throw new Error(`Invalid price for product ${product.name}. Please contact support.`);
       }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { formatPriceUnits } from '@/lib/product-utils';
 
 export async function GET(
   req: NextRequest,
@@ -90,16 +91,16 @@ export async function GET(
         productCode: item.product?.sku || 'N/A',
         productName: item.nameSnapshot || item.product?.name || 'Unknown Product',
         quantity: item.quantity,
-        unitPrice: (item.unitPriceCents / 100).toFixed(2),
-        itemTotal: ((item.unitPriceCents * item.quantity) / 100).toFixed(2),
+        unitPrice: formatPriceUnits(item.unitPriceCents, order.currency),
+        itemTotal: formatPriceUnits(item.unitPriceCents * item.quantity, order.currency),
         image: item.imageSnapshot || item.product?.images?.[0] || '/assets/placeholder.png',
       })),
       
       // Pricing
-      subtotal: (order.subtotalCents / 100).toFixed(2),
-      shipping: (order.shippingCents / 100).toFixed(2),
-      discount: order.discountCents > 0 ? (order.discountCents / 100).toFixed(2) : '0.00',
-      total: (order.totalCents / 100).toFixed(2),
+      subtotal: formatPriceUnits(order.subtotalCents, order.currency),
+      shipping: formatPriceUnits(order.shippingCents || 0, order.currency),
+      discount: order.discountCents > 0 ? formatPriceUnits(order.discountCents, order.currency) : '0.00',
+      total: formatPriceUnits(order.totalCents, order.currency),
       currency: order.currency,
       
       // Payment & Shipping

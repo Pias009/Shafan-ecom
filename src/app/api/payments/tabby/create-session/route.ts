@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
+import { getCurrencyDivisor } from "@/lib/product-utils";
 
 const COUNTRY_TO_REGION: Record<string, { region: TabbyRegion; currency: TabbyCurrency }> = {
   AE: { region: "UAE", currency: "AED" },
@@ -39,8 +40,10 @@ export async function POST(request: NextRequest) {
     const billingAddress = order.billingAddress as any;
     const shippingAddress = order.shippingAddress as any;
 
+    const divisor = getCurrencyDivisor(order.currency || currency);
+    
     const session = await tabbyService.createSession({
-      amount: order.totalCents / 100,
+      amount: Number(order.totalCents) / divisor,
       currency,
       orderId: order.id,
       orderReferenceId: order.id,
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
         title: item.nameSnapshot,
         description: item.nameSnapshot,
         quantity: item.quantity,
-        unitPrice: (item.unitPriceCents / 100).toFixed(2),
+        unitPrice: (Number(item.unitPriceCents) / divisor).toFixed(divisor === 1000 ? 3 : 2),
         imageUrl: item.imageSnapshot || undefined,
       })),
       metadata: {

@@ -20,8 +20,9 @@ interface PriceProps {
 
 function formatPriceSimple(amount: number, currencyCode: string, isRawPrice: boolean = false): string {
   const code = currencyCode?.toUpperCase() || 'USD';
-  // For raw prices from admin, show 0 decimals
-  const decimals = isRawPrice ? 0 : (["KWD", "BHD", "OMR"].includes(code) ? 3 : 2);
+  // ALWAYS show 3 decimals for these 3 currencies, whether raw or not
+  const isThreeDecimal = ["KWD", "BHD", "OMR"].includes(code);
+  const decimals = isThreeDecimal ? 3 : (isRawPrice ? 0 : 2);
   const symbol = code;
   return `${symbol} ${amount.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
@@ -45,6 +46,7 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
     if (price > 0 || (Number(price) || 0) > 0) {
       displayAmount = Number(price); // No division by 100
       displayCurrency = priceCurrency;
+      isRawPrice = true;
     }
   } else {
     // 2. Fallback to base amount

@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order total must be greater than 0" }, { status: 400 });
     }
 
-    const amount = amountInCents / 100;
+    const amount = amountInCents;
     const billing = (order.billingAddress as any) || {};
     const customerEmail = billing.email;
     const orderCurrency = order.currency || "usd";

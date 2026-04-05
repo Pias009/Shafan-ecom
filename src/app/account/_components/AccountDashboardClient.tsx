@@ -19,11 +19,11 @@ interface DashboardData {
 }
 
 export default function AccountDashboardClient() {
+  const userCountry = useUserCountry();
   const { items: cartItems } = useCartStore();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const userCountry = useUserCountry();
 
   useEffect(() => {
     setMounted(true);
@@ -179,7 +179,9 @@ export default function AccountDashboardClient() {
 
                   <div className="flex items-center justify-between pt-3 border-t border-black/5">
                     <div>
-                      <div className="text-lg font-black text-black">{order.currency?.toUpperCase()} {order.totalCents}</div>
+                      <div className="text-lg font-black text-black">
+                        <Price amount={order.totalCents} currency={order.currency} isCents={false} />
+                      </div>
                       <div className="text-[10px] font-bold text-black/30 uppercase">{new Date(order.createdAt).toLocaleDateString()}</div>
                     </div>
                     <Link href={`/account/orders`} className="p-2 rounded-full hover:bg-black/5 transition">

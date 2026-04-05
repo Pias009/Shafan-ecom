@@ -79,20 +79,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     
     // Pre-process to convert string numbers to actual numbers
     // Pre-process to convert string numbers to actual numbers (Whole numbers only as per user request)
-    if (data.priceCents) data.priceCents = parseInt(String(data.priceCents), 10);
-    if (data.discountCents) data.discountCents = parseInt(String(data.discountCents), 10);
+    if (data.priceCents) data.priceCents = Math.round(Number(data.priceCents));
+    if (data.discountCents) data.discountCents = Math.round(Number(data.discountCents));
     if (data.stockQuantity) data.stockQuantity = Number(data.stockQuantity);
     if (data.countryPrices && Array.isArray(data.countryPrices)) {
       data.countryPrices = data.countryPrices.map((cp: any) => ({
         ...cp,
-        priceCents: typeof cp.priceCents === 'string' ? parseInt(cp.priceCents, 10) : (Number(cp.priceCents) || 0),
+        priceCents: typeof cp.priceCents === 'string' ? Math.round(parseFloat(cp.priceCents)) : (Math.round(Number(cp.priceCents)) || 0),
         active: true
       }));
     }
     
     const parsed = UpdateSchema.safeParse(data);
     if (!parsed.success) {
-      return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      console.error('PRODUCT_UPDATE_VALIDATION_ERROR:', parsed.error.format());
+      return new Response(JSON.stringify({ error: 'Invalid payload', details: parsed.error.format() }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
     // normalize features if provided as string
     if (typeof (parsed.data as any).features === 'string') {
