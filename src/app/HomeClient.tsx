@@ -122,21 +122,8 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
     fetchBanners();
   }, []);
 
-  // Fetch active banners
-  useEffect(() => {
-    async function fetchBanners() {
-      try {
-        const response = await fetch('/api/banners');
-        if (!response.ok) throw new Error('Failed to fetch banners');
-        const data = await response.json();
-        setBanners(data);
-      } catch (error) {
-        console.error('Error fetching banners:', error);
-      }
-    }
-    
-    fetchBanners();
-  }, []);
+
+
 
   const brands = useMemo(() => {
     const set = new Set(products.map((p) => p.brand?.name).filter(Boolean));

@@ -13,8 +13,8 @@ async function main() {
       await prisma.product.update({
         where: { id: p.id },
         data: { 
-          priceCents: BigInt(Math.round(Number(p.priceCents) / 100)),
-          discountCents: p.discountCents ? BigInt(Math.round(Number(p.discountCents) / 100)) : undefined
+          priceCents: Math.round(Number(p.priceCents) / 100),
+          discountCents: p.discountCents ? Math.round(Number(p.discountCents) / 100) : undefined
         }
       });
       productCount++;
@@ -29,7 +29,7 @@ async function main() {
     if (cp.priceCents && Number(cp.priceCents) > 500000) {
       await prisma.countryPrice.update({
         where: { id: cp.id },
-        data: { priceCents: BigInt(Math.round(Number(cp.priceCents) / 100)) }
+        data: { priceCents: Math.round(Number(cp.priceCents) / 100) }
       });
       cpCount++;
     }
@@ -49,8 +49,8 @@ async function main() {
       await prisma.order.update({
         where: { id: o.id },
         data: {
-          totalCents: BigInt(Math.round(Number(o.totalCents) / 100)),
-          subtotalCents: BigInt(Math.round(Number(o.subtotalCents) / 100))
+          totalCents: Math.round(Number(o.totalCents) / 100),
+          subtotalCents: Math.round(Number(o.subtotalCents) / 100)
         }
       });
       
@@ -62,7 +62,7 @@ async function main() {
         if (Number(item.unitPriceCents) > 500000) {
           await prisma.orderItem.update({
             where: { id: item.id },
-            data: { unitPriceCents: BigInt(Math.round(Number(item.unitPriceCents) / 100)) }
+            data: { unitPriceCents: Math.round(Number(item.unitPriceCents) / 100) }
           });
         }
       }

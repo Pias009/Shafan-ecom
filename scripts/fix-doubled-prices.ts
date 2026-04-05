@@ -10,10 +10,10 @@ async function main() {
   for (const p of products) {
     const updates: any = {};
     if (p.priceCents && Number(p.priceCents) > 100000) {
-      updates.priceCents = BigInt(Math.round(Number(p.priceCents) / 100));
+      updates.priceCents = Math.round(Number(p.priceCents) / 100);
     }
     if (p.discountCents && Number(p.discountCents) > 100000) {
-      updates.discountCents = BigInt(Math.round(Number(p.discountCents) / 100));
+      updates.discountCents = Math.round(Number(p.discountCents) / 100);
     }
 
     if (Object.keys(updates).length > 0) {
@@ -28,7 +28,7 @@ async function main() {
     if (Number(cp.priceCents) > 100000) {
       await prisma.countryPrice.update({
         where: { id: cp.id },
-        data: { priceCents: BigInt(Math.round(Number(cp.priceCents) / 100)) }
+        data: { priceCents: Math.round(Number(cp.priceCents) / 100) }
       });
       console.log(`Fixed country price: ${cp.country} for product ${cp.productId}`);
     }
@@ -45,10 +45,10 @@ async function main() {
   for (const o of orders) {
     const updates: any = {};
     if (Number(o.totalCents) > 100000) {
-      updates.totalCents = BigInt(Math.round(Number(o.totalCents) / 100));
+      updates.totalCents = Math.round(Number(o.totalCents) / 100);
     }
     if (Number(o.subtotalCents) > 100000) {
-      updates.subtotalCents = BigInt(Math.round(Number(o.subtotalCents) / 100));
+      updates.subtotalCents = Math.round(Number(o.subtotalCents) / 100);
     }
 
     if (Object.keys(updates).length > 0) {
@@ -57,7 +57,7 @@ async function main() {
         if (Number(item.unitPriceCents) > 100000) {
           await prisma.orderItem.update({
             where: { id: item.id },
-            data: { unitPriceCents: BigInt(Math.round(Number(item.unitPriceCents) / 100)) }
+            data: { unitPriceCents: Math.round(Number(item.unitPriceCents) / 100) }
           });
         }
       }

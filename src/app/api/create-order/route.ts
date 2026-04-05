@@ -367,7 +367,7 @@ export async function POST(req: Request) {
       } else {
         // Fallback to database lookup
         const dbPrice = await getProductPrice(productId, countryCode, productStoreCode);
-        unitPriceCents = dbPrice.priceCents;
+        unitPriceCents = dbPrice.price;
         priceSource = dbPrice.source;
       }
       
