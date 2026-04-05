@@ -29,30 +29,28 @@ function formatPriceSimple(amount: number, currencyCode: string, isRawPrice: boo
   })}`;
 }
 
-function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, isCents, userCountry, currentCurrency }: PriceProps & { userCountry: string; currentCurrency: { code: string; rate: number } }) {
+function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, isCents = false, userCountry, currentCurrency }: PriceProps & { userCountry: string; currentCurrency: { code: string; rate: number } }) {
   if (amount == null) {
     return <span className={className}>-</span>;
   }
-  let displayAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  let displayAmount = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
   if (isNaN(displayAmount)) displayAmount = 0;
 
-  // Convert cents to regular amount if isCents is true
-  if (isCents) {
-    displayAmount = displayAmount / 100;
-  }
-
   let displayCurrency = currentCurrency.code;
-  let isRawPrice = false;
+  let isRawPrice = true; // All prices are now raw from admin as per request
 
+  // 1. Check if we have country-specific pricing
   if (countryPrices && countryPrices.length > 0) {
     const { price, currency: priceCurrency } = getDisplayPrice({ countryPrices }, userCountry);
-    if (price > 0) {
-      displayAmount = price;
+    if (price > 0 || (Number(price) || 0) > 0) {
+      displayAmount = Number(price); // No division by 100
       displayCurrency = priceCurrency;
-      isRawPrice = false;
     }
-  } else if (currency) {
-    displayCurrency = currency.toUpperCase();
+  } else {
+    // 2. Fallback to base amount
+    if (currency) {
+      displayCurrency = currency.toUpperCase();
+    }
   }
 
   const formatted = formatPriceSimple(displayAmount, displayCurrency, isRawPrice);

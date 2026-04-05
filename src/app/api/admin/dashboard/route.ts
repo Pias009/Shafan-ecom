@@ -35,7 +35,7 @@ export async function GET() {
 
     revenueOrders.forEach(order => {
       const rate = conversionRates[order.currency?.toUpperCase()] || 1;
-      totalRevenueAED += (order.totalCents / 100) * rate;
+      totalRevenueAED += Number(order.totalCents) * rate;
     });
 
     const [usersCount, productsCount, bannersCount, ordersCount, ordersByStatus] = await Promise.all([

@@ -161,7 +161,10 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
                       <div className="font-black text-sm">
                         {p.countryPrices.map((cp, idx) => (
                           <div key={cp.country} className={idx > 0 ? 'text-[10px] text-black/40' : ''}>
-                            {cp.currency} {cp.priceCents > 0 ? cp.priceCents : '—'}
+                            {cp.currency} {cp.priceCents > 0 ? Number(cp.priceCents).toLocaleString(undefined, { 
+                              minimumFractionDigits: ["KWD", "BHD", "OMR"].includes(cp.currency) ? 3 : 0,
+                              maximumFractionDigits: ["KWD", "BHD", "OMR"].includes(cp.currency) ? 3 : 2
+                            }) : '—'}
                           </div>
                         ))}
                       </div>

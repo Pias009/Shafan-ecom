@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { ShoppingBag, Package, Truck, CheckCircle2, XCircle, RotateCcw, ArrowRight, Loader2, Info } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { Price } from "@/components/Price";
+import { useUserCountry } from "@/lib/country-detection";
 
 interface DashboardData {
   orders: any[];
@@ -41,7 +43,13 @@ export default function AccountDashboardClient() {
 
   if (!mounted) return null;
 
-  const cartTotal = cartItems.reduce((acc, item) => acc + (item.discountPrice ?? item.price) * item.quantity, 0);
+  const cartTotal = cartItems.reduce((acc, item) => {
+    // Treat as cents since it comes from the DB through the store
+    const priceToUse = item.discountPrice ?? item.price ?? 0;
+    return acc + priceToUse * item.quantity;
+  }, 0);
+
+  const userCountry = useUserCountry();
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -89,13 +97,20 @@ export default function AccountDashboardClient() {
               {cartItems.slice(0, 3).map((item) => (
                 <div key={item.id} className="flex flex-wrap items-center gap-4 p-3 rounded-2xl bg-black/[0.02] border border-black/5">
                   <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden bg-white shadow-sm border border-black/5">
-                    <Image src={item.imageUrl} alt={item.name} fill className="object-cover" />
+                    <Image 
+                      src={item.imageUrl || "/placeholder-product.png"} 
+                      alt={item.name} 
+                      fill 
+                      className="object-cover" 
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold text-black break-words">{item.name}</div>
                     <div className="text-xs text-black/40 font-bold uppercase tracking-tighter">{item.brand}</div>
                   </div>
-                  <div className="text-sm font-black text-black">${item.discountPrice ?? item.price}</div>
+                  <div className="text-sm font-black text-black">
+                    <Price amount={item.discountPrice ?? item.price} isCents={false} countryPrices={item.countryPrices} />
+                  </div>
                 </div>
               ))}
               {cartItems.length > 3 && (
@@ -104,7 +119,9 @@ export default function AccountDashboardClient() {
               <div className="mt-6 pt-6 border-t border-black/5 flex items-center justify-between">
                 <div>
                   <div className="text-[10px] font-bold text-black/40 uppercase tracking-widest">Estimated Total</div>
-                  <div className="text-xl font-black text-black">${cartTotal.toFixed(2)}</div>
+                  <div className="text-xl font-black text-black">
+                    <Price amount={cartTotal} isCents={false} />
+                  </div>
                 </div>
                 <Link href="/cart" className="bg-black text-white rounded-full px-6 py-2.5 text-xs font-bold shadow-lg shadow-black/20 transition hover:scale-105 active:scale-95">
                   Checkout
@@ -163,7 +180,7 @@ export default function AccountDashboardClient() {
 
                   <div className="flex items-center justify-between pt-3 border-t border-black/5">
                     <div>
-                      <div className="text-lg font-black text-black">${(order.totalCents / 100).toFixed(2)}</div>
+                      <div className="text-lg font-black text-black">{order.currency?.toUpperCase()} {order.totalCents}</div>
                       <div className="text-[10px] font-bold text-black/30 uppercase">{new Date(order.createdAt).toLocaleDateString()}</div>
                     </div>
                     <Link href={`/account/orders`} className="p-2 rounded-full hover:bg-black/5 transition">

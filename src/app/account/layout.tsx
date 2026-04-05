@@ -19,21 +19,17 @@ export default async function AccountLayout({
   }
 
   return (
-    <Providers>
-      <Navbar />
-      <div className="mx-auto max-w-7xl px-6 py-10 pt-24 min-h-screen">
-        <AccountDashboardHeader />
-        
-        <div className="grid gap-8 md:grid-cols-[260px_1fr]">
-          <AccountNav />
-          <main className="min-w-0">
-            <Suspense fallback={<div className="flex justify-center py-20"><Loader /></div>}>
-                {children}
-            </Suspense>
-          </main>
-        </div>
+    <div className="mx-auto max-w-7xl px-6 py-10 min-h-screen">
+      <AccountDashboardHeader />
+      
+      <div className="grid gap-8 md:grid-cols-[260px_1fr] mt-8">
+        <AccountNav />
+        <main className="min-w-0">
+          <Suspense fallback={<div className="flex justify-center py-20"><Loader /></div>}>
+              {children}
+          </Suspense>
+        </main>
       </div>
-      <Footer />
-    </Providers>
+    </div>
   );
 }

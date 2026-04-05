@@ -4,21 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 
-// Delivery fee configuration by country
-interface DeliveryConfig {
-  minOrderCents: number;
-  deliveryFeeCents: number;
-  freeDeliveryCents: number;
-}
-
-const DELIVERY_CONFIG: Record<string, DeliveryConfig> = {
-  AE: { minOrderCents: 8000, deliveryFeeCents: 1500, freeDeliveryCents: 15000 },      // 80 AED min, 15 AED fee, 150 AED free
-  KW: { minOrderCents: 12000, deliveryFeeCents: 1500, freeDeliveryCents: 18000 },    // 12 KWD min, 1.5 KWD fee, 18 KWD free
-  SA: { minOrderCents: 15900, deliveryFeeCents: 1900, freeDeliveryCents: 35900 },    // 159 SAR min, 19 SAR fee, 359 SAR free
-  BH: { minOrderCents: 1300, deliveryFeeCents: 199, freeDeliveryCents: 1800 },       // 13 BHD min, 1.99 BHD fee, 18 BHD free
-  OM: { minOrderCents: 1600, deliveryFeeCents: 190, freeDeliveryCents: 2200 },        // 16 OMR min, 1.9 OMR fee, 22 OMR free
-  QA: { minOrderCents: 12900, deliveryFeeCents: 1900, freeDeliveryCents: 29900 },     // 129 QAR min, 19 QAR fee, 299 QAR free
-};
+// Delivery fee configuration by country (Using global config)
+const DELIVERY_CONFIG = COUNTRY_CONFIG;
 
 // Helper function to determine courier based on shipping address
 function determineCourier(shippingAddress: any): string {
@@ -47,28 +34,22 @@ function getCurrencyForCountry(country: string): string {
 }
 
 // Calculate delivery fee based on country and subtotal
-function calculateDeliveryFee(countryCode: string, subtotalCents: number): { feeCents: number; freeDelivery: boolean } {
-  const config = DELIVERY_CONFIG[countryCode.toUpperCase()];
+function calculateDeliveryFee(countryCode: string, subtotal: number): { fee: number; freeDelivery: boolean } {
+  const config = (DELIVERY_CONFIG as any)[countryCode.toUpperCase()];
   
   if (!config) {
     // Default to UAE config if country not found
-    const defaultConfig = DELIVERY_CONFIG['AE'];
-    const fee = subtotalCents >= defaultConfig.freeDeliveryCents ? 0 : defaultConfig.deliveryFeeCents;
-    return { feeCents: fee, freeDelivery: fee === 0 };
+    const defaultConfig = (DELIVERY_CONFIG as any)['AE'];
+    const fee = subtotal >= defaultConfig.freeDeliveryCents ? 0 : defaultConfig.deliveryFeeCents;
+    return { fee: fee, freeDelivery: fee === 0 };
   }
   
   // Check if order qualifies for free delivery
-  if (subtotalCents >= config.freeDeliveryCents) {
-    return { feeCents: 0, freeDelivery: true };
+  if (subtotal >= config.freeDeliveryCents) {
+    return { fee: 0, freeDelivery: true };
   }
   
-  // Check if order meets minimum order requirement
-  if (subtotalCents < config.minOrderCents) {
-    // Return delivery fee but indicate minimum not met
-    return { feeCents: config.deliveryFeeCents, freeDelivery: false };
-  }
-  
-  return { feeCents: config.deliveryFeeCents, freeDelivery: false };
+  return { fee: config.deliveryFeeCents, freeDelivery: false };
 }
 
 // Normalize country code to 2-letter format
@@ -88,7 +69,7 @@ function normalizeCountryCode(country: string | undefined): string {
   return countryMap[country.toUpperCase()] || 'AE';
 }
 
-// Get price for a product - check all possible sources
+// Get price for a product - check all possible sources (Returns raw currency units)
 async function getProductPrice(productId: string, countryCode: string, storeCode?: string) {
   // First try store inventory price if store is specified
   if (storeCode) {
@@ -100,7 +81,7 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
     });
     
     if (inventory && inventory.price > 0) {
-      return { priceCents: Math.round(inventory.price * 100), source: 'store_inventory' };
+      return { price: Number(inventory.price), source: 'store_inventory' };
     }
   }
   
@@ -113,8 +94,8 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
     }
   });
   
-  if (countryPrice && countryPrice.priceCents > 0) {
-    return { priceCents: countryPrice.priceCents, source: 'country_price' };
+  if (countryPrice && Number(countryPrice.priceCents) > 0) {
+    return { price: Number(countryPrice.priceCents), source: 'country_price' };
   }
   
   // Finally use base product price
@@ -125,12 +106,12 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
   
   if (product) {
     const basePrice = product.discountCents 
-      ? product.priceCents - product.discountCents 
-      : product.priceCents;
-    return { priceCents: basePrice, source: 'base_price' };
+      ? Number(product.priceCents) - Number(product.discountCents) 
+      : Number(product.priceCents);
+    return { price: basePrice, source: 'base_price' };
   }
   
-  return { priceCents: 0, source: 'none' };
+  return { price: 0, source: 'none' };
 }
 
 // Validate and apply discount from coupon code
@@ -226,22 +207,22 @@ async function applyDiscount(
       console.log(`Coupon allows up to ${discount.maxUsesPerOrder} uses per order`);
     }
 
-    // Calculate discount amount
-    let discountCents = 0;
+    // Calculate discount amount (Using raw units)
+    let discountAmount = 0;
     if (discount.discountType === "PERCENTAGE") {
-      discountCents = Math.round((subtotalCents * discount.value) / 100);
+      discountAmount = (subtotalCents * discount.value) / 100;
     } else if (discount.discountType === "FIXED_AMOUNT") {
-      discountCents = Math.round(discount.value * 100); // Value stored as float, convert to cents
+      discountAmount = discount.value; // Stored as raw units
     } else if (discount.discountType === "FREE_SHIPPING") {
-      discountCents = 0;
+      discountAmount = 0;
     }
 
     // Cap discount at subtotal
-    discountCents = Math.min(discountCents, subtotalCents);
+    discountAmount = Math.min(discountAmount, subtotalCents);
 
-    console.log(`Applied discount ${couponCode}: ${discountCents} cents (type: ${usageType})`);
+    console.log(`Applied discount ${couponCode}: ${discountAmount} (type: ${usageType})`);
 
-    return { discountCents, discountCodeUsed: discount.id };
+    return { discountCents: discountAmount, discountCodeUsed: discount.id };
   } catch (error) {
     console.error("Error applying discount:", error);
     return { discountCents: 0 };
@@ -428,15 +409,15 @@ export async function POST(req: Request) {
     }
 
     // Calculate delivery fee based on country
-    const { feeCents: shippingCents, freeDelivery } = calculateDeliveryFee(countryCode, subtotalCents);
+    const { fee: shippingCents, freeDelivery } = calculateDeliveryFee(countryCode, subtotalCents);
     
     // Check if minimum order requirement is met
-    const deliveryConfig = DELIVERY_CONFIG[countryCode.toUpperCase()];
+    const deliveryConfig = (DELIVERY_CONFIG as any)[countryCode.toUpperCase()];
     if (deliveryConfig && subtotalCents < deliveryConfig.minOrderCents) {
       const currencySymbol = getCurrencyForCountry(countryCode);
-      const minOrder = deliveryConfig.minOrderCents / 100;
+      const minOrder = deliveryConfig.minOrderCents;
       return NextResponse.json({ 
-        error: `Minimum order value is ${currencySymbol} ${minOrder.toFixed(0)} for ${countryCode.toUpperCase()}. Current order: ${currencySymbol} ${(subtotalCents / 100).toFixed(2)}`,
+        error: `Minimum order value is ${currencySymbol} ${minOrder} for ${countryCode.toUpperCase()}. Current order: ${currencySymbol} ${subtotalCents}`,
         minOrderRequired: true,
         minOrderCents: deliveryConfig.minOrderCents,
         currency: getCurrencyForCountry(countryCode)
@@ -511,9 +492,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       orderId: order.id,
-      subtotal: subtotalCents / 100,
-      shipping: shippingCents / 100,
-      total: order.totalCents / 100,
+      subtotal: subtotalCents,
+      shipping: shippingCents,
+      total: order.totalCents,
       currency: order.currency,
       status: order.status,
       freeDelivery,

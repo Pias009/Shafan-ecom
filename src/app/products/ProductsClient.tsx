@@ -295,7 +295,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
         </AnimatePresence>
 
           <div className="mt-12 md:mt-20 space-y-12 md:space-y-24">
-            {categories.map((cat) => {
+            {categories.filter(cat => cat !== t.product.all && cat !== 'All').map((cat) => {
               const productsInCat = filtered.filter(p => p.categoryName === cat);
               if (productsInCat.length === 0) return null;
 
@@ -304,7 +304,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                   <div className="flex items-center gap-3 md:gap-6 mb-6 md:mb-10 border-b border-black/5 pb-4 md:pb-6">
                     <h2 className="font-display text-2xl md:text-5xl font-bold text-black">{cat}</h2>
                     <div className="h-[1px] flex-1 bg-black/10" />
-                    <span className="font-body text-[9px] md:text-sm font-bold text-black/40 tracking-widest uppercase">
+                    <span suppressHydrationWarning className="font-body text-[9px] md:text-sm font-bold text-black/40 tracking-widest uppercase">
                       {productsInCat.length} {t.product.items}
                     </span>
                   </div>

@@ -216,6 +216,7 @@ export async function POST(req: Request) {
       processedBody.countryPrices = processedBody.countryPrices.map((cp: any) => ({
         ...cp,
         priceCents: typeof cp.priceCents === 'string' ? parseInt(cp.priceCents, 10) : (Number(cp.priceCents) || 0),
+        active: true,
       }));
     }
     
@@ -487,13 +488,13 @@ export async function POST(req: Request) {
             },
             update: {
               quantity: productData.stockQuantity ?? 0,
-              price: (productData.priceCents - (productData.discountCents || 0)) / 100
+              price: productData.priceCents - (productData.discountCents || 0)
             },
             create: {
               storeId: store.id,
               productId: product.id,
               quantity: productData.stockQuantity ?? 0,
-              price: (productData.priceCents - (productData.discountCents || 0)) / 100
+              price: productData.priceCents - (productData.discountCents || 0)
             }
           });
           console.log('[DEBUG] Store inventory created/updated successfully');

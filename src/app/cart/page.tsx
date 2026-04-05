@@ -13,6 +13,8 @@ import { Price } from "@/components/Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useUserCountry } from "@/lib/country-detection";
+import { getDisplayPrice } from "@/lib/product-utils";
+import { COUNTRY_CONFIG } from "@/lib/address-config";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -48,14 +50,14 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       router.push("/account/address");
       return;
     }
-    
+
     toast.loading(t.cart.creatingOrder, { id: "checkout" });
-    
+
     try {
       const addressRes = await fetch("/api/account/address");
       let billing = null;
       let shipping = null;
-      
+
       if (addressRes.ok) {
         const addressData = await addressRes.json();
         if (addressData) {
@@ -65,23 +67,18 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       }
 
       const orderItems = items.map((i: any) => {
-        const countryPrice = i.countryPrices?.find((cp: any) =>
-          cp.country.toUpperCase() === userCountry.toUpperCase()
-        );
-        const unitPrice = countryPrice && countryPrice.price > 0
-          ? countryPrice.price
-          : (i.discountPrice ?? i.price);
+        const { price: itemPriceCents } = getDisplayPrice(i, userCountry);
         return {
           productId: i.id,
           quantity: i.quantity,
-          unitPrice
+          unitPriceCents: Math.round(itemPriceCents)
         };
       });
 
-      const paymentMethodData = paymentMethod === "cod" 
+      const paymentMethodData = paymentMethod === "cod"
         ? { payment_method: "cod", payment_method_title: "Cash on Delivery" }
         : { payment_method: "stripe", payment_method_title: "Credit Card (Stripe)" };
-      
+
       const orderRes = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -94,7 +91,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
           ...paymentMethodData
         }),
       });
-      
+
       const data = await orderRes.json();
       if (data.orderId) {
         toast.success("Order created!", { id: "checkout" });
@@ -137,7 +134,12 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 className="glass-panel-heavy flex flex-row items-center gap-4 md:gap-6 rounded-2xl md:rounded-3xl p-3 md:p-5 border border-black/5 shadow-sm group hover:shadow-md transition-shadow"
               >
                 <div className="relative h-20 w-20 md:h-32 md:w-32 shrink-0 overflow-hidden rounded-xl md:rounded-2xl bg-black/[0.02] border border-black/5">
-                  <Image src={isValidImageUrl(item.imageUrl) ? item.imageUrl : "/placeholder-product.png"} alt={item.name || "Product image"} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <Image
+                    src={isValidImageUrl(item.imageUrl) ? item.imageUrl : "/placeholder-product.png"}
+                    alt={item.name || "Product image"}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
                 </div>
 
                 <div className="flex flex-1 flex-col justify-center min-w-0">
@@ -257,22 +259,20 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("stripe")}
-                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${
-                      paymentMethod === "stripe" 
-                        ? "border-black bg-black text-white" 
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${paymentMethod === "stripe"
+                        ? "border-black bg-black text-white"
                         : "border-black/20 text-black/60 hover:border-black/40"
-                    }`}
+                      }`}
                   >
                     💳 Card
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("cod")}
-                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${
-                      paymentMethod === "cod" 
-                        ? "border-black bg-black text-white" 
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${paymentMethod === "cod"
+                        ? "border-black bg-black text-white"
                         : "border-black/20 text-black/60 hover:border-black/40"
-                    }`}
+                      }`}
                   >
                     💵 COD
                   </button>
@@ -286,14 +286,14 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
             >
               {t.cart.checkout}
             </button>
-            
+
             {!hasAddress && (
               <p className="mt-4 text-[9px] md:text-[10px] text-red-500/80 font-bold uppercase text-center flex items-center justify-center gap-1.5 px-4 leading-tight">
                 <Info className="w-3 h-3 shrink-0" />
                 {t.cart.addressRequired}
               </p>
             )}
-            
+
             <div className="mt-8 md:mt-10 flex items-center justify-center gap-3 opacity-20 filter grayscale">
               <Image src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" width={40} height={20} className="w-8 h-4 md:w-10 md:h-5" />
               <div className="w-px h-3 bg-black" />
@@ -327,33 +327,21 @@ export default function CartPage() {
 
   if (!mounted) return null;
 
-  // Calculate subtotal using regular prices (not cents)
+  // Calculate subtotal using regular prices (keep in cents)
   const subtotal = items.reduce(
     (acc, item) => {
-      const countryPrice = item.countryPrices?.find(cp =>
-        cp.country.toUpperCase() === userCountry.toUpperCase()
-      );
-      const price = countryPrice && countryPrice.price > 0
-        ? countryPrice.price
-        : (item.discountPrice ?? item.price);
-      return acc + price * item.quantity;
+      const { price: itemPriceCents } = getDisplayPrice(item, userCountry);
+      return acc + (Number(itemPriceCents) * item.quantity);
     },
     0
   );
 
   const discount = Math.round(subtotal * couponDiscount);
 
-  // Delivery fee calculation based on country (using regular prices)
-  const DELIVERY_CONFIG: Record<string, { minOrder: number; deliveryFee: number; freeDelivery: number }> = {
-    AE: { minOrder: 80, deliveryFee: 15, freeDelivery: 150 },
-    KW: { minOrder: 120, deliveryFee: 15, freeDelivery: 180 },
-    SA: { minOrder: 159, deliveryFee: 19, freeDelivery: 359 },
-    BH: { minOrder: 13, deliveryFee: 1.99, freeDelivery: 18 },
-    OM: { minOrder: 16, deliveryFee: 1.9, freeDelivery: 22 },
-    QA: { minOrder: 129, deliveryFee: 19, freeDelivery: 299 },
-  };
-  const deliveryConfig = DELIVERY_CONFIG[userCountry.toUpperCase()] || DELIVERY_CONFIG['AE'];
-  const shipping = subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee;
+  const deliveryConfig = COUNTRY_CONFIG[userCountry.toUpperCase()] || COUNTRY_CONFIG['AE'];
+  
+  // Use raw units for comparison as per user request
+  const shipping = subtotal >= deliveryConfig.freeDeliveryCents ? 0 : deliveryConfig.deliveryFeeCents;
   const total = subtotal - discount + shipping;
 
   if (items.length === 0) {
@@ -375,7 +363,7 @@ export default function CartPage() {
   }
 
   return (
-    <CartContent 
+    <CartContent
       items={items}
       removeItem={removeItem}
       updateQuantity={updateQuantity}

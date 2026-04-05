@@ -65,21 +65,19 @@ export default async function ProductsPage({
     // Try to get country-specific price first
     const countryPrice = getPriceFromCountryPrices(p.countryPrices, countryCode);
     
-    // Use country price or base price
-    const salePrice = p.salePrice || p.salePriceCents || null;
-    const regularPrice = p.regularPrice || p.regularPriceCents || p.priceCents || 0;
-    
-    // Calculate final prices in display format
-    const displayPrice = countryPrice || salePrice || regularPrice;
-    const originalPrice = countryPrice ? (salePrice || regularPrice) : regularPrice;
+    const originalPrice = countryPrice || p.regularPrice || p.regularPriceCents || p.priceCents || 0;
+    const currentPrice = countryPrice || p.salePrice || p.salePriceCents || originalPrice;
     
     return {
       ...p,
-      price: displayPrice,
-      discountPrice: displayPrice < originalPrice ? originalPrice : undefined,
-      priceCents: countryPrice || p.salePriceCents || p.regularPriceCents,
-      brandName: p.brand?.name || "Generic",
-      categoryName: p.category?.name || "General",
+      price: currentPrice,
+      priceCents: currentPrice,
+      unitPriceCents: currentPrice,
+      regularPrice: originalPrice,
+      regularPriceCents: originalPrice,
+      discountPrice: currentPrice < originalPrice ? originalPrice : undefined,
+      brandName: p.brandName || p.brand?.name || "Generic",
+      categoryName: p.categoryName || p.category?.name || "General",
       imageUrl: p.mainImage,
       images: p.images || []
     };

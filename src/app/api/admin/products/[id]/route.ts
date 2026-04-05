@@ -78,13 +78,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     
     // Pre-process to convert string numbers to actual numbers
-    if (data.priceCents) data.priceCents = Number(data.priceCents);
-    if (data.discountCents) data.discountCents = Number(data.discountCents);
+    // Pre-process to convert string numbers to actual numbers (Whole numbers only as per user request)
+    if (data.priceCents) data.priceCents = parseInt(String(data.priceCents), 10);
+    if (data.discountCents) data.discountCents = parseInt(String(data.discountCents), 10);
     if (data.stockQuantity) data.stockQuantity = Number(data.stockQuantity);
     if (data.countryPrices && Array.isArray(data.countryPrices)) {
       data.countryPrices = data.countryPrices.map((cp: any) => ({
         ...cp,
         priceCents: typeof cp.priceCents === 'string' ? parseInt(cp.priceCents, 10) : (Number(cp.priceCents) || 0),
+        active: true
       }));
     }
     
