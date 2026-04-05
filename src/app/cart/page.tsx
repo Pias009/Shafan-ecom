@@ -13,6 +13,7 @@ import { Price } from "@/components/Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useUserCountry } from "@/lib/country-detection";
+import { useCountryStore } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 
@@ -21,7 +22,7 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
-function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, removeCoupon, subtotal, discount, total, shipping, freeDelivery, t, userCountry, applyCoupon }: any) {
+function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, removeCoupon, subtotal, discount, total, shipping, freeDelivery, t, selectedCountry, applyCoupon }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
   const [couponInput, setCouponInput] = useState("");
@@ -67,7 +68,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       }
 
       const orderItems = items.map((i: any) => {
-        const { price: itemPrice } = getDisplayPrice(i, userCountry);
+        const { price: itemPrice } = getDisplayPrice(i, selectedCountry);
         return {
           productId: i.id,
           quantity: i.quantity,
@@ -87,7 +88,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
           couponCode,
           billing,
           shipping,
-          country: userCountry,
+          country: selectedCountry,
           ...paymentMethodData
         }),
       });
@@ -126,7 +127,8 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       <div className="grid gap-6 md:gap-8 lg:grid-cols-12">
         <div className="lg:col-span-8 space-y-4">
           {items.map((item: any, idx: number) => {
-            const price = item.discountPrice ?? item.price;
+            // STRICT: Get price using selectedCountry for live display
+            const { price: itemDisplayPrice } = getDisplayPrice(item, selectedCountry);
             const itemKey = item.id || `item-${idx}`;
             return (
               <div
@@ -151,7 +153,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                       </h3>
                     </div>
                     <Price
-                      amount={price}
+                      amount={itemDisplayPrice}
                       countryPrices={item.countryPrices}
                       className="font-body font-black text-black text-sm md:text-lg shrink-0"
                     />
@@ -311,13 +313,13 @@ export default function CartPage() {
     updateQuantity,
     couponCode,
     couponDiscount,
-    removeCoupon,
     applyCoupon,
+    removeCoupon,
   } = useCartStore();
   const [mounted, setMounted] = useState(false);
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
-  const userCountry = useUserCountry();
+  const { selectedCountry } = useCountryStore();
 
   useEffect(() => {
     setMounted(true);
@@ -325,10 +327,10 @@ export default function CartPage() {
 
   if (!mounted) return null;
 
-  // Calculate subtotal using regular prices (direct decimal values)
+  // Calculate subtotal using selectedCountry - STRICT: only DB prices
   const subtotal = items.reduce(
     (acc, item) => {
-      const { price: itemPrice } = getDisplayPrice(item, userCountry);
+      const { price: itemPrice } = getDisplayPrice(item, selectedCountry);
       return acc + (Number(itemPrice) * item.quantity);
     },
     0
@@ -336,7 +338,7 @@ export default function CartPage() {
 
   const discount = subtotal * couponDiscount;
 
-  const deliveryConfig = COUNTRY_CONFIG[userCountry.toUpperCase()] || COUNTRY_CONFIG['AE'];
+  const deliveryConfig = COUNTRY_CONFIG[selectedCountry.toUpperCase()] || COUNTRY_CONFIG['AE'];
   
   // Use raw units for comparison as per user request
   const shipping = subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee;
@@ -375,7 +377,7 @@ export default function CartPage() {
       freeDelivery={shipping === 0}
       applyCoupon={applyCoupon}
       t={t}
-      userCountry={userCountry}
+      selectedCountry={selectedCountry}
     />
   );
 }

@@ -1,11 +1,11 @@
 import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag, ArrowRight } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { useUserCountry } from "@/lib/country-detection";
+import { useCountryStore } from "@/lib/country-store";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -60,10 +60,54 @@ export function ProductQuickViewModal({
 }) {
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
-  const userCountry = useUserCountry();
+  const { selectedCountry, selectedCurrency } = useCountryStore();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
+
+  // STRICT: Compute price using selectedCountry - no fallbacks
+  const { displayPrice, originalPrice, isAvailable } = useMemo(() => {
+    if (!product) return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+    
+    // Debug logging
+    console.log('QuickView selectedCountry:', selectedCountry, 'product:', product.name);
+    
+    // Ensure countryPrices is an array
+    const cpArray = Array.isArray(product.countryPrices) ? product.countryPrices : [];
+    console.log('QuickView countryPrices:', cpArray);
+    
+    // If no country prices at all, show unavailable
+    if (cpArray.length === 0) {
+      console.log('No country prices for:', product.name);
+      return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+    }
+    
+    const countryUpper = selectedCountry.toUpperCase();
+    
+    // Find matching country price - simpler logic
+    const countryPrice = cpArray.find((cp: any) => {
+      if (!cp) return false;
+      const cpCountry = (cp.country?.toUpperCase() || '').trim();
+      const cpPriceValue = Number(cp.price) || 0;
+      return cpCountry === countryUpper && cpPriceValue > 0;
+    });
+    
+    console.log('Found countryPrice:', countryPrice);
+    
+    if (countryPrice) {
+      const priceValue = Number(countryPrice.price) || 0;
+      if (priceValue > 0) {
+        return {
+          displayPrice: priceValue,
+          originalPrice: priceValue,
+          isAvailable: true
+        };
+      }
+    }
+    
+    // NO FALLBACK - if no valid country price, show unavailable
+    return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+  }, [product, selectedCountry]);
 
   // Combine main image with gallery images, filtering out duplicates
   const allImages = [
@@ -96,27 +140,6 @@ export function ProductQuickViewModal({
   const subCategoryName = product.subCategory?.name;
   const skinTones = product.skinTones || [];
   const skinConcerns = product.skinConcerns || [];
-
-  // Get price - use user's country to find the correct country-specific price
-  let displayPrice = 0;
-  let originalPrice = 0;
-  
-  if (product.countryPrices && product.countryPrices.length > 0) {
-    const countryPrice = product.countryPrices.find(cp => 
-      cp.country.toUpperCase() === userCountry.toUpperCase() && cp.active !== false
-    );
-    
-    if (countryPrice && Number(countryPrice.price) > 0) {
-      displayPrice = Number(countryPrice.price);
-      originalPrice = product.salePrice || product.discountPrice || Number(countryPrice.price);
-    } else {
-      displayPrice = product.salePrice || product.discountPrice || (product.discountPrice ?? product.price);
-      originalPrice = product.regularPrice || product.price;
-    }
-  } else {
-    displayPrice = product.salePrice || product.discountPrice || (product.discountPrice ?? product.price);
-    originalPrice = product.regularPrice || product.price;
-  }
 
   return (
     <AnimatePresence>
@@ -268,10 +291,15 @@ export function ProductQuickViewModal({
                 )}
 
                 <div className="flex items-baseline gap-3">
-                  <Price amount={displayPrice} className="text-2xl md:text-4xl font-black text-black" />
-                  {displayPrice < originalPrice ? (
-                    <Price amount={originalPrice} className="text-base md:text-lg text-red-500 line-through font-bold" />
-                  ) : null}
+                  {isAvailable ? (
+                    <>
+                      <span className="text-2xl md:text-4xl font-black text-black">
+                        {displayPrice.toFixed(2)} <span className="text-lg">{selectedCurrency}</span>
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-xl md:text-2xl font-black text-red-500">Unavailable in this region</span>
+                  )}
                 </div>
 
                 <div className="space-y-2">

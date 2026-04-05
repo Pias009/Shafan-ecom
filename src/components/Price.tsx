@@ -20,19 +20,6 @@ interface PriceProps {
 
 const GULF_COUNTRIES = ['AE', 'KW', 'BH', 'SA', 'OM', 'QA'];
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  AED: 'د.إ',
-  KWD: 'د.ك',
-  BHD: '.د.ب',
-  SAR: 'ر.س',
-  OMR: 'ر.ع.',
-  QAR: 'ر.ق',
-  BDT: '৳',
-  USD: '$',
-  EUR: '€',
-  GBP: '£',
-};
-
 const CURRENCY_SYMBOLS_ASCII: Record<string, string> = {
   AED: 'AED',
   KWD: 'KWD',
@@ -46,10 +33,10 @@ const CURRENCY_SYMBOLS_ASCII: Record<string, string> = {
   GBP: '£',
 };
 
-function formatPriceWithIntl(amount: number, currencyCode: string, useAscii: boolean = true): string {
+function formatPriceWithIntl(amount: number, currencyCode: string): string {
   const code = currencyCode?.toUpperCase() || 'USD';
   
-  const symbol = useAscii ? CURRENCY_SYMBOLS_ASCII[code] : CURRENCY_SYMBOLS[code] || code;
+  const symbol = CURRENCY_SYMBOLS_ASCII[code] || code;
   
   const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
   const formatted = new Intl.NumberFormat('en-US', {
@@ -71,27 +58,29 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
   let displayCurrency = selectedCurrency;
   let hasCountrySpecificPrice = false;
 
-  if (countryPrices && countryPrices.length > 0) {
+  // Only apply country-specific pricing if countryPrices is provided AND amount is 0
+  // For stored orders, amount already has the correct price stored in unitPrice
+  if (countryPrices && countryPrices.length > 0 && displayAmount === 0) {
     const countryUpper = userCountry.toUpperCase();
     const isGulfCountry = GULF_COUNTRIES.includes(countryUpper);
     
     if (isGulfCountry) {
       const { price, currency: priceCurrency } = getDisplayPrice({ countryPrices }, userCountry);
-      if (price > 0 || (Number(price) || 0) > 0) {
+      if (Number(price) > 0) {
         displayAmount = Number(price);
         displayCurrency = priceCurrency;
         hasCountrySpecificPrice = true;
       }
     }
+  } else if (displayAmount > 0) {
+    // Direct price (from stored orders) - use as-is with passed currency
+    if (currency) {
+      displayCurrency = currency;
+    }
+    hasCountrySpecificPrice = true;
   }
 
-  // NO FALLBACK: If no country-specific price, show as unavailable
-  // No conversion or multiplier - DB is the only source of truth
-  if (!hasCountrySpecificPrice) {
-    displayAmount = 0;
-  }
-
-  const formatted = formatPriceWithIntl(displayAmount, displayCurrency, true);
+  const formatted = formatPriceWithIntl(displayAmount, displayCurrency);
   
   if (showSymbolSmall) {
     return (

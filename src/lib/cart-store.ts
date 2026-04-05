@@ -56,21 +56,32 @@ export const useCartStore = create<CartState>()(
       couponDiscount: 0,
       addItem: (product, quantity = 1) =>
         set((state) => {
-          // STRICT: Only add if product has valid price for current country
+          // STRICT: Preserve entire countryPrices object for live recalculation
           const { selectedCountry } = useCountryStore.getState();
           const validPrice = getPriceForCountry(product, selectedCountry);
           
           if (validPrice <= 0) return state;
           
+          // Preserve all product data including countryPrices for live price calculation
+          const cartItem = {
+            ...product,
+            price: validPrice,
+            quantity,
+            // Ensure countryPrices is always preserved
+            countryPrices: product.countryPrices || []
+          };
+          
           const existingItem = state.items.find((item) => item.id === product.id);
           if (existingItem) {
             return {
               items: state.items.map((item) =>
-                item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+                item.id === product.id 
+                  ? { ...item, quantity: item.quantity + quantity } 
+                  : item
               ),
             };
           }
-          return { items: [...state.items, { ...product, price: validPrice, quantity }] };
+          return { items: [...state.items, cartItem] };
         }),
       removeItem: (productId) =>
         set((state) => ({ items: state.items.filter((item) => item.id !== productId) })),

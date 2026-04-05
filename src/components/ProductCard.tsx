@@ -6,7 +6,7 @@ import { ShoppingBag, Star, Package, ShoppingCart, Truck } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { hasValidPrice } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 
 function isValidImageUrl(url: any): boolean {
@@ -76,15 +76,17 @@ export function ProductCard({
     return null;
   }
 
-  // Safely get the display price
-  const displayPrice = product.discountPrice ?? product.price;
+  // Safely get the display price using country-specific pricing
+  const { price: countryPrice } = getDisplayPrice(product, selectedCountry);
+  const basePrice = product.discountPrice ?? product.price;
+  const displayPrice = countryPrice > 0 ? countryPrice : basePrice;
   const isNotAvailable = displayPrice <= 0;
-  const price = product.discountPrice ?? product.price;
-  const hasDiscount = !!product.discountPrice && product.discountPrice < product.price;
+  const price = displayPrice;
+  const hasDiscount = countryPrice > 0 && product.discountPrice && product.discountPrice < countryPrice;
   
   // Calculate discount percentage
   const discountPercentage = hasDiscount 
-    ? Math.round(((product.price - product.discountPrice!) / product.price) * 100)
+    ? Math.round(((countryPrice - product.discountPrice!) / countryPrice) * 100)
     : 0;
 
   // Safely get the brand name as a string
@@ -204,7 +206,7 @@ export function ProductCard({
           <div className="flex items-baseline gap-2">
             <Price amount={price} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} />
             {hasDiscount && (
-              <Price amount={product.price} className="text-xs text-red-500 line-through font-bold" countryPrices={product.countryPrices} />
+              <Price amount={product.discountPrice || countryPrice} className="text-xs text-red-500 line-through font-bold" countryPrices={product.countryPrices} />
             )}
           </div>
           

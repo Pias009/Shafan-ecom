@@ -16,6 +16,7 @@ import { translations } from "@/lib/translations";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUserCountry } from "@/lib/country-detection";
+import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice, formatPriceUnits } from "@/lib/product-utils";
 
 interface ProductPageClientProps {
@@ -29,11 +30,50 @@ export default function ProductPageClient({ product, recommendations }: ProductP
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
   const userCountry = useUserCountry();
+  const { selectedCountry } = useCountryStore();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [showDescription, setShowDescription] = useState<string>('shortDescription');
   const [quickView, setQuickView] = useState<any>(null);
+
+  // STRICT: Compute price using selectedCountry - no fallbacks
+  const { displayPrice, originalPrice, isAvailable } = useMemo(() => {
+    if (!product) return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+    
+    // Ensure countryPrices is an array
+    const cpArray = Array.isArray(product.countryPrices) ? product.countryPrices : [];
+    
+    // If no country prices at all, show unavailable
+    if (cpArray.length === 0) {
+      return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+    }
+    
+    const countryUpper = selectedCountry.toUpperCase();
+    
+    // Find matching country price - must have valid price > 0
+    const countryPrice = cpArray.find((cp: any) => {
+      if (!cp) return false;
+      const cpCountry = cp.country?.toUpperCase() || '';
+      const cpActive = cp.active !== false;
+      const cpPrice = Number(cp.price) || 0;
+      return cpCountry === countryUpper && cpActive && cpPrice > 0;
+    });
+    
+    if (countryPrice) {
+      const priceValue = Number(countryPrice.price) || 0;
+      if (priceValue > 0) {
+        return {
+          displayPrice: priceValue,
+          originalPrice: priceValue,
+          isAvailable: true
+        };
+      }
+    }
+    
+    // NO FALLBACK - if no valid country price, show unavailable
+    return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+  }, [product, selectedCountry]);
 
   const descriptionTabs = [
     { key: 'shortDescription', label: 'Overview' },
@@ -129,9 +169,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       router.push("/cart");
     }
   }
-
-  const displayPrice = product.salePrice || product.salePriceCents || product.price || product.priceCents || 0;
-  const originalPrice = product.regularPrice || product.regularPriceCents || product.price || product.priceCents || 0;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-black">
@@ -255,9 +292,15 @@ export default function ProductPageClient({ product, recommendations }: ProductP
             </div>
 
             <div className="flex items-baseline gap-4">
-              <Price amount={displayPrice} className="text-4xl lg:text-5xl font-black text-black" />
-              {product.salePriceCents && (
-                <Price amount={originalPrice} className="text-xl lg:text-2xl text-red-500 line-through font-bold" />
+              {isAvailable ? (
+                <>
+                  <Price amount={displayPrice} className="text-4xl lg:text-5xl font-black text-black" />
+                  {displayPrice < originalPrice && (
+                    <Price amount={originalPrice} className="text-xl lg:text-2xl text-red-500 line-through font-bold" />
+                  )}
+                </>
+              ) : (
+                <span className="text-2xl lg:text-3xl font-black text-red-500">Unavailable in this region</span>
               )}
             </div>
 

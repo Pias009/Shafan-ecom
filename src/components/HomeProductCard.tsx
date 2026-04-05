@@ -5,6 +5,8 @@ import { ShoppingBag, Star, Package, TrendingUp, ShoppingCart } from "lucide-rea
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import { getDisplayPrice } from "@/lib/product-utils";
+import { useCountryStore } from "@/lib/country-store";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -45,10 +47,13 @@ export function HomeProductCard({
 }: HomeProductCardProps) {
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
+  const { selectedCountry } = useCountryStore();
 
-  // Safely get the display price
-  const price = product.discountPrice ?? product.price;
-  const hasDiscount = !!product.discountPrice && product.discountPrice < product.price;
+  // Get country-specific price
+  const { price: countryPrice } = getDisplayPrice(product, selectedCountry);
+  const basePrice = product.discountPrice ?? product.price;
+  const price = countryPrice > 0 ? countryPrice : basePrice;
+  const hasDiscount = countryPrice > 0 && product.discountPrice && product.discountPrice < countryPrice;
 
   // Safely get the brand name as a string
   const brandName = typeof product.brand === "string"

@@ -1,38 +1,52 @@
 // Client-safe utility for checking product validity
 
-// Check if a product has a valid price for display
 export function hasValidPrice(product: any, userCountry?: string): boolean {
+  if (!product) return false;
+  
+  const countryCode = (userCountry || '').toUpperCase();
+  
+  // Check country-specific prices first
   if (product.countryPrices && product.countryPrices.length > 0) {
     const countryPrice = product.countryPrices.find((cp: any) =>
-      cp.country?.toUpperCase() === (userCountry || '').toUpperCase()
+      cp.country?.toUpperCase() === countryCode || cp.countryCode?.toUpperCase() === countryCode
     );
-    const priceToUse = countryPrice || product.countryPrices.find((cp: any) => cp.price > 0);
-    return priceToUse && priceToUse.price > 0;
+    if (countryPrice && (countryPrice.price > 0 || Number(countryPrice.price) > 0)) {
+      return true;
+    }
   }
-  return product.price > 0;
+  
+  // Fallback: check base price
+  if (product.price && Number(product.price) > 0) {
+    return true;
+  }
+  
+  return false;
 }
 
-// Get the display price for a product - returns direct decimal value
 export function getDisplayPrice(product: any, userCountry?: string): { price: number; currency: string } {
+  const countryCode = (userCountry || '').toUpperCase();
+  
   if (product?.countryPrices && product.countryPrices.length > 0) {
     const countryPrice = product.countryPrices.find((cp: any) =>
-      cp.country?.toUpperCase() === (userCountry || '').toUpperCase()
+      cp.country?.toUpperCase() === countryCode || cp.countryCode?.toUpperCase() === countryCode
     );
-    const priceToUse = countryPrice || product.countryPrices.find((cp: any) => (Number(cp.price) || 0) > 0);
-    if (priceToUse) {
+    if (countryPrice && Number(countryPrice.price) > 0) {
       return {
-        price: Number(priceToUse.price) || 0,
-        currency: priceToUse.currency || 'USD'
+        price: Number(countryPrice.price) || 0,
+        currency: countryPrice.currency || 'USD'
       };
     }
   }
   
-  // Final fallback to base price fields
-  const basePrice = product?.price ?? product?.discountPrice ?? 0;
-  return {
-    price: Number(basePrice) || 0,
-    currency: product?.currency || 'USD'
-  };
+  // Fallback to base price
+  if (product?.price && Number(product.price) > 0) {
+    return {
+      price: Number(product.price) || 0,
+      currency: product.currency || 'USD'
+    };
+  }
+  
+  return { price: 0, currency: 'USD' };
 }
 
 // Helper to get correct divisor for raw price units (cents vs fils)

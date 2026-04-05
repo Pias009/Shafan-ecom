@@ -461,7 +461,8 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
           ...quickView,
           price: quickView.price || quickView.priceCents || 0,
           imageUrl: quickView.mainImage,
-          brand: quickView.brand?.name
+          brand: quickView.brand?.name,
+          countryPrices: quickView.countryPrices || []
         } : null}
         onClose={() => setQuickView(null)}
         onAddToCart={(p) => addToCart(p)}
