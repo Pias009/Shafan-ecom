@@ -136,7 +136,7 @@ export function ProductCard({
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col items-center justify-center">
           {/* Price - Shows on Hover */}
           <div className="mb-4 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
-            <Price amount={price} showSymbolSmall countryPrices={product.countryPrices} isCents={false} />
+            <Price amount={price} showSymbolSmall countryPrices={product.countryPrices} />
           </div>
           
           {/* Action Buttons - Vertical View */}
@@ -170,9 +170,9 @@ export function ProductCard({
         {/* Price and Stock Info Row */}
         <div className="flex items-center justify-between mb-2 flex-shrink-0">
           <div className="flex items-baseline gap-2">
-            <Price amount={price} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} isCents={false} />
+            <Price amount={price} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} />
             {hasDiscount && (
-              <Price amount={product.price} className="text-xs text-red-500 line-through font-bold" countryPrices={product.countryPrices} isCents={false} />
+              <Price amount={product.price} className="text-xs text-red-500 line-through font-bold" countryPrices={product.countryPrices} />
             )}
           </div>
           

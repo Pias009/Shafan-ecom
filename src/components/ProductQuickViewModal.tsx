@@ -268,9 +268,9 @@ export function ProductQuickViewModal({
                 )}
 
                 <div className="flex items-baseline gap-3">
-                  <Price amount={displayPrice} className="text-2xl md:text-4xl font-black text-black" isCents={true} />
+                  <Price amount={displayPrice} className="text-2xl md:text-4xl font-black text-black" />
                   {displayPrice < originalPrice ? (
-                    <Price amount={originalPrice} className="text-base md:text-lg text-red-500 line-through font-bold" isCents={true} />
+                    <Price amount={originalPrice} className="text-base md:text-lg text-red-500 line-through font-bold" />
                   ) : null}
                 </div>
 

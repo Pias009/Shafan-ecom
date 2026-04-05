@@ -15,14 +15,11 @@ interface PriceProps {
     currency: string;
   }>;
   currency?: string;
-  isCents?: boolean;
 }
 
-function formatPriceSimple(amount: number, currencyCode: string, isRawPrice: boolean = false): string {
+function formatPriceSimple(amount: number, currencyCode: string): string {
   const code = currencyCode?.toUpperCase() || 'USD';
-  // ALWAYS show 3 decimals for these 3 currencies, whether raw or not
-  const isThreeDecimal = ["KWD", "BHD", "OMR"].includes(code);
-  const decimals = isThreeDecimal ? 3 : (isRawPrice ? 0 : 2);
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
   const symbol = code;
   return `${symbol} ${amount.toLocaleString(undefined, {
     minimumFractionDigits: decimals,
@@ -30,7 +27,7 @@ function formatPriceSimple(amount: number, currencyCode: string, isRawPrice: boo
   })}`;
 }
 
-function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, isCents = false, userCountry, currentCurrency }: PriceProps & { userCountry: string; currentCurrency: { code: string; rate: number } }) {
+function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, userCountry, currentCurrency }: PriceProps & { userCountry: string; currentCurrency: { code: string; rate: number } }) {
   if (amount == null) {
     return <span className={className}>-</span>;
   }
@@ -38,24 +35,22 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
   if (isNaN(displayAmount)) displayAmount = 0;
 
   let displayCurrency = currentCurrency.code;
-  let isRawPrice = true; // All prices are now raw from admin as per request
 
   // 1. Check if we have country-specific pricing
   if (countryPrices && countryPrices.length > 0) {
     const { price, currency: priceCurrency } = getDisplayPrice({ countryPrices }, userCountry);
     if (price > 0 || (Number(price) || 0) > 0) {
-      displayAmount = Number(price); // No division by 100
+      displayAmount = Number(price);
       displayCurrency = priceCurrency;
-      isRawPrice = true;
     }
   } else {
-    // 2. Fallback to base amount
+    // 2. Fallback to base amount - always raw (no cents)
     if (currency) {
       displayCurrency = currency.toUpperCase();
     }
   }
 
-  const formatted = formatPriceSimple(displayAmount, displayCurrency, isRawPrice);
+  const formatted = formatPriceSimple(displayAmount, displayCurrency);
   
   if (showSymbolSmall) {
     return (

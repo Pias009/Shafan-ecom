@@ -152,7 +152,6 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                     </div>
                     <Price
                       amount={price}
-                      isCents={false}
                       countryPrices={item.countryPrices}
                       className="font-body font-black text-black text-sm md:text-lg shrink-0"
                     />
@@ -224,7 +223,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
 
               <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-black/40 font-bold uppercase tracking-wider">
                 <div>{t.cart.subtotal}</div>
-                <Price amount={subtotal} isCents={false} className="text-black font-black" />
+                <Price amount={subtotal} className="text-black font-black" />
               </div>
 
               {couponCode && (
@@ -233,8 +232,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                     {t.cart.promo} ({couponCode})
                     <button onClick={removeCoupon} className="text-[9px] underline">({t.cart.remove})</button>
                   </div>
-                  <div className="font-black">- <Price amount={discount} isCents={false} /></div>
-                </div>
+                  <div className="font-black">- <Price amount={discount} /></div>                </div>
               )}
 
               <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-black/40 font-bold uppercase tracking-wider">
@@ -243,14 +241,14 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                   {freeDelivery ? (
                     <span className="text-green-600 font-black">FREE</span>
                   ) : (
-                    <Price amount={shipping} isCents={false} />
+                    <Price amount={shipping} />
                   )}
                 </div>
               </div>
 
               <div className="flex items-center justify-between pt-6 border-t border-black/5">
                 <div className="font-black text-xs md:text-sm uppercase tracking-widest">{t.cart.total}</div>
-                <Price amount={total} isCents={false} className="text-2xl md:text-3xl font-black text-black" />
+                <Price amount={total} className="text-2xl md:text-3xl font-black text-black" />
               </div>
 
               <div className="mt-6 pt-4 border-t border-black/5">

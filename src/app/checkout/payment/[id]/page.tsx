@@ -300,7 +300,7 @@ export default function CustomPaymentPage() {
                   <div className="bg-black/5 rounded-2xl p-4 space-y-2">
                     <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Order Total</div>
                     <div className="font-black text-2xl">
-                      <Price amount={order.totalCents} currency={order.currency} isCents={false} />
+                      <Price amount={order.totalCents} currency={order.currency} />
                     </div>
                   </div>
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
@@ -356,7 +356,7 @@ export default function CustomPaymentPage() {
                       <div className="text-[9px] md:text-[10px] text-black/40 font-bold uppercase tracking-widest mt-1">Quantity: {item.quantity}</div>
                     </div>
                     <div className="text-right font-black text-xs md:text-sm">
-                      <Price amount={item.unitPriceCents * item.quantity} currency={order.currency} isCents={false} />
+                      <Price amount={item.unitPriceCents * item.quantity} currency={order.currency} />
                     </div>
                   </div>
                 ))}
@@ -365,11 +365,11 @@ export default function CustomPaymentPage() {
               <div className="space-y-3 pt-6 border-t border-black/5">
                 <div className="flex justify-between text-[10px] text-black/40 font-bold uppercase tracking-widest">
                   <span>Subtotal</span>
-                  <Price amount={order.subtotalCents} currency={order.currency} isCents={false} className="text-black" />
+                  <Price amount={order.subtotalCents} currency={order.currency} className="text-black" />
                 </div>
                 <div className="flex justify-between pt-4 border-t border-black/5">
                   <span className="font-bold text-base md:text-lg">Total</span>
-                  <Price amount={order.totalCents} currency={order.currency} isCents={true} className="font-black text-xl md:text-2xl" />
+                  <Price amount={order.totalCents} currency={order.currency} className="font-black text-xl md:text-2xl" />
                 </div>
               </div>
 
