@@ -62,7 +62,7 @@ export function CurrencySelector() {
 
       {isOpen && (
         <div 
-          className="absolute top-full right-0 mt-2 w-48 glass-panel-heavy rounded-2xl p-2 border border-black/5 shadow-2xl z-[100] bg-white/95 backdrop-blur-xl transition-all animate-in fade-in zoom-in duration-200"
+          className="absolute top-full right-0 mt-2 w-48 glass-panel-heavy rounded-2xl p-2 border border-black/5 shadow-2xl z-[9999] bg-white/95 backdrop-blur-xl transition-all animate-in fade-in zoom-in duration-200"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-black/20 border-b border-black/5 mb-1">

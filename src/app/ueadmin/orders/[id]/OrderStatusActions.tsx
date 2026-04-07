@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Package, Check, Truck, CircleDollarSign, RotateCcw } from 'lucide-react';
 import { OrderStatus } from '@prisma/client';
 import CourierServices from '@/components/CourierServices';
 
@@ -18,15 +18,15 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
   const [sendEmail, setSendEmail] = useState(true);
 
   const statuses = [
-    { id: OrderStatus.ORDER_RECEIVED, label: 'Order Received' },
-    { id: OrderStatus.ORDER_CONFIRMED, label: 'Order Confirmed' },
-    { id: OrderStatus.PROCESSING, label: 'Processing' },
-    { id: OrderStatus.READY_FOR_PICKUP, label: 'Ready for Pickup' },
-    { id: OrderStatus.ORDER_PICKED_UP, label: 'Order Picked Up' },
-    { id: OrderStatus.IN_TRANSIT, label: 'In Transit' },
-    { id: OrderStatus.DELIVERED, label: 'Delivered' },
-    { id: OrderStatus.CANCELLED, label: 'Cancelled' },
-    { id: OrderStatus.REFUNDED, label: 'Refunded' },
+    { id: OrderStatus.ORDER_RECEIVED, label: 'Received', icon: Package },
+    { id: OrderStatus.ORDER_CONFIRMED, label: 'Confirmed', icon: Check },
+    { id: OrderStatus.PROCESSING, label: 'Processing', icon: Loader2 },
+    { id: OrderStatus.READY_FOR_PICKUP, label: 'Pickup', icon: Truck },
+    { id: OrderStatus.ORDER_PICKED_UP, label: 'Picked', icon: Truck },
+    { id: OrderStatus.IN_TRANSIT, label: 'Transit', icon: Truck },
+    { id: OrderStatus.DELIVERED, label: 'Delivered', icon: Check },
+    { id: OrderStatus.CANCELLED, label: 'Cancel', icon: RotateCcw },
+    { id: OrderStatus.REFUNDED, label: 'Refund', icon: CircleDollarSign },
   ];
 
   async function updateStatus(newStatus: OrderStatus, sendEmailNotification: boolean = true) {
@@ -84,21 +84,25 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
 
       <div className="space-y-3">
         <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Quick Status Switch</div>
-        <div className="flex flex-wrap gap-2">
-          {statuses.map((s) => (
+        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+          {statuses.map((s) => {
+            const Icon = s.icon;
+            return (
             <button
               key={s.id}
               onClick={() => updateStatus(s.id, sendEmail)}
               disabled={loading}
-              className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${
+              title={s.label}
+              className={`flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border ${
                 status === s.id 
                   ? 'bg-black text-white border-black' 
                   : 'bg-white text-black/40 border-black/5 hover:border-black/20'
-              } disabled:opacity-50`}
+              } disabled:opacity-50 min-w-[60px]`}
             >
+              <Icon size={14} />
               {s.label}
             </button>
-          ))}
+          )})}
         </div>
       </div>
 

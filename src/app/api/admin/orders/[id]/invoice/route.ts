@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAdminApiSession } from '@/lib/admin-session';
+import PDFDocument from 'pdfkit';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getAdminApiSession();
+    console.log('[INVOICE] Session check:', session ? 'authenticated' : 'not authenticated');
+    if (!session) {
+      console.log('[INVOICE] No session - returning 401');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
 
     const order = await (prisma as any).order.findUnique({
@@ -14,7 +23,6 @@ export async function POST(
         items: {
           include: {
             product: true,
-            variant: true,
           },
         },
         user: true,
@@ -46,250 +54,163 @@ export async function POST(
     dueDate.setDate(dueDate.getDate() + 30);
     const paymentDueDate = dueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    const subtotal = Number(order.subtotal);
-    const shippingCost = Number(order.shipping || 0);
-    const discount = Number(order.discount || 0);
-    const total = Number(order.total);
     const taxValue = (order.total - order.subtotal - (order.shipping || 0) + (order.discount || 0));
     const tax = taxValue.toFixed(2);
 
-    const itemsHtml = order.items.map((item: any, index: number) => `
-      <tr>
-        <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; color: #666; font-size: 10px;">${index + 1}</td>
-        <td style="padding: 12px 8px; border-bottom: 1px solid #eee;">
-          <strong style="font-size: 11px;">${item.nameSnapshot || item.product?.name || 'Unknown'}</strong>
-          ${item.variant?.name ? `<br><span style="color: #888; font-size: 9px;">Variant: ${item.variant.name}</span>` : ''}
-          ${item.sku ? `<br><span style="color: #888; font-size: 9px;">SKU: ${item.sku}</span>` : ''}
-        </td>
-        <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 11px;">${item.quantity}</td>
-        <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;">${formatPrice(item.unitPrice, order.currency)}</td>
-        <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;"><strong>${formatPrice(item.unitPrice * item.quantity, order.currency)}</strong></td>
-      </tr>
-    `).join('');
+    const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        const chunks: Buffer[] = [];
 
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Invoice #${order.id.slice(-8).toUpperCase()} - SHAFAN</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    @page { size: A4; margin: 0; }
-    html, body { width: 210mm; min-height: 297mm; font-family: 'Segoe UI', Arial, sans-serif; padding: 12mm; color: #1a1a1a; background: #fff; }
-    .invoice { width: 100%; }
-    
-    /* Header */
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 3px solid #000; }
-    .company-info { flex: 1; }
-    .logo { font-size: 36px; font-weight: 900; letter-spacing: 4px; color: #000; }
-    .company-details { margin-top: 8px; font-size: 10px; color: #666; line-height: 1.6; }
-    .invoice-box { text-align: right; }
-    .invoice-title { font-size: 28px; font-weight: 700; color: #000; letter-spacing: 2px; }
-    .invoice-number { font-size: 12px; color: #666; margin-top: 5px; }
-    
-    /* Info Grid */
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-    .info-box { background: #f8f9fa; border-radius: 8px; padding: 15px; }
-    .info-box h4 { font-size: 9px; text-transform: uppercase; color: #888; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #e0e0e0; padding-bottom: 5px; }
-    .info-box p { font-size: 10px; line-height: 1.6; color: #333; }
-    .info-box strong { display: block; font-size: 11px; color: #000; }
-    
-    /* Status Badge */
-    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .status-paid { background: #d4edda; color: #155724; }
-    .status-pending { background: #fff3cd; color: #856404; }
-    .status-failed { background: #f8d7da; color: #721c24; }
-    
-    /* Table */
-    .section { margin-bottom: 25px; }
-    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #888; margin-bottom: 10px; letter-spacing: 1px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; background: #fff; }
-    thead th { background: #000; color: #fff; padding: 12px 8px; font-weight: 600; text-transform: uppercase; font-size: 9px; letter-spacing: 0.5px; text-align: left; }
-    thead th:nth-child(1) { width: 40px; text-align: center; }
-    thead th:nth-child(3), thead th:nth-child(4), thead th:nth-child(5) { text-align: right; }
-    tbody tr:hover { background: #fafafa; }
-    
-    /* Totals */
-    .totals-section { display: flex; justify-content: flex-end; margin-top: 20px; }
-    .totals-table { width: 280px; }
-    .totals-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 11px; }
-    .totals-row.final { border-top: 2px solid #000; border-bottom: none; margin-top: 5px; padding-top: 12px; font-size: 16px; font-weight: 700; }
-    .totals-label { color: #666; }
-    .totals-value { font-weight: 600; }
-    .totals-row.final .totals-label, .totals-row.final .totals-value { color: #000; }
-    .discount { color: #28a745; }
-    
-    /* Payment Info */
-    .payment-section { background: #f0f0f0; border-radius: 8px; padding: 15px; margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-    .payment-box h5 { font-size: 9px; text-transform: uppercase; color: #888; letter-spacing: 1px; margin-bottom: 5px; }
-    .payment-box p { font-size: 11px; font-weight: 600; }
-    
-    /* Footer */
-    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
-    .terms { font-size: 9px; color: #888; line-height: 1.6; margin-bottom: 15px; }
-    .thank-you { text-align: center; padding: 20px; background: #f8f9fa; border-radius: 8px; margin-top: 20px; }
-    .thank-you h3 { font-size: 18px; font-weight: 700; color: #000; margin-bottom: 5px; }
-    .thank-you p { font-size: 11px; color: #666; }
-    .contact-info { text-align: center; margin-top: 15px; font-size: 10px; color: #888; }
-    
-    @media print {
-      body { padding: 0; }
-      .no-print { display: none; }
-    }
-  </style>
-</head>
-<body>
-  <div class="invoice">
-    <!-- Header -->
-    <div class="header">
-      <div class="company-info">
-        <div class="logo">SHAFAN</div>
-        <div class="company-details">
-          <p>Shafan Group Global Trading LLC</p>
-          <p>Dubai, United Arab Emirates</p>
-          <p>Email: shanfaglobal.it@gmail.com</p>
-          <p>Tel: +971 50 123 4567</p>
-          <p>TRN: 123456789012345</p>
-        </div>
-      </div>
-      <div class="invoice-box">
-        <div class="invoice-title">INVOICE</div>
-        <div class="invoice-number">
-          <strong>Invoice #:</strong> INV-${order.id.slice(-8).toUpperCase()}<br>
-          <strong>Order #:</strong> ${order.id.slice(-8).toUpperCase()}<br>
-          <strong>Date:</strong> ${orderDate}<br>
-          <strong>Time:</strong> ${orderTime}<br>
-          <span class="status-badge ${paymentStatus === 'PAID' ? 'status-paid' : 'status-pending'}">${paymentStatus}</span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Info Grid -->
-    <div class="info-grid">
-      <div class="info-box">
-        <h4>Bill To</h4>
-        <strong>${customerName}</strong>
-        <p>${billing?.address_1 || ''}</p>
-        <p>${billing?.address_2 || ''}</p>
-        <p>${billing?.city || ''}, ${billing?.state || ''} ${billing?.postcode || ''}</p>
-        <p>${billing?.country || ''}</p>
-        ${customerEmail ? `<p style="margin-top: 8px;"><strong>Email:</strong> ${customerEmail}</p>` : ''}
-        ${customerPhone ? `<p><strong>Phone:</strong> ${customerPhone}</p>` : ''}
-      </div>
-      <div class="info-box">
-        <h4>Ship To</h4>
-        <strong>${shipping?.first_name || ''} ${shipping?.last_name || ''}</strong>
-        <p>${shipping?.address_1 || ''}</p>
-        <p>${shipping?.address_2 || ''}</p>
-        <p>${shipping?.city || ''}, ${shipping?.state || ''} ${shipping?.postcode || ''}</p>
-        <p>${shipping?.country || ''}</p>
-        ${shipping?.phone ? `<p style="margin-top: 8px;"><strong>Phone:</strong> ${shipping?.phone}</p>` : ''}
-      </div>
-      <div class="info-box">
-        <h4>Order Info</h4>
-        <p><strong>Status:</strong> ${order.status.replace(/_/g, ' ')}</p>
-        <p><strong>Payment:</strong> ${paymentMethod}</p>
-        <p><strong>Currency:</strong> ${order.currency}</p>
-        <p><strong>Due Date:</strong> ${paymentDueDate}</p>
-        <p><strong>Store:</strong> ${order.store?.name || 'Online'}</p>
-        ${order.trackingNumber ? `<p><strong>Tracking:</strong> ${order.trackingNumber}</p>` : ''}
-      </div>
-    </div>
-    
-    <!-- Items Table -->
-    <div class="section">
-      <div class="section-title">Order Items</div>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Product</th>
-            <th style="text-align: center;">Qty</th>
-            <th style="text-align: right;">Unit Price</th>
-            <th style="text-align: right;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHtml}
-        </tbody>
-      </table>
-    </div>
-    
-    <!-- Totals -->
-    <div class="totals-section">
-      <div class="totals-table">
-        <div class="totals-row">
-          <span class="totals-label">Subtotal</span>
-          <span class="totals-value">${formatPrice(order.subtotal, order.currency)}</span>
-        </div>
-        <div class="totals-row">
-          <span class="totals-label">Shipping</span>
-          <span class="totals-value">${formatPrice(order.shipping || 0, order.currency)}</span>
-        </div>
-        ${discount > 0 ? `
-        <div class="totals-row">
-          <span class="totals-label">Discount</span>
-          <span class="totals-value discount">-${formatPrice(order.discount || 0, order.currency)}</span>
-        </div>
-        ` : ''}
-        ${parseFloat(tax) > 0 ? `
-        <div class="totals-row">
-          <span class="totals-label">VAT (5%)</span>
-          <span class="totals-value">${formatPrice(taxValue, order.currency)}</span>
-        </div>
-        ` : ''}
-        <div class="totals-row final">
-          <span class="totals-label">TOTAL</span>
-          <span class="totals-value">${formatPrice(order.total, order.currency)}</span>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Payment Info -->
-    <div class="payment-section">
-      <div class="payment-box">
-        <h5>Payment Method</h5>
-        <p>${paymentMethod}</p>
-      </div>
-      <div class="payment-box">
-        <h5>Payment Status</h5>
-        <p>${paymentStatus}</p>
-      </div>
-      <div class="payment-box">
-        <h5>Amount Paid</h5>
-        <p>${formatPrice(order.totalCents, order.currency)}</p>
-      </div>
-    </div>
-    
-    <!-- Footer -->
-    <div class="footer">
-      <div class="terms">
-        <strong>Terms & Conditions:</strong><br>
-        • Goods once sold will not be returned or exchanged unless defective.<br>
-        • Please inspect the goods upon delivery and report any damages within 24 hours.<br>
-        • Prices are inclusive of VAT where applicable.<br>
-        • For queries, contact us at shanfaglobal.it@gmail.com
-      </div>
-      
-      <div class="thank-you">
-        <h3>Thank You for Shopping with SHAFAN!</h3>
-        <p>Your order is being processed and will be shipped soon.</p>
-      </div>
-      
-      <div class="contact-info">
-        <p>Shafan Group Global Trading LLC | Dubai, UAE | shanfaglobal.it@gmail.com | +971 50 123 4567</p>
-        <p style="margin-top: 5px;">This is a computer-generated invoice. No signature required.</p>
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
 
-    return new NextResponse(html, {
+        doc.fontSize(28).font('Helvetica-Bold').text('INVOICE', 50, 50, { align: 'right' });
+        doc.fontSize(10).font('Helvetica').text(`Invoice #: INV-${order.id.slice(-8).toUpperCase()}`, 50, 50, { align: 'right' });
+        doc.text(`Order #: ${order.id.slice(-8).toUpperCase()}`, { align: 'right' });
+        doc.text(`Date: ${orderDate}`, { align: 'right' });
+        doc.text(`Time: ${orderTime}`, { align: 'right' });
+        doc.text(`Status: ${paymentStatus}`, { align: 'right' });
+
+        doc.moveDown();
+        doc.fontSize(36).font('Helvetica-Bold').text('SHAFAN', 50, 50);
+        doc.fontSize(10).font('Helvetica').text('Shafan Group Global Trading LLC', 50);
+        doc.text('Dubai, United Arab Emirates', 50);
+        doc.text('Email: shanfaglobal.it@gmail.com', 50);
+        doc.text('Tel: +971 50 123 4567', 50);
+        doc.text('TRN: 123456789012345', 50);
+
+        doc.moveDown();
+        doc.rect(50, 150, 495, 2).fill('#000');
+        doc.moveDown();
+
+        const billingAddr = [
+          billing?.address_1 || '',
+          billing?.address_2 || '',
+          `${billing?.city || ''}, ${billing?.state || ''} ${billing?.postcode || ''}`,
+          billing?.country || '',
+        ].filter(Boolean).join(', ');
+
+        const shippingAddr = [
+          shipping?.address_1 || '',
+          shipping?.address_2 || '',
+          `${shipping?.city || ''}, ${shipping?.state || ''} ${shipping?.postcode || ''}`,
+          shipping?.country || '',
+        ].filter(Boolean).join(', ');
+
+        const infoStartY = 170;
+        doc.fontSize(9).font('Helvetica-Bold').text('BILL TO', 50, infoStartY);
+        doc.fontSize(10).font('Helvetica').text(customerName, 50);
+        if (billingAddr) doc.text(billingAddr);
+        if (customerEmail) doc.text(`Email: ${customerEmail}`);
+        if (customerPhone) doc.text(`Phone: ${customerPhone}`);
+
+        doc.fontSize(9).font('Helvetica-Bold').text('SHIP TO', 220, infoStartY);
+        doc.fontSize(10).font('Helvetica').text(`${shipping?.first_name || ''} ${shipping?.last_name || ''}`, 220);
+        if (shippingAddr) doc.text(shippingAddr);
+        if (shipping?.phone) doc.text(`Phone: ${shipping.phone}`);
+
+        doc.fontSize(9).font('Helvetica-Bold').text('ORDER INFO', 390, infoStartY);
+        doc.fontSize(10).font('Helvetica').text(`Status: ${order.status.replace(/_/g, ' ')}`, 390);
+        doc.text(`Payment: ${paymentMethod}`, 390);
+        doc.text(`Currency: ${order.currency}`, 390);
+        doc.text(`Due Date: ${paymentDueDate}`, 390);
+        doc.text(`Store: ${order.store?.name || 'Online'}`, 390);
+        if (order.trackingNumber) doc.text(`Tracking: ${order.trackingNumber}`, 390);
+
+        doc.moveDown();
+        const tableTop = 290;
+        doc.rect(50, tableTop - 10, 495, 25).fill('#000');
+        doc.fillColor('#fff').fontSize(9).font('Helvetica-Bold').text('#', 55, tableTop - 2, { width: 30, align: 'center' });
+        doc.text('Product', 90, tableTop - 2, { width: 200 });
+        doc.text('Qty', 300, tableTop - 2, { width: 50, align: 'center' });
+        doc.text('Unit Price', 360, tableTop - 2, { width: 80, align: 'right' });
+        doc.text('Total', 450, tableTop - 2, { width: 80, align: 'right' });
+        doc.fillColor('#000');
+
+        let y = tableTop + 20;
+        order.items.forEach((item: any, index: number) => {
+          const itemName = item.nameSnapshot || item.product?.name || 'Unknown';
+          const itemDetails = item.sku ? `SKU: ${item.sku}` : '';
+          
+          doc.fontSize(10).font('Helvetica').text(String(index + 1), 55, y, { width: 30, align: 'center' });
+          doc.text(itemName + (itemDetails ? `\n${itemDetails}` : ''), 90, y, { width: 200 });
+          doc.text(String(item.quantity), 300, y, { width: 50, align: 'center' });
+          doc.text(formatPrice(item.unitPrice, order.currency), 360, y, { width: 80, align: 'right' });
+          doc.text(formatPrice(item.unitPrice * item.quantity, order.currency), 450, y, { width: 80, align: 'right' });
+          
+          y += 25;
+        });
+
+        doc.moveDown();
+        y += 20;
+        const totalsX = 360;
+        
+        doc.fontSize(10).font('Helvetica').text('Subtotal', totalsX, y, { width: 80, align: 'right' });
+        doc.text(formatPrice(order.subtotal, order.currency), 450, y, { width: 80, align: 'right' });
+        y += 15;
+        
+        doc.text('Shipping', totalsX, y, { width: 80, align: 'right' });
+        doc.text(formatPrice(order.shipping || 0, order.currency), 450, y, { width: 80, align: 'right' });
+        y += 15;
+
+        if ((order.discount || 0) > 0) {
+          doc.text('Discount', totalsX, y, { width: 80, align: 'right' });
+          doc.text(`-${formatPrice(order.discount || 0, order.currency)}`, 450, y, { width: 80, align: 'right' });
+          y += 15;
+        }
+
+        if (parseFloat(tax) > 0) {
+          doc.text('VAT (5%)', totalsX, y, { width: 80, align: 'right' });
+          doc.text(formatPrice(taxValue, order.currency), 450, y, { width: 80, align: 'right' });
+          y += 15;
+        }
+
+        y += 5;
+        doc.rect(totalsX - 10, y, 200, 2).fill('#000');
+        y += 15;
+        doc.fontSize(14).font('Helvetica-Bold').text('TOTAL', totalsX, y, { width: 80, align: 'right' });
+        doc.text(formatPrice(order.total, order.currency), 450, y, { width: 80, align: 'right' });
+
+        y += 50;
+        doc.rect(50, y, 495, 80).fill('#f0f0f0');
+        y += 15;
+        doc.fillColor('#000').fontSize(9).font('Helvetica-Bold').text('PAYMENT INFO', 60, y);
+        
+        doc.fontSize(10).font('Helvetica').text('Payment Method', 60, y + 30);
+        doc.text(paymentMethod, 180, y + 30);
+        
+        doc.text('Payment Status', 60, y + 45);
+        doc.text(paymentStatus, 180, y + 45);
+        
+        doc.text('Amount Paid', 60, y + 60);
+        doc.text(formatPrice(order.totalCents, order.currency), 180, y + 60);
+
+        const footerY = 700;
+        doc.fontSize(9).font('Helvetica').text('Terms & Conditions:', 50, footerY);
+        doc.text('• Goods once sold will not be returned or exchanged unless defective.', 50);
+        doc.text('• Please inspect the goods upon delivery and report any damages within 24 hours.', 50);
+        doc.text('• Prices are inclusive of VAT where applicable.', 50);
+        doc.text('• For queries, contact us at shanfaglobal.it@gmail.com', 50);
+
+        doc.moveDown();
+        doc.fontSize(14).font('Helvetica-Bold').text('Thank You for Shopping with SHAFAN!', 50, footerY + 80, { align: 'center' });
+        doc.fontSize(10).font('Helvetica').text('Your order is being processed and will be shipped soon.', 50, footerY + 100, { align: 'center' });
+
+        doc.fontSize(9).text('Shafan Group Global Trading LLC | Dubai, UAE | shanfaglobal.it@gmail.com | +971 50 123 4567', 50, footerY + 130, { align: 'center' });
+        doc.text('This is a computer-generated invoice. No signature required.', 50, footerY + 145, { align: 'center' });
+
+        doc.end();
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    return new NextResponse(pdfBuffer as unknown as BodyInit, {
       headers: {
-        'Content-Type': 'text/html',
-        'Content-Disposition': `attachment; filename="invoice-${order.id.slice(-8)}.html"`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="invoice-${order.id.slice(-8)}.pdf"`,
       },
     });
   } catch (error) {

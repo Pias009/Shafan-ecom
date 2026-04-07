@@ -16,7 +16,9 @@ export default function InvoiceDownload({ orderId }: Props) {
       });
 
       if (!res.ok) {
-        toast.error("Failed to download invoice");
+        const errorData = await res.json().catch(() => ({}));
+        console.error('Invoice download error:', res.status, errorData);
+        toast.error(errorData.error || "Failed to download invoice");
         return;
       }
 
@@ -24,7 +26,7 @@ export default function InvoiceDownload({ orderId }: Props) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `invoice-${orderId.slice(-8)}.html`;
+      a.download = `invoice-${orderId.slice(-8)}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

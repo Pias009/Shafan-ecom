@@ -73,9 +73,8 @@ export function HomeProductCard({
             src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}
             alt={product.name}
             fill
-            sizes="(max-width: 640px) 200px, (max-width: 768px) 290px, 360px"
+            sizes="(max-width: 768px) 100vw, 33vw"
             className="img object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40 active:blur-[4px] active:opacity-40"
-            priority={false}
           />
 
           {/* Badges */}

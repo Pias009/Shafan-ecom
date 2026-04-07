@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProducts } from "@/lib/products";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     
     return NextResponse.json(products, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
       }
     });
   } catch (error: any) {

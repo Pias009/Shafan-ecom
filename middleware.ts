@@ -1,5 +1,4 @@
 import { NextResponse, NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 
 const SECRET_PATH = process.env.SECRET_LOCK_PATH || `/master-${Math.random().toString(36).substring(2, 18)}`;
 

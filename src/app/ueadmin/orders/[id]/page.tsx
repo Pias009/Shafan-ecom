@@ -92,8 +92,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
-        <div className="lg:col-span-2 space-y-6 md:space-y-8">
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 lg:col-span-8 space-y-6 md:space-y-8">
           {/* Detailed Status & Fulfilment */}
           <section className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-black/5 shadow-sm bg-white space-y-6">
              <div className="flex items-center justify-between border-b border-black/5 pb-4">
@@ -199,8 +199,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
 
         {/* Sidebar: Payment & Financials */}
-        <div className="space-y-6 md:space-y-8">
-          <section className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-black/5 shadow-2xl bg-white lg:sticky lg:top-24">
+        <div className="col-span-12 lg:col-span-4 space-y-6 md:space-y-8">
+          <section className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-black/5 shadow-2xl bg-white sticky top-24 self-start">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2 bg-black/5 rounded-xl text-black/40"><CreditCard size={18} /></div>
               <h3 className="font-black uppercase tracking-widest text-xs text-black">Financials</h3>

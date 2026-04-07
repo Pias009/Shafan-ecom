@@ -321,7 +321,7 @@ export function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden glass-panel-heavy mx-4 mb-4 rounded-2xl p-6 space-y-2 border border-black/5">
+        <div className="md:hidden fixed inset-x-4 top-20 glass-panel-heavy rounded-2xl p-6 space-y-2 border border-black/5 overflow-y-auto max-h-[80vh] z-50">
           {/* User profile section */}
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-black/5 mb-2">
             <div className="w-10 h-10 rounded-full bg-black/10 flex items-center justify-center">
@@ -336,11 +336,26 @@ export function Navbar() {
               </div>
             </div>
             <button
-              onClick={onUserButtonClick}
+              onClick={() => {
+                if (status === "authenticated") {
+                  window.location.href = "/account";
+                } else {
+                  setAuthOpen(true);
+                }
+              }}
               className="text-xs font-bold px-3 py-1.5 rounded-full bg-black text-white"
             >
               {status === "authenticated" ? "Profile" : "Sign In"}
             </button>
+          </div>
+
+          {/* Settings - Language & Currency selectors */}
+          <div className="pt-2 pb-2 border-b border-black/5 flex items-center justify-between px-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-black/40">Settings</span>
+            <div className="flex items-center gap-2">
+              <LanguageSelector />
+              <CurrencySelector />
+            </div>
           </div>
 
           {/* Navigation links */}
@@ -371,14 +386,6 @@ export function Navbar() {
               </span>
             )}
           </Link>
-
-          <div className="pt-4 mt-2 border-t border-black/5 flex items-center justify-between px-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-black/40">Settings</span>
-            <div className="flex items-center gap-2">
-              <LanguageSelector />
-              <CurrencySelector />
-            </div>
-          </div>
         </div>
       )}
 

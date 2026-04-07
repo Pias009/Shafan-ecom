@@ -12,14 +12,14 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
-  preload: false,
+  display: 'swap',
 });
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  preload: false,
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
