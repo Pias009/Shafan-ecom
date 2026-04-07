@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import LoadingScreen from "./LoadingScreen";
+import { FloatingCartButton } from "./FloatingCartButton";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -39,7 +40,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
       {isLoading && <LoadingScreen onLoadingComplete={handleLoadingComplete} />}
-      {showContent && children}
+      {showContent && (
+        <>
+          {children}
+          <FloatingCartButton />
+        </>
+      )}
     </>
   );
 }

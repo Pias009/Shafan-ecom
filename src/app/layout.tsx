@@ -6,6 +6,7 @@ import { MainStoreLayout } from "@/components/MainStoreLayout";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import ClientLayout from "@/components/ClientLayout";
+import { WebVitalsReporter } from "@/components/WebVitalsReporter";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body
         className={`${playfairDisplay.variable} ${dmSans.variable} antialiased`}
       >
+        <WebVitalsReporter />
         <Providers>
           <ClientLayout>
             <Suspense fallback={

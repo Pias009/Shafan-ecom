@@ -467,7 +467,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         onClose={() => setQuickView(null)}
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
-        onMoreDetails={(productId) => router.push(`/products/${productId}`)}
+        onMoreDetails={(productId) => { setQuickView(null); window.location.href = `/products/${productId}`; }}
       />
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />

@@ -396,9 +396,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
             <div className="pt-8 border-t border-black/5 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={orderNow}
-                className="btn-53 flex-[2] h-20"
+                className="btn-53 flex-[2] h-20 rounded-3xl shadow-xl shadow-black/20"
               >
-                <span className="original">Order Now</span>
+                <span className="original font-black uppercase tracking-[0.15em]">Order Now</span>
                 <div className="letters">
                   {Array.from("FAST").map((letter, index) => (
                     <span key={index}>{letter}</span>
@@ -407,7 +407,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               </button>
               <button
                 onClick={addToCart}
-                className="flex-1 h-20 rounded-3xl bg-white border-2 border-black text-black text-xs font-black uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-all"
+                className="flex-1 h-20 rounded-3xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 text-gray-700 text-xs font-black uppercase tracking-[0.2em] hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-gray-200/50 transition-all active:scale-[0.98]"
               >
                 Add to Cart
               </button>
@@ -416,16 +416,16 @@ export default function ProductPageClient({ product, recommendations }: ProductP
             {/* Perks */}
             <div className="grid grid-cols-3 gap-4 pt-10 border-t border-black/5 text-center">
               <div className="space-y-2">
-                <div className="w-10 h-10 bg-black/5 rounded-full flex items-center justify-center mx-auto"><Truck size={18} className="text-black/40" /></div>
-                <div className="text-[8px] font-black uppercase tracking-widest text-black/40">Free Shipping</div>
+                <div className="w-10 h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><Truck size={18} className="text-slate-700" /></div>
+                <div className="text-[8px] font-black uppercase tracking-widest text-slate-600">Free Shipping</div>
               </div>
               <div className="space-y-2">
-                <div className="w-10 h-10 bg-black/5 rounded-full flex items-center justify-center mx-auto"><RefreshCw size={18} className="text-black/40" /></div>
-                <div className="text-[8px] font-black uppercase tracking-widest text-black/40">Easy Returns</div>
+                <div className="w-10 h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><RefreshCw size={18} className="text-slate-700" /></div>
+                <div className="text-[8px] font-black uppercase tracking-widest text-slate-600">Easy Returns</div>
               </div>
               <div className="space-y-2">
-                <div className="w-10 h-10 bg-black/5 rounded-full flex items-center justify-center mx-auto"><ShieldCheck size={18} className="text-black/40" /></div>
-                <div className="text-[8px] font-black uppercase tracking-widest text-black/40">Secured Payment</div>
+                <div className="w-10 h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><ShieldCheck size={18} className="text-slate-700" /></div>
+                <div className="text-[8px] font-black uppercase tracking-widest text-slate-600">Secured Payment</div>
               </div>
             </div>
           </div>
@@ -470,15 +470,15 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         <div className="glass-panel-heavy rounded-[2rem] p-3 flex items-center gap-3 shadow-2xl shadow-black/20 border border-white/20">
           <button
             onClick={addToCart}
-            className="w-14 h-14 rounded-2xl bg-white border-2 border-black flex items-center justify-center text-black active:scale-90 transition-all"
+            className="w-14 h-14 rounded-2xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 flex items-center justify-center text-slate-700 hover:shadow-lg hover:shadow-gray-200/50 active:scale-90 transition-all"
           >
             <ShoppingBag size={22} />
           </button>
           <button
             onClick={orderNow}
-            className="btn-53 flex-1 h-14"
+            className="btn-53 flex-1 h-14 rounded-2xl shadow-xl"
           >
-            <span className="original">Order Now</span>
+            <span className="original font-black uppercase tracking-[0.15em]">Order Now</span>
             <div className="letters">
               {Array.from("FAST").map((letter, index) => (
                 <span key={index}>{letter}</span>
@@ -538,7 +538,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         onClose={() => setQuickView(null)}
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
-        onMoreDetails={(productId) => router.push(`/products/${productId}`)}
+        onMoreDetails={(productId) => { setQuickView(null); window.location.href = `/products/${productId}`; }}
       />
     </div>
   );

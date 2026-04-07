@@ -378,7 +378,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
         onClose={() => setSearchInputuickView(null)}
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
-        onMoreDetails={(productId) => router.push(`/products/${productId}`)}
+        onMoreDetails={(productId) => { setSearchInputuickView(null); window.location.href = `/products/${productId}`; }}
       />
     </div>
   );

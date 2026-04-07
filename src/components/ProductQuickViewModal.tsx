@@ -359,7 +359,7 @@ export function ProductQuickViewModal({
                   <button
                     type="button"
                     onClick={() => onAddToCart(product)}
-                    className="w-14 h-14 md:w-auto md:h-16 md:flex-1 rounded-xl md:rounded-2xl bg-white border-2 border-black flex items-center justify-center md:px-8 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-black transition-all hover:bg-black hover:text-white active:scale-95 shrink-0"
+                    className="w-14 h-14 md:w-auto md:h-16 md:flex-1 rounded-2xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 flex items-center justify-center md:px-8 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-gray-700 transition-all hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-lg hover:shadow-gray-200/50 active:scale-[0.98] active:translate-y-0.5 shrink-0"
                     title={t.product.addToCart}
                   >
                     <ShoppingBag size={20} className="md:hidden" />
@@ -368,9 +368,9 @@ export function ProductQuickViewModal({
                   <button
                     type="button"
                     onClick={() => onOrderNow(product)}
-                    className="btn-53 flex-1 h-14 md:h-16"
+                    className="btn-53 flex-1 h-14 md:h-16 rounded-2xl shadow-xl shadow-black/20"
                   >
-                    <span className="original">{t.product.orderNow}</span>
+                    <span className="original font-black text-[11px] md:text-[12px] uppercase tracking-[0.15em]">{t.product.orderNow}</span>
                     <div className="letters">
                       {Array.from("FAST").map((letter, index) => (
                         <span key={index}>{letter}</span>
@@ -383,7 +383,7 @@ export function ProductQuickViewModal({
                 <button
                   type="button"
                   onClick={() => onMoreDetails(product.id)}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-black text-[10px] md:text-[11px] font-black uppercase tracking-widest transition-all hover:bg-gray-200 active:scale-95"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-b from-gray-50 to-gray-100 border border-gray-200 text-gray-700 text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all hover:from-gray-100 hover:to-gray-200 hover:border-gray-300 hover:shadow-md active:scale-[0.98]"
                 >
                   <span>More Details</span>
                   <ArrowRight size={14} />

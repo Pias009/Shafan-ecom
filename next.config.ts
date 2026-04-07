@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
     ppr: false, // Disable partial prerendering for simpler build
     optimizeServerReact: true,
   },
-  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
+  serverExternalPackages: ['@prisma/client', 'bcryptjs', 'pdfkit'],
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

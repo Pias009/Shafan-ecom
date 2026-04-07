@@ -391,22 +391,6 @@ export function Navbar() {
 
       </header>
       
-      {/* Floating Cart Button for Mobile (Home and Products pages only) */}
-      {safePathname && (safePathname === "/" || safePathname.startsWith("/products")) && (
-        <Link
-          href="/cart"
-          className="md:hidden fixed bottom-6 left-6 z-40 w-14 h-14 rounded-full bg-black text-white flex items-center justify-center shadow-2xl shadow-black/30 animate-bounce-subtle"
-          aria-label="Open cart"
-        >
-          <ShoppingBag size={24} />
-          {mounted && cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold border-2 border-white">
-              {cartCount}
-            </span>
-          )}
-        </Link>
-      )}
-      
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   );

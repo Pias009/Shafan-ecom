@@ -64,7 +64,7 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-black/5 pb-4">
-        <div className="text-[10px] font-black uppercase tracking-widest text-black/30">Fulfilment Actions</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-600">Fulfilment Actions</div>
         <CourierServices 
           orderId={orderId} 
           currentStatus={currentStatus} 
@@ -72,7 +72,7 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="text-[10px] font-black uppercase tracking-widest text-black/30">Order Control</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-600">Order Control</div>
         <button
           onClick={() => updateStatus(OrderStatus.CANCELLED, sendEmail)}
           disabled={loading}
@@ -83,7 +83,7 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
       </div>
 
       <div className="space-y-3">
-        <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Quick Status Switch</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-600">Quick Status Switch</div>
         <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
           {statuses.map((s) => {
             const Icon = s.icon;
@@ -96,7 +96,7 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
               className={`flex-shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border ${
                 status === s.id 
                   ? 'bg-black text-white border-black' 
-                  : 'bg-white text-black/40 border-black/5 hover:border-black/20'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
               } disabled:opacity-50 min-w-[60px]`}
             >
               <Icon size={14} />
@@ -112,15 +112,15 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
           id="sendEmail"
           checked={sendEmail}
           onChange={(e) => setSendEmail(e.target.checked)}
-          className="w-4 h-4 rounded border-black/20 text-black focus:ring-black"
+          className="w-4 h-4 rounded border-slate-300 text-black focus:ring-black"
         />
-        <label htmlFor="sendEmail" className="text-[10px] font-bold text-black/60 cursor-pointer">
+        <label htmlFor="sendEmail" className="text-[10px] font-bold text-slate-700 cursor-pointer">
           Send email notification to customer
         </label>
       </div>
       
       {loading && (
-        <div className="flex items-center gap-2 text-[10px] font-bold text-black/40 animate-pulse">
+        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 animate-pulse">
           <Loader2 size={12} className="animate-spin" />
           Updating database...
         </div>

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { uploadFromUrl } from '@/lib/cloudinary';
 import { getAdminApiSession, getAdminStoreAccess } from '@/lib/admin-session';
 import { SUPPORTED_COUNTRIES, isValidCountryCode, getCurrencyForCountry } from '@/lib/countries';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Generate a URL-friendly slug from a product name
@@ -557,6 +558,10 @@ export async function POST(req: Request) {
     }
 
     console.log('[DEBUG] Product creation completed successfully');
+    
+    revalidatePath('/');
+    revalidatePath('/products');
+    
     return new Response(JSON.stringify(product), { headers: { 'Content-Type': 'application/json' } });
   } catch (error: any) {
     console.error('PRODUCT_CREATE_ERROR:', error);

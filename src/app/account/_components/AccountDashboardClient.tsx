@@ -51,22 +51,22 @@ export default function AccountDashboardClient() {
   }, 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Grid - Single Row Horizontal on Mobile */}
+      <div className="grid grid-cols-4 gap-1">
         {[
           { label: "Pending", value: data?.stats.pending ?? 0, icon: Loader2, color: "text-yellow-600", bg: "bg-yellow-50" },
           { label: "Shipped", value: data?.stats.shipped ?? 0, icon: Truck, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Delivered", value: data?.stats.delivered ?? 0, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
           { label: "Refunded", value: data?.stats.refunded ?? 0, icon: RotateCcw, color: "text-red-600", bg: "bg-red-50" },
         ].map((stat, i) => (
-          <div key={i} className={`glass-panel border border-black/5 rounded-3xl p-5 flex flex-col items-center justify-center text-center shadow-sm`}>
-            <div className={`p-3 rounded-2xl ${stat.bg} mb-3`}>
-              <stat.icon className={`w-5 h-5 ${stat.color} ${stat.label === 'Pending' ? 'animate-spin' : ''}`} />
+          <div key={i} className={`glass-panel border border-black/5 rounded-lg py-2 px-0.5 flex flex-col items-center justify-center text-center shadow-sm`}>
+            <div className={`p-1 rounded ${stat.bg}`}>
+              <stat.icon className={`w-4 h-4 ${stat.color} ${stat.label === 'Pending' ? 'animate-spin' : ''}`} />
             </div>
-            <div className="text-2xl font-black text-black">{stat.value}</div>
-            <div className="text-[10px] font-bold uppercase tracking-wider text-black/40">{stat.label}</div>
+            <div className="text-[9px] font-black text-black">{stat.value}</div>
+            <div className="text-[5px] font-bold uppercase tracking-wider text-black/40">{stat.label}</div>
           </div>
         ))}
       </div>

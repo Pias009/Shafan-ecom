@@ -1,6 +1,6 @@
 import { prisma, prismaWithRetry } from "./prisma";
 
-export const revalidate = 60;
+export const revalidate = 0;
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;

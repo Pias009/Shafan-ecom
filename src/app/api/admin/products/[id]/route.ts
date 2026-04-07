@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getAdminApiSession } from '@/lib/admin-session';
 import { z } from 'zod';
 import { uploadFromUrl } from '@/lib/cloudinary';
+import { revalidatePath } from 'next/cache';
 
 const UpdateSchema = z.object({
   name: z.string().optional(),
@@ -244,6 +245,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     } catch {
       // ignore audit log failures for now
     }
+    
+    revalidatePath('/');
+    revalidatePath('/products');
+    
     return new Response(JSON.stringify(updated), { status: 303, headers: { 'Location': '/ueadmin/products' } });
   } catch (e) {
     console.error('PRODUCT_UPDATE_FATAL:', e);
@@ -307,6 +312,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       // Continue even if audit log fails
     }
 
+    revalidatePath('/');
+    revalidatePath('/products');
+    
     return new Response(JSON.stringify({
       success: true,
       message: 'Product deleted successfully',

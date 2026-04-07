@@ -16,13 +16,19 @@ export default function InvoiceDownload({ orderId }: Props) {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
+        let errorData: { error?: string } = {};
+        try {
+          errorData = await res.json() as { error?: string };
+        } catch {
+          errorData = { error: "Failed to parse error response" };
+        }
         console.error('Invoice download error:', res.status, errorData);
-        toast.error(errorData.error || "Failed to download invoice");
+        toast.error(errorData.error || `Failed to download invoice (${res.status})`);
         return;
       }
 
-      const blob = await res.blob();
+      const arrayBuffer = await res.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -31,6 +37,7 @@ export default function InvoiceDownload({ orderId }: Props) {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+      toast.success("Invoice downloaded successfully");
     } catch (error) {
       console.error("Download error:", error);
       toast.error("Failed to download invoice");
@@ -46,8 +53,8 @@ export default function InvoiceDownload({ orderId }: Props) {
         <Download size={18} />
       </div>
       <div className="flex-1">
-        <p className="text-xs font-black uppercase tracking-widest text-black">Download Invoice</p>
-        <p className="text-[9px] font-bold text-black/40 uppercase tracking-widest">PDF format</p>
+        <p className="text-xs font-black uppercase tracking-widest text-slate-900">Download Invoice</p>
+        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">PDF format</p>
       </div>
     </button>
   );

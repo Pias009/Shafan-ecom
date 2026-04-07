@@ -170,7 +170,7 @@ export function OffersClient({ products }: { products: any[] }) {
         onClose={() => setQuickView(null)}
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
-        onMoreDetails={(productId) => router.push(`/products/${productId}`)}
+        onMoreDetails={(productId) => { setQuickView(null); window.location.href = `/products/${productId}`; }}
       />
     </main>
   );
