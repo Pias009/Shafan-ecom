@@ -3,6 +3,7 @@ import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
+import { revalidatePath } from "next/cache";
 
 // Delivery fee configuration by country (Using global config)
 const DELIVERY_CONFIG = COUNTRY_CONFIG;
@@ -487,6 +488,8 @@ export async function POST(req: Request) {
         });
       }
     }
+
+    revalidatePath('/ueadmin/orders');
 
     return NextResponse.json({
       orderId: order.id,

@@ -97,7 +97,6 @@ export function AddProductForm({
     skinToneIds: [] as string[],
     skinConcernIds: [] as string[],
     description: '',
-    shortDescription: '',
     benefits: '',
     ingredients: '',
     howToUse: '',
@@ -258,7 +257,6 @@ export function AddProductForm({
         name: formData.name,
         sku: formData.sku || undefined,
         description: formData.description || undefined,
-        shortDescription: formData.shortDescription,
         benefits: formData.benefits,
         ingredients: formData.ingredients,
         howToUse: formData.howToUse,
@@ -377,18 +375,6 @@ export function AddProductForm({
                 onChange={handleChange}
                 rows={3}
                 placeholder="Tell customers about this product..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Short Description</label>
-              <textarea
-                name="shortDescription"
-                value={formData.shortDescription}
-                onChange={handleChange}
-                rows={2}
-                placeholder="Brief overview of the product..."
                 className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
               />
             </div>

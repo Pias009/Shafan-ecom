@@ -65,7 +65,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="pb-20 px-4 md:px-0 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <Link href="/ueadmin/orders" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-black transition mb-4">
           <ArrowLeft size={14} /> Back to Orders
         </Link>
@@ -88,20 +88,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </p>
           </div>
           
-          {/* Quick Stats */}
-          <div className="flex gap-3">
-            <div className="glass-panel px-4 py-2 rounded-xl border border-black/5">
-              <div className="flex items-center gap-2">
-                <ShoppingCart size={14} className="text-slate-400" />
-                <span className="text-xs font-black text-slate-700">{totalItems} Items</span>
-              </div>
-            </div>
-            <div className="glass-panel px-4 py-2 rounded-xl border border-black/5">
-              <div className="flex items-center gap-2">
-                <DollarSign size={14} className="text-slate-400" />
-                <span className="text-xs font-black text-slate-700">{formatPrice(order.total, order.currency)}</span>
-              </div>
-            </div>
+          {/* Quick Stats & Actions */}
+          <div className="flex flex-wrap items-center gap-3">
+            <InvoiceDownload orderId={order.id} />
           </div>
         </div>
       </div>
@@ -115,6 +104,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <div className="flex items-center gap-3">
               <div className="p-2 bg-black/5 rounded-xl text-slate-700"><Truck size={20} /></div>
               <h3 className="font-black text-sm uppercase tracking-widest text-slate-900">Fulfillment Status</h3>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-3 py-1.5 glass-panel rounded-lg border border-black/5">
+                <ShoppingCart size={14} className="text-slate-400" />
+                <span className="text-xs font-black text-slate-700">{totalItems} Items</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 glass-panel rounded-lg border border-black/5">
+                <DollarSign size={14} className="text-slate-400" />
+                <span className="text-xs font-black text-slate-700">{formatPrice(order.total, order.currency)}</span>
+              </div>
             </div>
           </div>
           <OrderStatusActions orderId={order.id} currentStatus={order.status} />
@@ -202,14 +201,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <h3 className="font-black text-xs uppercase tracking-widest text-slate-900">Shipping Address</h3>
             </div>
             <div className="text-xs font-semibold text-slate-600 leading-relaxed uppercase tracking-wider">
-              {shipping ? (
+              {(shipping as Record<string, string | undefined>) ? (
                 <div className="space-y-2">
-                  <div className="font-bold text-slate-900">{String(shipping.first_name || '')} {String(shipping.last_name || '')}</div>
-                  <div>{String(shipping.address_1 || '')}</div>
-                  {shipping.address_2 && <div>{String(shipping.address_2)}</div>}
-                  <div>{String(shipping.city || '')}, {String(shipping.state || '')} {String(shipping.postcode || '')}</div>
-                  <div className="font-bold text-slate-800">{String(shipping.country || '')}</div>
-                  {shipping.phone && <div className="text-slate-500">Phone: {String(shipping.phone)}</div>}
+                  <div className="font-bold text-slate-900">{String((shipping as Record<string, string>).first_name || '')} {String((shipping as Record<string, string>).last_name || '')}</div>
+                  <div>{String((shipping as Record<string, string>).address_1 || '')}</div>
+                  {(shipping as Record<string, string>).address_2 && <div>{String((shipping as Record<string, string>).address_2)}</div>}
+                  <div>{String((shipping as Record<string, string>).city || '')}, {String((shipping as Record<string, string>).state || '')} {String((shipping as Record<string, string>).postcode || '')}</div>
+                  <div className="font-bold text-slate-800">{String((shipping as Record<string, string>).country || '')}</div>
+                  {(shipping as Record<string, string>).phone && <div className="text-slate-500">Phone: {String((shipping as Record<string, string>).phone)}</div>}
                 </div>
               ) : (
                 <div className="italic text-slate-400">No shipping address</div>
@@ -224,14 +223,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <h3 className="font-black text-xs uppercase tracking-widest text-slate-900">Billing Address</h3>
             </div>
             <div className="text-xs font-semibold text-slate-600 leading-relaxed uppercase tracking-wider">
-              {billing ? (
+              {(billing as Record<string, string | undefined>) ? (
                 <div className="space-y-2">
-                  <div className="font-bold text-slate-900">{String(billing.first_name || '')} {String(billing.last_name || '')}</div>
-                  <div>{String(billing.address_1 || '')}</div>
-                  {billing.address_2 && <div>{String(billing.address_2)}</div>}
-                  <div>{String(billing.city || '')}, {String(billing.state || '')} {String(billing.postcode || '')}</div>
-                  <div className="font-bold text-slate-800">{String(billing.country || '')}</div>
-                  {billing.email && <div className="text-slate-500">Email: {String(billing.email)}</div>}
+                  <div className="font-bold text-slate-900">{String((billing as Record<string, string>).first_name || '')} {String((billing as Record<string, string>).last_name || '')}</div>
+                  <div>{String((billing as Record<string, string>).address_1 || '')}</div>
+                  {(billing as Record<string, string>).address_2 && <div>{String((billing as Record<string, string>).address_2)}</div>}
+                  <div>{String((billing as Record<string, string>).city || '')}, {String((billing as Record<string, string>).state || '')} {String((billing as Record<string, string>).postcode || '')}</div>
+                  <div className="font-bold text-slate-800">{String((billing as Record<string, string>).country || '')}</div>
+                  {(billing as Record<string, string>).email && <div className="text-slate-500">Email: {String((billing as Record<string, string>).email)}</div>}
                 </div>
               ) : (
                 <div className="italic text-slate-400">Same as shipping</div>
@@ -239,15 +238,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </div>
           </section>
         </div>
-
-        {/* Shipping Management */}
-        <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white">
-          <ShippingPanel 
-            orderId={order.id} 
-            shippingAddress={shipping}
-            existingShipment={order.shipment}
-          />
-        </section>
 
         {/* Financial Summary */}
         <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-xl bg-white">
@@ -345,12 +335,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </section>
         </div>
 
-        {/* Invoice Download */}
-        <div className="flex justify-end">
-          <div className="w-full md:w-auto md:min-w-[300px]">
-            <InvoiceDownload orderId={order.id} />
-          </div>
-        </div>
+        {/* Shipping Management - End of Page */}
+        <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white">
+          <ShippingPanel 
+            orderId={order.id} 
+            shippingAddress={shipping}
+            existingShipment={order.shipment}
+          />
+        </section>
 
       </div>
     </div>

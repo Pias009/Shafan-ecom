@@ -268,7 +268,6 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
         name: product.name,
         sku: product.sku || null,
         description: product.description,
-        shortDescription: product.shortDescription,
         benefits: product.benefits,
         ingredients: product.ingredients,
         howToUse: product.howToUse,
@@ -367,17 +366,6 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                   value={product.description || ''} 
                   onChange={handleChange}
                   rows={3}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Short Description</label>
-                <textarea 
-                  name="shortDescription"
-                  value={product.shortDescription || ''} 
-                  onChange={handleChange}
-                  rows={2}
                   className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
                 />
               </div>

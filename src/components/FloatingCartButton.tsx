@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 
 export function FloatingCartButton() {
+  const pathname = usePathname();
   const items = useCartStore((state) => state.items);
   const [mounted, setMounted] = useState(false);
   const [animate, setAnimate] = useState(false);
   const [prevCount, setPrevCount] = useState(0);
+
+  const isAdminRoute = pathname?.startsWith('/ueadmin') || pathname?.startsWith('/admin');
 
   useEffect(() => {
     setMounted(true);
@@ -24,7 +28,7 @@ export function FloatingCartButton() {
     setPrevCount(items.length);
   }, [items.length, mounted, prevCount]);
 
-  if (!mounted) return null;
+  if (!mounted || isAdminRoute) return null;
 
   return (
     <Link

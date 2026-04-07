@@ -34,49 +34,18 @@ export default function ProductPageClient({ product, recommendations }: ProductP
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
-  const [showDescription, setShowDescription] = useState<string>('shortDescription');
+  const [showDescription, setShowDescription] = useState<string>('description');
   const [quickView, setQuickView] = useState<any>(null);
-
-  // STRICT: Compute price using selectedCountry - no fallbacks
-  const { displayPrice, originalPrice, isAvailable } = useMemo(() => {
-    if (!product) return { displayPrice: 0, originalPrice: 0, isAvailable: false };
-    
-    // Ensure countryPrices is an array
-    const cpArray = Array.isArray(product.countryPrices) ? product.countryPrices : [];
-    
-    // If no country prices at all, show unavailable
-    if (cpArray.length === 0) {
-      return { displayPrice: 0, originalPrice: 0, isAvailable: false };
-    }
-    
-    const countryUpper = selectedCountry.toUpperCase();
-    
-    // Find matching country price - must have valid price > 0
-    const countryPrice = cpArray.find((cp: any) => {
-      if (!cp) return false;
-      const cpCountry = cp.country?.toUpperCase() || '';
-      const cpActive = cp.active !== false;
-      const cpPrice = Number(cp.price) || 0;
-      return cpCountry === countryUpper && cpActive && cpPrice > 0;
-    });
-    
-    if (countryPrice) {
-      const priceValue = Number(countryPrice.price) || 0;
-      if (priceValue > 0) {
-        return {
-          displayPrice: priceValue,
-          originalPrice: priceValue,
-          isAvailable: true
-        };
-      }
-    }
-    
-    // NO FALLBACK - if no valid country price, show unavailable
-    return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+  
+  // Price calculation using getDisplayPrice
+  const priceInfo = useMemo(() => {
+    return getDisplayPrice(product, selectedCountry);
   }, [product, selectedCountry]);
+  const displayPrice = priceInfo.price || product.price || 0;
+  const originalPrice = product.discountPrice || product.price || 0;
+  const isAvailable = displayPrice > 0;
 
   const descriptionTabs = [
-    { key: 'shortDescription', label: 'Overview' },
     { key: 'description', label: 'Description' },
     { key: 'benefits', label: 'Benefits' },
     { key: 'ingredients', label: 'Ingredients' },
