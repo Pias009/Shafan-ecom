@@ -167,7 +167,7 @@ export function ProductQuickViewModal({
             className="relative w-full max-w-5xl overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col md:flex-row max-h-[90vh] md:min-h-[500px]"
           >
             {/* Image Gallery Side */}
-            <div className="md:w-1/2 relative bg-black/[0.02] p-4 md:p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0">
+            <div className="md:w-1/2 relative bg-white p-4 md:p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0">
               <div className="relative w-full aspect-square md:aspect-auto md:h-full max-h-[300px] md:max-h-none rounded-[1.5rem] md:rounded-[2rem] overflow-hidden group cursor-zoom-in" onClick={() => setIsEnlarged(true)}>
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -182,7 +182,7 @@ export function ProductQuickViewModal({
                       src={isValidImageUrl(allImages[currentImageIndex]) ? allImages[currentImageIndex] : "/placeholder-product.png"}
                       alt={product.name}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       priority
                     />
                   </motion.div>

@@ -31,8 +31,13 @@ export async function POST(req: Request) {
 
     const orderCurrency = order.currency || "usd";
     const code = orderCurrency.toUpperCase();
-    const multiplier = ["KWD", "BHD", "OMR"].includes(code) ? 1000 : 100;
-    const amount = Math.round(totalAmount * multiplier);
+    const isThreeDecimal = ["KWD", "BHD", "OMR"].includes(code);
+    const multiplier = isThreeDecimal ? 1000 : 100;
+    let amount = Math.round(totalAmount * multiplier);
+    if (isThreeDecimal) {
+      amount = Math.round(amount / 10) * 10;
+    }
+    console.log("Fixed Stripe Amount: " + amount);
     const billing = (order.billingAddress as any) || {};
     const customerEmail = billing.email;
 
