@@ -1,9 +1,9 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
-import { CheckCircle2, Package, ArrowRight, Home } from "lucide-react";
+import { CheckCircle2, Package, ArrowRight, Home, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -11,14 +11,64 @@ import { Loader } from "@/components/Loader";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const [valid, setValid] = useState(false);
+  const [checking, setChecking] = useState(true);
+  
   const sessionId = searchParams?.get("session_id");
   const orderId = searchParams?.get("order_id");
   const isCOD = searchParams?.get("cod") === "true";
   const clearCart = useCartStore(state => state.clearCart);
 
   useEffect(() => {
-    clearCart();
-  }, [clearCart]);
+    async function validateOrder() {
+      if (!orderId && !sessionId) {
+        router.push("/");
+        return;
+      }
+
+      if (orderId) {
+        try {
+          const res = await fetch(`/api/orders/${orderId}`);
+          const data = await res.json();
+          if (data.error || !data.id) {
+            router.push("/");
+            return;
+          }
+        } catch (e) {
+          router.push("/");
+          return;
+        }
+      }
+
+      setValid(true);
+      setChecking(false);
+    }
+
+    validateOrder();
+  }, [orderId, sessionId, router]);
+
+  useEffect(() => {
+    if (valid) {
+      clearCart();
+    }
+  }, [valid, clearCart]);
+
+  if (checking) {
+    return (
+      <div className="pt-40 text-center">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (!valid) {
+    return (
+      <div className="pt-40 text-center">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <div className="pt-24 md:pt-32 pb-20 px-4 md:px-6 max-w-3xl mx-auto flex flex-col items-center text-center min-h-[70vh]">

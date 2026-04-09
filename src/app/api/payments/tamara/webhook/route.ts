@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TamaraService } from "@/services/payments/tamara";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,33 +37,37 @@ export async function POST(request: NextRequest) {
       case "payment.approved":
         await prisma.order.update({
           where: { id: order.id },
-          data: { status: "PROCESSING" },
+          data: { status: OrderStatus.PROCESSING, paymentStatus: PaymentStatus.PAID },
         });
         break;
 
       case "payment.captured":
         await prisma.order.update({
           where: { id: order.id },
-          data: { status: "ORDER_CONFIRMED" },
+          data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: PaymentStatus.PAID },
         });
         break;
 
       case "payment.declined":
       case "order_declined":
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { paymentStatus: PaymentStatus.CANCELLED },
+        });
         console.log("Tamara payment declined for order:", order.id);
         break;
 
       case "order_cancelled":
         await prisma.order.update({
           where: { id: order.id },
-          data: { status: "CANCELLED" },
+          data: { status: OrderStatus.CANCELLED, paymentStatus: PaymentStatus.CANCELLED },
         });
         break;
 
       case "payment.refunded":
         await prisma.order.update({
           where: { id: order.id },
-          data: { status: "REFUNDED" },
+          data: { status: OrderStatus.REFUNDED, paymentStatus: PaymentStatus.CANCELLED },
         });
         break;
 

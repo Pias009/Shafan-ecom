@@ -44,7 +44,7 @@ interface Order {
   createdAt: Date;
   total: number;
   currency: string;
-  paymentStatus: 'PAID' | 'PENDING' | 'UNPAID';
+  paymentStatus: 'PAID' | 'PENDING' | 'CANCELLED';
   paymentMethod: string;
   paymentMethodTitle: string | null;
   status: OrderStatus;

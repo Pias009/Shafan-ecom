@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { createAramexShipment } from "@/lib/shipping/aramex";
+
+function generateTrackingCode(): string {
+  const prefix = "GL";
+  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
+  return `${prefix}-${random}-${Date.now().toString().slice(-6)}`;
+}
 
 export async function POST(req: Request) {
   try {
@@ -33,6 +40,56 @@ export async function POST(req: Request) {
       },
       include: { items: true, shipment: true }
     });
+
+    // Create shipment for COD order
+    const shippingAddress = updatedOrder.shippingAddress as any;
+    const countryCode = shippingAddress?.country || "AE";
+    const gulfCountries = ['AE', 'KW', 'SA', 'BH', 'QA', 'OM'];
+    const trackingCode = generateTrackingCode();
+    
+    let aramexResult = null;
+    if (gulfCountries.includes(countryCode?.toUpperCase())) {
+      try {
+        aramexResult = await createAramexShipment({
+          orderId: orderId,
+          recipientName: `${shippingAddress?.first_name || ''} ${shippingAddress?.last_name || ''}`.trim() || "Customer",
+          recipientPhone: shippingAddress?.phone || "+971048387827",
+          recipientEmail: updatedOrder.email || "customer@email.com",
+          recipientAddress: shippingAddress?.address_1 || "Address",
+          recipientCity: shippingAddress?.city || "City",
+          recipientCountry: countryCode,
+          productCode: "PDS",
+          weight: 0.5,
+          description: `Shafan Order ${orderId}`,
+          pieces: updatedOrder.items?.length || 1,
+        });
+      } catch (aramexError) {
+        console.error("Aramex shipment creation failed:", aramexError);
+      }
+    }
+
+    // Create shipment record
+    if (aramexResult?.Shipments?.[0]?.ID) {
+      await prisma.shipment.create({
+        data: {
+          orderId: orderId,
+          courier: "ARAMEX",
+          trackingCode: aramexResult.Shipments[0].ID,
+          trackingUrl: `https://www.aramex.com/track/${aramexResult.Shipments[0].ID}`,
+          status: "Pending"
+        }
+      });
+    } else {
+      await prisma.shipment.create({
+        data: {
+          orderId: orderId,
+          courier: "GLOBAL_COURIER",
+          trackingCode: trackingCode,
+          trackingUrl: `https://global-courier.com/track/${trackingCode}`,
+          status: "Pending"
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TabbyService } from "@/services/payments/tabby";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
         if (paymentStatus === "AUTHORIZED") {
           await prisma.order.update({
             where: { id: order.id },
-            data: { status: "PROCESSING" },
+            data: { status: OrderStatus.PROCESSING, paymentStatus: PaymentStatus.PAID },
           });
         }
         break;
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
         if (paymentStatus === "CAPTURED") {
           await prisma.order.update({
             where: { id: order.id },
-            data: { status: "ORDER_CONFIRMED" },
+            data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: PaymentStatus.PAID },
           });
         }
         break;

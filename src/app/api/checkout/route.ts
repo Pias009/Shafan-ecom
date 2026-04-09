@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
-import { createAramexShipment } from "@/lib/shipping/aramex";
 
 // Helper function to determine courier based on shipping address
 function determineCourier(shippingAddress: any): string {
@@ -122,12 +121,13 @@ export async function POST(req: Request) {
 
     const total = subtotal;
 
-    // 3. Create Order with shipment
+    // 3. Create Order (payment pending - will be set at payment step)
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
         email: session.user.email,
         status: OrderStatus.ORDER_RECEIVED,
+        paymentStatus: "PENDING" as any,
         currency: currency.toLowerCase(),
         subtotal,
         total,
@@ -151,70 +151,19 @@ export async function POST(req: Request) {
           postcode: address.postalCode || "",
           country: address.country || "BD",
         },
-        paymentMethod: "stripe",
-        paymentMethodTitle: "Stripe Online",
+        // paymentMethod set by user at payment step
         items: {
           create: orderItems
         },
       },
       include: {
         items: true,
-        shipment: true
       }
     });
-
-    // 4. Create Aramex shipment for Gulf countries
-    let aramexResult = null;
-    const gulfCountries = ['AE', 'KW', 'SA', 'BH', 'QA', 'OM'];
-    if (gulfCountries.includes(countryCode.toUpperCase())) {
-      try {
-        aramexResult = await createAramexShipment({
-          orderId: order.id,
-          recipientName: address.fullName || "Customer",
-          recipientPhone: address.phone || "+971048387827",
-          recipientEmail: session.user.email || "customer@email.com",
-          recipientAddress: address.address1 || "Address",
-          recipientCity: address.city || "City",
-          recipientCountry: countryCode,
-          productCode: "PDS",
-          weight: 0.5,
-          description: `Shafan Order ${order.id}`,
-          pieces: items.length,
-        });
-      } catch (aramexError) {
-        console.error("Aramex shipment creation failed:", aramexError);
-      }
-    }
-
-    // Update shipment with Aramex tracking if successful
-    if (aramexResult?.Shipments?.[0]?.ID) {
-      await prisma.shipment.create({
-        data: {
-          orderId: order.id,
-          courier: "ARAMEX",
-          trackingCode: aramexResult.Shipments[0].ID,
-          trackingUrl: `https://www.aramex.com/track/${aramexResult.Shipments[0].ID}`,
-          status: "Created"
-        }
-      });
-    } else {
-      // Fallback to manual courier
-      await prisma.shipment.create({
-        data: {
-          orderId: order.id,
-          courier: courier,
-          trackingCode: trackingCode,
-          trackingUrl: `https://global-courier.com/track/${trackingCode}`,
-          status: "Created"
-        }
-      });
-    }
 
     return NextResponse.json({
       orderId: order.id,
       url: `/checkout/payment/${order.id}`,
-      courier: order.shipment?.courier,
-      trackingCode: order.shipment?.trackingCode
     });
   } catch (error: any) {
     console.error("Prisma Checkout Error:", error.message);
