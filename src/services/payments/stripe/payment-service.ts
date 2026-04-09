@@ -4,19 +4,11 @@ export async function createPaymentIntent(amount: number, orderId: string, custo
   const stripe = getStripe();
   
   try {
-    console.log(`STRIIPE: Creating intent for ${amount} ${currency} (Order: ${orderId})`);
+    console.log(`💰 Stripe Transmission: Sending ${amount} units for ${currency} (Order: ${orderId})`);
     
-    // Stripe expects amount in the smallest currency unit (cents, fils, etc.)
-    // We convert our database "whole units" (e.g. 665 for 665 AED) to Stripe subunits.
-    const code = currency.toUpperCase();
-    const divisor = ["KWD", "BHD", "OMR"].includes(code) ? 1000 : 100;
-    
-    // For 3-decimal currencies (KWD, BHD, OMR), Stripe REQUIRES the amount to be divisible by 10
-    // (the last decimal place must be zero).
-    let finalAmount = Math.round(amount * divisor);
-    if (divisor === 1000) {
-      finalAmount = Math.round(finalAmount / 10) * 10;
-    }
+    // Amount already normalized by caller using the Stripe normalization protocol:
+    // 3-decimal currencies (KWD, BHD, OMR) × 1000, 2-decimal currencies (AED, SAR, QAR, USD) × 100
+    const finalAmount = amount;
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalAmount,

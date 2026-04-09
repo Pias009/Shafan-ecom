@@ -138,24 +138,30 @@ export default function CustomPaymentPage() {
   useEffect(() => {
     async function fetchOrderAndStripe() {
       try {
-        const [orderRes, stripeRes] = await Promise.all([
-          fetch(`/api/orders/${id}`),
-          fetch("/api/payments/stripe/create-intent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: id }),
-          })
-        ]);
-
+        const orderRes = await fetch(`/api/orders/${id}`);
         const orderData = await orderRes.json();
         if (orderData.error) throw new Error(orderData.error);
         setOrder(orderData);
 
-        // If order already has COD, redirect to success
         if (orderData.paymentMethod === "cod") {
           router.push(`/checkout/success?orderId=${id}&cod=true`);
           return;
         }
+
+        const totalAmount = orderData.total || 0;
+        const code = (orderData.currency || "usd").toUpperCase();
+        const multiplier = ["KWD", "BHD", "OMR"].includes(code) ? 1000 : 100;
+        const calculatedInteger = Math.round(totalAmount * multiplier);
+        toast.success(
+          `DEBUG: Sending ${calculatedInteger} units to Stripe for price ${totalAmount} ${code}`,
+          { duration: 4000 }
+        );
+
+        const stripeRes = await fetch("/api/payments/stripe/create-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: id }),
+        });
 
         const stripeData = await stripeRes.json();
         if (stripeData.error) throw new Error(stripeData.error);

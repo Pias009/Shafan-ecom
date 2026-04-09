@@ -29,11 +29,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order total must be greater than 0" }, { status: 400 });
     }
 
-    // Stripe expects amounts in cents (smallest currency unit)
-    const amount = Math.round(totalAmount * 100);
+    const orderCurrency = order.currency || "usd";
+    const code = orderCurrency.toUpperCase();
+    const multiplier = ["KWD", "BHD", "OMR"].includes(code) ? 1000 : 100;
+    const amount = Math.round(totalAmount * multiplier);
     const billing = (order.billingAddress as any) || {};
     const customerEmail = billing.email;
-    const orderCurrency = order.currency || "usd";
 
     const paymentIntent = await createPaymentIntent(amount, orderId.toString(), customerEmail, orderCurrency);
 

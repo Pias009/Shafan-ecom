@@ -61,7 +61,7 @@ export function ProductCard({
   if (!mounted || !hasHydrated) {
     return (
       <div className="bg-white shadow-lg rounded-2xl overflow-hidden w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] mx-auto">
-        <div className="h-[150px] sm:h-[170px] md:h-[190px] bg-gray-100 animate-pulse" />
+        <div className="aspect-square bg-[#F9FAFB] p-4 animate-pulse" />
         <div className="p-4 space-y-2">
           <div className="h-4 bg-gray-200 rounded animate-pulse" />
           <div className="h-3 bg-gray-200 rounded w-2/3 animate-pulse" />
@@ -115,7 +115,7 @@ export function ProductCard({
   return (
     <div className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden ${compact ? 'w-[160px]' : 'w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]'} mx-auto flex flex-col`}>
       {/* Image Section */}
-      <div className="relative overflow-hidden h-[150px] sm:h-[170px] md:h-[190px] w-full bg-gray-50 flex-shrink-0">
+      <div className="relative overflow-hidden aspect-square w-full bg-[#F9FAFB] flex-shrink-0 p-4">
         <button
           type="button"
           onClick={() => onQuickView(product)}
@@ -126,7 +126,7 @@ export function ProductCard({
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
+            className="object-contain transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
             priority={false}
           />
 
