@@ -105,6 +105,7 @@ export async function GET(
       
       // Payment & Shipping
       paymentMethod: order.paymentMethodTitle || 'Card',
+      paymentStatus: order.paymentStatus || 'PENDING',
       trackingCode: order.shipment?.trackingCode || 'Not yet assigned',
       courier: order.shipment?.courier || 'Not yet assigned',
       

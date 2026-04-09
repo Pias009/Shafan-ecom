@@ -16,6 +16,7 @@ import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
+import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -137,7 +138,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
               >
                 <div className="relative h-20 w-20 md:h-32 md:w-32 shrink-0 overflow-hidden rounded-xl md:rounded-2xl bg-black/[0.02] border border-black/5">
                   <Image
-                    src={isValidImageUrl(item.imageUrl) ? item.imageUrl : "/placeholder-product.png"}
+                    src={isValidImageUrl(item.imageUrl) ? getOptimizedUrl(item.imageUrl, 150) : "/placeholder-product.png"}
                     alt={item.name || "Product image"}
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-500"

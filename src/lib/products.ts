@@ -16,6 +16,8 @@ export function hasValidPrice(product: any, userCountry?: string): boolean {
 }
 
 export async function getProducts(storeCode?: string, page: number = 1, limit: number = 50) {
+  const skip = (page - 1) * limit;
+  
   try {
     const dbProducts = await prismaWithRetry(async () => {
       return await prisma.product.findMany({
@@ -32,6 +34,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         },
         orderBy: { createdAt: 'desc' },
         take: limit,
+        skip: skip,
       });
     });
 
@@ -93,6 +96,17 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
   } catch (error: any) {
     console.error("Prisma Product Fetch Error:", error);
     return [];
+  }
+}
+
+export async function getProductCount(storeCode?: string): Promise<number> {
+  try {
+    return await prisma.product.count({
+      where: { active: true },
+    });
+  } catch (error) {
+    console.error("Prisma Product Count Error:", error);
+    return 0;
   }
 }
 

@@ -1,15 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { ProductsSlider } from "@/components/ProductsSlider";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Filter, X } from "lucide-react";
+import { Filter, X, Loader2 } from "lucide-react";
 import { Price } from "@/components/Price";
 import { useRouter } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
@@ -18,8 +16,27 @@ import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice } from "@/lib/product-utils";
 import { useSearchStore } from "@/lib/search-store";
 
-export default function ProductsClient({ initialProducts, category, brand: initialBrand, banners = [] }: { initialProducts: any[], category?: string, brand?: string, banners?: any[] }) {
-  const [products] = useState<any[]>(initialProducts);
+export default function ProductsClient({ 
+  initialProducts, 
+  category, 
+  brand: initialBrand, 
+  banners = [],
+  totalCount = 0,
+  currentPage = 1,
+  limit = 20
+}: { 
+  initialProducts: any[], 
+  category?: string, 
+  brand?: string, 
+  banners?: any[],
+  totalCount?: number,
+  currentPage?: number,
+  limit?: number
+}) {
+  const [products, setProducts] = useState<any[]>(initialProducts);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(initialProducts.length === limit);
+  const [page, setPage] = useState(currentPage);
   const [brand, setBrand] = useState(initialBrand || "All");
   const [selectedCategory, setSelectedCategory] = useState(category || "All");
   const [selectedSubCategory, setSelectedSubCategory] = useState("All");
@@ -27,8 +44,9 @@ export default function ProductsClient({ initialProducts, category, brand: initi
   const [maxPrice, setMaxPrice] = useState(100000);
   const [searchInputuickView, setSearchInputuickView] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const { query: q, clearQuery } = useSearchStore();
   const [searchInput, setSearchInput] = useState("");
+  const router = useRouter();
+  const { query: q, clearQuery } = useSearchStore();
 
   useEffect(() => {
     if (q) {
@@ -43,7 +61,6 @@ export default function ProductsClient({ initialProducts, category, brand: initi
   }, [clearQuery]);
 
   const { addItem, hasAddress } = useCartStore();
-  const router = useRouter();
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
@@ -123,7 +140,6 @@ export default function ProductsClient({ initialProducts, category, brand: initi
 
     const tid = toast.loading(t.cart.creatingOrder);
     try {
-      // Calculate unit price matching cart calculation
       const countryPrice = product.countryPrices?.find((cp: any) =>
         cp.country.toUpperCase() === selectedCountry.toUpperCase()
       );
@@ -137,7 +153,7 @@ export default function ProductsClient({ initialProducts, category, brand: initi
         body: JSON.stringify({ 
           items: [{ 
             productId: product.id, 
-            searchInputuantity: 1,
+            quantity: 1,
             unitPrice
           }],
           country: selectedCountry
@@ -156,6 +172,27 @@ export default function ProductsClient({ initialProducts, category, brand: initi
       router.push("/cart");
     }
   }
+
+  const loadMore = useCallback(async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/products?page=${nextPage}&limit=${limit}`);
+      const newProducts = await res.json();
+      if (newProducts.length > 0) {
+        setProducts(prev => [...prev, ...newProducts]);
+        setPage(nextPage);
+        setHasMore(newProducts.length === limit);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Failed to load more products:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, hasMore, page, limit]);
 
   return (
     <div className="min-h-screen bg-cream text-black">
@@ -368,6 +405,28 @@ export default function ProductsClient({ initialProducts, category, brand: initi
                 className="mt-8 text-black underline font-bold underline-offset-4"
             >
                 {t.product.resetFilters}
+            </button>
+          </div>
+        )}
+
+        {hasMore && filtered.length > 0 && (
+          <div className="flex justify-center mt-16">
+            <button
+              onClick={loadMore}
+              disabled={loading}
+              className="flex items-center gap-2 px-8 py-4 bg-black text-white rounded-full font-black text-sm uppercase tracking-widest hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  Load More
+                  <span className="text-xs opacity-70">({totalCount - products.length} remaining)</span>
+                </>
+              )}
             </button>
           </div>
         )}

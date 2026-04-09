@@ -1,9 +1,10 @@
 import ProductsClient from "./ProductsClient";
-import { getProducts } from "@/lib/products";
+import { getProducts, getProductCount } from "@/lib/products";
 import { getStoreCode } from "@/lib/server/store-utils";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 
+export const revalidate = 3600;
 export const dynamic = 'force-dynamic';
 
 async function getBanners() {
@@ -50,11 +51,14 @@ function getPriceFromCountryPrices(countryPrices: any[], countryCode: string) {
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; brand?: string; q?: string }>;
+  searchParams: Promise<{ category?: string; brand?: string; q?: string; page?: string }>;
 }) {
   const storeCode = await getStoreCode();
-  const products = await getProducts(storeCode);
   const params = await searchParams;
+  const page = parseInt(params.page || '1', 10);
+  const limit = 20;
+  const products = await getProducts(storeCode, page, limit);
+  const totalCount = await getProductCount(storeCode);
   const category = params.category;
   const brand = params.brand;
   const searchQuery = params.q || "";
@@ -84,5 +88,13 @@ export default async function ProductsPage({
     };
   });
 
-  return <ProductsClient initialProducts={transformed} category={category} brand={brand} banners={banners} />;
+  return <ProductsClient 
+    initialProducts={transformed} 
+    category={category} 
+    brand={brand} 
+    banners={banners}
+    totalCount={totalCount}
+    currentPage={page}
+    limit={limit}
+  />;
 }

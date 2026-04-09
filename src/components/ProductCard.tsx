@@ -8,6 +8,7 @@ import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
+import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -40,7 +41,7 @@ interface ProductCardProps {
   compact?: boolean;
 }
 
-export function ProductCard({
+function ProductCard({
   product,
   onQuickView,
   onAddToCart,
@@ -122,7 +123,7 @@ export function ProductCard({
           className="w-full h-full relative block"
         >
           <Image
-            src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}
+            src={isValidImageUrl(product.imageUrl) ? getOptimizedUrl(product.imageUrl, 400) : "/placeholder-product.png"}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
@@ -264,3 +265,5 @@ export function ProductCard({
     </div>
   );
 }
+
+export { ProductCard };

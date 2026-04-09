@@ -28,9 +28,10 @@ export async function GET() {
     });
 
     const defaultContact = {
-      phone: "+971 4 123 4567",
-      email: "info@shafa.com",
-      address: "Dubai, UAE"
+      phone: "+971 04 838 7827",
+      whatsapp: "+971 54 720 6046",
+      email: "support@shanfaglobal.com",
+      address: "Al Diyafa Shopping Center, Satwa Round About, Dubai, United Arab Emirates"
     };
 
     const contactInfo = settings?.data as typeof defaultContact || defaultContact;

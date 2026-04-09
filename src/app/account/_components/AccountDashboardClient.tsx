@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Price } from "@/components/Price";
 import { useUserCountry } from "@/lib/country-detection";
+import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 interface DashboardData {
   orders: any[];
@@ -97,7 +98,7 @@ export default function AccountDashboardClient() {
                 <div key={item.id} className="flex flex-wrap items-center gap-4 p-3 rounded-2xl bg-black/[0.02] border border-black/5">
                   <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden bg-white shadow-sm border border-black/5">
                     <Image 
-                      src={item.imageUrl || "/placeholder-product.png"} 
+                      src={item.imageUrl ? getOptimizedUrl(item.imageUrl, 150) : "/placeholder-product.png"} 
                       alt={item.name} 
                       fill 
                       className="object-cover" 

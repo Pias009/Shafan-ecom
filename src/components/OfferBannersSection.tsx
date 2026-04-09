@@ -214,26 +214,26 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
           
           {/* Offer text (main highlight) */}
           {banner.offerText ? (
-            <h3 className="font-display text-lg md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-1 md:mb-2 text-balance">
+            <h3 className="font-display text-[clamp(1rem,4vw,2.5rem)] font-black leading-tight tracking-tight mb-1 md:mb-2 text-balance">
               {banner.offerText}
             </h3>
           ) : banner.title ? (
-            <h3 className="font-display text-lg md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-1 md:mb-2 text-balance">
+            <h3 className="font-display text-[clamp(1rem,4vw,2.5rem)] font-black leading-tight tracking-tight mb-1 md:mb-2 text-balance">
               {banner.title}
             </h3>
           ) : (
-            <h3 className="font-display text-lg md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-1 md:mb-2">
+            <h3 className="font-display text-[clamp(1rem,4vw,2.5rem)] font-black leading-tight tracking-tight mb-1 md:mb-2">
               SPECIAL OFFER
             </h3>
           )}
           
           {/* Subtitle or description */}
           {banner.subtitle ? (
-            <p className="font-body text-[10px] md:text-base lg:text-lg mt-1 md:mt-2 italic line-clamp-2 opacity-90 text-pretty">
+            <p className="font-body text-[clamp(0.625rem,2vw,1.125rem)] mt-1 md:mt-2 italic line-clamp-2 opacity-90 text-pretty">
               {banner.subtitle}
             </p>
           ) : (
-            <p className="font-body text-[10px] md:text-base lg:text-lg mt-1 md:mt-2 italic opacity-90">
+            <p className="font-body text-[clamp(0.625rem,2vw,1.125rem)] mt-1 md:mt-2 italic opacity-90">
               Limited time offer
             </p>
           )}
@@ -257,7 +257,7 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
       </div>
 
       {/* Image side - Banner image occupying remaining space */}
-      <div className="flex-1 min-h-[160px] md:min-h-0 relative overflow-hidden">
+      <div className="flex-1 min-h-[160px] md:min-h-0 relative overflow-hidden bg-[#f3f3f3]">
         <motion.div
           initial={{ scale: 1.05, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -268,7 +268,7 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
             src={banner.imageUrl}
             alt={banner.title || "promotional banner"}
             fill
-            className="object-cover object-center"
+            className="object-contain"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 60vw"
             priority={true}
           />

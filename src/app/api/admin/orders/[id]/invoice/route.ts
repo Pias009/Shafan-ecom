@@ -197,7 +197,7 @@ export async function POST(
           const afterDiscount = itemLineValue - proportionalDiscount;
           const itemTax = afterDiscount * taxRate;
           const lineTotal = afterDiscount + itemTax;
-          const hsCode = ((item.product as Record<string, unknown>)?.hsCode as string) || '-';
+          const hsCode = ((item.product as Record<string, unknown>)?.hsCode as string) || '33049901';
           
           // Row background
           if (index % 2 === 0) {
@@ -269,7 +269,11 @@ export async function POST(
         doc.text('Status:', 50, y + 42);
         
         doc.fontSize(9).font('Helvetica-Bold').fillColor('#1a1a1a').text(paymentMethod, 100, y + 28);
-        doc.fontSize(9).font('Helvetica-Bold').fillColor('#16a34a').text('PAID', 100, y + 42);
+        
+        const isPaid = order.paymentStatus === 'PAID';
+        const paymentStatusText = isPaid ? 'PAID' : 'UNPAID';
+        const paymentStatusColor = isPaid ? '#16a34a' : '#dc2626';
+        doc.fontSize(9).font('Helvetica-Bold').fillColor(paymentStatusColor).text(paymentStatusText, 100, y + 42);
         
         doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text('AMOUNT PAID', 275, y + 10);
         doc.fontSize(14).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(total, order.currency || 'USD'), 275, y + 30);

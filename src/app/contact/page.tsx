@@ -13,7 +13,12 @@ async function getContactInfo() {
       return await res.json();
     }
   } catch (e) {}
-  return { phone: "+971 4 123 4567", email: "info@shafa.com", address: "Dubai, UAE" };
+  return { 
+    phone: "+971 04 838 7827", 
+    whatsapp: "+971 54 720 6046",
+    email: "support@shanfaglobal.com", 
+    address: "Al Diyafa Shopping Center, Satwa Round About, Dubai, United Arab Emirates" 
+  };
 }
 
 export default async function ContactPage() {
@@ -46,16 +51,28 @@ export default async function ContactPage() {
             </div>
 
             <div className="space-y-4">
+              {contact.whatsapp && (
+                <div className="flex items-center gap-3">
+                  <MessageCircle size={18} className="text-green-600" />
+                  <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" className="font-bold text-black hover:text-green-600 transition">
+                    {contact.whatsapp}
+                  </a>
+                </div>
+              )}
               {contact.phone && (
                 <div className="flex items-center gap-3">
                   <Phone size={18} className="text-black/40" />
-                  <span className="font-bold text-black">{contact.phone}</span>
+                  <a href={`tel:${contact.phone}`} className="font-bold text-black hover:text-black/70 transition">
+                    {contact.phone}
+                  </a>
                 </div>
               )}
               {contact.email && (
                 <div className="flex items-center gap-3">
                   <Mail size={18} className="text-black/40" />
-                  <span className="font-bold text-black">{contact.email}</span>
+                  <a href={`mailto:${contact.email}`} className="font-bold text-black hover:text-black/70 transition">
+                    {contact.email}
+                  </a>
                 </div>
               )}
               {contact.address && (

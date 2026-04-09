@@ -220,6 +220,11 @@ model Product {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([active])
+  @@index([createdAt])
+  @@index([hot])
+  @@index([trending])
 }
 
 model ProductCategory {
