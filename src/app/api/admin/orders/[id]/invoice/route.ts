@@ -49,7 +49,16 @@ export async function POST(
     
     const customerEmail = order.user?.email || (billing?.email as string) || '';
     const customerPhone = (billing?.phone as string) || (shipping?.phone as string) || '';
-    const paymentMethod = order.paymentMethodTitle || order.paymentMethod || 'N/A';
+    const rawPaymentMethod = order.paymentMethodTitle || order.paymentMethod || '';
+    
+    function getDisplayPaymentMethod(method: string): string {
+      const m = method.toLowerCase();
+      if (m === 'cod' || m === 'cash on delivery' || m === 'cash_on_delivery') return 'Cash on Delivery';
+      if (m === 'card' || m === 'stripe' || m === 'online') return 'Online Payment';
+      return method;
+    }
+    
+    const paymentMethod = getDisplayPaymentMethod(rawPaymentMethod);
 
     function formatPrice(amount: number, currency: string): string {
       const code = currency?.toUpperCase() || 'USD';
@@ -154,7 +163,7 @@ export async function POST(
         orderY += 12;
         doc.text(`Payment: ${paymentMethod}`, 380, orderY);
         orderY += 12;
-        doc.text(`Currency: ${order.currency || 'USD'}`, 380, orderY);
+        doc.text(`Currency: ${(order.currency || 'USD').toUpperCase()}`, 380, orderY);
         
         // Update y to the max of all three columns
         y = Math.max(y + 24, shipY + 12, orderY + 12);
@@ -255,7 +264,7 @@ export async function POST(
         
         // Grand Total
         doc.fontSize(14).font('Helvetica-Bold').fillColor('#1a1a1a').text('TOTAL', totalsX, y, { width: 150, align: 'right' });
-        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(total, order.currency || 'USD'), totalsX + 155, y, { width: 80, align: 'right' });
+        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(total, (order.currency || 'USD').toUpperCase()), totalsX + 155, y, { width: 80, align: 'right' });
 
         y += 35;
 
@@ -271,8 +280,16 @@ export async function POST(
         doc.fontSize(9).font('Helvetica-Bold').fillColor('#1a1a1a').text(paymentMethod, 100, y + 28);
         
         const isPaid = order.paymentStatus === 'PAID';
-        const paymentStatusText = isPaid ? 'PAID' : 'UNPAID';
-        const paymentStatusColor = isPaid ? '#16a34a' : '#dc2626';
+        const isCOD = rawPaymentMethod.toLowerCase() === 'cod' || rawPaymentMethod.toLowerCase() === 'cash on delivery';
+        let paymentStatusText: string;
+        if (isPaid) {
+          paymentStatusText = `PAID BY ${paymentMethod.toUpperCase()}`;
+        } else if (isCOD) {
+          paymentStatusText = 'PENDING';
+        } else {
+          paymentStatusText = order.paymentStatus === 'PENDING' ? 'PENDING' : 'UNPAID';
+        }
+        const paymentStatusColor = isPaid ? '#16a34a' : (isCOD ? '#d97706' : '#dc2626');
         doc.fontSize(9).font('Helvetica-Bold').fillColor(paymentStatusColor).text(paymentStatusText, 100, y + 42);
         
         doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text('AMOUNT PAID', 275, y + 10);

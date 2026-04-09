@@ -1,8 +1,61 @@
+import React from 'react';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
 import { OrderFilter } from './_components/OrderFilter';
 import { getAdminStoreAccess } from '@/lib/admin-session';
+
+interface OrderItem {
+  productName: string;
+  quantity: number;
+  price: number;
+}
+
+interface BillingAddress {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  address_1?: string;
+  address_2?: string;
+  city?: string;
+  state?: string;
+  postcode?: string;
+  country?: string;
+}
+
+interface User {
+  name: string | null;
+  email: string | null;
+}
+
+interface Store {
+  code: string | null;
+  name: string | null;
+}
+
+interface PrismaWhere {
+  status?: OrderStatus;
+  storeId?: { in: string[] };
+}
+
+interface Order {
+  id: string;
+  createdAt: Date;
+  total: number;
+  currency: string;
+  paymentStatus: 'PAID' | 'PENDING' | 'UNPAID';
+  paymentMethod: string;
+  paymentMethodTitle: string | null;
+  status: OrderStatus;
+  subtotal: number;
+  shipping: number;
+  discount: number;
+  billingAddress: BillingAddress | null;
+  user: User | null;
+  store: Store | null;
+  items: OrderItem[];
+}
 
 function formatPrice(amountCents: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
@@ -57,14 +110,35 @@ function getPaymentStatusColor(paymentStatus: PaymentStatus | null): string {
 function getPaymentStatusLabel(paymentStatus: PaymentStatus | null): string {
   switch (paymentStatus) {
     case PaymentStatus.PAID:
-      return 'Paid';
+      return 'PAID';
     case PaymentStatus.PENDING:
-      return 'COD / Pending';
+      return 'PENDING';
     case PaymentStatus.CANCELLED:
-      return 'Cancelled';
+      return 'CANCELLED';
     default:
-      return 'Unknown';
+      return 'UNKNOWN';
   }
+}
+
+function getPaymentMethodDisplay(method: string | null): string {
+  if (!method) return 'N/A';
+  const m = method.toLowerCase();
+  if (m === 'cod' || m === 'cash on delivery') return 'COD';
+  if (m === 'card' || m === 'stripe' || m === 'online') return 'Stripe';
+  return method;
+}
+
+function getDateGroup(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const orderDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffTime = today.getTime() - orderDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default async function OrdersPage({ searchParams }: { searchParams?: Promise<{ status?: string }> }) {
@@ -77,7 +151,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     return <div className="p-20 text-center font-black opacity-20 italic text-3xl">Unauthorized Access</div>;
   }
 
-  const where: any = {};
+  const where: PrismaWhere = {};
   
   // Filter by status if specified
   if (status !== 'ALL') {
@@ -104,7 +178,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     );
   }
 
-  const dbOrders = await (prisma as any).order.findMany({
+  const dbOrders = await prisma.order.findMany({
     where,
     include: {
       user: true,
@@ -113,7 +187,20 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     orderBy: {
       createdAt: 'desc'
     }
-  }) as any[];
+  }) as Order[];
+
+  // Group orders by date
+  const groupedOrders: Record<string, Order[]> = {};
+  dbOrders.forEach((order) => {
+    const dateKey = new Date(order.createdAt).toISOString().split('T')[0];
+    if (!groupedOrders[dateKey]) {
+      groupedOrders[dateKey] = [];
+    }
+    groupedOrders[dateKey].push(order);
+  });
+
+  // Sort date keys in descending order
+  const sortedDateKeys = Object.keys(groupedOrders).sort((a, b) => b.localeCompare(a));
 
   return (
     <div className="space-y-6 px-2 md:px-0">
@@ -144,7 +231,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Store</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Date</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Customer</th>
-                <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Payment</th>
+                <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Payment Method</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Total</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Payment Status</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Status</th>
@@ -152,43 +239,61 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5 overflow-x-auto">
-              {dbOrders.map((o) => {
-                const billing = o.billingAddress as any;
-                const customer = o.user?.name || (billing ? `${billing.first_name || ''} ${billing.last_name || ''}`.trim() : 'Guest');
-                const email = o.user?.email || billing?.email || 'No email';
-                const date = new Date(o.createdAt).toLocaleDateString();
-                const paid = o.paymentMethodTitle || o.paymentMethod || 'Unknown';
-                const storeCode = o.store?.code || 'N/A';
-                const storeName = o.store?.name || 'Unknown Store';
+              {sortedDateKeys.map((dateKey) => {
+                const ordersInGroup = groupedOrders[dateKey];
+                const groupLabel = getDateGroup(dateKey);
                 
                 return (
-                  <tr key={o.id} className="hover:bg-black/[0.02] transition-colors group">
-                    <td className="px-4 md:px-6 py-4 font-black">#{o.id.substring(0, 8)}</td>
-                    <td className="px-4 md:px-6 py-4">
-                      <div className="font-black text-[10px] md:text-xs uppercase tracking-widest">{storeCode}</div>
-                      <div className="text-[9px] text-black/70 truncate max-w-[80px]">{storeName}</div>
-                    </td>
-                    <td className="px-4 md:px-6 py-4 text-[10px] md:text-sm font-medium text-black">{date}</td>
-                    <td className="px-4 md:px-6 py-4">
-                      <div className="font-bold text-[11px] md:text-sm">{customer}</div>
-                      <div className="text-[9px] md:text-[10px] font-bold text-black/70 truncate max-w-[120px] md:max-w-[150px] uppercase tracking-tighter">{email}</div>
-                    </td>
-                    <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{paid}</td>
-                    <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{formatPrice(o.total, o.currency)}</td>
-                    <td className="px-4 md:px-6 py-4">
-                      <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getPaymentStatusColor(o.paymentStatus)}`}>
-                        {getPaymentStatusLabel(o.paymentStatus)}
-                      </span>
-                    </td>
-                    <td className="px-4 md:px-6 py-4">
-                      <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getStatusColor(o.status)}`}>
-                        {o.status}
-                      </span>
-                    </td>
-                    <td className="px-4 md:px-6 py-4 text-right">
-                      <Link href={`/ueadmin/orders/${o.id}`} className="bg-black text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 md:px-4 py-2 rounded-full hover:scale-105 transition">View</Link>
-                    </td>
-                  </tr>
+                  <React.Fragment key={dateKey}>
+                    <tr className="bg-black/5">
+                      <td colSpan={9} className="px-4 md:px-6 py-3">
+                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-black/70">{groupLabel}</span>
+                      </td>
+                    </tr>
+                    {ordersInGroup.map((o) => {
+                      const billing = o.billingAddress;
+                      const customer = o.user?.name || (billing ? `${billing.first_name || ''} ${billing.last_name || ''}`.trim() : 'Guest');
+                      const email = o.user?.email || billing?.email || 'No email';
+                      const date = new Date(o.createdAt).toLocaleDateString();
+                      const paymentMethodDisplay = getPaymentMethodDisplay(o.paymentMethod);
+                      const storeCode = o.store?.code || 'N/A';
+                      const storeName = o.store?.name || 'Unknown Store';
+                      
+                      return (
+                        <tr key={o.id} className="hover:bg-black/[0.02] transition-colors group">
+                          <td className="px-4 md:px-6 py-4 font-black">#{o.id.substring(0, 8)}</td>
+                          <td className="px-4 md:px-6 py-4">
+                            <div className="font-black text-[10px] md:text-xs uppercase tracking-widest">{storeCode}</div>
+                            <div className="text-[9px] text-black/70 truncate max-w-[80px]">{storeName}</div>
+                          </td>
+                          <td className="px-4 md:px-6 py-4 text-[10px] md:text-sm font-medium text-black">{date}</td>
+                          <td className="px-4 md:px-6 py-4">
+                            <div className="font-bold text-[11px] md:text-sm">{customer}</div>
+                            <div className="text-[9px] md:text-[10px] font-bold text-black/70 truncate max-w-[120px] md:max-w-[150px] uppercase tracking-tighter">{email}</div>
+                          </td>
+                          <td className="px-4 md:px-6 py-4">
+                            <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${o.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+                              {paymentMethodDisplay}
+                            </span>
+                          </td>
+                          <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{formatPrice(o.total, o.currency)}</td>
+                          <td className="px-4 md:px-6 py-4">
+                            <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getPaymentStatusColor(o.paymentStatus)}`}>
+                              {getPaymentStatusLabel(o.paymentStatus)}
+                            </span>
+                          </td>
+                          <td className="px-4 md:px-6 py-4">
+                            <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getStatusColor(o.status)}`}>
+                              {o.status}
+                            </span>
+                          </td>
+                          <td className="px-4 md:px-6 py-4 text-right">
+                            <Link href={`/ueadmin/orders/${o.id}`} className="bg-black text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 md:px-4 py-2 rounded-full hover:scale-105 transition">View</Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
                 );
               })}
             </tbody>
