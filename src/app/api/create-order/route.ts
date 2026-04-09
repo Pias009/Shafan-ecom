@@ -336,11 +336,13 @@ export async function POST(req: Request) {
         throw new Error(`Product not found: ${productId || productSlug}`);
       }
 
+      const itemQuantity = typeof item.quantity === 'number' && item.quantity > 0 ? item.quantity : 1;
+
       // Check stock availability
       if (product.stockQuantity !== null && product.stockQuantity <= 0) {
         throw new Error(`Product "${product.name}" is out of stock. Please remove it from your cart.`);
       }
-      if (product.stockQuantity !== null && product.stockQuantity < item.quantity) {
+      if (product.stockQuantity !== null && product.stockQuantity < itemQuantity) {
         throw new Error(`Not enough stock for "${product.name}". Available: ${product.stockQuantity}`);
       }
 
@@ -376,12 +378,12 @@ export async function POST(req: Request) {
         throw new Error(`Invalid price for product ${product.name}. Please contact support.`);
       }
       
-      const itemTotal = unitPrice * item.quantity;
+      const itemTotal = unitPrice * itemQuantity;
       subtotal += itemTotal;
 
       orderItemsData.push({
         productId: product.id,
-        quantity: item.quantity,
+        quantity: itemQuantity,
         unitPrice: unitPrice,
         nameSnapshot: product.name,
         imageSnapshot: product.mainImage,
@@ -475,15 +477,15 @@ export async function POST(req: Request) {
     });
 
     // Decrement stock for each ordered item
-    for (const item of items) {
+    for (const orderItem of orderItemsData) {
       const product = await prisma.product.findUnique({
-        where: { id: item.productId }
+        where: { id: orderItem.productId }
       });
       if (product && product.stockQuantity !== null) {
         await prisma.product.update({
-          where: { id: item.productId },
+          where: { id: orderItem.productId },
           data: {
-            stockQuantity: Math.max(0, product.stockQuantity - item.quantity)
+            stockQuantity: Math.max(0, product.stockQuantity - orderItem.quantity)
           }
         });
       }

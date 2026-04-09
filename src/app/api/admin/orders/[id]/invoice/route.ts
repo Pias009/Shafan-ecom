@@ -50,7 +50,6 @@ export async function POST(
     const customerEmail = order.user?.email || (billing?.email as string) || '';
     const customerPhone = (billing?.phone as string) || (shipping?.phone as string) || '';
     const paymentMethod = order.paymentMethodTitle || order.paymentMethod || 'N/A';
-    const paymentStatus = 'PAID';
 
     function formatPrice(amount: number, currency: string): string {
       const code = currency?.toUpperCase() || 'USD';
@@ -59,13 +58,14 @@ export async function POST(
     }
 
     const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const orderTime = new Date(order.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
     const subtotal = order.subtotal || 0;
     const shippingCost = order.shipping || 0;
     const discount = order.discount || 0;
     const total = order.total || 0;
-    const taxValue = Math.max(0, total - subtotal - shippingCost + discount);
+    const taxRate = 0.05;
+    const amountBeforeTax = subtotal - discount;
+    const taxValue = amountBeforeTax > 0 ? amountBeforeTax * taxRate : 0;
 
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       try {
@@ -80,16 +80,15 @@ export async function POST(
         let y = 35;
         
         // Company Info
-        doc.fontSize(9).font('Helvetica').fillColor('#666').text('Shanfá Group Global Trading LLC', 40, y);
+        doc.fontSize(9).font('Helvetica').fillColor('#666').text('Al Shanfa General Trading Co. L.L.C', 40, y);
         doc.text('Dubai, United Arab Emirates', 40, y + 12);
-        doc.text('TRN: 100400981500003', 40, y + 24);
+        doc.text('TRN: 104177488400003', 40, y + 24);
         
         // Invoice Title Box
         doc.rect(380, y - 5, 155, 55).fill('#1a1a1a');
         doc.fontSize(18).font('Helvetica-Bold').fillColor('#fff').text('INVOICE', 380, y + 5, { align: 'center', width: 155 });
         doc.fontSize(8).font('Helvetica').fillColor('#ccc').text(`INV-${(order.id || '').slice(-8).toUpperCase()}`, 380, y + 22, { align: 'center', width: 155 });
         doc.text(`Date: ${orderDate}`, 380, y + 34, { align: 'center', width: 155 });
-        doc.text(`Status: PAID`, 380, y + 46, { align: 'center', width: 155 });
 
         y += 70;
         doc.rect(40, y, 495, 2).fill('#1a1a1a');
@@ -153,13 +152,9 @@ export async function POST(
         doc.fontSize(9).font('Helvetica').fillColor('#444');
         doc.text(`Order #: ${(order.id || '').slice(-8).toUpperCase()}`, 380, orderY);
         orderY += 12;
-        doc.text(`Status: ${(order.status || 'UNKNOWN').replace(/_/g, ' ')}`, 380, orderY);
-        orderY += 12;
         doc.text(`Payment: ${paymentMethod}`, 380, orderY);
         orderY += 12;
         doc.text(`Currency: ${order.currency || 'USD'}`, 380, orderY);
-        orderY += 12;
-        doc.text(`Store: ${order.store?.name || 'Online'}`, 380, orderY);
         
         // Update y to the max of all three columns
         y = Math.max(y + 24, shipY + 12, orderY + 12);
@@ -170,12 +165,15 @@ export async function POST(
 
         // ========== ITEMS TABLE HEADER ==========
         doc.rect(40, y, 495, 28).fill('#1a1a1a');
-        doc.fillColor('#fff').fontSize(9).font('Helvetica-Bold');
-        doc.text('#', 48, y + 9, { width: 25, align: 'center' });
-        doc.text('DESCRIPTION', 75, y + 9, { width: 230 });
-        doc.text('QTY', 310, y + 9, { width: 35, align: 'center' });
-        doc.text('UNIT PRICE', 350, y + 9, { width: 75, align: 'right' });
-        doc.text('TOTAL', 430, y + 9, { width: 90, align: 'right' });
+        doc.fillColor('#fff').fontSize(8).font('Helvetica-Bold');
+        doc.text('#', 42, y + 9, { width: 20, align: 'center' });
+        doc.text('DESCRIPTION', 62, y + 9, { width: 155 });
+        doc.text('HS CODE', 220, y + 9, { width: 55, align: 'center' });
+        doc.text('QTY', 278, y + 9, { width: 35, align: 'center' });
+        doc.text('UNIT PRICE', 318, y + 9, { width: 70, align: 'right' });
+        doc.text('DISCOUNT', 393, y + 9, { width: 55, align: 'right' });
+        doc.text('TAX', 453, y + 9, { width: 45, align: 'right' });
+        doc.text('TOTAL', 500, y + 9, { width: 35, align: 'right' });
         
         y += 28;
         doc.fillColor('#000');
@@ -184,11 +182,22 @@ export async function POST(
         let tableY = y;
         const itemHeight = 24;
         
+        const totalItemsValue = (order.items || []).reduce((sum: number, item: Record<string, unknown>) => {
+          const qty = (item.quantity as number) || 0;
+          const price = (item.unitPrice as number) || 0;
+          return sum + (price * qty);
+        }, 0);
+        
         (order.items || []).forEach((item: Record<string, unknown>, index: number) => {
           const itemName = (item.nameSnapshot as string) || ((item.product as Record<string, unknown>)?.name as string) || 'Unknown';
           const qty = (item.quantity as number) || 0;
           const price = (item.unitPrice as number) || 0;
-          const lineTotal = price * qty;
+          const itemLineValue = price * qty;
+          const proportionalDiscount = totalItemsValue > 0 ? (itemLineValue / totalItemsValue) * discount : 0;
+          const afterDiscount = itemLineValue - proportionalDiscount;
+          const itemTax = afterDiscount * taxRate;
+          const lineTotal = afterDiscount + itemTax;
+          const hsCode = ((item.product as Record<string, unknown>)?.hsCode as string) || '-';
           
           // Row background
           if (index % 2 === 0) {
@@ -197,12 +206,15 @@ export async function POST(
           doc.rect(40, tableY, 495, itemHeight).stroke('#eee');
           
           // Item data
-          doc.fillColor('#1a1a1a').fontSize(9).font('Helvetica');
-          doc.text(String(index + 1), 48, tableY + 7, { width: 25, align: 'center' });
-          doc.text(itemName, 75, tableY + 7, { width: 230 });
-          doc.text(String(qty), 310, tableY + 7, { width: 35, align: 'center' });
-          doc.text(formatPrice(price, order.currency || 'USD'), 350, tableY + 7, { width: 75, align: 'right' });
-          doc.text(formatPrice(lineTotal, order.currency || 'USD'), 430, tableY + 7, { width: 90, align: 'right' });
+          doc.fillColor('#1a1a1a').fontSize(8).font('Helvetica');
+          doc.text(String(index + 1), 42, tableY + 8, { width: 20, align: 'center' });
+          doc.text(itemName, 62, tableY + 8, { width: 155 });
+          doc.text(hsCode, 220, tableY + 8, { width: 55, align: 'center' });
+          doc.text(String(qty), 278, tableY + 8, { width: 35, align: 'center' });
+          doc.text(formatPrice(price, order.currency || 'USD'), 318, tableY + 8, { width: 70, align: 'right' });
+          doc.text(proportionalDiscount > 0 ? formatPrice(proportionalDiscount, order.currency || 'USD') : '-', 393, tableY + 8, { width: 55, align: 'right' });
+          doc.text(itemTax > 0 ? formatPrice(itemTax, order.currency || 'USD') : '-', 453, tableY + 8, { width: 45, align: 'right' });
+          doc.text(formatPrice(lineTotal, order.currency || 'USD'), 500, tableY + 8, { width: 35, align: 'right' });
           
           tableY += itemHeight;
         });
@@ -214,38 +226,36 @@ export async function POST(
         // ========== TOTALS SECTION ==========
         const totalsX = 300;
         
-        // Subtotal
-        doc.fontSize(10).font('Helvetica').fillColor('#444').text('Subtotal', totalsX, y, { width: 120, align: 'right' });
-        doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(subtotal, order.currency || 'USD'), totalsX + 125, y, { width: 90, align: 'right' });
-        y += 18;
-        
-        // Shipping
-        doc.fontSize(10).font('Helvetica').fillColor('#444').text('Shipping', totalsX, y, { width: 120, align: 'right' });
-        doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(shippingCost, order.currency || 'USD'), totalsX + 125, y, { width: 90, align: 'right' });
+        // Amount Before Tax
+        doc.fontSize(10).font('Helvetica').fillColor('#444').text('Total Amount Before Tax', totalsX, y, { width: 150, align: 'right' });
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(amountBeforeTax, order.currency || 'USD'), totalsX + 155, y, { width: 80, align: 'right' });
         y += 18;
         
         // Discount
         if (discount > 0) {
-          doc.fontSize(10).font('Helvetica').fillColor('#444').text('Discount', totalsX, y, { width: 120, align: 'right' });
-          doc.fontSize(10).font('Helvetica-Bold').fillColor('#16a34a').text(`-${formatPrice(discount, order.currency || 'USD')}`, totalsX + 125, y, { width: 90, align: 'right' });
+          doc.fontSize(10).font('Helvetica').fillColor('#444').text('Discount', totalsX, y, { width: 150, align: 'right' });
+          doc.fontSize(10).font('Helvetica-Bold').fillColor('#16a34a').text(`-${formatPrice(discount, order.currency || 'USD')}`, totalsX + 155, y, { width: 80, align: 'right' });
           y += 18;
         }
         
-        // VAT
-        if (taxValue > 0) {
-          doc.fontSize(10).font('Helvetica').fillColor('#444').text('VAT (5%)', totalsX, y, { width: 120, align: 'right' });
-          doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(taxValue, order.currency || 'USD'), totalsX + 125, y, { width: 90, align: 'right' });
-          y += 18;
-        }
+        // Tax
+        doc.fontSize(10).font('Helvetica').fillColor('#444').text('Total Tax (5%)', totalsX, y, { width: 150, align: 'right' });
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(taxValue, order.currency || 'USD'), totalsX + 155, y, { width: 80, align: 'right' });
+        y += 18;
+        
+        // Shipping
+        doc.fontSize(10).font('Helvetica').fillColor('#444').text('Shipping', totalsX, y, { width: 150, align: 'right' });
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(shippingCost, order.currency || 'USD'), totalsX + 155, y, { width: 80, align: 'right' });
+        y += 18;
         
         // Total Line
         y += 5;
-        doc.rect(totalsX - 10, y, 260, 2).fill('#1a1a1a');
+        doc.rect(totalsX - 10, y, 245, 2).fill('#1a1a1a');
         y += 10;
         
         // Grand Total
-        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1a1a1a').text('TOTAL', totalsX, y, { width: 120, align: 'right' });
-        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(total, order.currency || 'USD'), totalsX + 125, y, { width: 90, align: 'right' });
+        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1a1a1a').text('TOTAL', totalsX, y, { width: 150, align: 'right' });
+        doc.fontSize(14).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(total, order.currency || 'USD'), totalsX + 155, y, { width: 80, align: 'right' });
 
         y += 35;
 
@@ -273,25 +283,25 @@ export async function POST(
         doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text('Terms & Conditions', 40, y);
         y += 14;
         doc.fontSize(8).font('Helvetica').fillColor('#666');
-        doc.text('• Goods once sold will not be returned or exchanged unless defective.', 40, y);
+        doc.text('• Returns accepted within 2 days of delivery.', 40, y);
         y += 11;
-        doc.text('• Please inspect the goods upon delivery and report any damages within 24 hours.', 40, y);
+        doc.text('• Goods must be returned in original packaging with all tags and accessories.', 40, y);
         y += 11;
         doc.text('• Prices are inclusive of VAT where applicable.', 40, y);
         y += 11;
-        doc.text('• For queries, contact us at shanfaglobal.it@gmail.com', 40, y);
+        doc.text('• For support, contact us at support@shanfaglobal.com', 40, y);
 
         y += 25;
         
         // Thank you message
-        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1a1a1a').text('Thank You for Shopping with SHANFÁ!', 40, y, { align: 'center', width: 495 });
+        doc.fontSize(12).font('Helvetica-Bold').fillColor('#1a1a1a').text('Thank You for Shopping with SHANFA GLOBAL!', 40, y, { align: 'center', width: 495 });
         y += 16;
         doc.fontSize(9).font('Helvetica').fillColor('#666').text('Your order is being processed and will be shipped soon.', 40, y, { align: 'center', width: 495 });
 
         y += 30;
         
         // Bottom footer
-        doc.fontSize(8).fillColor('#999').text('Shanfá Group Global Trading LLC | Dubai, UAE | shanfaglobal.it@gmail.com | +971 50 123 4567', 40, y, { align: 'center', width: 495 });
+        doc.fontSize(8).fillColor('#999').text('Al Shanfa General Trading Co. L.L.C | Dubai, UAE | support@shanfaglobal.com | www.shanfaglobal.com', 40, y, { align: 'center', width: 495 });
         y += 12;
         doc.text('This is a computer-generated invoice. No signature required.', 40, y, { align: 'center', width: 495 });
 

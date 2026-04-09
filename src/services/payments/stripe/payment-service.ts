@@ -20,14 +20,12 @@ export async function createPaymentIntent(amount: number, orderId: string, custo
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalAmount,
-      currency: currency.toLowerCase(), // Real order currency
+      currency: currency.toLowerCase(),
       receipt_email: customerEmail,
       metadata: {
         orderId: orderId,
       },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
     });
 
     return paymentIntent;
