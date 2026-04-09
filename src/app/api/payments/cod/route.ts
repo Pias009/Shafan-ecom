@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -23,12 +23,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order already has a payment method" }, { status: 400 });
     }
 
-    // Update order to COD payment
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
         paymentMethod: "cod",
         paymentMethodTitle: "Cash on Delivery",
+        paymentStatus: PaymentStatus.PENDING,
         status: OrderStatus.ORDER_RECEIVED,
       },
       include: { items: true, shipment: true }

@@ -25,6 +25,12 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum PaymentStatus {
+  PAID
+  PENDING
+  CANCELLED
+}
+
 enum DiscountType {
   PERCENTAGE
   FIXED_AMOUNT
@@ -313,6 +319,7 @@ model Order {
   user                  User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   email                 String?
   status                OrderStatus     @default(ORDER_RECEIVED)
+  paymentStatus         PaymentStatus   @default(PENDING)
   currency              String          @default("usd")
   subtotal              Float?
   shipping              Float?          @default(0)

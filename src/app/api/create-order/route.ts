@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { revalidatePath } from "next/cache";
 
@@ -440,12 +440,15 @@ export async function POST(req: Request) {
     const courier = determineCourier(shipping);
     const trackingCode = generateTrackingCode();
 
-    // Create the order in Prisma
+    // Create the order in Prisma with PENDING paymentStatus
+    // For COD: order is created immediately (paymentStatus PENDING)
+    // For Stripe: order will be created, webhook will update to PAID
     const order = await prisma.order.create({
       data: {
         userId: session?.user?.id || null,
         email: session?.user?.email || billing?.email || null,
         status: OrderStatus.ORDER_RECEIVED,
+        paymentStatus: PaymentStatus.PENDING,
         currency: currency.toLowerCase(),
         subtotal,
         shipping: shippingFee,

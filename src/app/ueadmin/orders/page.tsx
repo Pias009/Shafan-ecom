@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, PaymentStatus } from '@prisma/client';
 import { OrderFilter } from './_components/OrderFilter';
 import { getAdminStoreAccess } from '@/lib/admin-session';
 
@@ -38,6 +38,32 @@ function getStatusColor(status: OrderStatus): string {
       return 'bg-gray-100 text-gray-800 border-gray-200';
     default:
       return 'bg-gray-50 text-gray-600 border-gray-100';
+  }
+}
+
+function getPaymentStatusColor(paymentStatus: PaymentStatus | null): string {
+  switch (paymentStatus) {
+    case PaymentStatus.PAID:
+      return 'bg-green-100 text-green-800 border-green-200';
+    case PaymentStatus.PENDING:
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case PaymentStatus.CANCELLED:
+      return 'bg-red-100 text-red-800 border-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+}
+
+function getPaymentStatusLabel(paymentStatus: PaymentStatus | null): string {
+  switch (paymentStatus) {
+    case PaymentStatus.PAID:
+      return 'Paid';
+    case PaymentStatus.PENDING:
+      return 'COD / Pending';
+    case PaymentStatus.CANCELLED:
+      return 'Cancelled';
+    default:
+      return 'Unknown';
   }
 }
 
@@ -111,7 +137,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
            <div className="text-[10px] font-black uppercase tracking-widest text-black italic">Global Fulfilment Flow</div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left min-w-[800px] md:min-w-0">
+          <table className="w-full text-left min-w-[900px] md:min-w-0">
             <thead className="bg-black text-white">
               <tr>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Order #</th>
@@ -120,6 +146,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Customer</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Payment</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Total</th>
+                <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Payment Status</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest">Status</th>
                 <th className="px-4 md:px-6 py-4 text-[10px] md:text-xs font-black uppercase tracking-widest text-right">Actions</th>
               </tr>
@@ -148,6 +175,11 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
                     </td>
                     <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{paid}</td>
                     <td className="px-4 md:px-6 py-4 font-black text-xs md:text-sm">{formatPrice(o.total, o.currency)}</td>
+                    <td className="px-4 md:px-6 py-4">
+                      <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getPaymentStatusColor(o.paymentStatus)}`}>
+                        {getPaymentStatusLabel(o.paymentStatus)}
+                      </span>
+                    </td>
                     <td className="px-4 md:px-6 py-4">
                       <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getStatusColor(o.status)}`}>
                         {o.status}

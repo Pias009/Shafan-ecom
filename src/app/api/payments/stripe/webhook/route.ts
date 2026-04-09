@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { verifyStripeWebhook } from "@/services/payments/stripe/payment-service";
 import { prisma } from "@/lib/prisma";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
@@ -23,6 +23,7 @@ export async function POST(req: Request) {
           where: { id: orderId },
           data: { 
             status: OrderStatus.ORDER_CONFIRMED,
+            paymentStatus: PaymentStatus.PAID,
             stripePaymentIntentId: paymentIntent.id
           },
           include: { 
