@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { OrderStatus } from '@prisma/client';
 import { OrderFilter } from './_components/OrderFilter';
 import { getAdminStoreAccess } from '@/lib/admin-session';
 
@@ -94,27 +94,31 @@ function getStatusColor(status: OrderStatus): string {
   }
 }
 
-function getPaymentStatusColor(paymentStatus: PaymentStatus | null): string {
+function getPaymentStatusColor(paymentStatus: string | null): string {
   switch (paymentStatus) {
-    case PaymentStatus.PAID:
+    case 'PAID':
       return 'bg-green-100 text-green-800 border-green-200';
-    case PaymentStatus.PENDING:
+    case 'PENDING':
       return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case PaymentStatus.CANCELLED:
+    case 'CANCELLED':
+      return 'bg-red-100 text-red-800 border-red-200';
+    case 'UNPAID':
       return 'bg-red-100 text-red-800 border-red-200';
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200';
   }
 }
 
-function getPaymentStatusLabel(paymentStatus: PaymentStatus | null): string {
+function getPaymentStatusLabel(paymentStatus: string | null): string {
   switch (paymentStatus) {
-    case PaymentStatus.PAID:
+    case 'PAID':
       return 'PAID';
-    case PaymentStatus.PENDING:
+    case 'PENDING':
       return 'PENDING';
-    case PaymentStatus.CANCELLED:
+    case 'CANCELLED':
       return 'CANCELLED';
+    case 'UNPAID':
+      return 'UNPAID';
     default:
       return 'UNKNOWN';
   }
@@ -182,12 +186,13 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     where,
     include: {
       user: true,
-      store: { select: { code: true, name: true } }
+      store: { select: { code: true, name: true } },
+      items: true
     },
     orderBy: {
       createdAt: 'desc'
     }
-  }) as Order[];
+  }) as unknown as Order[];
 
   // Group orders by date
   const groupedOrders: Record<string, Order[]> = {};
