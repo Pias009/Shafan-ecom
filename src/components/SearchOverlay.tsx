@@ -81,11 +81,9 @@ export function SearchOverlay({ onClose }: SearchOverlayProps) {
   }, [query]);
 
   const handleSelect = useCallback((product: any) => {
-    setStoreQuery(query);
-    setStoreIsSearching(true);
     handleClose();
-    router.push(`/products?q=${encodeURIComponent(query)}`);
-  }, [query, setStoreQuery, setStoreIsSearching, handleClose, router]);
+    router.push(`/products/${product.slug || product.id}`);
+  }, [handleClose, router]);
 
   const handleSearch = useCallback(() => {
     if (query.trim()) {
