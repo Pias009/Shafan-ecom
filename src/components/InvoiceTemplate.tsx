@@ -168,13 +168,7 @@ export const InvoiceTemplate = React.forwardRef<HTMLDivElement, InvoiceTemplateP
               Payment Method
             </h3>
             <p className="text-gray-600 text-sm font-semibold">{data.paymentMethod}</p>
-            <div className="mt-2">
-              <span className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Status: </span>
-              <span className={`text-xs font-bold ${data.paymentStatus === 'PAID' ? 'text-green-600' : 'text-red-600'}`}>
-                {data.paymentStatus === 'PAID' ? 'PAID' : 'UNPAID'}
-              </span>
-            </div>
-            <div className="mt-6 p-4 bg-gray-50 rounded border border-gray-200">
+            <div className="mt-6 p-4 bg-white rounded border border-gray-200">
               <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-2">
                 Order Summary
               </p>

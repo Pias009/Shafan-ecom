@@ -76,10 +76,20 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
           <p className="text-[10px] md:text-xs font-bold text-black/30 uppercase tracking-widest">
             {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
+          {/* Payment Status Badge */}
+          <div className="mt-2">
+            <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
+              order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800 border-green-200' :
+              order.paymentStatus === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-200' :
+              'bg-amber-100 text-amber-800 border-amber-200'
+            }`}>
+              Payment: {order.paymentStatus || 'PENDING'}
+            </span>
+          </div>
         </div>
         <div className="text-center md:text-right bg-black/5 p-6 rounded-3xl md:bg-transparent md:p-0">
           <div className="text-[10px] font-black uppercase tracking-widest text-black/20 mb-1">Total Paid</div>
-          <div className="text-4xl md:text-5xl font-black">{formatPrice(order.totalCents, order.currency)}</div>
+          <div className="text-4xl md:text-5xl font-black">{formatPrice(order.total || order.totalCents || 0, order.currency)}</div>
         </div>
       </div>
 

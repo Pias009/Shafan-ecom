@@ -34,18 +34,49 @@ export function BrandMarquee() {
     fetchBrands();
   }, []);
 
+  // Sort brands with Color Wow first
+  const sortedBrands = [...brands].sort((a, b) => {
+    if (a.name === 'Color Wow') return -1;
+    if (b.name === 'Color Wow') return 1;
+    return a.name.localeCompare(b.name);
+  });
+
   if (loading) {
+    return null;
+  }
+
+  if (brands.length === 0) {
+    return null;
+  }
+
+  // If few brands, show centered layout
+  const isFewBrands = sortedBrands.length <= 4;
+
+  if (isFewBrands) {
     return (
-      <section id="brands" className="w-full bg-gradient-to-b from-gray-50 to-white py-12 overflow-hidden">
+      <section id="brands" className="w-full bg-gradient-to-b from-gray-50 to-white py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-black text-gray-800">Premium Partners</h2>
-          </div>
-          <div className="flex gap-12 justify-center">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="text-lg font-bold text-gray-300 animate-pulse">
-                Loading...
-              </div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8 md:mb-12"
+          >
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-gray-900">
+              Premium Partners
+            </h2>
+            <div className="w-16 h-1 bg-black mx-auto mt-3 rounded-full" />
+          </motion.div>
+
+          <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+            {sortedBrands.map((brand) => (
+              <Link
+                key={brand.id}
+                href={`/products?brand=${encodeURIComponent(brand.name)}`}
+                className="text-xl md:text-2xl font-bold text-gray-800 hover:text-black transition-colors"
+              >
+                {brand.name}
+              </Link>
             ))}
           </div>
         </div>
@@ -53,17 +84,12 @@ export function BrandMarquee() {
     );
   }
 
-  if (brands.length === 0) {
-    return null;
-  }
-
   // Duplicate brands for seamless infinite scroll
-  const duplicatedBrands = [...brands, ...brands, ...brands, ...brands];
+  const duplicatedBrands = [...sortedBrands, ...sortedBrands, ...sortedBrands, ...sortedBrands];
 
   return (
     <section id="brands" className="w-full bg-gradient-to-b from-gray-50 to-white py-12 md:py-16 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header - Bold and prominent */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,13 +102,10 @@ export function BrandMarquee() {
           <div className="w-16 h-1 bg-black mx-auto mt-3 rounded-full" />
         </motion.div>
 
-        {/* Auto-scrolling Marquee Container */}
         <div className="relative overflow-hidden">
-          {/* Gradient overlays for smooth edges */}
           <div className="absolute top-0 left-0 w-20 md:w-32 h-full bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
           <div className="absolute top-0 right-0 w-20 md:w-32 h-full bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
 
-          {/* Animated Marquee Track */}
           <motion.div
             animate={{ x: [0, -1000] }}
             transition={{
@@ -102,7 +125,6 @@ export function BrandMarquee() {
                   href={`/products?brand=${encodeURIComponent(brand.name)}`}
                   className="block"
                 >
-                  {/* Brand Name - Bold and brand-like */}
                   <span className="text-lg md:text-xl font-bold text-gray-800 whitespace-nowrap hover:text-black transition-colors">
                     {brand.name}
                   </span>

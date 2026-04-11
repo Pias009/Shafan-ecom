@@ -22,7 +22,6 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
     { id: OrderStatus.ORDER_CONFIRMED, label: 'Confirmed', icon: Check },
     { id: OrderStatus.PROCESSING, label: 'Processing', icon: Loader2 },
     { id: OrderStatus.READY_FOR_PICKUP, label: 'Pickup', icon: Truck },
-    { id: OrderStatus.ORDER_PICKED_UP, label: 'Picked', icon: Truck },
     { id: OrderStatus.IN_TRANSIT, label: 'Transit', icon: Truck },
     { id: OrderStatus.DELIVERED, label: 'Delivered', icon: Check },
     { id: OrderStatus.CANCELLED, label: 'Cancel', icon: RotateCcw },

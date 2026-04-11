@@ -209,16 +209,30 @@ async function applyDiscount(
     }
 
     // Calculate discount amount
-    let discountAmount = 0;
+    let rawDiscount = 0;
     if (discount.discountType === "PERCENTAGE") {
-      discountAmount = (subtotal * discount.value) / 100;
+      rawDiscount = (subtotal * discount.value) / 100;
     } else if (discount.discountType === "FIXED_AMOUNT") {
-      discountAmount = discount.value;
+      rawDiscount = discount.value;
     } else if (discount.discountType === "FREE_SHIPPING") {
-      discountAmount = 0;
+      rawDiscount = 0;
     }
 
-    // Cap discount at subtotal
+    // Apply discount cap if configured (maximum discount amount to prevent excessive losses on large orders)
+    let discountAmount = rawDiscount;
+    const countryMaxLimits = discount.countryMaxLimits as Record<string, number> | null;
+    
+    // Use country-specific cap if available, otherwise use global cap
+    const maxCap = countryMaxLimits?.[countryCode] || discount.maxLimitAmount;
+    if (maxCap && maxCap > 0) {
+      discountAmount = Math.min(rawDiscount, maxCap);
+      console.log(`Discount capped: ${rawDiscount} -> ${discountAmount} (cap: ${maxCap} for ${countryCode})`);
+    } else if (discount.maxLimitAmount && discount.maxLimitAmount > 0) {
+      discountAmount = Math.min(rawDiscount, discount.maxLimitAmount);
+      console.log(`Discount capped: ${rawDiscount} -> ${discountAmount} (global cap: ${discount.maxLimitAmount})`);
+    }
+
+    // Cap discount at subtotal (can't exceed order total)
     discountAmount = Math.min(discountAmount, subtotal);
 
     console.log(`Applied discount ${couponCode}: ${discountAmount} (type: ${usageType})`);

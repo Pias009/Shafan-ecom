@@ -120,6 +120,8 @@ export async function PUT(
       description,
       discountType,
       value,
+      maxLimitAmount,
+      countryMaxLimits,
       applyToAll,
       minimumOrderValue,
       startDate,
@@ -203,6 +205,8 @@ export async function PUT(
     if (description !== undefined) updateData.description = description;
     if (discountType !== undefined) updateData.discountType = discountType;
     if (value !== undefined) updateData.value = value;
+    if (maxLimitAmount !== undefined) updateData.maxLimitAmount = maxLimitAmount;
+    if (countryMaxLimits !== undefined) updateData.countryMaxLimits = Object.keys(countryMaxLimits).length > 0 ? countryMaxLimits : null;
     if (applyToAll !== undefined) updateData.applyToAll = applyToAll;
     if (minimumOrderValue !== undefined) updateData.minimumOrderValue = minimumOrderValue;
     if (startDateObj !== undefined) updateData.startDate = startDateObj;

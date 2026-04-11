@@ -113,12 +113,12 @@ export function AdminSidebar() {
                   >
                      <SettingsIcon size={18} /> Shipping Settings
                   </Link>
-                  <Link
+<Link
                      href="/ueadmin/blog"
                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                  >
-                     <BookOpen size={18} /> Announcements
-                  </Link>
+                   >
+                      <BookOpen size={18} /> Blog
+                   </Link>
                   <Link
                     href="/ueadmin/email-test"
                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"

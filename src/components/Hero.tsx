@@ -2,10 +2,11 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Sparkles, Brain, CalendarCheck } from "lucide-react";
+import { Sparkles, Brain, HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import toast from "react-hot-toast";
 
 const skinTypes = ["Oily", "Dry", "Combination", "Sensitive", "Normal"];
 
@@ -26,8 +27,9 @@ function SkinTypeCard() {
       transition={{ delay: 0.4, duration: 0.5 }}
       whileHover={{ y: -3 }}
       className="glass-panel-heavy p-3 md:p-4 rounded-xl md:rounded-2xl border border-black/5 hover:shadow-lg transition-all cursor-pointer group"
+      onClick={() => toast.success("Coming Soon!")}
     >
-      <Link href="/skin-type-quiz" className="flex flex-col items-center text-center gap-2">
+      <div className="flex flex-col items-center text-center gap-2">
         {/* Icon */}
         <motion.div
           className="w-10 h-10 md:w-12 md:h-12 bg-pink-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300"
@@ -58,7 +60,7 @@ function SkinTypeCard() {
         
         {/* Description */}
         <p className="text-[8px] md:text-[10px] text-black/40 font-medium">Take the quiz</p>
-      </Link>
+      </div>
     </motion.div>
   );
 }
@@ -71,8 +73,9 @@ function SkinConcernCard() {
       transition={{ delay: 0.5, duration: 0.5 }}
       whileHover={{ y: -3 }}
       className="glass-panel-heavy p-3 md:p-4 rounded-xl md:rounded-2xl border border-black/5 hover:shadow-lg transition-all cursor-pointer group"
+      onClick={() => toast.success("Coming Soon!")}
     >
-      <Link href="/skin-concern-test" className="flex flex-col items-center text-center gap-2">
+      <div className="flex flex-col items-center text-center gap-2">
         {/* Icon with pulse */}
         <motion.div
           className="w-10 h-10 md:w-12 md:h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-md"
@@ -96,12 +99,14 @@ function SkinConcernCard() {
         
         {/* Description */}
         <p className="text-[8px] md:text-[10px] text-black/40 font-medium">Get personalized solutions</p>
-      </Link>
+      </div>
     </motion.div>
   );
 }
 
-function ConsultationCard() {
+// Removed ConsultationCard - keeping only SkinTypeCard and SkinConcernCard
+
+function ComingSoonCard() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -109,26 +114,33 @@ function ConsultationCard() {
       transition={{ delay: 0.6, duration: 0.5 }}
       whileHover={{ y: -3 }}
       className="glass-panel-heavy p-3 md:p-4 rounded-xl md:rounded-2xl border border-black/5 hover:shadow-lg transition-all cursor-pointer group"
+      onClick={() => toast.success("Coming Soon!")}
     >
-      <Link href="/consultation" className="flex flex-col items-center text-center gap-2">
-        {/* Icon */}
+      <div className="flex flex-col items-center text-center gap-2">
+        {/* Icon with pulse */}
         <motion.div
-          className="w-10 h-10 md:w-12 md:h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300"
+          className="w-10 h-10 md:w-12 md:h-12 bg-amber-500 rounded-xl flex items-center justify-center shadow-md"
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
         >
-          <CalendarCheck className="w-5 h-5 md:w-6 md:h-6 text-white" />
+          <HelpCircle className="w-5 h-5 md:w-6 md:h-6 text-white" />
         </motion.div>
         
         {/* Title */}
-        <h4 className="text-[10px] md:text-xs font-bold text-black leading-tight">Book Consultation</h4>
+        <h4 className="text-[10px] md:text-xs font-bold text-black leading-tight">Ask Our Experts</h4>
         
-        {/* Text */}
-        <div className="h-6 flex items-center justify-center">
-          <span className="text-blue-500 font-bold text-sm md:text-base">Expert Advice</span>
-        </div>
+        {/* Animated Text */}
+        <motion.div
+          className="h-6 flex items-center justify-center"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <span className="text-amber-500 font-bold text-sm md:text-base">Coming Soon</span>
+        </motion.div>
         
         {/* Description */}
-        <p className="text-[8px] md:text-[10px] text-black/40 font-medium">1-on-1 with specialists</p>
-      </Link>
+        <p className="text-[8px] md:text-[10px] text-black/40 font-medium">Get expert guidance</p>
+      </div>
     </motion.div>
   );
 }
@@ -198,7 +210,7 @@ export function Hero() {
         <div className="grid grid-cols-3 gap-2 md:gap-4">
           <SkinTypeCard />
           <SkinConcernCard />
-          <ConsultationCard />
+          <ComingSoonCard />
         </div>
 
       </div>

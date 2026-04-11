@@ -15,9 +15,9 @@ async function getContactInfo() {
   } catch (e) {}
   return { 
     phone: "+971 04 838 7827", 
-    whatsapp: "+971 54 720 6046",
+    whatsapp: "971501234567",
     email: "support@shanfaglobal.com", 
-    address: "Al Diyafa Shopping Center, Satwa Round About, Dubai, United Arab Emirates" 
+    address: "Office 405, Al Diyafa Center, Satwa Roundabout, Dubai, UAE" 
   };
 }
 
@@ -54,7 +54,7 @@ export default async function ContactPage() {
               {contact.whatsapp && (
                 <div className="flex items-center gap-3">
                   <MessageCircle size={18} className="text-green-600" />
-                  <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}`} target="_blank" className="font-bold text-black hover:text-green-600 transition">
+                  <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}?text=Hi%20Shafa%20Global,%20I%20have%20a%20question%20about%20my%20order.`} target="_blank" className="font-bold text-black hover:text-green-600 transition">
                     {contact.whatsapp}
                   </a>
                 </div>
@@ -87,7 +87,7 @@ export default async function ContactPage() {
             <div className="pt-4">
               <p className="text-xs font-black uppercase tracking-widest text-black/30 mb-4">Follow Us</p>
               <div className="flex gap-4">
-                <a href="https://wa.me/" target="_blank" className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center hover:bg-green-500/20 transition">
+                <a href={`https://wa.me/${contact.whatsapp.replace(/\D/g, '')}?text=Hi%20Shafa%20Global,%20I%20have%20a%20question%20about%20my%20order.`} target="_blank" className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center hover:bg-green-500/20 transition">
                   <MessageCircle className="text-green-600" size={18} />
                 </a>
                 <a href="#" className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center hover:bg-blue-500/20 transition">

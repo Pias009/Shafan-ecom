@@ -45,7 +45,6 @@ export default async function Dashboard() {
   ]);
 
   const totalRevenue = revenueData._sum.total || 0;
-  const currencySymbol = 'AED';
   
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -59,7 +58,7 @@ export default async function Dashboard() {
   };
 
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-10 pb-20 px-6 py-8 md:px-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl font-black tracking-tight text-black">UAE Dashboard</h1>
@@ -94,7 +93,7 @@ export default async function Dashboard() {
           <div className="p-4 bg-black/5 rounded-2xl text-black"><TrendingUp size={24} /></div>
           <div>
             <div className="text-[10px] font-black uppercase tracking-widest text-black/50">Revenue</div>
-            <div className="text-3xl font-black text-black">{currencySymbol} {totalRevenue.toLocaleString()}</div>
+            <div className="text-3xl font-black text-black">AED {totalRevenue.toLocaleString()}</div>
           </div>
         </div>
       </div>
@@ -143,7 +142,7 @@ export default async function Dashboard() {
                       </span>
                     </td>
                     <td className="px-8 py-5 text-right font-black text-sm">
-                      ${(o.total || 0).toFixed(2)}
+                      {o.currency?.toUpperCase() || 'AED'} {Number(o.total || 0).toFixed(2)}
                     </td>
                   </tr>
                 ))}

@@ -23,7 +23,7 @@ export function Footer() {
         { label: t.footer.routines, href: "/routines" },
         { label: t.footer.newArrivals, href: "/products?sort=new" },
         { label: t.footer.brands, href: "/brands" },
-        { label: t.footer.deals, href: "/announcements" },
+        { label: t.footer.deals, href: "/blog" },
       ],
     },
     {
@@ -43,7 +43,7 @@ export function Footer() {
       title: t.footer.about,
       links: [
         { label: t.footer.aboutUs, href: "/about" },
-        { label: t.footer.bloggers, href: "/bloggers" },
+        { label: t.footer.bloggers, href: "/blog" },
       ],
     },
     {
@@ -190,23 +190,23 @@ export function Footer() {
         <div className="flex items-center gap-5 order-2 md:order-1">
           <span className="text-[10px] font-black uppercase tracking-widest text-white/60">{t.footer.followUs || "FOLLOW US"}</span>
           <div className="flex items-center gap-4">
-            <Link href="https://wa.me/" target="_blank" className="flex items-center gap-1.5 group">
+            <Link href="https://wa.me/9717206046" target="_blank" className="flex items-center gap-1.5 group">
               <MessageCircle size={16} className="text-white/60 group-hover:text-green-400 transition-colors" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">WhatsApp</span>
             </Link>
-            <Link href="#" className="flex items-center gap-1.5 group">
+            <Link href="https://www.facebook.com/ShanfaGlobalArabia" target="_blank" className="flex items-center gap-1.5 group">
               <Facebook size={16} className="text-white/60 group-hover:text-blue-400 transition-colors" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">Facebook</span>
             </Link>
-            <Link href="#" className="flex items-center gap-1.5 group">
+            <Link href="https://www.instagram.com/shanfa.global" target="_blank" className="flex items-center gap-1.5 group">
               <Instagram size={16} className="text-white/60 group-hover:text-pink-400 transition-colors" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">Instagram</span>
             </Link>
-            <Link href="#" className="flex items-center gap-1.5 group">
+            <Link href="https://www.tiktok.com/@shanfaglobal" target="_blank" className="flex items-center gap-1.5 group">
               <Music size={16} className="text-white/60 group-hover:text-black transition-colors" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">TikTok</span>
             </Link>
-            <Link href="#" className="flex items-center gap-1.5 group">
+            <Link href="https://linkedin.com/company/shanfa-global/" target="_blank" className="flex items-center gap-1.5 group">
               <Linkedin size={16} className="text-white/60 group-hover:text-blue-300 transition-colors" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">LinkedIn</span>
             </Link>

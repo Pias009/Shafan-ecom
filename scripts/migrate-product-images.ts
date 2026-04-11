@@ -52,7 +52,7 @@ async function migrateImages() {
     console.log(`  ID: ${product.id}`);
 
     let newMainImage: string | null = null;
-    let newImages: string[] = [];
+    const newImages: string[] = [];
 
     // Upload main image
     if (product.mainImage && product.mainImage.includes('unsplash')) {

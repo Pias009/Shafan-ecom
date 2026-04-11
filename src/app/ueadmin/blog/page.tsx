@@ -122,7 +122,7 @@ export default function AdminBlogPage() {
       <Toaster />
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Blog & Announcements</h1>
+          <h1 className="text-2xl font-bold">Blog & News</h1>
           <p className="text-sm text-black/70 mt-1">Manage published blog posts & offers</p>
         </div>
         <button

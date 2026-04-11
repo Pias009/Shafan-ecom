@@ -77,7 +77,7 @@ export function detectUserCountry(): string {
 
   // 4. Default fallback - if detected country is not in Gulf, default to Kuwait
   // But allow Bangladesh (BD) for BD users
-  let detectedCountry = DEFAULT_COUNTRY;
+  const detectedCountry = DEFAULT_COUNTRY;
   
   // Check timezone for Bangladesh
   try {

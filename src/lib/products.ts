@@ -99,6 +99,30 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
   }
 }
 
+export async function getProductsForSelect(storeCode?: string, includeSku: boolean = false) {
+  try {
+    const selectFields = includeSku 
+      ? { id: true, name: true, sku: true }
+      : { id: true, name: true };
+
+    const dbProducts = await prisma.product.findMany({
+      where: { active: true },
+      select: selectFields,
+      orderBy: { name: 'asc' },
+      take: 1000,
+    });
+
+    return dbProducts.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      sku: p.sku || null,
+    }));
+  } catch (error: any) {
+    console.error("Prisma Product Select Fetch Error:", error);
+    return [];
+  }
+}
+
 export async function getProductCount(storeCode?: string): Promise<number> {
   try {
     return await prisma.product.count({

@@ -47,6 +47,7 @@ export default async function OrdersPage() {
       total: o.total,
       currency: o.currency,
       status: o.status,
+      paymentStatus: o.paymentStatus,
       createdAt: o.createdAt,
       itemCount: o.items.reduce((acc: number, item: any) => acc + item.quantity, 0),
       paymentMethod: o.paymentMethodTitle,
@@ -105,6 +106,14 @@ export default async function OrdersPage() {
                         'bg-black/5 text-black/40 border-black/5'
                       }`}>
                         {order.status.replace(/_/g, ' ')}
+                      </span>
+                      {/* Payment Status Badge */}
+                      <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${
+                        order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800 border-green-200' :
+                        order.paymentStatus === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-200' :
+                        'bg-amber-100 text-amber-800 border-amber-200'
+                      }`}>
+                        {order.paymentStatus || 'PENDING'}
                       </span>
                     </div>
 

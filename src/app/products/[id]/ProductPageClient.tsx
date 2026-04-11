@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice, formatPriceUnits } from "@/lib/product-utils";
+import { formatDescription } from "@/utils/formatText";
 
 interface ProductPageClientProps {
   product: any;
@@ -307,10 +308,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                       transition={{ duration: 0.2 }}
                       className="py-4"
                     >
-                      <div 
-                        className="text-lg leading-relaxed text-black/60 font-medium prose prose-stone max-w-none"
-                        dangerouslySetInnerHTML={{ __html: (product as any)[showDescription] || "" }}
-                      />
+                      <div className="text-lg leading-relaxed text-black/60 font-medium prose prose-stone max-w-none">
+                        {formatDescription((product as any)[showDescription] as string)}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

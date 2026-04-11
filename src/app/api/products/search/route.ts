@@ -13,11 +13,48 @@ export async function GET(req: Request) {
   try {
     const products = await prisma.product.findMany({
       where: {
-        name: {
-          contains: query,
-          mode: "insensitive",
-        },
         active: true,
+        OR: [
+          {
+            name: {
+              contains: query,
+              mode: "insensitive",
+            },
+          },
+          {
+            brand: {
+              name: {
+                contains: query,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            subCategory: {
+              name: {
+                contains: query,
+                mode: "insensitive",
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        brand: {
+          select: {
+            name: true,
+          },
+        },
+        subCategory: {
+          select: {
+            name: true,
+            category: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
       },
       take: limit,
     });
@@ -30,8 +67,10 @@ export async function GET(req: Request) {
       discountPrice: p.discountPrice,
       mainImage: p.mainImage,
       imageUrl: p.mainImage,
-      brand: "Shafan",
-      brandName: "Shafan",
+      brand: p.brand?.name || "Shafan",
+      brandName: p.brand?.name || "Shafan",
+      category: p.subCategory?.category?.name,
+      subCategory: p.subCategory?.name,
     }));
 
     return NextResponse.json({ products: formattedProducts });

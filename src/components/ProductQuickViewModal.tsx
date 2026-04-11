@@ -6,6 +6,7 @@ import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
+import { formatDescription } from "@/utils/formatText";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -121,7 +122,7 @@ export function ProductQuickViewModal({
     
     const timer = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-    }, 4000);
+    }, 6000);
 
     return () => clearInterval(timer);
   }, [product, allImages.length, isEnlarged]);
@@ -329,13 +330,13 @@ export function ProductQuickViewModal({
                     </div>
                   </div>
                   {product.shortDescription && (
-                    <div id="quickview-tab-shortDescription" className="text-sm leading-relaxed text-black/60 font-medium prose prose-sm max-w-none line-clamp-4 pt-2">
+                    <div id="quickview-tab-shortDescription" className="text-sm leading-relaxed text-black/60 font-medium prose prose-sm max-w-none pt-2 whitespace-pre-line">
                       {product.shortDescription}
                     </div>
                   )}
                   {(product.details || product.description) && (
-                    <div id="quickview-tab-description" className="text-sm leading-relaxed text-black/60 font-medium prose prose-sm max-w-none line-clamp-6 pt-2">
-                      {product.description || product.details}
+                    <div id="quickview-tab-description" className="text-sm leading-relaxed text-black/60 font-medium prose prose-sm max-w-none pt-2">
+                      {formatDescription(product.description || product.details)}
                     </div>
                   )}
                 </div>
@@ -343,11 +344,12 @@ export function ProductQuickViewModal({
                 {product.features && product.features.length > 0 && (
                   <div className="space-y-3">
                     <div className="text-[10px] font-black uppercase tracking-widest text-black/20">{t.product.information}</div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       {product.features.map((f, i) => (
-                        <span key={i} className="px-4 py-1.5 bg-black/[0.03] rounded-full text-[10px] font-bold text-black/40 border border-black/5">
-                          {f}
-                        </span>
+                        <div key={i} className="flex items-center gap-2 p-2 bg-black/[0.02] border border-black/5 rounded-xl">
+                          <div className="w-1 h-1 bg-black/20 rounded-full" />
+                          <span className="text-[9px] font-bold text-black/50 uppercase tracking-widest">{f}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -359,7 +361,7 @@ export function ProductQuickViewModal({
                   <button
                     type="button"
                     onClick={() => onAddToCart(product)}
-                    className="w-14 h-14 md:w-auto md:h-16 md:flex-1 rounded-2xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 flex items-center justify-center md:px-8 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-gray-700 transition-all hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-lg hover:shadow-gray-200/50 active:scale-[0.98] active:translate-y-0.5 shrink-0"
+                    className="w-14 h-14 md:w-auto md:h-16 md:flex-1 rounded-2xl bg-black border-2 border-black flex items-center justify-center md:px-8 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-200/50 active:scale-[0.98] active:translate-y-0.5 shrink-0"
                     title={t.product.addToCart}
                   >
                     <ShoppingBag size={20} className="md:hidden" />
@@ -383,7 +385,7 @@ export function ProductQuickViewModal({
                 <button
                   type="button"
                   onClick={() => onMoreDetails(product.id)}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-b from-gray-50 to-gray-100 border border-gray-200 text-gray-700 text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all hover:from-gray-100 hover:to-gray-200 hover:border-gray-300 hover:shadow-md active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-black border border-black text-white text-[10px] md:text-[11px] font-bold uppercase tracking-widest transition-all hover:bg-gray-800 hover:shadow-md active:scale-[0.98]"
                 >
                   <span>More Details</span>
                   <ArrowRight size={14} />

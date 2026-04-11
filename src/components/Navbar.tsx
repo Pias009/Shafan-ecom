@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles } from "lucide-react";
+import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthModal } from "./AuthModal";
@@ -15,12 +15,15 @@ import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { Logo } from "./Logo";
 import { useCountryStore } from "@/lib/country-store";
+import { SearchOverlay } from "./SearchOverlay";
 
 export function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const [authOpen, setAuthOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const handleSearchClose = useCallback(() => setSearchOpen(false), []);
   
   // Safe pathname for SSR - use empty string if null
   const safePathname = pathname || "";
@@ -163,6 +166,16 @@ export function Navbar() {
             <Logo />
           </div>
           
+          {/* Mobile action buttons - search first */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="p-2 text-black"
+            aria-label="Search"
+          >
+            <Search size={20} />
+          </button>
+          
           {/* Mobile hamburger on right */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -210,6 +223,16 @@ export function Navbar() {
 
           {/* User + Actions dropdown */}
           <div className="relative -ml-4 flex items-center gap-2">
+            {/* Search Button */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="inline-flex h-16 items-center justify-center rounded-full px-3 text-black transition hover:bg-black/5"
+              aria-label="Search"
+            >
+              <Search size={22} />
+            </button>
+
             {/* Dynamic Flag - Clickable to open Currency Selector */}
             {mounted && (
               <CurrencySelector />
@@ -370,6 +393,21 @@ export function Navbar() {
             </Link>
           ))}
 
+          {/* Search button */}
+          <button
+            type="button"
+            onClick={() => {
+              setMobileOpen(false);
+              setSearchOpen(true);
+            }}
+            className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-black/5 mt-2 w-full text-left"
+          >
+            <div className="flex items-center gap-3">
+              <Search size={18} className="text-black" />
+              <span className="text-sm font-bold text-black">Search Products</span>
+            </div>
+          </button>
+
           {/* Cart section (visible to all users) */}
           <Link
             href="/cart"
@@ -392,6 +430,9 @@ export function Navbar() {
       </header>
       
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <AnimatePresence>
+        {searchOpen && <SearchOverlay onClose={handleSearchClose} />}
+      </AnimatePresence>
     </>
   );
 }

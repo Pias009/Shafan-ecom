@@ -5,6 +5,7 @@ import OrderStatusActions from './OrderStatusActions';
 import InvoiceDownload from './_components/InvoiceDownload';
 import ShippingPanel from './_components/ShippingPanel';
 import PaymentActions from './_components/PaymentActions';
+import PaymentStatusEditor from './_components/PaymentStatusEditor';
 import { OrderStatus } from '@prisma/client';
 
 function formatPrice(amount: number, currency: string): string {
@@ -297,14 +298,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Status</span>
-                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                  order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800 border-green-200' :
-                  order.paymentStatus === 'PENDING' ? 'bg-amber-100 text-amber-800 border-amber-200' :
-                  order.paymentStatus === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-200' :
-                  'bg-gray-100 text-gray-800 border-gray-200'
-                }`}>
-                  {order.paymentStatus || 'UNKNOWN'}
-                </span>
+                <PaymentStatusEditor orderId={order.id} currentPaymentStatus={order.paymentStatus || 'PENDING'} />
               </div>
               <div className="flex justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Currency</span>

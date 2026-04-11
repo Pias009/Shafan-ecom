@@ -97,7 +97,7 @@ const ProductCreateSchema = z.object({
   }
 );
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getAdminApiSession();
     if (!session) {
@@ -107,6 +107,22 @@ export async function GET() {
     const storeAccess = await getAdminStoreAccess();
     if (!storeAccess) {
       return new Response('Unauthorized', { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const select = searchParams.get('select');
+
+    // Lightweight select for dropdowns/selectors
+    if (select === 'name,id' || select === 'name,id,sku') {
+      const products = await prisma.product.findMany({
+        where: { active: true },
+        select: select === 'name,id,sku'
+          ? { id: true, name: true, sku: true }
+          : { id: true, name: true },
+        orderBy: { name: 'asc' },
+        take: 1000,
+      });
+      return new Response(JSON.stringify(products), { headers: { 'Content-Type': 'application/json' } });
     }
 
     const accessibleStoreIds = storeAccess.storeIds;
@@ -260,7 +276,7 @@ export async function POST(req: Request) {
     }
 
     // Resolve sub-category by ID if provided
-    let subCategoryId: string | null = productData.subCategoryId?.trim() || null;
+    const subCategoryId: string | null = productData.subCategoryId?.trim() || null;
 
     // Get valid category IDs (only those that exist in DB)
     const categoryIds = productData.categoryIds?.filter(id => id.trim()) || [];

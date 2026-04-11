@@ -443,8 +443,9 @@ model Discount {
   description String?
 
   // Discount type and value
-  discountType DiscountType @default(PERCENTAGE)
-  value        Float // e.g., 20 for 20% or 15.50 for $15.50
+  discountType   DiscountType @default(PERCENTAGE)
+  value          Float // e.g., 20 for 20% or 15.50 for $15.50
+  maxLimitAmount Float? // Maximum discount cap (to prevent excessive discounts on large orders)
 
   // Application scope
   applyToAll        Boolean @default(false)
@@ -460,6 +461,9 @@ model Discount {
   usageType         String  @default("MULTI_USE") // SINGLE_USE (one-time per user) or MULTI_USE (multiple users)
   maxUsesPerUser    Int?    // Max times a single user can use this coupon
   maxUsesPerOrder   Int?    // Max times this coupon can be used in single order (usually 1)
+
+  // Country-specific discount caps
+  countryMaxLimits Json? // JSON: { "AE": 50, "KW": 10, "KW": 15 } - max discount per country in that currency
 
   // Status
   active    Boolean @default(true)

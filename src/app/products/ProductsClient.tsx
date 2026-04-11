@@ -19,19 +19,23 @@ import { useSearchStore } from "@/lib/search-store";
 export default function ProductsClient({ 
   initialProducts, 
   category, 
+  subcategory,
   brand: initialBrand, 
   banners = [],
   totalCount = 0,
   currentPage = 1,
-  limit = 20
+  limit = 20,
+  isRoutinesPage = false
 }: { 
   initialProducts: any[], 
   category?: string, 
+  subcategory?: string,
   brand?: string, 
   banners?: any[],
   totalCount?: number,
   currentPage?: number,
-  limit?: number
+  limit?: number,
+  isRoutinesPage?: boolean
 }) {
   const [products, setProducts] = useState<any[]>(initialProducts);
   const [loading, setLoading] = useState(false);
@@ -39,14 +43,16 @@ export default function ProductsClient({
   const [page, setPage] = useState(currentPage);
   const [brand, setBrand] = useState(initialBrand || "All");
   const [selectedCategory, setSelectedCategory] = useState(category || "All");
-  const [selectedSubCategory, setSelectedSubCategory] = useState("All");
+  const [selectedSubCategory, setSelectedSubCategory] = useState(subcategory || "All");
   const [selectedSkinTone, setSelectedSkinTone] = useState("All");
+  const [selectedSkinConcern, setSelectedSkinConcern] = useState("All");
   const [maxPrice, setMaxPrice] = useState(100000);
   const [searchInputuickView, setSearchInputuickView] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const router = useRouter();
   const { query: q, clearQuery } = useSearchStore();
+  const isRoutines = isRoutinesPage;
 
   useEffect(() => {
     if (q) {
@@ -54,11 +60,43 @@ export default function ProductsClient({
     }
   }, [q]);
 
+  // Initialize filters from URL params on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlBrand = params.get("brand");
+    const urlCategory = params.get("category");
+    const urlSubcategory = params.get("subcategory");
+    const urlSkinTone = params.get("skinTone");
+    const urlConcern = params.get("concern");
+    const urlMaxPrice = params.get("maxPrice");
+    
+    if (urlBrand) setBrand(urlBrand);
+    if (urlCategory) setSelectedCategory(urlCategory);
+    if (urlSubcategory) setSelectedSubCategory(urlSubcategory);
+    if (urlSkinTone) setSelectedSkinTone(urlSkinTone);
+    if (urlConcern) setSelectedSkinConcern(urlConcern);
+    if (urlMaxPrice) setMaxPrice(Number(urlMaxPrice));
+  }, []);
+
   useEffect(() => {
     return () => {
       clearQuery();
     };
   }, [clearQuery]);
+
+  // Sync filters to URL for sharing
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchInput) params.set("q", searchInput);
+    if (brand && brand !== "All") params.set("brand", brand);
+    if (selectedCategory && selectedCategory !== "All") params.set("category", selectedCategory);
+    if (selectedSubCategory && selectedSubCategory !== "All") params.set("subcategory", selectedSubCategory);
+    if (selectedSkinTone && selectedSkinTone !== "All") params.set("skinTone", selectedSkinTone);
+    if (selectedSkinConcern && selectedSkinConcern !== "All") params.set("concern", selectedSkinConcern);
+    if (maxPrice < 100000) params.set("maxPrice", maxPrice.toString());
+    
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [searchInput, brand, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, maxPrice, router]);
 
   const { addItem, hasAddress } = useCartStore();
   const { currentLanguage } = useLanguageStore();
@@ -98,6 +136,21 @@ export default function ProductsClient({
     return ['All', ...Array.from(skinToneSet).sort()];
   }, [products, selectedCategory, t.product.all]);
 
+  const skinConcernsList = useMemo(() => {
+    const filteredProducts = selectedCategory === t.product.all 
+      ? products 
+      : products.filter(p => p.categoryName === selectedCategory);
+    const concernSet = new Set<string>();
+    filteredProducts.forEach(p => {
+      if (p.skinConcerns && p.skinConcerns.length > 0) {
+        p.skinConcerns.forEach((sc: any) => {
+          if (sc.name) concernSet.add(sc.name);
+        });
+      }
+    });
+    return ['All', ...Array.from(concernSet).sort()];
+  }, [products, selectedCategory, t.product.all]);
+
   const filtered = useMemo(() => {
     return products.filter((p) => {
       if (!hasValidPrice(p, selectedCountry)) return false;
@@ -111,10 +164,12 @@ export default function ProductsClient({
       const matchesSubCategory = selectedSubCategory === 'All' || p.subCategoryName === selectedSubCategory;
       const matchesSkinTone = selectedSkinTone === 'All' || 
         (p.skinTones && p.skinTones.some((st: any) => st.name === selectedSkinTone));
+      const matchesSkinConcern = selectedSkinConcern === 'All' || 
+        (p.skinConcerns && p.skinConcerns.some((sc: any) => sc.name === selectedSkinConcern));
       
-      return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone;
+      return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone && matchesSkinConcern;
     });
-  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedCountry]);
+  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, selectedCountry]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -327,6 +382,19 @@ export default function ProductsClient({
 
                 <div>
                   <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                    Skin Concern
+                  </label>
+                  <select
+                    value={selectedSkinConcern}
+                    onChange={(e) => setSelectedSkinConcern(e.target.value)}
+                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                  >
+                    {skinConcernsList.map(sc => <option key={sc} value={sc}>{sc}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
                     Max Price
                   </label>
                   <div className="h-10 md:h-12 flex items-center px-2 bg-white/50 rounded-2xl">
@@ -390,22 +458,38 @@ export default function ProductsClient({
 
         {filtered.length === 0 && (
           <div className="py-32 text-center">
-            <div className="text-6xl mb-6 opacity-30">🔍</div>
-            <p className="font-display text-3xl text-black">{t.product.noProducts}</p>
-            <p className="text-black/50 mt-2">{t.product.tryAdjusting}</p>
-            <button 
-                onClick={() => { 
-                  setSearchInput(""); 
-                  setBrand(t.product.all); 
-                  setSelectedCategory(t.product.all);
-                  setSelectedSubCategory('All');
-                  setSelectedSkinTone('All');
-                  setMaxPrice(100000); 
-                }} 
-                className="mt-8 text-black underline font-bold underline-offset-4"
-            >
-                {t.product.resetFilters}
-            </button>
+            {isRoutines ? (
+              <>
+                <div className="text-6xl mb-6 opacity-30">✨</div>
+                <p className="font-display text-3xl text-black">Curated Routines Coming Soon</p>
+                <p className="text-black/50 mt-2">We're curating the best skincare routines for you</p>
+                <button 
+                    onClick={() => window.location.href = '/products'} 
+                    className="mt-8 text-black underline font-bold underline-offset-4"
+                >
+                    Browse all products
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="text-6xl mb-6 opacity-30">🔍</div>
+                <p className="font-display text-3xl text-black">{t.product.noProducts}</p>
+                <p className="text-black/50 mt-2">{t.product.tryAdjusting}</p>
+                <button 
+                    onClick={() => { 
+                      setSearchInput(""); 
+                      setBrand(t.product.all); 
+                      setSelectedCategory(t.product.all);
+                      setSelectedSubCategory('All');
+                      setSelectedSkinTone('All');
+                      setMaxPrice(100000); 
+                    }} 
+                    className="mt-8 text-black underline font-bold underline-offset-4"
+                >
+                    {t.product.resetFilters}
+                </button>
+              </>
+            )}
           </div>
         )}
 

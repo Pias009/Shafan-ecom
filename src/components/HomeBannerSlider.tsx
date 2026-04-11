@@ -17,7 +17,7 @@ export default function HomeBannerSlider({ banners }: { banners: Banner[] }) {
     
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % banners.length);
-    }, 5000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, [banners.length]);

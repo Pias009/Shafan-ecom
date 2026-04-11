@@ -8,10 +8,9 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface SearchOverlayProps {
   onClose: () => void;
-  allProducts?: any[];
 }
 
-export function SearchOverlay({ onClose, allProducts = [] }: SearchOverlayProps) {
+export function SearchOverlay({ onClose }: SearchOverlayProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -60,29 +59,18 @@ export function SearchOverlay({ onClose, allProducts = [] }: SearchOverlayProps)
     }
 
     debounceTimerRef.current = setTimeout(() => {
-      if (allProducts && allProducts.length > 0) {
-        const filtered = allProducts
-          .filter(p => 
-            p.name?.toLowerCase().includes(query.toLowerCase()) ||
-            p.brandName?.toLowerCase().includes(query.toLowerCase()) ||
-            p.brand?.name?.toLowerCase().includes(query.toLowerCase())
-          )
-          .slice(0, 5);
-        setSuggestions(filtered);
-      } else {
-        setIsSearching(true);
-        fetch(`/api/products/search?q=${encodeURIComponent(query)}&limit=5`)
-          .then(res => res.json())
-          .then(data => {
-            setSuggestions(data.products || []);
-          })
-          .catch(() => {
-            setSuggestions([]);
-          })
-          .finally(() => {
-            setIsSearching(false);
-          });
-      }
+      setIsSearching(true);
+      fetch(`/api/products/search?q=${encodeURIComponent(query)}&limit=5`)
+        .then(res => res.json())
+        .then(data => {
+          setSuggestions(data.products || []);
+        })
+        .catch(() => {
+          setSuggestions([]);
+        })
+        .finally(() => {
+          setIsSearching(false);
+        });
     }, 300);
 
     return () => {
@@ -90,7 +78,7 @@ export function SearchOverlay({ onClose, allProducts = [] }: SearchOverlayProps)
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [query, allProducts]);
+  }, [query]);
 
   const handleSelect = useCallback((product: any) => {
     setStoreQuery(query);

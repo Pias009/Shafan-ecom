@@ -4,7 +4,10 @@ import { PaymentStatus } from "@prisma/client";
 import { z } from "zod";
 
 const PaymentStatusSchema = z.object({
-  paymentStatus: z.nativeEnum(PaymentStatus),
+  paymentStatus: z.string().refine(
+    (val) => ['PAID', 'PENDING', 'CANCELLED'].includes(val),
+    { message: "Invalid payment status" }
+  ),
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -29,7 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const updatedOrder = await prisma.order.update({
       where: { id },
-      data: { paymentStatus },
+      data: { paymentStatus: paymentStatus as PaymentStatus },
     });
 
     return new Response(JSON.stringify(updatedOrder), {

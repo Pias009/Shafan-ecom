@@ -27,6 +27,8 @@ export async function GET() {
       id: o.id,
       status: o.status.toLowerCase(),
       total: o.total,
+      totalCents: o.total,
+      currency: o.currency || 'AED',
       createdAt: o.createdAt.toISOString(),
       items: o.items.map((it) => ({
         name: it.nameSnapshot,
