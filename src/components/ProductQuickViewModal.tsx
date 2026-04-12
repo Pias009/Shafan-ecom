@@ -146,26 +146,23 @@ export function ProductQuickViewModal({
     <AnimatePresence>
       {product ? (
         <motion.div
-          className="fixed inset-0 z-[100] grid place-items-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center backdrop-blur-lg"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           role="dialog"
           aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
         >
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-lg"
-          />
-
           <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-5xl overflow-hidden rounded-[2rem] md:rounded-[3rem] bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col md:flex-row max-h-[90vh] md:min-h-[500px]"
+            className="relative mx-auto w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col md:flex-row"
+            onClick={(e) => e.stopPropagation()}
           >
             {/* Image Gallery Side */}
             <div className="md:w-1/2 relative bg-white p-4 md:p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0">

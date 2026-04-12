@@ -39,9 +39,9 @@ export function TrendingNowSlider({
         {/* Horizontal scroll container */}
         <div className="relative">
           {/* Scrollable container */}
-          <div className="flex overflow-x-auto pb-6 md:pb-8 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-5 md:gap-6 lg:gap-7">
+          <div className="flex overflow-x-auto pb-6 md:pb-8 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4">
             {products.map((product) => (
-              <div key={product.id} className="flex-shrink-0 snap-start">
+              <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
                 <HomeProductCard
                   product={{
                     ...product,
@@ -57,6 +57,7 @@ export function TrendingNowSlider({
                   onQuickView={onQuickView}
                   onAddToCart={onAddToCart}
                   onOrderNow={onOrderNow}
+                  compact
                 />
               </div>
             ))}

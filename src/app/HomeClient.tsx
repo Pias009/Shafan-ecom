@@ -257,8 +257,91 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                   </div>
                 </div>
 
-                {/* 4 Products in Column Layout */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-4 md:gap-5 lg:gap-6 px-1 sm:px-4 md:px-0 w-full">
+                {/* 4 Products in Column Layout - Mobile (up to lg) */}
+                <div className="block lg:hidden grid grid-cols-2 gap-y-6 gap-x-2 justify-items-center" style={{ padding: '0 4px !important' }}>
+                  <div className="w-[140px] sm:w-[170px] md:w-[200px]">
+                  <HomeProductCard
+                    product={{
+                      ...filteredNewArrivals[0],
+                      price: filteredNewArrivals[0]?.regularPrice || filteredNewArrivals[0]?.regularPriceCents || filteredNewArrivals[0]?.price || filteredNewArrivals[0]?.priceCents || 0,
+                      discountPrice: filteredNewArrivals[0]?.salePrice || filteredNewArrivals[0]?.salePriceCents || undefined,
+                      imageUrl: filteredNewArrivals[0]?.mainImage,
+                      brand: filteredNewArrivals[0]?.brand?.name,
+                      averageRating: filteredNewArrivals[0]?.averageRating,
+                      ratingCount: filteredNewArrivals[0]?.ratingCount,
+                      stockQuantity: filteredNewArrivals[0]?.stockQuantity,
+                      totalSales: filteredNewArrivals[0]?.totalSales,
+                      countryPrices: filteredNewArrivals[0]?.countryPrices,
+                    }}
+                    onQuickView={(pp) => setQuickView(pp)}
+                    onAddToCart={(pp) => addToCart(pp)}
+                    onOrderNow={(pp) => orderNow(pp)}
+                    compact
+                  />
+                  </div>
+                  <div className="w-[140px] sm:w-[170px] md:w-[200px]">
+                  <HomeProductCard
+                    product={{
+                      ...filteredNewArrivals[1],
+                      price: filteredNewArrivals[1]?.regularPrice || filteredNewArrivals[1]?.regularPriceCents || filteredNewArrivals[1]?.price || filteredNewArrivals[1]?.priceCents || 0,
+                      discountPrice: filteredNewArrivals[1]?.salePrice || filteredNewArrivals[1]?.salePriceCents || undefined,
+                      imageUrl: filteredNewArrivals[1]?.mainImage,
+                      brand: filteredNewArrivals[1]?.brand?.name,
+                      averageRating: filteredNewArrivals[1]?.averageRating,
+                      ratingCount: filteredNewArrivals[1]?.ratingCount,
+                      stockQuantity: filteredNewArrivals[1]?.stockQuantity,
+                      totalSales: filteredNewArrivals[1]?.totalSales,
+                      countryPrices: filteredNewArrivals[1]?.countryPrices,
+                    }}
+                    onQuickView={(pp) => setQuickView(pp)}
+                    onAddToCart={(pp) => addToCart(pp)}
+                    onOrderNow={(pp) => orderNow(pp)}
+                    compact
+                  />
+                  </div>
+                  <div className="w-[140px] sm:w-[170px] md:w-[200px]">
+                  <HomeProductCard
+                    product={{
+                      ...filteredNewArrivals[2],
+                      price: filteredNewArrivals[2]?.regularPrice || filteredNewArrivals[2]?.regularPriceCents || filteredNewArrivals[2]?.price || filteredNewArrivals[2]?.priceCents || 0,
+                      discountPrice: filteredNewArrivals[2]?.salePrice || filteredNewArrivals[2]?.salePriceCents || undefined,
+                      imageUrl: filteredNewArrivals[2]?.mainImage,
+                      brand: filteredNewArrivals[2]?.brand?.name,
+                      averageRating: filteredNewArrivals[2]?.averageRating,
+                      ratingCount: filteredNewArrivals[2]?.ratingCount,
+                      stockQuantity: filteredNewArrivals[2]?.stockQuantity,
+                      totalSales: filteredNewArrivals[2]?.totalSales,
+                      countryPrices: filteredNewArrivals[2]?.countryPrices,
+                    }}
+                    onQuickView={(pp) => setQuickView(pp)}
+                    onAddToCart={(pp) => addToCart(pp)}
+                    onOrderNow={(pp) => orderNow(pp)}
+                    compact
+                  />
+                  </div>
+                  <div className="w-[140px] sm:w-[170px] md:w-[200px]">
+                  <HomeProductCard
+                    product={{
+                      ...filteredNewArrivals[3],
+                      price: filteredNewArrivals[3]?.regularPrice || filteredNewArrivals[3]?.regularPriceCents || filteredNewArrivals[3]?.price || filteredNewArrivals[3]?.priceCents || 0,
+                      discountPrice: filteredNewArrivals[3]?.salePrice || filteredNewArrivals[3]?.salePriceCents || undefined,
+                      imageUrl: filteredNewArrivals[3]?.mainImage,
+                      brand: filteredNewArrivals[3]?.brand?.name,
+                      averageRating: filteredNewArrivals[3]?.averageRating,
+                      ratingCount: filteredNewArrivals[3]?.ratingCount,
+                      stockQuantity: filteredNewArrivals[3]?.stockQuantity,
+                      totalSales: filteredNewArrivals[3]?.totalSales,
+                      countryPrices: filteredNewArrivals[3]?.countryPrices,
+                    }}
+                    onQuickView={(pp) => setQuickView(pp)}
+                    onAddToCart={(pp) => addToCart(pp)}
+                    onOrderNow={(pp) => orderNow(pp)}
+                    compact
+                  />
+                  </div>
+                </div>
+                {/* Desktop grid - shown on lg */}
+                <div className="hidden lg:grid grid-cols-4 gap-4 w-full">
                   {filteredNewArrivals.slice(0, 4).map((product, index) => (
                     <HomeProductCard
                       key={product.id}
@@ -277,6 +360,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                       onQuickView={(pp) => setQuickView(pp)}
                       onAddToCart={(pp) => addToCart(pp)}
                       onOrderNow={(pp) => orderNow(pp)}
+                      compact
                     />
                   ))}
                 </div>
@@ -399,7 +483,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
               </AnimatePresence>
 
               <div className="w-full flex justify-center overflow-x-hidden">
-                <div className="grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 w-full max-w-7xl px-3 sm:px-4">
+                <div className="grid gap-2 sm:gap-3 md:gap-4 lg:gap-5 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 w-full max-w-7xl px-3 sm:px-4">
                   {filtered.slice(0, 10).map((p, idx) => (
                     <HomeProductCard
                       key={p.id}
@@ -418,6 +502,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                       onQuickView={(pp) => setQuickView(pp)}
                       onAddToCart={(pp) => addToCart(pp)}
                       onOrderNow={(pp) => orderNow(pp)}
+                      compact
                     />
                   ))}
                 </div>
