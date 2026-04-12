@@ -42,8 +42,8 @@ export function CountryLanguageModal({ isOpen, onClose }: CountryLanguageModalPr
             className="fixed inset-0 z-[9999]"
             style={{
               background: "rgba(0, 0, 0, 0.6)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
             }}
             onClick={onClose}
           />
@@ -56,16 +56,21 @@ export function CountryLanguageModal({ isOpen, onClose }: CountryLanguageModalPr
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className="fixed z-[10000]"
             style={{
+              position: "fixed",
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              width: "85%",
+              width: "80%",
               maxWidth: "320px",
+              height: "auto",
+              maxHeight: "50vh",
               background: "#FFFFFF",
-              borderRadius: "24px",
-              padding: "25px",
-              boxShadow: "0 15px 50px rgba(0,0,0,0.4)",
+              borderRadius: "20px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+              zIndex: 100001,
+              padding: "20px",
               color: "#000000",
+              overflowY: "auto",
             }}
             onClick={(e) => e.stopPropagation()}
           >

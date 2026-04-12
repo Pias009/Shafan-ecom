@@ -1,7 +1,7 @@
 "use client";
 
 import { useCountryStore } from "@/lib/country-store";
-import { getFlagForCountry } from "@/lib/currency-rates";
+import { useState } from "react";
 
 const CURRENCY_LIST = [
   { code: "KWD", name: "Kuwait", flag: "🇰🇼" },
@@ -14,44 +14,44 @@ const CURRENCY_LIST = [
 
 export function CurrencySelector() {
   const { selectedCurrency, setCurrency } = useCountryStore();
+  const [open, setOpen] = useState(false);
+
+  const current = CURRENCY_LIST.find(c => c.code === selectedCurrency) || CURRENCY_LIST[0];
 
   return (
-    <div className="flex flex-col items-center">
-      <span style={{ 
-        fontSize: '10px', 
-        fontWeight: 900, 
-        color: '#000', 
-        opacity: 0.5,
-        textTransform: 'uppercase', 
-        letterSpacing: '0.15em',
-        marginBottom: '8px'
-      }}>
-        Currency
-      </span>
-      <div className="flex flex-wrap gap-2 justify-center">
-        {CURRENCY_LIST.slice(0, 3).map((currency) => (
-          <button
-            key={currency.code}
-            onClick={() => setCurrency(currency.code)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '8px 12px',
-              borderRadius: '10px',
-              fontSize: '12px',
-              fontWeight: 600,
-              background: selectedCurrency === currency.code ? '#000' : '#f0f0f0',
-              color: selectedCurrency === currency.code ? '#fff' : '#000',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <span>{currency.flag}</span>
-            <span>{currency.code}</span>
-          </button>
-        ))}
-      </div>
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/5 hover:bg-black/10 transition"
+      >
+        <span className="text-lg">{current.flag}</span>
+        <span className="text-sm font-semibold">{current.code}</span>
+      </button>
+      
+      {open && (
+        <div className="absolute top-full right-0 mt-2 w-48 glass-panel-heavy rounded-xl p-2 shadow-xl z-50">
+          {CURRENCY_LIST.map((currency) => (
+            <button
+              key={currency.code}
+              onClick={() => {
+                setCurrency(currency.code);
+                setOpen(false);
+              }}
+              className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg transition ${
+                selectedCurrency === currency.code 
+                  ? "bg-black text-white" 
+                  : "hover:bg-black/5"
+              }`}
+            >
+              <span className="text-lg">{currency.flag}</span>
+              <span className="text-sm font-medium">{currency.name}</span>
+              <span className={`text-xs ${selectedCurrency === currency.code ? "text-white/70" : "text-black/50"}`}>
+                {currency.code}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

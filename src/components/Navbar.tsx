@@ -79,6 +79,7 @@ export function Navbar() {
 
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isAtTop, setIsAtTop] = useState(true);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -103,6 +104,13 @@ export function Navbar() {
     const onScroll = () => {
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 20);
+      setIsAtTop(currentScrollY <= 0);
+      
+      // Smart-Hide: Disable scroll hide when mobile menu is open (Force-Locked-Fixed)
+      if (mobileOpen) {
+        setVisible(true);
+        return;
+      }
       
       // Hide navbar when scrolling down, show when scrolling up
       // Account for alert section by checking if we're past it
@@ -125,7 +133,7 @@ export function Navbar() {
     
     window.addEventListener("scroll", debouncedScroll, { passive: true });
     return () => window.removeEventListener("scroll", debouncedScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, mobileOpen]);
 
   // Sync address status
   const setHasAddress = useCartStore((state) => state.setHasAddress);
@@ -170,11 +178,29 @@ export function Navbar() {
   
   return (
     <>
-      <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 transform glass-nav ${
-        scrolled ? "shadow-md" : "lg:shadow-none shadow-sm"
-      } ${visible ? "translate-y-0" : "-translate-y-full"}`}
-    >
+<header
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 glass-nav ${
+          scrolled ? "shadow-md" : "lg:shadow-none shadow-sm"
+        } ${
+          mobileOpen
+            ? "translate-y-0 !fixed top-0 bg-white z-[100000]"
+            : visible || isAtTop
+            ? "translate-y-0"
+            : "-translate-y-full"
+        }`}
+        style={
+          mobileOpen
+            ? {
+                position: "fixed",
+                top: 0,
+                background: "#ffffff",
+                opacity: 1,
+                zIndex: 100000,
+                transform: "translateY(0)",
+              }
+            : undefined
+        }
+      >
       <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center px-0">
         {/* Mobile layout: Logo centered */}
         <div className="flex items-center justify-between w-full lg:hidden px-2">
