@@ -148,22 +148,7 @@ export function BannerSlider() {
             </motion.div>
           </AnimatePresence>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              {slides.map((s, i) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  aria-label={`Go to slide ${i + 1}`}
-                  onClick={() => setIndex(i)}
-                  className={`h-2.5 w-2.5 rounded-full ring-1 ring-black/20 transition ${
-                    i === index ? "bg-black" : "bg-black/20 hover:bg-black/40"
-                  }`}
-                />
-              ))}
-            </div>
-
-          </div>
+          
         </div>
       </div>
     </section>

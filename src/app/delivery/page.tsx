@@ -90,7 +90,7 @@ const deliveryData = [
 
 export default function DeliveryPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white/40 backdrop-blur-sm">
       <Navbar />
       
       <main className="flex-1 pt-24 pb-20 px-4">

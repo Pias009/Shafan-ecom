@@ -25,10 +25,11 @@ interface CartState {
   items: CartItem[];
   couponCode: string | null;
   couponDiscount: number;
+  couponMaxLimit: number | null;
   addItem: (product: ProductSummary, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
-  applyCoupon: (code: string) => void;
+  applyCoupon: (code: string) => Promise<{ success: boolean; error?: string }>;
   removeCoupon: () => void;
   clearCart: () => void;
   hasAddress: boolean;
@@ -54,6 +55,7 @@ export const useCartStore = create<CartState>()(
       items: [],
       couponCode: null,
       couponDiscount: 0,
+      couponMaxLimit: null,
       addItem: (product, quantity = 1) =>
         set((state) => {
           // STRICT: Preserve entire countryPrices object for live recalculation
@@ -93,20 +95,25 @@ export const useCartStore = create<CartState>()(
         })),
       applyCoupon: async (code: string) => {
         try {
-          const res = await fetch("/api/coupons/validate?code=" + code);
+          const country = useCountryStore.getState().selectedCountry || "AE";
+          const res = await fetch("/api/coupons/validate?code=" + code + "&country=" + country);
           const data = await res.json();
           if (data.valid && data.discount) {
-            set({ couponCode: code, couponDiscount: data.discount });
+            set({ 
+              couponCode: code, 
+              couponDiscount: data.discount,
+              couponMaxLimit: data.maxLimitAmount || null 
+            });
             return { success: true };
           }
-          set({ couponCode: null, couponDiscount: 0 });
+          set({ couponCode: null, couponDiscount: 0, couponMaxLimit: null });
           return { success: false, error: data.error || "Invalid coupon" };
         } catch {
-          set({ couponCode: null, couponDiscount: 0 });
+          set({ couponCode: null, couponDiscount: 0, couponMaxLimit: null });
           return { success: false, error: "Failed to validate coupon" };
         }
       },
-      removeCoupon: () => set({ couponCode: null, couponDiscount: 0 }),
+      removeCoupon: () => set({ couponCode: null, couponDiscount: 0, couponMaxLimit: null }),
       clearCart: () => set({ items: [], couponCode: null, couponDiscount: 0 }),
       hasAddress: false,
       setHasAddress: (val) => set({ hasAddress: val }),

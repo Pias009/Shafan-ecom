@@ -18,6 +18,7 @@ export function Footer() {
       id: "shop",
       title: t.footer.shop,
       links: [
+        { label: "Shopping Cart", href: "/cart" },
         { label: t.footer.skinCare, href: "/category/skin-care" },
         { label: t.footer.hairCare, href: "/category/hair-care" },
         { label: t.footer.routines, href: "/routines" },
@@ -130,6 +131,7 @@ export function Footer() {
                 <Link
                   key={link.label}
                   href={link.href}
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
                   className="text-sm font-medium text-white/60 hover:text-white transition-colors"
                 >
                   {link.label}
@@ -167,6 +169,7 @@ export function Footer() {
                       <Link
                         key={link.label}
                         href={link.href}
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })}
                         className="text-sm font-medium text-white/70 hover:text-white transition-colors"
                       >
                         {link.label}
@@ -190,7 +193,7 @@ export function Footer() {
         <div className="flex items-center gap-5 order-2 md:order-1">
           <span className="text-[10px] font-black uppercase tracking-widest text-white/60">{t.footer.followUs || "FOLLOW US"}</span>
           <div className="flex items-center gap-4">
-            <Link href="https://wa.me/9717206046" target="_blank" className="flex items-center gap-1.5 group">
+            <Link href="https://wa.me/971547206046" target="_blank" className="flex items-center gap-1.5 group">
               <MessageCircle size={16} className="text-white/60 group-hover:text-green-400 transition-colors" />
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">WhatsApp</span>
             </Link>
@@ -203,7 +206,9 @@ export function Footer() {
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">Instagram</span>
             </Link>
             <Link href="https://www.tiktok.com/@shanfaglobal" target="_blank" className="flex items-center gap-1.5 group">
-              <Music size={16} className="text-white/60 group-hover:text-black transition-colors" />
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor" className="text-white/60 group-hover:text-black transition-colors w-4 h-4">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.93 2.93 0 0 1-5.91 0V4.16A1.17 1.17 0 0 1 5 3h.68a4 4 0 0 1 3.93 4.79 9.64 9.64 0 0 1-7.37 3.1V12h3.11v6.63a4.85 4.85 0 0 0 3.08 4.52 4.82 4.82 0 0 0 5.09-.64V12H22V7.9a4.84 4.84 0 0 0-2.41-1.21Z"/>
+              </svg>
               <span className="text-[10px] font-black uppercase tracking-wider text-white/60 group-hover:text-white transition-colors hidden lg:inline">TikTok</span>
             </Link>
             <Link href="https://linkedin.com/company/shanfa-global/" target="_blank" className="flex items-center gap-1.5 group">

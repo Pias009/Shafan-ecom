@@ -278,31 +278,6 @@ async function main() {
   }
   console.log("Brands seeded.");
 
-  // 8. Create sample Banner(s)
-  const banners = [
-    {
-      imageUrl: "https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=1200",
-      title: "Spring Sale",
-      link: "/brands",
-      active: true,
-    },
-    {
-      imageUrl: "https://images.pexels.com/photos/3735641/pexels-photo-3735641.jpeg?auto=compress&cs=tinysrgb&w=1200",
-      title: "New Arrivals",
-      link: "/products",
-      active: true,
-    },
-  ];
-
-  for (const b of banners) {
-    await prisma.enhancedOfferBanner.upsert({
-      where: { imageUrl: b.imageUrl },
-      update: { title: b.title, link: b.link, active: b.active },
-      create: { ...b },
-    });
-  }
-  console.log("Banners seeded.");
-
   // 9. Fetch created data for mapping
   const dbBrands = await prisma.brand.findMany();
   const dbCategories = await prisma.category.findMany();

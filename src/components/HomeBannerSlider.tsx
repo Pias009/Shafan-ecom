@@ -53,18 +53,6 @@ export default function HomeBannerSlider({ banners }: { banners: Banner[] }) {
         </motion.div>
       </AnimatePresence>
 
-      {banners.length > 1 && (
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
-          {banners.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-3 h-3 rounded-full ${currentIndex === index ? 'bg-white' : 'bg-white/50'}`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+      </div>
   );
 }

@@ -20,7 +20,7 @@ export function UserDropdown({
       {open ? (
         <>
           <div
-            className="fixed inset-0 z-40 cursor-default"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-md cursor-default"
             role="dialog"
             aria-modal="true"
             onClick={onClose}

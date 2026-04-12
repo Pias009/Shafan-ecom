@@ -302,9 +302,9 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              Max Discount Cap
-              <span className="text-xs text-gray-500 font-normal">(The discount won't exceed this value)</span>
+            <label className="block text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+              Fixed Discount Limit (Manual) - Hard Ceiling
+              <span className="text-xs text-red-600 font-medium">(This is the absolute maximum discount allowed)</span>
             </label>
             <input
               type="number"
@@ -312,23 +312,23 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
               step="0.01"
               value={form.maxLimitAmount ?? ""}
               onChange={(e) => handleInputChange("maxLimitAmount", e.target.value ? parseFloat(e.target.value) : undefined)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="No cap"
-              title="The discount will not exceed this value, even if the percentage calculation is higher"
+              className="w-full px-4 py-3 border-2 border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-red-50"
+              placeholder="No cap - leave empty for unlimited"
+              title="This is the HARD CEILING - the discount will NEVER exceed this value"
             />
           </div>
         </div>
 
         {/* Country-specific Max Discount Caps */}
-        <div className="mt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-            Max Discount Cap by Country
-            <span className="text-xs text-gray-500 font-normal">(Optional - set different cap per country)</span>
+        <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+          <label className="block text-sm font-bold text-red-900 mb-3 flex items-center gap-2">
+            Fixed Discount Limit (Manual) by Country
+            <span className="text-xs text-red-700 font-medium">(Optional - override global cap per country)</span>
           </label>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {COUNTRIES.map((country) => (
-              <div key={country.code} className="border rounded-lg p-3">
-                <div className="text-xs font-medium text-gray-600 mb-2">{country.name}</div>
+              <div key={country.code} className="border border-red-200 rounded-lg p-3 bg-white">
+                <div className="text-xs font-bold text-red-800 mb-2">{country.name}</div>
                 <input
                   type="number"
                   min="0"
@@ -338,7 +338,7 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
                     ...form.countryMaxLimits,
                     [country.code]: e.target.value ? parseFloat(e.target.value) : undefined
                   })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-red-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
                   placeholder="No cap"
                 />
               </div>

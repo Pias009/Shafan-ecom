@@ -204,7 +204,7 @@ export default function CustomPaymentPage() {
   const shipping = order.shippingAddress || {};
 
   return (
-    <div className="min-h-screen bg-cream text-black flex flex-col">
+    <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black flex flex-col">
       <main className="flex-1 max-w-6xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-12 xl:col-span-8 space-y-6 md:space-y-8 order-1 w-full overflow-x-hidden">

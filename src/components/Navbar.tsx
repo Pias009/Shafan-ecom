@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search } from "lucide-react";
+import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search, CheckCircle } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -23,6 +23,26 @@ export function Navbar() {
   const router = useRouter();
   const [authOpen, setAuthOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [orderNotification, setOrderNotification] = useState<string | null>(null);
+  
+  // Check for recent order notification
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const recentOrder = localStorage.getItem('recent_order');
+      if (recentOrder) {
+        setOrderNotification(recentOrder);
+      }
+    }
+  }, []);
+  
+  const handleOrderClick = () => {
+    if (orderNotification) {
+      localStorage.removeItem('recent_order');
+      setOrderNotification(null);
+      router.push(`/account/orders/${orderNotification}`);
+    }
+  };
+  
   const handleSearchClose = useCallback(() => setSearchOpen(false), []);
   
   // Safe pathname for SSR - use empty string if null
@@ -151,38 +171,35 @@ export function Navbar() {
   return (
     <>
       <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 transform ${
-        scrolled ? "glass-nav shadow-md" : "bg-transparent"
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 transform glass-nav ${
+        scrolled ? "shadow-md" : "lg:shadow-none shadow-sm"
       } ${visible ? "translate-y-0" : "-translate-y-full"}`}
     >
       <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center px-0">
-        {/* Mobile layout: Logo centered, hamburger on right */}
-        <div className="flex items-center justify-between w-full lg:hidden">
-          {/* Empty div for spacing to center logo */}
-          <div className="w-6"></div>
+        {/* Mobile layout: Logo centered */}
+        <div className="flex items-center justify-between w-full lg:hidden px-2">
+          {/* Left: Search button */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="p-2 text-black hover:bg-black/5 rounded-lg transition-colors"
+            aria-label="Search"
+          >
+            <Search size={18} />
+          </button>
           
-          {/* Logo centered */}
+{/* Logo centered */}
           <div className="flex-shrink-0">
             <Logo />
           </div>
           
-          {/* Mobile action buttons - search first */}
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            className="p-2 text-black"
-            aria-label="Search"
-          >
-            <Search size={20} />
-          </button>
-          
-          {/* Mobile hamburger on right */}
+          {/* Right: Menu button */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 text-black"
+            className="p-2 text-black hover:bg-black/5 rounded-lg transition-colors"
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
@@ -342,96 +359,160 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-x-4 top-20 glass-panel-heavy rounded-2xl p-6 space-y-2 border border-black/5 overflow-y-auto max-h-[80vh] z-50">
-          {/* User profile section */}
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-black/5 mb-2">
-            <div className="w-10 h-10 rounded-full bg-black/10 flex items-center justify-center">
-              <UserRound size={20} className="text-black" />
-            </div>
-            <div className="flex-1">
-              <div className="font-bold text-sm text-black">
-                {userLabel ? `Hello, ${userLabel}` : t.nav.signIn}
-              </div>
-              <div className="text-xs text-black/60">
-                {status === "authenticated" ? "Manage your account" : "Sign in to your account"}
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                if (status === "authenticated") {
-                  window.location.href = "/account";
-                } else {
-                  setAuthOpen(true);
-                }
+      {/* Mobile menu - Full page overlay with circular reveal */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="md:hidden fixed inset-0 z-50"
+          >
+            {/* Circular reveal animation */}
+            <motion.div
+              initial={{ scale: 0, borderRadius: "50%" }}
+              animate={{ 
+                scale: 1.175, 
+                borderRadius: "0%",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
               }}
-              className="text-xs font-bold px-3 py-1.5 rounded-full bg-black text-white"
+              exit={{ 
+                scale: 0, 
+                borderRadius: "50%",
+                transition: { delay: 0.1 }
+              }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="absolute inset-0 bg-white shadow-2xl"
             >
-              {status === "authenticated" ? "Profile" : "Sign In"}
-            </button>
-          </div>
+              {/* Close button */}
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/5 hover:bg-black/10 transition-colors z-10"
+              >
+                <X size={24} className="text-black" />
+              </button>
 
-          {/* Settings - Language & Currency selectors */}
-          <div className="pt-2 pb-2 border-b border-black/5 flex items-center justify-between px-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-black/40">Settings</span>
-            <div className="flex items-center gap-2">
-              <LanguageSelector />
-              <CurrencySelector />
-            </div>
-          </div>
+              {/* Centered content */}
+              <div className="flex flex-col items-center justify-center min-h-full py-20 px-6 space-y-6">
+                {/* User section */}
+                <div className="flex flex-col items-center gap-3 text-center mb-4">
+                  <div className="w-16 h-16 rounded-full bg-black/10 flex items-center justify-center">
+                    <UserRound size={28} className="text-black" />
+                  </div>
+                  <div className="font-bold text-lg text-black">
+                    {userLabel ? `Hello, ${userLabel}` : t.nav.signIn}
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (status === "authenticated") {
+                        window.location.href = "/account";
+                      } else {
+                        setAuthOpen(true);
+                      }
+                      setMobileOpen(false);
+                    }}
+                    className="text-sm font-bold px-6 py-2 rounded-full bg-black text-white"
+                  >
+                    {status === "authenticated" ? "View Profile" : "Sign In"}
+                  </button>
+                </div>
 
-          {/* Navigation links */}
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className="block px-4 py-3 text-sm font-bold tracking-widest rounded-xl transition-colors text-black hover:bg-black/5 truncate"
-            >
-              {link.label}
-            </Link>
-          ))}
+                {/* Settings row */}
+                <div className="flex items-center gap-4 py-2">
+                  <LanguageSelector />
+                  <CurrencySelector />
+                </div>
 
-          {/* Search button */}
-          <button
-            type="button"
-            onClick={() => {
-              setMobileOpen(false);
-              setSearchOpen(true);
-            }}
-            className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-black/5 mt-2 w-full text-left"
-          >
-            <div className="flex items-center gap-3">
-              <Search size={18} className="text-black" />
-              <span className="text-sm font-bold text-black">Search Products</span>
-            </div>
-          </button>
+                {/* Divider */}
+                <div className="w-32 h-px bg-black/10" />
 
-          {/* Cart section (visible to all users) */}
-          <Link
-            href="/cart"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center justify-between px-4 py-3 rounded-xl bg-black/5 mt-2"
-          >
-            <div className="flex items-center gap-3">
-              <ShoppingBag size={18} className="text-black" />
-              <span className="text-sm font-bold text-black">Shopping Cart</span>
-            </div>
-            {mounted && cartCount > 0 && (
-              <span className="w-6 h-6 rounded-full bg-black text-white text-xs flex items-center justify-center font-bold">
-                {cartCount}
-              </span>
-            )}
-          </Link>
-        </div>
-      )}
+                {/* Navigation links - centered */}
+                <nav className="flex flex-col items-center gap-3">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="w-full text-center px-8 py-3 text-base font-bold tracking-widest rounded-full transition-colors text-black hover:bg-black/5"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </nav>
+
+                {/* Divider */}
+                <div className="w-32 h-px bg-black/10" />
+
+                {/* Additional actions */}
+                <div className="flex flex-col items-center gap-3 w-full">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setSearchOpen(true);
+                    }}
+                    className="w-full text-center px-8 py-3 text-base font-bold tracking-widest rounded-full hover:bg-black/5 text-black"
+                  >
+                    Search
+                  </button>
+
+                  <Link
+                    href="/cart"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full px-8 py-3 text-base font-bold tracking-widest rounded-full hover:bg-black/5 text-black"
+                  >
+                    <ShoppingBag size={20} />
+                    Cart
+                    {mounted && cartCount > 0 && (
+                      <span className="w-6 h-6 rounded-full bg-black text-white text-xs flex items-center justify-center font-bold">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       </header>
       
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <AnimatePresence>
         {searchOpen && <SearchOverlay onClose={handleSearchClose} />}
+      </AnimatePresence>
+      
+      {/* Post-order notification card */}
+      <AnimatePresence>
+        {orderNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-6 right-6 z-50 max-w-sm"
+          >
+            <div 
+              onClick={handleOrderClick}
+              className="glass-panel-heavy cursor-pointer rounded-2xl p-4 md:p-5 border border-green-200 shadow-xl shadow-green-100/50 bg-white/90 backdrop-blur-xl hover:scale-105 transition-transform"
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-green-100 rounded-full shrink-0">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-black">Order Placed!</p>
+                  <p className="text-xs text-black/60 mt-0.5">Check your order details here</p>
+                  <p className="text-[10px] font-bold text-green-600 mt-2 uppercase tracking-wider">View Order</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </>
   );

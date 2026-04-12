@@ -157,7 +157,7 @@ export function ProductQuickViewModal({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="fixed inset-0 bg-black/70 backdrop-blur-md"
+            className="fixed inset-0 bg-black/50 backdrop-blur-lg"
           />
 
           <motion.div

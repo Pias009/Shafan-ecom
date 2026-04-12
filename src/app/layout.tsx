@@ -36,9 +36,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning style={{ scrollBehavior: 'smooth' }}>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+      </head>
       <body
-        className={`${playfairDisplay.variable} ${dmSans.variable} antialiased`}
+        className={`${playfairDisplay.variable} ${dmSans.variable} antialiased overflow-x-hidden max-w-full`}
       >
         <WebVitalsReporter />
         <Providers>

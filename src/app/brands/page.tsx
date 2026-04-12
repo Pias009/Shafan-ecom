@@ -42,7 +42,7 @@ export default function BrandsPage() {
   }, [brands, t.brands.taglineDefault, currentLanguage.code]);
 
   return (
-    <div className="min-h-screen relative z-0 flex flex-col">
+    <div className="min-h-screen relative z-0 flex flex-col bg-white/40 backdrop-blur-sm">
       {/* Navbar handled globally */}
       
       <main className="pt-32 pb-20 px-6 max-w-5xl mx-auto flex-1">

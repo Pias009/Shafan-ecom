@@ -44,7 +44,7 @@ function formatPriceWithIntl(amount: number, currencyCode: string): string {
     maximumFractionDigits: decimals,
   }).format(amount);
   
-  return `${symbol} ${formatted}`;
+  return `${symbol}${formatted}`;
 }
 
 function PriceContent({ amount, className, showSymbolSmall, countryPrices, currency, userCountry, selectedCurrency }: PriceProps & { userCountry: string; selectedCurrency: string }) {

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
-import { CheckCircle2, Package, ArrowRight, Home, AlertCircle } from "lucide-react";
+import { CheckCircle2, Package, ArrowRight, Home, AlertCircle, Heart, Sparkles, Gift } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -89,6 +89,25 @@ function SuccessContent() {
           {(orderId || sessionId) && (
             <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/20 mb-6 md:mb-8">Ref: {orderId ? `#${orderId}` : sessionId?.slice(0, 20)}</p>
           )}
+
+          {/* Celebration wishes */}
+          <div className="bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 rounded-2xl p-4 md:p-6 mb-6 md:mb-8 border border-pink-100">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Heart className="w-4 h-4 text-pink-500" />
+              <span className="text-[10px] md:text-xs font-bold text-pink-600 uppercase tracking-widest">Thank You!</span>
+              <Sparkles className="w-4 h-4 text-purple-500" />
+            </div>
+            <p className="text-sm md:text-base text-black/80 font-medium">
+              🎉 Your radiant skin journey begins!
+            </p>
+            <p className="text-xs md:text-sm text-black/50 mt-2">
+              We wish you glowing skin and confident moments. Enjoy your natural skincare ritual! ✨
+            </p>
+            <div className="flex items-center justify-center gap-1 mt-3">
+              <Gift className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] text-black/30">Your trust means the world to us</span>
+            </div>
+          </div>
 
           <div className="grid sm:grid-cols-2 gap-3 md:gap-4 mt-8 md:mt-10">
             <Link 

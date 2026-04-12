@@ -47,6 +47,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ valid: false, error: "Coupon usage limit reached" }, { status: 400 });
     }
 
+    // Get country-specific max limit if available
+    let maxLimitAmount = discount.maxLimitAmount;
+    if (discount.countryMaxLimits) {
+      const limits = discount.countryMaxLimits as Record<string, number>;
+      if (limits[country.toUpperCase()]) {
+        maxLimitAmount = limits[country.toUpperCase()];
+      }
+    }
+
     // Return discount info
     const discountValue = discount.discountType === "PERCENTAGE" 
       ? discount.value / 100 
@@ -59,6 +68,7 @@ export async function GET(request: NextRequest) {
       description: discount.description,
       type: discount.discountType,
       minimumOrderValue: discount.minimumOrderValue,
+      maxLimitAmount: maxLimitAmount,
     });
   } catch (error) {
     console.error("Coupon validation error:", error);

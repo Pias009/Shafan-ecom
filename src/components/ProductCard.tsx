@@ -222,22 +222,22 @@ function ProductCard({
         </div>
 
         {/* Product Name */}
-        <h3 className="font-display text-xs sm:text-sm font-bold text-black leading-tight line-clamp-2 mb-1 overflow-hidden">
+        <h3 className="text-xs sm:text-sm font-semibold text-black leading-tight line-clamp-2 mb-1 overflow-hidden">
           {product.name}
         </h3>
         
         {/* Brand Name */}
-        <p className="font-body text-[8px] sm:text-[9px] uppercase text-gray-500 tracking-wider mb-2 flex-shrink-0">
+        <p className="text-[8px] sm:text-[9px] uppercase text-gray-400 tracking-wider mb-2 flex-shrink-0">
           {brandName}
         </p>
 
         {/* Star Rating */}
-        <div className="flex items-center gap-1.5 mb-2 flex-shrink-0">
+        <div className="flex items-center gap-1 mb-1 flex-shrink-0">
           <div className="flex">
             {renderStars(product.averageRating || 0)}
           </div>
           {product.ratingCount !== undefined && (
-            <span className="text-[10px] text-gray-500 font-medium">
+            <span className="text-[10px] text-gray-400 font-medium">
               ({product.ratingCount})
             </span>
           )}

@@ -250,7 +250,7 @@ export default function ProductsClient({
   }, [loading, hasMore, page, limit]);
 
   return (
-    <div className="min-h-screen bg-cream text-black">
+    <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black">
       <div className="max-w-7xl mx-auto px-6 pt-32 pb-20">
         <ProductsSlider />
 

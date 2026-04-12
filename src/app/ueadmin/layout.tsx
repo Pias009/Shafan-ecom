@@ -9,7 +9,7 @@ export default function UeAdminLayout({ children }: { children: React.ReactNode 
            <AdminSidebar />
         </div>
         
-        <main className="flex-1 lg:pl-80 w-full min-h-screen flex flex-col pt-12 pr-12 pl-12 overflow-y-auto">
+        <main className="flex-1 lg:pl-80 w-full min-h-screen flex flex-col pt-12 px-8 lg:px-12 overflow-y-auto">
           <div className="flex-1">
              {children}
           </div>

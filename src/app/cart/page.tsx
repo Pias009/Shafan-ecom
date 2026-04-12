@@ -3,7 +3,7 @@
 import { useCartStore } from "@/lib/cart-store";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Minus, Plus, Trash2, Info } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2, Info, CheckCircle, Circle } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Footer } from "@/components/Footer";
@@ -16,6 +16,13 @@ import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
+
+function getCurrencyForCountry(countryCode: string): string {
+  const currencies: Record<string, string> = {
+    AE: 'AED', KW: 'KWD', SA: 'SAR', BH: 'BHD', OM: 'OMR', QA: 'QAR'
+  };
+  return currencies[countryCode?.toUpperCase()] || 'AED';
+}
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 function isValidImageUrl(url: any): boolean {
@@ -23,7 +30,7 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
-function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, removeCoupon, subtotal, discount, total, shipping, freeDelivery, t, selectedCountry, applyCoupon }: any) {
+function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, couponMaxLimit, removeCoupon, subtotal, discount, total, shipping, freeDelivery, t, selectedCountry, applyCoupon }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
   const [couponInput, setCouponInput] = useState("");
@@ -68,14 +75,36 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         }
       }
 
+      // Build order items first
       const orderItems = items.map((i: any) => {
         const { price: itemPrice } = getDisplayPrice(i, selectedCountry);
         return {
-          productId: i.id,
-          quantity: i.quantity,
-          price: itemPrice
+          productId: i.id || i.productId,
+          quantity: Number(i.quantity) || 1,
+          price: Number(itemPrice) || 0
         };
       });
+      
+      // Calculate subtotal from items
+      const subtotal = Number(orderItems.reduce((sum: number, i: any) => sum + (i.price * i.quantity), 0));
+      
+      // Get shipping fee based on country config
+      const deliveryConfig = (COUNTRY_CONFIG as any)[selectedCountry];
+      const freeDeliveryThreshold = deliveryConfig?.freeDelivery || 150;
+      const shippingFee = subtotal >= freeDeliveryThreshold ? 0 : (deliveryConfig?.deliveryFee || 10);
+      
+      // Calculate discount amount (from coupon if applied)
+      const discountAmount = (couponDiscount && typeof couponDiscount === 'number') ? couponDiscount : 0;
+      
+      // Calculate final total: (subtotal - discount) + shipping
+      const total = Number((subtotal - discountAmount + shippingFee).toFixed(2));
+      
+      // MOV check: Minimum Order Value
+      const minOrderValue = deliveryConfig?.minOrder || 80;
+      if (subtotal < minOrderValue) {
+        toast.error(`Minimum order is ${getCurrencyForCountry(selectedCountry)} ${minOrderValue}. Add more items!`, { id: "checkout" });
+        return;
+      }
 
       const paymentMethodData = paymentMethod === "cod"
         ? { payment_method: "cod", payment_method_title: "Cash on Delivery" }
@@ -86,7 +115,11 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: orderItems,
-          couponCode,
+          subtotal,
+          shippingFee: Number(shippingFee),
+          discountAmount: Number(discountAmount),
+          total,
+          ...(couponCode && { couponCode }),
           billing,
           shipping,
           country: selectedCountry,
@@ -95,13 +128,29 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       });
 
       const data = await orderRes.json();
-      if (data.orderId) {
-        toast.success("Order created!", { id: "checkout" });
+      console.log("Order response:", orderRes.status, JSON.stringify(data));
+      
+      if (orderRes.ok && data.orderId) {
+        // Save order ID for post-order notification on homepage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('recent_order', data.orderId);
+        }
+        toast.success("Order created! Redirecting...", { id: "checkout" });
         if (paymentMethod === "cod") {
           router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
         } else {
+          console.log("Redirecting to payment page for order:", data.orderId);
           router.push(`/checkout/payment/${data.orderId}`);
         }
+      } else if (!orderRes.ok) {
+        toast.error(data?.error || `Server error (${orderRes.status})`, { id: "checkout" });
+        console.error("Order failed:", orderRes.status, data);
+      } else if (data.minOrderRequired) {
+        const currencySymbol = data.currency || 'AED';
+        toast.error(`Minimum order is ${currencySymbol} ${data.minOrder}. Add more items!`, { id: "checkout" });
+      } else if (data.error) {
+        toast.error(data.error, { id: "checkout" });
+        console.error("Order error:", data.error);
       } else {
         toast.error(data.error || "Checkout failed", { id: "checkout" });
       }
@@ -134,8 +183,14 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
             return (
               <div
                 key={itemKey}
-                className="glass-panel-heavy flex flex-row items-center gap-4 md:gap-6 rounded-2xl md:rounded-3xl p-3 md:p-5 border border-black/5 shadow-sm group hover:shadow-md transition-shadow"
+                className="glass-panel-heavy flex flex-row items-center gap-4 md:gap-6 rounded-2xl md:rounded-3xl p-3 md:p-5 border border-black/5 shadow-sm group hover:shadow-md transition-shadow relative overflow-hidden"
               >
+                {/* In Cart indicator - Green */}
+                <div className="absolute top-3 right-3 flex items-center gap-1 bg-green-50 px-2 py-1 rounded-full">
+                  <CheckCircle className="w-3 h-3 text-green-500" />
+                  <span className="text-[8px] font-bold text-green-600 uppercase">In Cart</span>
+                </div>
+
                 <div className="relative h-20 w-20 md:h-32 md:w-32 shrink-0 overflow-hidden rounded-xl md:rounded-2xl bg-black/[0.02] border border-black/5">
                   <Image
                     src={isValidImageUrl(item.imageUrl) ? getOptimizedUrl(item.imageUrl, 150) : "/placeholder-product.png"}
@@ -231,9 +286,16 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
 
               {couponCode && (
                 <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-green-600 font-bold uppercase tracking-wider">
-                  <div className="flex items-center gap-2">
-                    {t.cart.promo} ({couponCode})
-                    <button onClick={removeCoupon} className="text-[9px] underline">({t.cart.remove})</button>
+                  <div className="flex flex-col items-start gap-0.5">
+                    <div className="flex items-center gap-2">
+                      {t.cart.promo} ({couponCode})
+                      <button onClick={removeCoupon} className="text-[9px] underline">({t.cart.remove})</button>
+                    </div>
+                    {couponMaxLimit && (
+                      <span className="text-[8px] text-green-500 font-normal normal-case">
+                        Max cap: <Price amount={couponMaxLimit} />
+                      </span>
+                    )}
                   </div>
                   <div className="font-black">- <Price amount={discount} /></div>                </div>
               )}
@@ -314,6 +376,7 @@ export default function CartPage() {
     updateQuantity,
     couponCode,
     couponDiscount,
+    couponMaxLimit,
     applyCoupon,
     removeCoupon,
   } = useCartStore();
@@ -337,7 +400,9 @@ export default function CartPage() {
     0
   );
 
-  const discount = subtotal * couponDiscount;
+  // Apply coupon discount with max limit cap
+  const rawDiscount = subtotal * couponDiscount;
+  const discount = couponMaxLimit ? Math.min(rawDiscount, couponMaxLimit) : rawDiscount;
 
   const deliveryConfig = COUNTRY_CONFIG[selectedCountry.toUpperCase()] || COUNTRY_CONFIG['AE'];
   
@@ -370,6 +435,7 @@ export default function CartPage() {
       updateQuantity={updateQuantity}
       couponCode={couponCode}
       couponDiscount={couponDiscount}
+      couponMaxLimit={couponMaxLimit}
       removeCoupon={removeCoupon}
       subtotal={subtotal}
       discount={discount}

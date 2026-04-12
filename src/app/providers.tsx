@@ -15,7 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        <CustomToaster position="bottom-center" />
+        <CustomToaster position="top-center" />
         {children}
       </NextThemesProvider>
     </SessionProvider>

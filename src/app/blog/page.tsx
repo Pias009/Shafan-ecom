@@ -51,7 +51,7 @@ export default function BlogPage() {
   const rest = filtered.slice(1);
 
   return (
-    <div className="min-h-screen relative z-0">
+    <div className="min-h-screen relative z-0 bg-white/40 backdrop-blur-sm">
       <section className="relative pt-32 pb-20 px-6 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black/[0.03] to-transparent pointer-events-none" />
         <div className="max-w-4xl mx-auto text-center relative z-10">

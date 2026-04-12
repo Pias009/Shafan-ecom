@@ -228,7 +228,7 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
            <OrderFilter currentStatus={status} />
            <div className="text-[10px] font-black uppercase tracking-widest text-black italic">Global Fulfilment Flow</div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left min-w-[900px] md:min-w-0">
             <thead className="bg-black text-white">
               <tr>

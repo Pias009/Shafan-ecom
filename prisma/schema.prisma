@@ -341,6 +341,7 @@ model Order {
   discountId            String?         @db.ObjectId // Applied discount
   appliedDiscount       Discount?       @relation(fields: [discountId], references: [id])
   discountAmount        Float? // Amount saved from discount
+  couponCode            String? // Coupon code used
   items                 OrderItem[]
   shipment              Shipment?
   discountUsages        DiscountUsage[]

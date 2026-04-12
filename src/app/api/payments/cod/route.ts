@@ -11,11 +11,17 @@ function generateTrackingCode(): string {
 
 export async function POST(req: Request) {
   try {
-    const { orderId } = await req.json();
+    const body = await req.json();
+    const { orderId } = body;
+
+    console.log("=== COD Payment Request ===");
+    console.log("Body:", JSON.stringify(body));
 
     if (!orderId) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
+
+    console.log("Looking for order:", orderId);
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -42,53 +48,65 @@ export async function POST(req: Request) {
     });
 
     // Create shipment for COD order
-    const shippingAddress = updatedOrder.shippingAddress as any;
-    const countryCode = shippingAddress?.country || "AE";
-    const gulfCountries = ['AE', 'KW', 'SA', 'BH', 'QA', 'OM'];
-    const trackingCode = generateTrackingCode();
-    
-    let aramexResult = null;
-    if (gulfCountries.includes(countryCode?.toUpperCase())) {
-      try {
-        aramexResult = await createAramexShipment({
-          orderId: orderId,
-          recipientName: `${shippingAddress?.first_name || ''} ${shippingAddress?.last_name || ''}`.trim() || "Customer",
-          recipientPhone: shippingAddress?.phone || "+971048387827",
-          recipientEmail: updatedOrder.email || "customer@email.com",
-          recipientAddress: shippingAddress?.address_1 || "Address",
-          recipientCity: shippingAddress?.city || "City",
-          recipientCountry: countryCode,
-          productCode: "PDS",
-          weight: 0.5,
-          description: `Shafan Order ${orderId}`,
-          pieces: updatedOrder.items?.length || 1,
-        });
-      } catch (aramexError) {
-        console.error("Aramex shipment creation failed:", aramexError);
+    let shipmentCreated = false;
+    try {
+      const shippingAddress = updatedOrder.shippingAddress as any;
+      const countryCode = shippingAddress?.country || "AE";
+      const gulfCountries = ['AE', 'KW', 'SA', 'BH', 'QA', 'OM'];
+      const trackingCode = generateTrackingCode();
+      
+      let aramexResult = null;
+      if (gulfCountries.includes(countryCode?.toUpperCase())) {
+        try {
+          aramexResult = await createAramexShipment({
+            orderId: orderId,
+            recipientName: `${shippingAddress?.first_name || ''} ${shippingAddress?.last_name || ''}`.trim() || "Customer",
+            recipientPhone: shippingAddress?.phone || "+971048387827",
+            recipientEmail: updatedOrder.email || "customer@email.com",
+            recipientAddress: shippingAddress?.address_1 || "Address",
+            recipientCity: shippingAddress?.city || "City",
+            recipientCountry: countryCode,
+            productCode: "PDS",
+            weight: 0.5,
+            description: `Shafan Order ${orderId}`,
+            pieces: updatedOrder.items?.length || 1,
+          });
+        } catch (aramexError) {
+          console.error("Aramex shipment creation failed:", aramexError);
+        }
       }
-    }
 
-    // Create shipment record
-    if (aramexResult?.Shipments?.[0]?.ID) {
-      await prisma.shipment.create({
-        data: {
-          orderId: orderId,
-          courier: "ARAMEX",
-          trackingCode: aramexResult.Shipments[0].ID,
-          trackingUrl: `https://www.aramex.com/track/${aramexResult.Shipments[0].ID}`,
-          status: "Pending"
+      // Create shipment record
+      try {
+        if (aramexResult?.Shipments?.[0]?.ID) {
+          await prisma.shipment.create({
+            data: {
+              orderId: orderId,
+              courier: "ARAMEX",
+              trackingCode: aramexResult.Shipments[0].ID,
+              trackingUrl: `https://www.aramex.com/track/${aramexResult.Shipments[0].ID}`,
+              status: "Pending"
+            }
+          });
+          shipmentCreated = true;
+        } else {
+          await prisma.shipment.create({
+            data: {
+              orderId: orderId,
+              courier: "GLOBAL_COURIER",
+              trackingCode: trackingCode,
+              trackingUrl: `https://global-courier.com/track/${trackingCode}`,
+              status: "Pending"
+            }
+          });
+          shipmentCreated = true;
         }
-      });
-    } else {
-      await prisma.shipment.create({
-        data: {
-          orderId: orderId,
-          courier: "GLOBAL_COURIER",
-          trackingCode: trackingCode,
-          trackingUrl: `https://global-courier.com/track/${trackingCode}`,
-          status: "Pending"
-        }
-      });
+      } catch (shipmentError) {
+        console.error("Shipment record creation failed:", shipmentError);
+      }
+    } catch (shipmentError) {
+      console.error("Shipment process failed:", shipmentError);
+      // Continue even if shipment fails - order is still valid
     }
 
     return NextResponse.json({
@@ -100,7 +118,9 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error("COD Payment Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("=== COD Payment Error ===");
+    console.error(error);
+    const errorMessage = error?.message || "Payment failed. Please try again.";
+    return NextResponse.json({ error: errorMessage, details: error.toString() }, { status: 500 });
   }
 }

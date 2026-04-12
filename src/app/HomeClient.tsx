@@ -228,7 +228,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   return (
-    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full">
+    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full bg-white/40 backdrop-blur-sm">
       {/* NoticeBoard and Navbar handled globally */}
       <Hero />
 
@@ -424,15 +424,19 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
               </div>
 
               {filtered.length > 10 && (
-                <div className="mt-16 flex justify-center">
+                <div className="mt-12 flex justify-center">
                   <button
                     onClick={() => router.push("/products")}
-                    className="group flex flex-col items-center gap-4 transition-all duration-300 hover:scale-[1.05]"
+                    className="group flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.02]"
                   >
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-black/5 border-2 border-black/10 group-hover:bg-black group-hover:text-white group-hover:border-black transition-all duration-300">
-                      <ArrowRight className="w-8 h-8" />
-                    </div>
-                    <span className="font-bold text-sm uppercase tracking-widest text-black/60 group-hover:text-black transition-colors">
+                    <motion.div 
+                      className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/80 text-black shadow-md border border-black/10"
+                      whileHover={{ scale: 1.1, x: 4 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
+                    </motion.div>
+                    <span className="font-semibold text-xs uppercase tracking-widest text-black/50 group-hover:text-black transition-colors">
                       See All Products
                     </span>
                   </button>

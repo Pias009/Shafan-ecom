@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Maximize2, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Price } from "@/components/Price";
@@ -37,13 +37,13 @@ export default function ProductPageClient({ product, recommendations }: ProductP
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [showDescription, setShowDescription] = useState<string>('description');
   const [quickView, setQuickView] = useState<any>(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   
   // Price calculation using getDisplayPrice
   const priceInfo = useMemo(() => {
     return getDisplayPrice(product, selectedCountry);
   }, [product, selectedCountry]);
   const displayPrice = priceInfo.price || product.price || 0;
-  const originalPrice = product.discountPrice || product.price || 0;
   const isAvailable = displayPrice > 0;
 
   const descriptionTabs = [
@@ -80,7 +80,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     const p = productToAdd || product;
     if (!p) return;
 
-    // Use our utility to get the correct price for the user's country
+    setIsAddingToCart(true);
+
     const { price: itemPrice } = getDisplayPrice(p, userCountry);
     
     addItem({
@@ -94,6 +95,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     }, 1);
     
     toast.success(`${p.name || 'Product'} added to cart`);
+    
+    setTimeout(() => setIsAddingToCart(false), 800);
   }
 
   async function orderNow(productToOrder?: any) {
@@ -144,7 +147,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     <div className="min-h-screen bg-[#FDFBF7] text-black">
       {/* Navbar handled globally */}
 
-      <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-20 sm:pb-28">
         {/* Breadcrumbs */}
         <div className="mb-10 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-black/30">
           <Link href="/products" className="hover:text-black transition-colors">Products</Link>
@@ -152,7 +155,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
           <span className="text-black/60">{product.name}</span>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-start">
           {/* Gallery Section */}
           <div className="space-y-6">
             <div 
@@ -198,19 +201,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               <div className="absolute bottom-6 right-6 p-3 bg-black/10 backdrop-blur-md rounded-full text-white pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                 <Maximize2 size={20} />
               </div>
-
-              {/* Progress Bar */}
-              {allImages.length > 1 && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/5">
-                  <motion.div 
-                    className="h-full bg-black/20"
-                    initial={{ width: "0%" }}
-                    animate={{ width: `${((currentImageIndex + 1) / allImages.length) * 100}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              )}
-            </div>
+              </div>
 
             {/* Thumbnails */}
             {allImages.length > 1 && (
@@ -248,7 +239,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   <span className="px-3 py-1 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full">Hot</span>
                 )}
               </div>
-              <h1 className="text-3xl lg:text-5xl font-bold tracking-tighter text-black leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tighter text-black leading-tight">
                 {product.name}
               </h1>
               <div className="flex items-center gap-2 text-black/30">
@@ -263,14 +254,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
             <div className="flex items-baseline gap-4">
               {isAvailable ? (
-                <>
-                  <Price amount={displayPrice} className="text-4xl lg:text-5xl font-black text-black" />
-                  {displayPrice < originalPrice && (
-                    <Price amount={originalPrice} className="text-xl lg:text-2xl text-red-500 line-through font-bold" />
-                  )}
-                </>
+                <Price amount={displayPrice} className="text-3xl sm:text-4xl lg:text-5xl font-black text-black" />
               ) : (
-                <span className="text-2xl lg:text-3xl font-black text-red-500">Unavailable in this region</span>
+                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-red-500">Unavailable in this region</span>
               )}
             </div>
 
@@ -320,7 +306,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
             {product.features && product.features.length > 0 && (
               <div className="space-y-6">
                 <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Specifications</div>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {product.features.map((f: string, i: number) => (
                     <div key={i} className="flex items-center gap-3 p-4 bg-black/[0.02] border border-black/5 rounded-2xl">
                       <div className="w-1.5 h-1.5 bg-black/20 rounded-full" />
@@ -362,13 +348,13 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               </div>
             )}
 
-            <div className="pt-8 border-t border-black/5 flex flex-col sm:flex-row gap-4">
+            <div className="hidden md:flex pt-6 sm:pt-8 border-t border-black/5 flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
                 onClick={orderNow}
-                className="btn-53 flex-[2] h-20 rounded-3xl shadow-xl shadow-black/20"
+                className="btn-53 flex-[2] h-24 rounded-3xl shadow-xl shadow-black/20 text-xl"
               >
-                <span className="original font-black uppercase tracking-[0.15em]">Order Now</span>
-                <div className="letters">
+                <span className="original font-black uppercase tracking-[0.15em] text-lg">Order Now</span>
+                <div className="letters text-lg">
                   {Array.from("FAST").map((letter, index) => (
                     <span key={index}>{letter}</span>
                   ))}
@@ -376,14 +362,14 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               </button>
               <button
                 onClick={addToCart}
-                className="flex-1 h-20 rounded-3xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 text-gray-700 text-xs font-black uppercase tracking-[0.2em] hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-gray-200/50 transition-all active:scale-[0.98]"
+                className="flex-1 h-24 rounded-3xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 text-gray-700 text-sm font-black uppercase tracking-[0.2em] hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-gray-200/50 transition-all active:scale-[0.98]"
               >
                 Add to Cart
               </button>
             </div>
 
             {/* Perks */}
-            <div className="grid grid-cols-3 gap-4 pt-10 border-t border-black/5 text-center">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-8 sm:pt-10 border-t border-black/5 text-center">
               <div className="space-y-2">
                 <div className="w-10 h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><Truck size={18} className="text-slate-700" /></div>
                 <div className="text-[8px] font-black uppercase tracking-widest text-slate-600">Free Shipping</div>
@@ -402,9 +388,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
         {/* Recommendations */}
         {filteredRecommendations.length > 0 && (
-          <section className="mt-32 space-y-12">
+          <section className="mt-20 sm:mt-32 space-y-8 sm:space-y-12">
             <div className="flex items-center gap-6">
-              <h2 className="text-4xl font-bold tracking-tight text-black">Recommended</h2>
+              <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-black">Recommended</h2>
               <div className="h-[1px] flex-1 bg-black/5" />
             </div>
 
@@ -435,17 +421,81 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
 
       {/* Mobile Sticky Bar */}
-      <div className="md:hidden fixed bottom-6 left-6 right-6 z-[40]">
-        <div className="glass-panel-heavy rounded-[2rem] p-3 flex items-center gap-3 shadow-2xl shadow-black/20 border border-white/20">
-          <button
+      <div className="md:hidden fixed bottom-4 left-4 right-4 z-[40] max-w-lg mx-auto">
+        <div className="glass-panel-heavy rounded-[2rem] p-2 sm:p-3 flex items-center gap-2 sm:gap-3 shadow-2xl shadow-black/20 border border-white/20">
+          <motion.button
             onClick={addToCart}
-            className="w-14 h-14 rounded-2xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 flex items-center justify-center text-slate-700 hover:shadow-lg hover:shadow-gray-200/50 active:scale-90 transition-all"
+            disabled={isAddingToCart}
+            className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center ${
+              isAddingToCart 
+                ? 'bg-green-500 shadow-lg shadow-green-500/40' 
+                : 'bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200'
+            }`}
+            whileHover={!isAddingToCart ? { scale: 1.05 } : {}}
+            whileTap={!isAddingToCart ? { scale: 0.95 } : {}}
+            animate={isAddingToCart ? { scale: [1, 1.15, 1.05, 1] } : {}}
+            transition={{ duration: 0.3 }}
           >
-            <ShoppingBag size={22} />
-          </button>
+            <AnimatePresence mode="wait">
+              {!isAddingToCart ? (
+                <motion.div
+                  key="bag"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 64 64" className="w-6 h-6">
+                    <defs>
+                      <linearGradient id="cartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#f97316" />
+                        <stop offset="50%" stopColor="#ef4444" />
+                        <stop offset="100%" stopColor="#ec4899" />
+                      </linearGradient>
+                    </defs>
+                    <motion.path
+                      d="M4 12h8l4 16h28l-4-16H12l-8-4v0l4 20h8"
+                      fill="url(#cartGrad)"
+                      stroke="none"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.5 }}
+                    />
+                    <motion.circle
+                      cx="20"
+                      cy="52"
+                      r="6"
+                      fill="#f97316"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2 }}
+                    />
+                    <motion.circle
+                      cx="44"
+                      cy="52"
+                      r="6"
+                      fill="#ec4899"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.3 }}
+                    />
+                  </svg>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="check"
+                  initial={{ scale: 0.5, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                >
+                  <Check size={20} className="text-green-500" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
           <button
             onClick={orderNow}
-            className="btn-53 flex-1 h-14 rounded-2xl shadow-xl"
+            className="btn-53 flex-1 h-14 sm:h-16 rounded-2xl shadow-xl text-base"
           >
             <span className="original font-black uppercase tracking-[0.15em]">Order Now</span>
             <div className="letters">

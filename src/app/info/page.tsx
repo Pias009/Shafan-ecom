@@ -55,7 +55,7 @@ At Shafan, customer satisfaction is our top priority. Our dedicated support team
 
 export default function InfoPage() {
   return (
-    <div className="min-h-screen bg-cream text-black font-body">
+    <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black font-body">
       <div className="max-w-7xl mx-auto px-4 py-12 md:py-20">
         {/* Header */}
         <div className="text-center mb-12">

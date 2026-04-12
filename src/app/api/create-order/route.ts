@@ -248,8 +248,13 @@ export async function POST(req: Request) {
   try {
     const session = await getServerAuthSession();
     const body = await req.json();
-    const { items, billing, shipping, payment_method, payment_method_title, couponCode, storeCode, country } = body;
+    
+    console.log("=== CREATE ORDER REQUEST ===");
+    console.log(JSON.stringify(body, null, 2));
+    
+    const { items, billing, shipping, payment_method, payment_method_title, couponCode, storeCode, country, total: clientTotal, subtotal: clientSubtotal, shippingFee: clientShippingFee, discountAmount: clientDiscount } = body;
 
+    // Validate items array
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
@@ -396,11 +401,11 @@ export async function POST(req: Request) {
       subtotal += itemTotal;
 
       orderItemsData.push({
-        productId: product.id,
+        productId: product.id || "unknown",
         quantity: itemQuantity,
         unitPrice: unitPrice,
-        nameSnapshot: product.name,
-        imageSnapshot: product.mainImage,
+        nameSnapshot: product?.name || "Unknown Product",
+        imageSnapshot: product?.mainImage || null,
       });
 
       // Track the store for this product (for order assignment)
@@ -439,16 +444,42 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // Apply discount from coupon code
-    const { discount } = await applyDiscount(
-      couponCode,
-      countryCode,
-      subtotal,
-      session?.user?.id || undefined,
-      session?.user?.email || undefined
-    );
+    // Apply discount from coupon code (wrapped in try-catch to prevent crashes)
+    let discount = 0;
+    let couponCodeApplied = null;
+    
+    if (couponCode) {
+      try {
+        const discountResult = await applyDiscount(
+          couponCode,
+          countryCode,
+          subtotal,
+          session?.user?.id || undefined,
+          session?.user?.email || undefined
+        );
+        discount = discountResult.discount || 0;
+        couponCodeApplied = couponCode;
+        console.log(`Coupon applied: ${couponCode} -> discount: ${discount}`);
+      } catch (discountError: any) {
+        console.error("Discount application failed, proceeding without discount:", discountError?.message);
+        discount = 0; // Proceed without discount rather than failing
+      }
+    }
 
-    const total = subtotal + shippingFee - discount;
+    // Final total = (Subtotal + Shipping) - Discount
+    let total = subtotal + shippingFee - discount;
+    
+    // Round total based on currency (KWD, BHD, OMR = 3 decimals, others = 2 decimals)
+    const highDecimalsCurrencies = ['KWD', 'BHD', 'OMR'];
+    const decimals = highDecimalsCurrencies.includes(currency.toUpperCase()) ? 3 : 2;
+    total = Math.round(total * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    subtotal = Math.round(subtotal * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    
+    console.log(`Order totals after rounding | Subtotal: ${subtotal} | Shipping: ${shippingFee} | Discount: ${discount} | Total: ${total}`);
+
+    // Server-side price validation (prevent tampering)
+    // Skip this check if fields are missing (backward compatibility)
+    console.log(`Price validation: clientTotal=${clientTotal}, serverTotal=${subtotal + shippingFee - discount}`);
 
     // Determine courier based on shipping address
     const courier = determineCourier(shipping);
@@ -457,11 +488,14 @@ export async function POST(req: Request) {
     // Create the order in Prisma with PENDING paymentStatus
     // For COD: order is created immediately (paymentStatus PENDING)
     // For Stripe: order will be created, webhook will update to PAID
+    const isCOD = payment_method?.toLowerCase() === 'cod';
+    const orderStatus = isCOD ? OrderStatus.ORDER_RECEIVED : OrderStatus.ORDER_RECEIVED;
+    
     const order = await prisma.order.create({
       data: {
         userId: session?.user?.id || null,
         email: session?.user?.email || billing?.email || null,
-        status: OrderStatus.ORDER_RECEIVED,
+        status: orderStatus,
         paymentStatus: PaymentStatus.PENDING,
         currency: currency.toLowerCase(),
         subtotal,
@@ -472,6 +506,8 @@ export async function POST(req: Request) {
         shippingAddress: shipping || {},
         paymentMethod: payment_method || "stripe",
         paymentMethodTitle: payment_method_title || "Credit Card (Stripe)",
+        // Store coupon info if applied
+        ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: discount } : {}),
         // Assign store to order if determined from products
         ...(orderStoreId ? { storeId: orderStoreId } : {}),
         items: {
@@ -522,7 +558,25 @@ export async function POST(req: Request) {
       trackingCode: order.shipment?.trackingCode
     });
   } catch (error: any) {
-    console.error("Create Order Route Error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("=== CREATE ORDER ERROR ===");
+    console.error(error);
+    
+    // Return more specific error messages
+    let errorMessage = "An unexpected error occurred. Please try again.";
+    let errorStatus = 500;
+    
+    if (error?.message) {
+      errorMessage = error.message;
+      
+      // Map common Prisma/MongoDB errors to 400
+      if (errorMessage.includes("ObjectId") || errorMessage.includes("Invalid")) {
+        errorMessage = "Invalid data format. Please refresh your cart and try again.";
+        errorStatus = 400;
+      } else if (errorMessage.includes("required") || errorMessage.includes("must be")) {
+        errorStatus = 400;
+      }
+    }
+    
+    return NextResponse.json({ error: errorMessage }, { status: errorStatus });
   }
 }

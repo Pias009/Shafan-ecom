@@ -1,14 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* Radiant-skin warm palette */
+  /* Clean warm palette */
   --background-hsl: 40 33% 97%;
-  --foreground-hsl: 140 15% 19%;
-  --muted-hsl: 40 20% 92%;
-  --muted-foreground-hsl: 140 10% 40%;
+  --foreground-hsl: 140 15% 10%;
+  --muted-hsl: 40 15% 94%;
+  --muted-foreground-hsl: 140 8% 35%;
   --secondary-hsl: 15 28% 76%;
-  --border-hsl: 40 15% 88%;
+  --border-hsl: 40 10% 85%;
 
   --background: hsl(var(--background-hsl));
   --foreground: hsl(var(--foreground-hsl));
@@ -20,14 +20,14 @@
   --sage: hsl(120 10% 70%);
 
   /* Glass panel tokens */
-  --glass-panel-bg: hsla(0, 0%, 100%, 0.6);
-  --glass-panel-border: hsla(0, 0%, 100%, 0.3);
-  --glass-heavy-bg: hsla(0, 0%, 100%, 0.85);
-  --glass-nav-bg: hsla(0, 0%, 100%, 0.8);
+  --glass-panel-bg: hsla(0, 0%, 100%, 0.45);
+  --glass-panel-border: hsla(0, 0%, 100%, 0.25);
+  --glass-heavy-bg: hsla(0, 0%, 100%, 0.6);
+  --glass-nav-bg: hsla(0, 0%, 100%, 0.7);
 
-  /* Font families */
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  /* Font families - clean and professional */
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
 
   --radius: 0.75rem;
 }
@@ -37,13 +37,15 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
+  --font-serif: var(--font-display);
 }
 
-/* Background: radiant warm gradient */
+/* Background: image with blur */
 body {
   background: url('/images/background.svg') no-repeat center center fixed;
   background-size: cover;
-  background-color: hsl(var(--background-hsl));
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   font-family: var(--font-body);
   min-height: 100dvh;
   overflow-x: hidden;
@@ -74,15 +76,25 @@ body {
 
 @layer base {
   body {
-    color: #000000;
-  }
-
-  h1, h2, h3, h4, h5, h6, p, span, label, input, select, textarea {
-    font-family: var(--font-display);
+    color: #111111;
+    font-family: var(--font-body);
   }
 
   h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
     font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  p, span, label, input, select, textarea {
+    font-family: var(--font-body);
+  }
+
+  /* Price and numbers - clean and readable */
+  .price, [class*="Price"] {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   /* Footer and any section with class bg-black should have white text */
@@ -121,6 +133,16 @@ body {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  @media (max-width: 1023px) {
+    .glass-nav {
+      background: linear-gradient(180deg, rgba(240, 248, 255, 0.88) 0%, rgba(255, 255, 255, 0.82) 100%);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: 0 4px 30px rgba(135, 180, 255, 0.2);
+      border-bottom: 1px solid rgba(200, 220, 255, 0.35);
+    }
   }
 
   /* Legacy glass (keep for any remaining components) */
@@ -186,10 +208,36 @@ body {
     100% { transform: translateX(-50%); }
   }
 
-  .marquee {
+  .animate-marquee {
     display: flex;
     width: max-content;
-    animation: marquee 18s linear infinite;
+    animation: marquee 16s linear infinite;
+  }
+
+  .animate-marquee:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes rainbowMove {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+
+  @keyframes rainbowBorder {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .animate-rainbow-border {
+    animation: rainbowBorder 3s linear infinite;
+  }
+
+  @keyframes ping {
+    75%, 100% { transform: scale(1.8); opacity: 0; }
+  }
+
+  .ping {
+    animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
 
   @keyframes float {
@@ -894,6 +942,26 @@ body {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Custom scrollbar for tables */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e5e5 transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #d4d4d4;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #a3a3a3;
 }
 
 /* Toast Notification Animations */
