@@ -146,26 +146,24 @@ export function ProductQuickViewModal({
     <AnimatePresence>
       {product ? (
         <motion.div
-          className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center backdrop-blur-lg"
+          className="fixed inset-0 z-[999] flex items-center justify-center pointer-events-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           role="dialog"
           aria-modal="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) onClose();
-          }}
         >
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-lg pointer-events-auto z-0" onClick={onClose} />
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative mx-auto w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col md:flex-row"
+            className="relative mx-auto w-[95%] max-w-4xl max-h-[85vh] rounded-2xl bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col md:flex-row pointer-events-auto overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Image Gallery Side */}
-            <div className="md:w-1/2 relative bg-white p-4 md:p-6 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0">
+            <div className="md:w-1/2 relative bg-white p-3 md:p-5 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0 max-h-[35vh] md:max-h-[85vh] overflow-hidden">
               <div className="relative w-full aspect-square md:aspect-auto md:h-full max-h-[300px] md:max-h-none rounded-[1.5rem] md:rounded-[2rem] overflow-hidden group cursor-zoom-in" onClick={() => setIsEnlarged(true)}>
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -237,10 +235,10 @@ export function ProductQuickViewModal({
                 <X className="h-5 w-5" />
               </button>
 
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6 overflow-y-auto max-h-[50vh] md:max-h-[85vh]">
                 <div>
                   <div className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-black/20 mb-1 md:mb-2">{brandName}</div>
-                  <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-black leading-tight">
+                  <h2 className="text-lg md:text-2xl font-bold tracking-tight text-black leading-tight">
                     {product.name}
                   </h2>
                   <div className="mt-2 flex flex-wrap gap-2">
