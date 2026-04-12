@@ -61,9 +61,9 @@ export function HomeProductCard({
     : product.brand?.name || "Shafan Global";
 
   return (
-    <div className={`el-wrapper group ${compact ? 'w-full' : 'w-full'} bg-white shadow-lg hover:shadow-2xl active:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-[280px] sm:h-[300px] md:h-[320px] lg:h-[340px]`}>
+    <div className={`el-wrapper group ${compact ? 'w-[160px]' : 'w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]'} mx-auto bg-white shadow-lg hover:shadow-2xl active:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col`}>
       {/* Box Up - Image Section */}
-      <div className="box-up relative overflow-hidden h-[140px] sm:h-[160px] md:h-[180px] lg:h-[200px] w-full bg-gray-50 flex-shrink-0">
+      <div className="box-up relative overflow-hidden aspect-square w-full bg-gray-50 flex-shrink-0 p-4">
         <button
           type="button"
           onClick={() => onQuickView(product)}
@@ -133,7 +133,7 @@ export function HomeProductCard({
       </div>
 
       {/* Box Down - Info Section */}
-      <div className="box-down relative overflow-hidden bg-white p-2 sm:p-3 flex flex-col flex-1 min-h-0">
+      <div className="box-down relative overflow-hidden bg-white p-3 sm:p-4 flex flex-col flex-1">
         {/* Price - Always Visible - Above Title */}
         <div className="flex items-baseline gap-1 sm:gap-2 mb-1.5 sm:mb-2 justify-start flex-shrink-0">
           <Price

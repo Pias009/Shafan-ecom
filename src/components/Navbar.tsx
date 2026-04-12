@@ -412,7 +412,18 @@ export function Navbar() {
                 transition: { delay: 0.1 }
               }}
               transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute inset-0 bg-white shadow-2xl"
+              className="absolute inset-0"
+              style={{
+                background: "rgba(255, 255, 255, 0.98)",
+                backdropFilter: "blur(30px) saturate(150%)",
+                WebkitBackdropFilter: "blur(30px) saturate(150%)",
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100vh",
+                zIndex: 9998,
+              }}
             >
               {/* Close button */}
               <button
@@ -447,8 +458,8 @@ export function Navbar() {
                   </button>
                 </div>
 
-                {/* Settings row */}
-                <div className="flex items-center gap-4 py-2">
+                {/* Settings row - horizontal on mobile */}
+                <div className="flex items-center gap-2 py-2">
                   <LanguageSelector />
                   <CurrencySelector />
                 </div>
@@ -456,18 +467,24 @@ export function Navbar() {
                 {/* Divider */}
                 <div className="w-32 h-px bg-black/10" />
 
-                {/* Navigation links - centered */}
-                <nav className="flex flex-col items-center gap-3">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="w-full text-center px-8 py-3 text-base font-bold tracking-widest rounded-full transition-colors text-black hover:bg-black/5"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
+                {/* Main links - stacked */}
+                <nav className="flex flex-col items-center gap-2">
+                  <Link href="/" onClick={() => setMobileOpen(false)} className="text-center px-8 py-3 text-base font-bold tracking-widest rounded-full transition-colors text-black hover:bg-black/5">Home</Link>
+                  <Link href="/products" onClick={() => setMobileOpen(false)} className="text-center px-8 py-3 text-base font-bold tracking-widest rounded-full transition-colors text-black hover:bg-black/5">Products</Link>
+                  <Link href="/brands" onClick={() => setMobileOpen(false)} className="text-center px-8 py-3 text-base font-bold tracking-widest rounded-full transition-colors text-black hover:bg-black/5">Brands</Link>
+                </nav>
+
+                {/* Categories - 2 columns for Skin, Hair, Body, Fragrances */}
+                <nav className="grid grid-cols-2 gap-2 w-full max-w-xs">
+                  <Link href="/products?category=Skin+Care" onClick={() => setMobileOpen(false)} className="text-center px-3 py-2 text-sm font-semibold tracking-wide rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 transition-colors">Skin Care</Link>
+                  <Link href="/products?category=Hair+Care" onClick={() => setMobileOpen(false)} className="text-center px-3 py-2 text-sm font-semibold tracking-wide rounded-full bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 transition-colors">Hair Care</Link>
+                  <Link href="/products?category=Body+Care" onClick={() => setMobileOpen(false)} className="text-center px-3 py-2 text-sm font-semibold tracking-wide rounded-full bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors">Body Care</Link>
+                  <Link href="/products?category=Fragrances" onClick={() => setMobileOpen(false)} className="text-center px-3 py-2 text-sm font-semibold tracking-wide rounded-full bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition-colors">Fragrances</Link>
+                </nav>
+
+                {/* Offers */}
+                <nav className="flex flex-col items-center gap-2">
+                  <Link href="/offers" onClick={() => setMobileOpen(false)} className="text-center px-8 py-3 text-base font-bold tracking-widest rounded-full transition-colors text-black hover:bg-black/5">🎉 Offers</Link>
                 </nav>
 
                 {/* Divider */}

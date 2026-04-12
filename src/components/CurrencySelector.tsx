@@ -1,7 +1,7 @@
 "use client";
 
 import { useCountryStore } from "@/lib/country-store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const CURRENCY_LIST = [
   { code: "KWD", name: "Kuwait", flag: "🇰🇼" },
@@ -15,8 +15,18 @@ const CURRENCY_LIST = [
 export function CurrencySelector() {
   const { selectedCurrency, setCurrency } = useCountryStore();
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const current = CURRENCY_LIST.find(c => c.code === selectedCurrency) || CURRENCY_LIST[0];
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div className="relative">
@@ -29,7 +39,10 @@ export function CurrencySelector() {
       </button>
       
       {open && (
-        <div className="absolute top-full right-0 mt-2 w-48 glass-panel-heavy rounded-xl p-2 shadow-xl z-50">
+        <div 
+          className="absolute top-full mt-2 w-48 glass-panel-heavy rounded-xl p-2 shadow-xl z-50"
+          style={isMobile ? { left: '50%', transform: 'translateX(-50%)' } : { right: 0 }}
+        >
           {CURRENCY_LIST.map((currency) => (
             <button
               key={currency.code}

@@ -1,13 +1,23 @@
 "use client";
 
 import { useLanguageStore, SUPPORTED_LANGUAGES, LanguageCode } from "@/lib/language-store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function LanguageSelector() {
   const { currentLanguage, setLanguage } = useLanguageStore();
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const current = SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage.code) || SUPPORTED_LANGUAGES[0];
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div className="relative">
@@ -20,7 +30,10 @@ export function LanguageSelector() {
       </button>
       
       {open && (
-        <div className="absolute top-full right-0 mt-2 w-40 glass-panel-heavy rounded-xl p-2 shadow-xl z-50">
+        <div 
+          className="absolute top-full mt-2 w-40 glass-panel-heavy rounded-xl p-2 shadow-xl z-50"
+          style={isMobile ? { left: '50%', transform: 'translateX(-50%)' } : { right: 0 }}
+        >
           {SUPPORTED_LANGUAGES.map((lang) => (
             <button
               key={lang.code}
