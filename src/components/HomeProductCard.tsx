@@ -61,7 +61,7 @@ export function HomeProductCard({
     : product.brand?.name || "Shafan Global";
 
   return (
-    <div className={`el-wrapper group ${compact ? 'w-[140px]' : 'w-[160px] sm:w-[180px] md:w-[200px] lg:w-[220px]'} mx-auto bg-white shadow-lg hover:shadow-2xl active:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-[280px] sm:h-[300px] md:h-[320px] lg:h-[340px]`}>
+    <div className={`el-wrapper group ${compact ? 'w-full' : 'w-full'} bg-white shadow-lg hover:shadow-2xl active:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-[280px] sm:h-[300px] md:h-[320px] lg:h-[340px]`}>
       {/* Box Up - Image Section */}
       <div className="box-up relative overflow-hidden h-[140px] sm:h-[160px] md:h-[180px] lg:h-[200px] w-full bg-gray-50 flex-shrink-0">
         <button
@@ -73,8 +73,8 @@ export function HomeProductCard({
             src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}
             alt={product.name}
             fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="img object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40 active:blur-[4px] active:opacity-40"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 25vw"
+            className="img object-contain transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40 active:blur-[4px] active:opacity-40"
           />
 
           {/* Badges */}
