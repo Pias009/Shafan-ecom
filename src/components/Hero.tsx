@@ -202,7 +202,7 @@ function Marquee() {
 
 function AnimatedBorder({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative group">
+    <div className="relative group overflow-hidden">
       {/* Subtle glowing border - white/silver light effect */}
       <div className="absolute -inset-0.5 rounded-[1.75rem] sm:rounded-[2.25rem] md:rounded-[2.75rem] lg:rounded-[3.25rem] opacity-30 blur-sm"
            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.3), rgba(255,255,255,0.6))" }} />
@@ -211,7 +211,7 @@ function AnimatedBorder({ children }: { children: React.ReactNode }) {
       <div className="absolute inset-0 rounded-[1.75rem] sm:rounded-[2.25rem] md:rounded-[2.75rem] lg:rounded-[3.25rem] border border-white/50" />
       
       {/* Inner content */}
-      <div className="relative">
+      <div className="relative overflow-hidden">
         {children}
       </div>
     </div>
@@ -220,8 +220,8 @@ function AnimatedBorder({ children }: { children: React.ReactNode }) {
 
 export function Hero() {
   return (
-    <section className="flex flex-col items-center justify-center px-3 sm:px-5 md:px-6 pt-10 sm:pt-14 md:pt-20 pb-8 md:pb-16">
-      <div className="max-w-7xl w-full mx-auto space-y-3 md:space-y-4">
+    <section className="flex flex-col items-center justify-center px-3 sm:px-5 md:px-6 pt-10 sm:pt-14 md:pt-20 pb-8 md:pb-16 overflow-x-hidden">
+      <div className="max-w-7xl w-full mx-auto space-y-3 md:space-y-4 overflow-x-hidden">
         <AnimatedBorder>
           <motion.div
             initial={{ opacity: 0, scale: 0.85 }}
