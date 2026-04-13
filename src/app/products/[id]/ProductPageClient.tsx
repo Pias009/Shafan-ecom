@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Maximize2, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Maximize2, ArrowLeft, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Price } from "@/components/Price";
@@ -231,6 +231,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   <span className="px-2 sm:px-3 py-1 bg-red-500 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-full">Hot</span>
                 )}
               </div>
+<<<<<<< HEAD
               <div className="flex items-center gap-2 text-black/30">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
@@ -239,6 +240,12 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest">({product.ratingCount || 0} reviews)</span>
               </div>
+=======
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tighter text-black leading-tight">
+                {product.name}
+              </h1>
+              
+>>>>>>> 598ede5fb3175f90e4a2fb288ad69f1cde56222d
             </div>
 
             <div className="flex items-baseline gap-2 sm:gap-4">
