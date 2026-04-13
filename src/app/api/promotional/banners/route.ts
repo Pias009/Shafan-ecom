@@ -5,13 +5,11 @@ export const dynamic = "force-dynamic";
 
 // GET /api/promotional/banners - Get active banners for public display
 export async function GET(req: NextRequest) {
-  console.log("[DEBUG] GET /api/promotional/banners: Public request received");
   try {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "10");
     const priority = searchParams.get("priority"); // Optional: filter by priority
 
-    console.log("[DEBUG] GET: Query params:", { limit, priority });
 
     // Build where clause for active banners
     const where: any = {
@@ -23,14 +21,11 @@ export async function GET(req: NextRequest) {
       const priorityNum = parseInt(priority);
       if (!isNaN(priorityNum) && priorityNum >= 1 && priorityNum <= 3) {
         where.priority = priorityNum;
-        console.log("[DEBUG] GET: Filtering by priority:", priorityNum);
       }
     }
 
-    console.log("[DEBUG] GET: Where clause:", JSON.stringify(where, null, 2));
 
     // Get active banners
-    console.log("[DEBUG] GET: Querying database for active banners...");
     const banners = await prisma.enhancedOfferBanner.findMany({
       where,
       orderBy: [
@@ -57,7 +52,6 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    console.log("[DEBUG] GET: Found", banners.length, "active banners");
 
     // Increment click count for analytics (simulated - would be done on actual click)
     // This is just for tracking impressions/views

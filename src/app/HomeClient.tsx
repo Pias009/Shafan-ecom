@@ -49,7 +49,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
 
   useEffect(() => {
     setMounted(true);
-    
+
     async function detectCountry() {
       try {
         const getCookie = (name: string) => {
@@ -93,7 +93,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
 
         setCountry("KW");
         setCurrency("KWD");
-        
+
       } catch (err) {
         console.debug("Geo sync skipped", err);
       }
@@ -113,7 +113,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         console.error('Error fetching banners:', error);
       }
     }
-    
+
     fetchBanners();
   }, []);
 
@@ -134,7 +134,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
     const query = q.trim().toLowerCase();
     return products.filter((p) => {
       if (!hasValidPrice(p, selectedCountry)) return false;
-      
+
       const price = p.price || 0;
       if (price > maxPrice) return false;
       if (category !== "All" && p.category?.name !== category) return false;
@@ -149,12 +149,12 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   }, [q, category, brand, maxPrice, products, selectedCountry, selectedCurrency]);
 
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
-  
+
   // Filter newArrivals based on country support
   const filteredNewArrivals = useMemo(() => {
     return newArrivals.filter((p) => hasValidPrice(p, selectedCountry));
   }, [newArrivals, selectedCountry, selectedCurrency]);
-  
+
   // Filter hot products based on country support
   const filteredHot = useMemo(() => {
     return hot.filter((p) => hasValidPrice(p, selectedCountry));
@@ -200,11 +200,11 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          items: [{ 
-            productId: product.id, 
+        body: JSON.stringify({
+          items: [{
+            productId: product.id,
             quantity: 1,
-            unitPrice 
+            unitPrice
           }],
           country: selectedCountry
         }),
@@ -244,211 +244,210 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
 
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 pb-20 flex-1 overflow-x-hidden">
 
-            {/* New Arrivals Section */}
-            {filteredNewArrivals.length > 0 && (
-              <section className="py-12 md:py-20 w-full overflow-hidden">
-                <div className="text-center mb-8 md:mb-12 px-4 sm:px-6 md:px-0">
-                  <div className="relative z-10 w-full">
-                    <div className="inline-flex items-center gap-2 glass-panel rounded-full px-3 sm:px-5 py-2 mb-4">
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW ARRIVALS</span>
-                    </div>
-                    <h2 className="font-display text-lg sm:text-xl md:text-4xl lg:text-5xl text-black mt-2 font-black leading-tight break-words">Fresh From The Shelf</h2>
-                    <p className="font-body text-black/70 mt-3 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-4 sm:px-0">Discover our latest additions, just arrived</p>
-                  </div>
+        {/* New Arrivals Section */}
+        {filteredNewArrivals.length > 0 && (
+          <section className="py-12 md:py-20 w-full overflow-hidden">
+            <div className="text-center mb-8 md:mb-12 px-4 sm:px-6 md:px-0">
+              <div className="relative z-10 w-full">
+                <div className="inline-flex items-center gap-2 glass-panel rounded-full px-3 sm:px-5 py-2 mb-4">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW ARRIVALS</span>
                 </div>
+                <h2 className="font-display text-lg sm:text-xl md:text-4xl lg:text-5xl text-black mt-2 font-black leading-tight break-words">Fresh From The Shelf</h2>
+                <p className="font-body text-black/70 mt-3 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-4 sm:px-0">Discover our latest additions, just arrived</p>
+              </div>
+            </div>
 
-                {/* 4 Products in Column Layout */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 px-4 sm:px-6 md:px-0 w-full">
-                  {filteredNewArrivals.slice(0, 4).map((product, index) => (
-                    <HomeProductCard
-                      key={product.id}
-                      product={{
-                        ...product,
-                        price: product.regularPrice || product.regularPriceCents || product.price || product.priceCents || 0,
-                        discountPrice: product.salePrice || product.salePriceCents || undefined,
-                        imageUrl: product.mainImage,
-                        brand: product.brand?.name,
-                        averageRating: product.averageRating,
-                        ratingCount: product.ratingCount,
-                        stockQuantity: product.stockQuantity,
-                        totalSales: product.totalSales,
-                        countryPrices: product.countryPrices,
-                      }}
-                      onQuickView={(pp) => setQuickView(pp)}
-                      onAddToCart={(pp) => addToCart(pp)}
-                      onOrderNow={(pp) => orderNow(pp)}
+            {/* 4 Products in Column Layout */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6 px-4 sm:px-6 md:px-0 w-full">
+              {filteredNewArrivals.slice(0, 4).map((product, index) => (
+                <HomeProductCard
+                  key={product.id}
+                  product={{
+                    ...product,
+                    price: product.regularPrice || product.regularPriceCents || product.price || product.priceCents || 0,
+                    discountPrice: product.salePrice || product.salePriceCents || undefined,
+                    imageUrl: product.mainImage,
+                    brand: product.brand?.name,
+                    averageRating: product.averageRating,
+                    ratingCount: product.ratingCount,
+                    stockQuantity: product.stockQuantity,
+                    totalSales: product.totalSales,
+                    countryPrices: product.countryPrices,
+                  }}
+                  onQuickView={(pp) => setQuickView(pp)}
+                  onAddToCart={(pp) => addToCart(pp)}
+                  onOrderNow={(pp) => orderNow(pp)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {filteredHot.length > 0 && (
+          <TrendingNowSlider
+            products={filteredHot}
+            onQuickView={(pp) => setQuickView(pp)}
+            onAddToCart={(pp) => addToCart(pp)}
+            onOrderNow={(pp) => orderNow(pp)}
+          />
+        )}
+
+
+
+        {/* All Products + Filters */}
+        <section id="products" className="pt-12 md:pt-24">
+          <div className="text-center mb-8 md:mb-12">
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW</span>
+              </div>
+              <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black mt-2 font-black">New Arrivals</h2>
+              <p className="font-body text-black/70 mt-3 text-base sm:text-lg max-w-2xl mx-auto px-4">Fresh additions to our collection</p>
+            </div>
+          </div>
+
+          {/* Filter Row */}
+          <div className="flex justify-center mb-8 md:mb-10">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${showFilters ? "bg-black text-white" : "glass-panel text-black hover:bg-black hover:text-white"
+                }`}
+            >
+              {showFilters ? <X size={14} /> : <Filter size={14} />}
+              {showFilters ? "Hide Filters" : "Show Filters"}
+            </button>
+          </div>
+
+          {/* Filter bar */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, y: -20, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -20, height: 0 }}
+                className="overflow-hidden mb-12"
+              >
+                <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 items-stretch md:items-end shadow-lg border border-black/5">
+                  <div className="col-span-2 md:col-span-1">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                      Search
+                    </label>
+                    <input
+                      type="text"
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder="Search products…"
+                      className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none placeholder:text-black/20"
                     />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {filteredHot.length > 0 && (
-              <TrendingNowSlider
-                products={filteredHot}
-                onQuickView={(pp) => setQuickView(pp)}
-                onAddToCart={(pp) => addToCart(pp)}
-                onOrderNow={(pp) => orderNow(pp)}
-              />
-            )}
-
-
-
-            {/* All Products + Filters */}
-            <section id="products" className="pt-12 md:pt-24">
-              <div className="text-center mb-8 md:mb-12">
-                <div className="relative z-10">
-                  <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW</span>
                   </div>
-                  <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black mt-2 font-black">New Arrivals</h2>
-                  <p className="font-body text-black/70 mt-3 text-base sm:text-lg max-w-2xl mx-auto px-4">Fresh additions to our collection</p>
-                </div>
-              </div>
 
-              {/* Filter Row */}
-              <div className="flex justify-center mb-8 md:mb-10">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
-                    showFilters ? "bg-black text-white" : "glass-panel text-black hover:bg-black hover:text-white"
-                  }`}
-                >
-                  {showFilters ? <X size={14} /> : <Filter size={14} />}
-                  {showFilters ? "Hide Filters" : "Show Filters"}
-                </button>
-              </div>
-
-              {/* Filter bar */}
-              <AnimatePresence>
-                {showFilters && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -20, height: 0 }}
-                    animate={{ opacity: 1, y: 0, height: "auto" }}
-                    exit={{ opacity: 0, y: -20, height: 0 }}
-                    className="overflow-hidden mb-12"
-                  >
-                    <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 items-stretch md:items-end shadow-lg border border-black/5">
-                      <div className="col-span-2 md:col-span-1">
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
-                          Search
-                        </label>
-                        <input
-                          type="text"
-                          value={q}
-                          onChange={(e) => setQ(e.target.value)}
-                          placeholder="Search products…"
-                          className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none placeholder:text-black/20"
-                        />
-                      </div>
-
-                      <div className="w-full md:w-[150px]">
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
-                          Category
-                        </label>
-                        <select
-                          value={category}
-                          onChange={(e) => setCategory(e.target.value)}
-                          className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
-                        >
-                          <option value="All">All Categories</option>
-                          {categories.filter(c => c !== "All").map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="w-full md:w-[150px]">
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
-                          Brand
-                        </label>
-                        <select
-                          value={brand}
-                          onChange={(e) => setBrand(e.target.value)}
-                          className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
-                        >
-                          <option value="All">All Brands</option>
-                          {brands.filter(b => b !== "All").map((b) => (
-                            <option key={b} value={b}>{b}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="w-full md:w-[220px]">
-                        <div className="flex justify-between items-center mb-1.5 px-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-black/30">
-                            Max Price
-                          </label>
-                          <Price amount={maxPrice} className="text-[10px] font-black" />
-                        </div>
-                        <div className="px-2 h-10 md:h-12 flex items-center">
-                          <input
-                            type="range"
-                            min="0"
-                            max="5000"
-                            step="10"
-                            value={maxPrice}
-                            onChange={(e) => setMaxPrice(Number(e.target.value))}
-                            className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="w-full flex justify-center overflow-x-hidden">
-                <div className="grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 w-full max-w-7xl px-3 sm:px-4">
-                  {filtered.slice(0, 10).map((p, idx) => (
-                    <HomeProductCard
-                      key={p.id}
-                      product={{
-                        ...p,
-                        price: p.regularPrice || p.regularPriceCents || p.price || p.priceCents || 0,
-                        discountPrice: p.salePrice || p.salePriceCents || undefined,
-                        imageUrl: p.mainImage,
-                        brand: p.brand?.name,
-                        averageRating: p.averageRating,
-                        ratingCount: p.ratingCount,
-                        stockQuantity: p.stockQuantity,
-                        totalSales: p.totalSales,
-                        countryPrices: p.countryPrices,
-                      }}
-                      onQuickView={(pp) => setQuickView(pp)}
-                      onAddToCart={(pp) => addToCart(pp)}
-                      onOrderNow={(pp) => orderNow(pp)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {filtered.length > 10 && (
-                <div className="mt-12 flex justify-center">
-                  <button
-                    onClick={() => router.push("/products")}
-                    className="group flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.02]"
-                  >
-                    <motion.div 
-                      className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/80 text-black shadow-md border border-black/10"
-                      whileHover={{ scale: 1.1, x: 4 }}
-                      whileTap={{ scale: 0.95 }}
+                  <div className="w-full md:w-[150px]">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                      Category
+                    </label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
                     >
-                      <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-                    </motion.div>
-                    <span className="font-semibold text-xs uppercase tracking-widest text-black/50 group-hover:text-black transition-colors">
-                      See All Products
-                    </span>
-                  </button>
-                </div>
-              )}
+                      <option value="All">All Categories</option>
+                      {categories.filter(c => c !== "All").map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              {filtered.length === 0 && (
-                <p className="text-center font-bold text-black/50 mt-12 italic">
-                  No products found. Try adjusting your filters.
-                </p>
-              )}
-            </section>
+                  <div className="w-full md:w-[150px]">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                      Brand
+                    </label>
+                    <select
+                      value={brand}
+                      onChange={(e) => setBrand(e.target.value)}
+                      className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                    >
+                      <option value="All">All Brands</option>
+                      {brands.filter(b => b !== "All").map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="w-full md:w-[220px]">
+                    <div className="flex justify-between items-center mb-1.5 px-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-black/30">
+                        Max Price
+                      </label>
+                      <Price amount={maxPrice} className="text-[10px] font-black" />
+                    </div>
+                    <div className="px-2 h-10 md:h-12 flex items-center">
+                      <input
+                        type="range"
+                        min="0"
+                        max="5000"
+                        step="10"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(Number(e.target.value))}
+                        className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="w-full flex justify-center overflow-x-hidden">
+            <div className="grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 w-full max-w-7xl px-3 sm:px-4">
+              {filtered.slice(0, 10).map((p, idx) => (
+                <HomeProductCard
+                  key={p.id}
+                  product={{
+                    ...p,
+                    price: p.regularPrice || p.regularPriceCents || p.price || p.priceCents || 0,
+                    discountPrice: p.salePrice || p.salePriceCents || undefined,
+                    imageUrl: p.mainImage,
+                    brand: p.brand?.name,
+                    averageRating: p.averageRating,
+                    ratingCount: p.ratingCount,
+                    stockQuantity: p.stockQuantity,
+                    totalSales: p.totalSales,
+                    countryPrices: p.countryPrices,
+                  }}
+                  onQuickView={(pp) => setQuickView(pp)}
+                  onAddToCart={(pp) => addToCart(pp)}
+                  onOrderNow={(pp) => orderNow(pp)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {filtered.length > 10 && (
+            <div className="mt-12 flex justify-center">
+              <button
+                onClick={() => router.push("/products")}
+                className="group flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.02]"
+              >
+                <motion.div
+                  className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/80 text-black shadow-md border border-black/10"
+                  whileHover={{ scale: 1.1, x: 4 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
+                </motion.div>
+                <span className="font-semibold text-xs uppercase tracking-widest text-black/50 group-hover:text-black transition-colors">
+                  See All Products
+                </span>
+              </button>
+            </div>
+          )}
+
+          {filtered.length === 0 && (
+            <p className="text-center font-bold text-black/50 mt-12 italic">
+              No products found. Try adjusting your filters.
+            </p>
+          )}
+        </section>
       </main>
 
       {/* Blog Showcase Section */}

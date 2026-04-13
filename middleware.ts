@@ -5,102 +5,77 @@ const SECRET_PATH = process.env.SECRET_LOCK_PATH || `/master-${Math.random().toS
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone()
   const pathname = url.pathname
-  const ipAddress = req.headers.get('x-forwarded-for') ||
-                   req.headers.get('x-real-ip') ||
-                   'unknown'
-  const userAgent = req.headers.get('user-agent')
 
-  const isSecretPath = pathname.startsWith(SECRET_PATH)
-  const isStaticAsset = pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)
+  // 1. FAST EXCLUSIONS
+  const isStaticAsset = pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|mp4|webm)$/)
   const isApi = pathname.startsWith('/api/')
+  const isNextInternal = pathname.startsWith('/_next/')
+  
+  if (isStaticAsset || isNextInternal) return NextResponse.next()
 
-  // --- WEBSITE LOCK ENFORCEMENT (Edge-safe) ---
-  if (!isSecretPath && !isStaticAsset) {
-    try {
-      // Use fetch to check lock status from API instead of direct DB access
-      const lockCheckRes = await fetch(`${req.nextUrl.origin}/api/lock/status`, {
-        headers: { 'x-internal': 'true' },
-        cache: 'no-store'
-      });
-      
-      if (lockCheckRes.ok) {
-        const lockData = await lockCheckRes.json();
-        if (lockData.isLocked) {
-          if (isApi) {
-            return new NextResponse(
-              JSON.stringify({
-                error: 'Website locked',
-                message: 'Website is currently locked. Please contact the Mastermind for assistance.'
-              }),
-              {
-                status: 503,
-                headers: { 'Content-Type': 'application/json' }
-              }
-            )
-          } else {
-            return new NextResponse(getLockedPage(), {
-              status: 503,
-              headers: { 'Content-Type': 'text/html' }
-            })
-          }
-        }
-      }
-    } catch (error) {
-      // If lock check fails, allow request
-      console.error('Failed to check lock state:', error)
-    }
-  }
-
-  // --- LOG SECRET ACCESS (Edge-safe) ---
+  // 2. SECRET PATH HANDLING
+  const isSecretPath = pathname.startsWith(SECRET_PATH)
   if (isSecretPath) {
+    // Fire and forget logging
     fetch(`${req.nextUrl.origin}/api/lock/log-access`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: pathname, ipAddress, userAgent, success: false, reason: 'Access attempt' })
+      body: JSON.stringify({ 
+        path: pathname, 
+        ipAddress: req.headers.get('x-forwarded-for') || 'unknown',
+        userAgent: req.headers.get('user-agent'),
+        reason: 'Access attempt' 
+      })
     }).catch(() => {});
   }
 
-  // --- ADMIN PANEL PROTECTION ---
+  // 3. ADMIN PROTECTION
   if (pathname.startsWith('/ueadmin')) {
     const activeAdmin = process.env.ACTIVE_ADMIN_PANELS === 'true'
-    if (!activeAdmin) {
-      console.log('MIDDLEWARE: Admin panels deactivated, ACTIVE_ADMIN_PANELS=', process.env.ACTIVE_ADMIN_PANELS)
-      return new NextResponse("Admin Panels are currently deactivated.", { status: 403 })
-    }
+    if (!activeAdmin) return new NextResponse("Admin Panels are currently deactivated.", { status: 403 })
 
     const isAuthPage = pathname.startsWith('/ueadmin/login') ||
                        pathname.startsWith('/ueadmin/verify') ||
                        pathname.startsWith('/ueadmin/setup')
 
     if (!isAuthPage) {
-      // Check admin session cookie
-      const adminCookie = req.cookies.get('admin-session');
-      
-      console.log('MIDDLEWARE: Admin route accessed', {
-        pathname,
-        hasAdminCookie: !!adminCookie,
-      })
-      
+      const adminCookie = req.cookies.get('admin-session')
       if (!adminCookie) {
-        console.log('MIDDLEWARE: No admin cookie found, redirecting to login')
         url.pathname = '/ueadmin/login'
         return NextResponse.redirect(url)
       }
-      
-      console.log('MIDDLEWARE: Admin access granted')
     }
   }
 
-  // --- STORE RESOLUTION LOGIC ---
+  // 4. WEBSITE LOCK ENFORCEMENT
+  // Only check lock for non-API page requests. Add caching.
+  if (!isSecretPath && !isApi && !pathname.includes('ueadmin')) {
+    try {
+      const lockCheckRes = await fetch(`${req.nextUrl.origin}/api/lock/status`, {
+        headers: { 'x-internal': 'true' },
+        next: { revalidate: 60 } // Cache for 60 seconds for speed
+      });
+      
+      if (lockCheckRes.ok) {
+        const lockData = await lockCheckRes.json();
+        if (lockData.isLocked) {
+          return new NextResponse(getLockedPage(), {
+            status: 503,
+            headers: { 'Content-Type': 'text/html' }
+          })
+        }
+      }
+    } catch (error) {}
+  }
+
+  // 5. STORE RESOLUTION
   const cookies = req.cookies
   const hasStore = cookies.get('store_code')
   
   if (hasStore) return NextResponse.next()
 
-  const storeCode = 'UAE'
-
   const res = NextResponse.next()
-  res.cookies.set('store_code', storeCode, { path: '/' })
+  res.cookies.set('store_code', 'UAE', { path: '/', maxAge: 60 * 60 * 24 * 30 })
   return res
 }
 
@@ -258,16 +233,7 @@ export function getSecretPath(): string {
 // Matcher configuration for Next.js middleware
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth.js endpoints)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public (public files)
-     */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)',
-    // Specifically protect admin routes
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public|images|icons|fonts).*)',
     '/ueadmin/:path*',
   ],
 };

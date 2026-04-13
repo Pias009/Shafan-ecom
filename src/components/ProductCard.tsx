@@ -61,7 +61,7 @@ function ProductCard({
   // Wait for hydration - return placeholder to match server render
   if (!mounted || !hasHydrated) {
     return (
-      <div className="bg-white shadow-lg rounded-2xl overflow-hidden w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] mx-auto">
+      <div className="bg-white shadow-lg rounded-2xl overflow-hidden w-full mx-auto">
         <div className="aspect-square bg-[#F9FAFB] p-4 animate-pulse" />
         <div className="p-4 space-y-2">
           <div className="h-4 bg-gray-200 rounded animate-pulse" />
@@ -114,9 +114,9 @@ function ProductCard({
   };
 
   return (
-    <div className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden ${compact ? 'w-[160px]' : 'w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]'} mx-auto flex flex-col`}>
+    <div className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden w-full h-full flex flex-col`}>
       {/* Image Section */}
-      <div className="relative overflow-hidden aspect-square w-full bg-[#F9FAFB] flex-shrink-0 p-4">
+      <div className="relative overflow-hidden aspect-square w-full bg-[#F9FAFB] flex-shrink-0 p-2 sm:p-4">
         <button
           type="button"
           onClick={() => onQuickView(product)}
@@ -126,7 +126,7 @@ function ProductCard({
             src={isValidImageUrl(product.imageUrl) ? getOptimizedUrl(product.imageUrl, 400) : "/placeholder-product.png"}
             alt={product.name}
             fill
-            sizes="(max-width: 768px) 100vw, 33vw"
+            sizes="(max-width: 768px) 50vw, 25vw"
             className="object-contain transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
             priority={false}
           />
@@ -163,12 +163,12 @@ function ProductCard({
         </button>
 
         {/* Hover Background */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
+        <div className="h-bg absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
 
         {/* Cart Overlay - Shows on Hover */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col items-center justify-center">
           {/* Price - Shows on Hover */}
-          <div className="mb-4 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
+          <div className="mb-4 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 text-center">
             <Price amount={price} showSymbolSmall countryPrices={product.countryPrices} />
           </div>
           
@@ -200,21 +200,21 @@ function ProductCard({
       </div>
 
       {/* Info Section */}
-      <div className="p-3 sm:p-4 bg-white flex flex-col flex-1 min-h-0">
+      <div className="p-2 sm:p-4 bg-white flex flex-col flex-1 min-h-0">
         {/* Price and Stock Info Row */}
         <div className="flex items-center justify-between mb-2 flex-shrink-0">
           <div className="flex items-baseline gap-2">
             <Price amount={price} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} />
             {hasDiscount && (
-              <Price amount={product.discountPrice || countryPrice} className="text-xs text-red-500 line-through font-bold" countryPrices={product.countryPrices} />
+              <Price amount={product.discountPrice || countryPrice} className="text-[10px] text-red-500 line-through font-bold" countryPrices={product.countryPrices} />
             )}
           </div>
           
           {/* Stock Status - Moved to top right */}
           {product.stockQuantity !== undefined && (
-            <div className="flex items-center gap-1.5 bg-gray-50/50 px-2 py-1 rounded-lg">
+            <div className="flex items-center gap-1 bg-gray-50/50 px-1.5 py-0.5 rounded-lg">
               <Package size={10} className={product.stockQuantity > 0 ? "text-emerald-500" : "text-red-500"} />
-              <span className={`text-[9px] sm:text-[10px] font-semibold ${product.stockQuantity > 0 ? "text-emerald-700" : "text-red-600"}`}>
+              <span className={`text-[8px] sm:text-[10px] font-semibold ${product.stockQuantity > 0 ? "text-emerald-700" : "text-red-600"}`}>
                 {product.stockQuantity > 0 ? `${product.stockQuantity}` : t.product.outOfStock}
               </span>
             </div>
@@ -222,7 +222,7 @@ function ProductCard({
         </div>
 
         {/* Product Name */}
-        <h3 className="text-xs sm:text-sm font-semibold text-black leading-tight line-clamp-2 mb-1 overflow-hidden">
+        <h3 className="text-xs sm:text-sm font-semibold text-black leading-tight line-clamp-2 mb-1 overflow-hidden break-words">
           {product.name}
         </h3>
         

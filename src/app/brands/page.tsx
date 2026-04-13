@@ -58,14 +58,14 @@ export default function BrandsPage() {
             <Loader size="lg" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-6">
             {brandsWithCount.map((brand) => (
               <Link
                 key={brand.id}
                 href={`/products?brand=${encodeURIComponent(brand.name)}`}
-                className="group glass-panel-heavy rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl flex flex-col items-center text-center border border-black/5"
+                className="group glass-panel-heavy rounded-2xl p-2 sm:p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl flex flex-col items-center text-center border border-black/5"
               >
-                <div className="w-24 h-24 rounded-full bg-black/5 flex items-center justify-center mb-4 shadow-lg p-2 group-hover:scale-105 transition-transform overflow-hidden">
+                <div className="w-12 h-12 sm:w-24 sm:h-24 rounded-full bg-black/5 flex items-center justify-center mb-2 sm:mb-4 shadow-lg p-1 sm:p-2 group-hover:scale-105 transition-transform overflow-hidden">
                   {brand.image ? (
                     <img
                       src={brand.image}
@@ -73,20 +73,20 @@ export default function BrandsPage() {
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
-                    <span className="font-display text-3xl text-black font-black italic">
+                    <span className="font-display text-xl sm:text-3xl text-black font-black italic">
                       {brand.name[0]}
                     </span>
                   )}
                 </div>
-                <h2 className="font-display text-xl text-black mb-1 font-bold">
+                <h2 className="font-display text-[10px] sm:text-xl text-black mb-0.5 sm:mb-1 font-bold leading-tight">
                   {brand.name}
                 </h2>
-                <p className="font-body text-sm text-black/40 italic leading-relaxed font-medium mb-3 line-clamp-2">
+                <p className="hidden sm:block font-body text-sm text-black/40 italic leading-relaxed font-medium mb-3 line-clamp-2">
                   {brand.tagline}
                 </p>
-                <div className="mt-auto w-full pt-4 border-t border-black/5">
-                  <span className="font-body text-[10px] font-black uppercase tracking-[0.2em] text-black/60">
-                    {brand.productCount} {t.brands.products}
+                <div className="mt-auto w-full pt-1 sm:pt-4 border-t border-black/5">
+                  <span className="font-body text-[8px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] text-black/60">
+                    {brand.productCount} <span className="hidden sm:inline">{t.brands.products}</span>
                   </span>
                 </div>
               </Link>

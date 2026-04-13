@@ -249,7 +249,6 @@ export async function POST(req: Request) {
     const session = await getServerAuthSession();
     const body = await req.json();
     
-    console.log("=== CREATE ORDER REQUEST ===");
     console.log(JSON.stringify(body, null, 2));
     
     const { items, billing, shipping, payment_method, payment_method_title, couponCode, storeCode, country, total: clientTotal, subtotal: clientSubtotal, shippingFee: clientShippingFee, discountAmount: clientDiscount } = body;

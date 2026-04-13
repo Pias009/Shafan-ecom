@@ -89,11 +89,7 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
   }, []);
 
   const handleInputChange = (field: keyof DiscountFormData, value: any) => {
-    if (field === "value" && value === "") {
-      setForm((prev) => ({ ...prev, [field]: 0 }));
-    } else {
-      setForm((prev) => ({ ...prev, [field]: value }));
-    }
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleAddProduct = (productId: string) => {
@@ -280,8 +276,11 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
               min="0"
               max={form.discountType === "PERCENTAGE" ? 100 : undefined}
               step={form.discountType === "PERCENTAGE" ? 1 : 0.01}
-              value={form.value}
-              onChange={(e) => handleInputChange("value", parseFloat(e.target.value))}
+              value={isNaN(form.value) ? "" : form.value}
+              onChange={(e) => {
+                const val = e.target.value === "" ? 0 : parseFloat(e.target.value);
+                handleInputChange("value", val);
+              }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="0"
             />
@@ -334,10 +333,13 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
                   min="0"
                   step="0.01"
                   value={form.countryMaxLimits[country.code] ?? ""}
-                  onChange={(e) => handleInputChange("countryMaxLimits", {
-                    ...form.countryMaxLimits,
-                    [country.code]: e.target.value ? parseFloat(e.target.value) : undefined
-                  })}
+                  onChange={(e) => {
+                    const val = e.target.value === "" ? undefined : parseFloat(e.target.value);
+                    handleInputChange("countryMaxLimits", {
+                      ...form.countryMaxLimits,
+                      [country.code]: val
+                    });
+                  }}
                   className="w-full px-2 py-1.5 text-sm border border-red-300 rounded focus:outline-none focus:ring-1 focus:ring-red-500"
                   placeholder="No cap"
                 />

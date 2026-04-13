@@ -152,10 +152,6 @@ export default function CustomPaymentPage() {
         const code = (orderData.currency || "usd").toUpperCase();
         const multiplier = ["KWD", "BHD", "OMR"].includes(code) ? 1000 : 100;
         const calculatedInteger = Math.round(totalAmount * multiplier);
-        toast.success(
-          `DEBUG: Sending ${calculatedInteger} units to Stripe for price ${totalAmount} ${code}`,
-          { duration: 4000 }
-        );
 
         const stripeRes = await fetch("/api/payments/stripe/create-intent", {
           method: "POST",

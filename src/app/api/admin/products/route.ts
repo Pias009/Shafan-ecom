@@ -200,7 +200,6 @@ export async function POST(req: Request) {
     }
     
     const body = await req.json();
-    console.log("API Request Body:", JSON.stringify(body, null, 2));
     
     // Pre-process to convert string numbers to actual numbers
     const processedBody = { ...body };
@@ -223,8 +222,6 @@ export async function POST(req: Request) {
     
     const parsed = ProductCreateSchema.safeParse(processedBody);
     if (!parsed.success) {
-      console.error("Validation Error Details:", JSON.stringify(parsed.error.issues, null, 2));
-      console.error("Raw body that failed:", JSON.stringify(body, null, 2));
       return new Response(JSON.stringify({
         error: 'Invalid payload',
         details: parsed.error.issues,
@@ -233,7 +230,6 @@ export async function POST(req: Request) {
       }), { status: 400 });
     }
     const data = parsed.data;
-    console.log("Parsed data (validated):", JSON.stringify(data, null, 2));
     
     // Create a copy of data to avoid modifying the validated object
     const productData = { ...data };
@@ -302,44 +298,31 @@ export async function POST(req: Request) {
     let storeId: string | null = null;
     let storeCodeForInventory: string | null = null;
     
-    console.log('[DEBUG] Starting store assignment logic...');
-    console.log('[DEBUG] productData.storeId:', productData.storeId);
-    console.log('[DEBUG] storeAccess.allowedStores:', storeAccess.allowedStores);
-    console.log('[DEBUG] storeAccess.isSuperAdmin:', storeAccess.isSuperAdmin);
     
     if (productData.storeId && productData.storeId !== 'GLOBAL') {
       // If storeId is explicitly provided (and not GLOBAL)
       // Validate that admin has access to the specified store
-      console.log('[DEBUG] Checking access to specified store:', productData.storeId);
       const canAccess = storeAccess.allowedStores.includes(productData.storeId);
       if (!canAccess && !storeAccess.isSuperAdmin) {
-        console.log('[DEBUG] Access denied to store:', productData.storeId);
         return new Response(JSON.stringify({
           error: 'No access to specified store'
         }), { status: 403 });
       }
       
-      console.log('[DEBUG] Looking up store with code:', productData.storeId);
       const store = await prisma.store.findFirst({ where: { code: productData.storeId } });
-      console.log('[DEBUG] Found store:', store);
       if (!store) {
-        console.log('[DEBUG] Store not found with code:', productData.storeId);
         return new Response(JSON.stringify({
           error: 'Specified store not found'
         }), { status: 404 });
       }
       storeId = store.id;
       storeCodeForInventory = productData.storeId;
-      console.log('[DEBUG] Store assigned successfully. storeId:', storeId, 'storeCodeForInventory:', storeCodeForInventory);
     } else {
       // No storeId provided or GLOBAL specified - auto-assign to admin's primary store
-      console.log('[DEBUG] No explicit storeId or GLOBAL specified. Auto-assigning...');
       if (storeAccess.allowedStores.length > 0) {
         // Use the first store from allowedStores (admin's primary store)
         const primaryStoreCode = storeAccess.allowedStores[0];
-        console.log('[DEBUG] Primary store code:', primaryStoreCode);
         const store = await prisma.store.findFirst({ where: { code: primaryStoreCode } });
-        console.log('[DEBUG] Found primary store:', store);
         if (store) {
           storeId = store.id;
           storeCodeForInventory = primaryStoreCode;
@@ -350,23 +333,18 @@ export async function POST(req: Request) {
             console.log(`Note: GLOBAL product request overridden - assigning to ${primaryStoreCode} instead`);
           }
         } else {
-          console.log('[DEBUG] ERROR: Primary store not found in database!');
         }
       } else if (storeAccess.isSuperAdmin) {
         // SUPERADMIN with no store access - assign to UAE as default
-        console.log('[DEBUG] SUPERADMIN with no store access, assigning to UAE...');
         const uaeStore = await prisma.store.findFirst({ where: { code: 'UAE' } });
-        console.log('[DEBUG] Found UAE store:', uaeStore);
         if (uaeStore) {
           storeId = uaeStore.id;
           storeCodeForInventory = 'UAE';
           console.log(`SUPERADMIN product assigned to UAE store as default`);
         } else {
-          console.log('[DEBUG] ERROR: UAE store not found in database!');
         }
       } else {
         // Regular admin with no store access cannot create products
-        console.log('[DEBUG] ERROR: Admin has no store access');
         return new Response(JSON.stringify({
           error: 'Admin has no store access. Cannot create products.'
         }), { status: 403 });
@@ -403,17 +381,14 @@ export async function POST(req: Request) {
       currency: 'USD',
       tags: productData.tags ?? [],
     };
-    console.log('[DEBUG] dbProductData.slug:', dbProductData.slug);
 
     // Use upsert to handle existing products atomically
     // This prevents race conditions and P2002 unique constraint errors
-    console.log('[DEBUG] Upserting product with name:', productData.name);
     const product = await prisma.product.upsert({
       where: { name: productData.name },
       update: dbProductData,
       create: dbProductData,
     });
-    console.log('[DEBUG] Product upserted successfully. Product ID:', product.id);
 
     // Handle product categories (many-to-many)
     // Always delete and recreate relations to ensure consistency
@@ -470,13 +445,10 @@ export async function POST(req: Request) {
     }
 
     // Handle initial store inventory if storeId provided (and not GLOBAL)
-    console.log('[DEBUG] Creating store inventory...');
     if (storeCodeForInventory && storeId) {
-      console.log('[DEBUG] storeCodeForInventory:', storeCodeForInventory, 'storeId:', storeId);
       const store = await prisma.store.findFirst({
         where: { code: storeCodeForInventory }
       });
-      console.log('[DEBUG] Found store for inventory:', store);
       
       if (store) {
         try {
@@ -498,24 +470,18 @@ export async function POST(req: Request) {
               price: productData.price - (productData.discountPrice || 0)
             }
           });
-          console.log('[DEBUG] Store inventory created/updated successfully');
         } catch (inventoryError) {
           console.error('[DEBUG] ERROR creating store inventory:', inventoryError);
           throw inventoryError; // Re-throw to be caught by outer catch block
         }
       } else {
-        console.log('[DEBUG] WARNING: Store not found for inventory creation');
       }
     } else {
-      console.log('[DEBUG] No store inventory to create (storeCodeForInventory or storeId is null)');
     }
 
     // Create country-specific prices if provided
-    console.log('[DEBUG] Creating country prices...');
     if (productData.countryPrices && productData.countryPrices.length > 0) {
-      console.log('[DEBUG] Country prices to create:', productData.countryPrices);
       // First, delete existing country prices for this product
-      console.log('[DEBUG] Deleting existing country prices for product:', product.id);
       await prisma.countryPrice.deleteMany({
         where: { productId: product.id }
       });
@@ -530,7 +496,6 @@ export async function POST(req: Request) {
           active: countryPrice.active !== false, // Default to true if not specified
         };
       });
-      console.log('[DEBUG] Country prices with currency:', countryPricesWithCurrency);
       
       // Create new country prices
       try {
@@ -547,17 +512,14 @@ export async function POST(req: Request) {
             })
           )
         );
-        console.log('[DEBUG] Country prices created successfully');
       } catch (countryPriceError) {
         console.error('[DEBUG] ERROR creating country prices:', countryPriceError);
         throw countryPriceError; // Re-throw to be caught by outer catch block
       }
     } else {
-      console.log('[DEBUG] No country prices provided');
     }
 
     // Log activity
-    console.log('[DEBUG] Creating audit log...');
     try {
       await prisma.auditLog.create({
         data: {
@@ -567,13 +529,11 @@ export async function POST(req: Request) {
           details: `Product "${productData.name}" created by ${user.email}`,
         }
       });
-      console.log('[DEBUG] Audit log created successfully');
     } catch (auditError) {
       console.error('[DEBUG] ERROR creating audit log:', auditError);
       // Don't fail the entire request if audit log fails
     }
 
-    console.log('[DEBUG] Product creation completed successfully');
     
     revalidatePath('/');
     revalidatePath('/products');

@@ -14,14 +14,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { orderId } = body;
 
-    console.log("=== COD Payment Request ===");
-    console.log("Body:", JSON.stringify(body));
 
     if (!orderId) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    console.log("Looking for order:", orderId);
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },

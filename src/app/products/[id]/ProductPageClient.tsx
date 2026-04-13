@@ -32,13 +32,13 @@ export default function ProductPageClient({ product, recommendations }: ProductP
   const router = useRouter();
   const userCountry = useUserCountry();
   const { selectedCountry } = useCountryStore();
-  
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [showDescription, setShowDescription] = useState<string>('description');
   const [quickView, setQuickView] = useState<any>(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  
+
   // Price calculation using getDisplayPrice
   const priceInfo = useMemo(() => {
     return getDisplayPrice(product, selectedCountry);
@@ -55,7 +55,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
   const availableTabs = descriptionTabs.filter(tab => (product as any)[tab.key]);
   const defaultTab = availableTabs[0]?.key || null;
-  
+
   // Filter recommendations based on country support
   const filteredRecommendations = useMemo(() => {
     return recommendations.filter((p) => hasValidPrice(p, userCountry));
@@ -83,7 +83,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     setIsAddingToCart(true);
 
     const { price: itemPrice } = getDisplayPrice(p, userCountry);
-    
+
     addItem({
       id: p.id,
       name: p.name || 'Product',
@@ -93,9 +93,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       imageUrl: p.mainImage || p.imageUrl,
       countryPrices: p.countryPrices,
     }, 1);
-    
+
     toast.success(`${p.name || 'Product'} added to cart`);
-    
+
     setTimeout(() => setIsAddingToCart(false), 800);
   }
 
@@ -121,8 +121,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: [{ 
-            productId: p.id, 
+          items: [{
+            productId: p.id,
             quantity: 1,
             unitPrice
           }],
@@ -148,17 +148,10 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       {/* Navbar handled globally */}
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-32 pb-20 sm:pb-28">
-        {/* Breadcrumbs */}
-        <div className="mb-10 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-black/30">
-          <Link href="/products" className="hover:text-black transition-colors">Products</Link>
-          <span className="w-1 h-1 bg-black/10 rounded-full" />
-          <span className="text-black/60">{product.name}</span>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-start">
           {/* Gallery Section */}
           <div className="space-y-4 sm:space-y-6">
-            <div 
+            <div
               className="relative aspect-square rounded-2xl sm:rounded-[3rem] overflow-hidden bg-black/[0.02] border border-black/5 group cursor-zoom-in shadow-2xl shadow-black/5"
               onClick={() => setIsEnlarged(true)}
             >
@@ -183,13 +176,13 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
               {allImages.length > 1 && (
                 <div className="absolute inset-x-6 top-1/2 -translate-y-1/2 flex justify-between opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(p => (p - 1 + allImages.length) % allImages.length); }}
                     className="w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all text-black"
                   >
                     <ChevronLeft size={24} />
                   </button>
-                  <button 
+                  <button
                     onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(p => (p + 1) % allImages.length); }}
                     className="w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all text-black"
                   >
@@ -197,11 +190,11 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   </button>
                 </div>
               )}
-              
+
               <div className="absolute bottom-6 right-6 p-3 bg-black/10 backdrop-blur-md rounded-full text-white pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
                 <Maximize2 size={20} />
               </div>
-              </div>
+            </div>
 
             {/* Thumbnails */}
             {allImages.length > 1 && (
@@ -210,9 +203,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
-                    className={`relative w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-3xl overflow-hidden flex-shrink-0 transition-all border-2 ${
-                      currentImageIndex === idx ? "border-black scale-105 shadow-xl" : "border-transparent opacity-40 hover:opacity-100"
-                    }`}
+                    className={`relative w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-3xl overflow-hidden flex-shrink-0 transition-all border-2 ${currentImageIndex === idx ? "border-black scale-105 shadow-xl" : "border-transparent opacity-40 hover:opacity-100"
+                      }`}
                   >
                     <Image src={img} alt="Thumbnail" fill className="object-cover" />
                   </button>
@@ -239,9 +231,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   <span className="px-2 sm:px-3 py-1 bg-red-500 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-full">Hot</span>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold tracking-tighter text-black leading-tight">
-                {product.name}
-              </h1>
               <div className="flex items-center gap-2 text-black/30">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
@@ -288,25 +277,24 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                 <div className="flex items-center justify-between">
                   <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Details</div>
                 </div>
-                
+
                 <div className="border-b border-black/10 overflow-x-auto">
                   <div className="flex gap-0.5 min-w-max">
                     {availableTabs.map(tab => (
                       <button
                         key={tab.key}
                         onClick={() => setShowDescription(tab.key)}
-                        className={`px-3 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                          showDescription === tab.key 
-                            ? 'text-black border-b-2 border-black' 
+                        className={`px-3 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${showDescription === tab.key
+                            ? 'text-black border-b-2 border-black'
                             : 'text-black/40 hover:text-black/60'
-                        }`}
+                          }`}
                       >
                         {tab.label}
                       </button>
                     ))}
                   </div>
                 </div>
-                
+
                 <AnimatePresence mode="wait">
                   {showDescription && (product as any)[showDescription] && (
                     <motion.div
@@ -397,25 +385,26 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               <div className="h-[1px] flex-1 bg-black/5" />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
               {filteredRecommendations.map((rec, idx) => (rec &&
-                <ProductCard
-                  key={rec.id}
-                  product={{
-                    ...rec,
-                    price: rec.price || rec.priceCents || 0,
-                    discountPrice: rec.salePrice || rec.salePriceCents || undefined,
-                    imageUrl: rec.mainImage,
-                    brand: rec.brand?.name,
-                    averageRating: rec.averageRating,
-                    ratingCount: rec.ratingCount,
-                    stockQuantity: rec.stockQuantity,
-                    totalSales: rec.totalSales,
-                  }}
-                  onQuickView={(p) => setQuickView(p)}
-                  onAddToCart={(p) => addToCart(p)}
-                  onOrderNow={(p) => orderNow(p)}
-                />
+                <div key={rec.id} className="w-full min-w-0">
+                  <ProductCard
+                    product={{
+                      ...rec,
+                      price: rec.price || rec.priceCents || 0,
+                      discountPrice: rec.salePrice || rec.salePriceCents || undefined,
+                      imageUrl: rec.mainImage,
+                      brand: rec.brand?.name,
+                      averageRating: rec.averageRating,
+                      ratingCount: rec.ratingCount,
+                      stockQuantity: rec.stockQuantity,
+                      totalSales: rec.totalSales,
+                    }}
+                    onQuickView={(p) => setQuickView(p)}
+                    onAddToCart={(p) => addToCart(p)}
+                    onOrderNow={(p) => orderNow(p)}
+                  />
+                </div>
               ))}
             </div>
           </section>
@@ -432,31 +421,31 @@ export default function ProductPageClient({ product, recommendations }: ProductP
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] bg-white flex items-center justify-center p-6 md:p-20"
           >
-            <button 
+            <button
               onClick={() => setIsEnlarged(false)}
               className="absolute top-10 right-10 w-16 h-16 bg-black text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-[110] shadow-2xl"
             >
               <X size={32} />
             </button>
-            
+
             <div className="relative w-full h-full max-w-7xl">
-              <Image 
-                src={allImages[currentImageIndex]} 
-                alt="Full View" 
-                fill 
+              <Image
+                src={allImages[currentImageIndex]}
+                alt="Full View"
+                fill
                 className="object-contain"
               />
             </div>
 
             {allImages.length > 1 && (
               <div className="absolute inset-x-10 top-1/2 -translate-y-1/2 flex justify-between">
-                <button 
+                <button
                   onClick={() => setCurrentImageIndex(p => (p - 1 + allImages.length) % allImages.length)}
                   className="w-20 h-20 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-xl"
                 >
                   <ChevronLeft size={48} />
                 </button>
-                <button 
+                <button
                   onClick={() => setCurrentImageIndex(p => (p + 1) % allImages.length)}
                   className="w-20 h-20 rounded-full bg-black/5 text-black flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-xl"
                 >

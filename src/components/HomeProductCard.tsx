@@ -105,7 +105,7 @@ export function HomeProductCard({
               showSymbolSmall
             />
           </div>
-          
+
           {/* Action Buttons - Vertical View */}
           <div className="flex flex-col gap-1.5 sm:gap-2 md:gap-3 transition-all duration-600 ease-out delay-200 opacity-0 group-hover:opacity-100 active:opacity-100 transform translate-y-4 group-hover:translate-y-0 active:translate-y-0">
             <button

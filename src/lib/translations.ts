@@ -11,6 +11,7 @@ export const translations = {
       offers: "OFFERS",
       signIn: "LOGIN",
       account: "ACCOUNT",
+      cart: "CART",
     },
     home: {
       hotProducts: "HOT PRODUCTS",
@@ -165,6 +166,7 @@ export const translations = {
       offers: "العروض",
       signIn: "تسجيل الدخول",
       account: "حسابي",
+      cart: "السلة",
     },
     home: {
       hotProducts: "المنتجات الأكثر طلباً",

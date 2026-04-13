@@ -214,18 +214,6 @@ export function Navbar() {
             >
               <Search size={20} />
             </button>
-            <Link 
-              href="/cart"
-              className="p-2 -mr-2 text-black hover:bg-black/5 rounded-full transition-colors relative"
-              aria-label="Cart"
-            >
-              <ShoppingBag size={20} />
-              {mounted && cartCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[8px] flex items-center justify-center font-bold">
-                  {cartCount > 9 ? "9+" : cartCount}
-                </span>
-              )}
-            </Link>
           </div>
         </div>
 
@@ -278,7 +266,7 @@ export function Navbar() {
 
             {/* Dynamic Flag - Clickable to open Currency Selector */}
             {mounted && (
-              <CurrencySelector />
+              <CurrencySelector direction="down" />
             )}
             
             {/* User Button - SEPARATE */}
@@ -326,11 +314,11 @@ export function Navbar() {
                   <div className="flex flex-row gap-2 px-2 py-1">
                     <div className="flex-1">
                       <span className="text-[10px] font-black uppercase tracking-widest text-black/30 block mb-1">Currency</span>
-                      <CurrencySelector />
+                      <CurrencySelector direction="down" />
                     </div>
                     <div className="flex-1">
                       <span className="text-[10px] font-black uppercase tracking-widest text-black/30 block mb-1">Language</span>
-                      <LanguageSelector />
+                      <LanguageSelector direction="down" />
                     </div>
                   </div>
                   
@@ -500,8 +488,8 @@ export function Navbar() {
                 <div className="mt-auto bg-white/60 backdrop-blur-xl border-t border-black/5 p-6 pb-10">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                      <LanguageSelector />
-                      <CurrencySelector />
+                      <LanguageSelector align="left" direction="up" />
+                      <CurrencySelector align="left" direction="up" />
                     </div>
                     {status === "authenticated" && (
                       <button 
