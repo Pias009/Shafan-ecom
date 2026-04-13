@@ -231,7 +231,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   <span className="px-2 sm:px-3 py-1 bg-red-500 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-full">Hot</span>
                 )}
               </div>
-<<<<<<< HEAD
               <div className="flex items-center gap-2 text-black/30">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
@@ -240,12 +239,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest">({product.ratingCount || 0} reviews)</span>
               </div>
-=======
-              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tighter text-black leading-tight">
-                {product.name}
-              </h1>
-              
->>>>>>> 598ede5fb3175f90e4a2fb288ad69f1cde56222d
             </div>
 
             <div className="flex items-baseline gap-2 sm:gap-4">

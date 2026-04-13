@@ -1,19 +1,8 @@
-<<<<<<< HEAD
 "use client";
 
 import { ArrowLeft, Phone, Mail, MapPin, Facebook, Instagram, Linkedin, MessageCircle, Loader2, Clock } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-=======
-import { ArrowLeft, Phone, Mail, MapPin, Facebook, Instagram, Linkedin, MessageCircle } from "lucide-react";
-import Link from "next/link";
-import ContactForm from "./ContactForm";
-
-const WHATSAPP = "+971547206046";
-const PHONE = "+971 04 838 7827";
-const EMAIL = "support@shanfaglobal.com";
-const ADDRESS = "AL Diyafa Shopping Center, AL Baada, Dubai, United Arab Emirates";
->>>>>>> 598ede5fb3175f90e4a2fb288ad69f1cde56222d
 
 export default function ContactPage() {
   return (
@@ -35,7 +24,6 @@ export default function ContactPage() {
           <div className="space-y-8">
             <div>
               <h2 className="font-display text-2xl md:text-3xl font-black text-black mb-4">Get in Touch</h2>
-<<<<<<< HEAD
               <p className="text-black/60 text-lg">
                 Have a question? We&apos;d love to hear from you.
               </p>
@@ -92,53 +80,14 @@ export default function ContactPage() {
                   <div>AL Baada, Dubai</div>
                   <div>United Arab Emirates</div>
                 </div>
-=======
-              <p className="text-black/60 text-lg mb-6">
-                Have a question? We'd love to hear from you.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <MessageCircle size={18} className="text-green-600" />
-                <a 
-                  href={`https://wa.me/${WHATSAPP.replace(/\D/g, '')}?text=Hi%20Shafan%20Global,%20I%20have%20a%20question.`} 
-                  target="_blank" 
-                  className="font-bold text-black hover:text-green-600 transition"
-                >
-                  {WHATSAPP}
-                </a>
-              </div>
-              <div className="flex items-center gap-3">
-                <Phone size={18} className="text-black/40" />
-                <a href={`tel:${PHONE}`} className="font-bold text-black hover:text-black/70 transition">
-                  {PHONE}
-                </a>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail size={18} className="text-black/40" />
-                <a href={`mailto:${EMAIL}`} className="font-bold text-black hover:text-black/70 transition">
-                  {EMAIL}
-                </a>
-              </div>
-              <div className="flex items-start gap-3">
-                <MapPin size={18} className="text-black/40 mt-0.5" />
-                <span className="font-bold text-black">{ADDRESS}</span>
->>>>>>> 598ede5fb3175f90e4a2fb288ad69f1cde56222d
               </div>
             </div>
 
             <div className="pt-4">
               <p className="text-xs font-black uppercase tracking-widest text-black/30 mb-4">Follow Us</p>
-<<<<<<< HEAD
               <div className="flex gap-3">
                 <a href="https://wa.me/971547206046" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center hover:bg-green-500/20 transition" aria-label="WhatsApp">
                   <MessageCircle className="text-green-600" size={20} />
-=======
-              <div className="flex gap-4">
-                <a href={`https://wa.me/${WHATSAPP.replace(/\D/g, '')}`} target="_blank" className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center hover:bg-green-500/20 transition">
-                  <MessageCircle className="text-green-600" size={18} />
->>>>>>> 598ede5fb3175f90e4a2fb288ad69f1cde56222d
                 </a>
                 <a href="https://www.facebook.com/ShanfaGlobalArabia" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-blue-600/10 rounded-full flex items-center justify-center hover:bg-blue-600/20 transition" aria-label="Facebook">
                   <Facebook className="text-blue-600" size={20} />
@@ -172,8 +121,6 @@ export default function ContactPage() {
     </div>
   );
 }
-<<<<<<< HEAD
-
 function ContactForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -257,5 +204,3 @@ function ContactForm() {
     </form>
   );
 }
-=======
->>>>>>> 598ede5fb3175f90e4a2fb288ad69f1cde56222d
