@@ -37,7 +37,6 @@ export async function POST(req: Request) {
     if (isThreeDecimal) {
       amount = Math.round(amount / 10) * 10;
     }
-    console.log("Fixed Stripe Amount: " + amount);
     const billing = (order.billingAddress as any) || {};
     const customerEmail = billing.email;
 

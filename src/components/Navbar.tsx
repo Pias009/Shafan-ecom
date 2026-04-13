@@ -105,15 +105,18 @@ export function Navbar() {
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 20);
       
-      // Hide navbar when scrolling down, show when scrolling up
-      // Account for alert section by checking if we're past it
-      const scrollThreshold = 50; // Reduced threshold for faster hiding
+      // Smart-Hide: Disable scroll hide when mobile menu is open (Force-Locked-Fixed)
+      if (mobileOpen) {
+        setVisible(true);
+        return;
+      }
       
-      if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
-        // Scrolling down - hide completely
+      // Hide navbar when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        // Scrolling down - hide
         setVisible(false);
       } else if (currentScrollY < lastScrollY) {
-        // Scrolling up - show immediately
+        // Scrolling up - show
         setVisible(true);
       }
       setLastScrollY(currentScrollY);
@@ -126,7 +129,7 @@ export function Navbar() {
     
     window.addEventListener("scroll", debouncedScroll, { passive: true });
     return () => window.removeEventListener("scroll", debouncedScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, mobileOpen]);
 
   // Sync address status
   const setHasAddress = useCartStore((state) => state.setHasAddress);
@@ -182,11 +185,29 @@ export function Navbar() {
   
   return (
     <>
-      <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 transform glass-nav ${
-        scrolled ? "shadow-md" : "lg:shadow-none shadow-sm"
-      } ${visible ? "translate-y-0" : "-translate-y-full"}`}
-    >
+<header
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 glass-nav ${
+          scrolled ? "shadow-md" : "lg:shadow-none shadow-sm"
+        } ${
+          mobileOpen
+            ? "translate-y-0 !fixed top-0 bg-white z-[100000]"
+            : visible
+            ? "translate-y-0"
+            : "-translate-y-full"
+        }`}
+        style={
+          mobileOpen
+            ? {
+                position: "fixed",
+                top: 0,
+                background: "#ffffff",
+                opacity: 1,
+                zIndex: 100000,
+                transform: "translateY(0)",
+              }
+            : undefined
+        }
+      >
       <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center px-0">
         {/* Mobile layout: Logo centered */}
         <div className="flex items-center justify-between w-full lg:hidden px-4 py-1">
@@ -380,11 +401,32 @@ export function Navbar() {
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 z-[99998] bg-white/40 backdrop-blur-3xl"
-              style={{ height: '100dvh' }}
+              initial={{ scale: 0, borderRadius: "50%" }}
+              animate={{ 
+                scale: 1.175, 
+                borderRadius: "0%",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
+              }}
+              exit={{ 
+                scale: 0, 
+                borderRadius: "50%",
+                transition: { delay: 0.1 }
+              }}
+              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              className="md:hidden fixed inset-0 z-[99999]"
+              style={{
+                background: "rgba(255, 255, 255, 0.98)",
+                backdropFilter: "blur(30px) saturate(150%)",
+                WebkitBackdropFilter: "blur(30px) saturate(150%)",
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100vw",
+                height: "100dvh",
+              }}
             >
               {/* Background Accent */}
               <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[40%] bg-emerald-100/50 rounded-full blur-[100px] pointer-events-none" />

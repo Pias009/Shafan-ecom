@@ -257,7 +257,7 @@ export function Hero() {
                   <div className="w-2 h-2 rounded-full bg-gradient-to-br from-violet-400 to-sky-400" />
                 </div>
                 <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-black leading-none tracking-[-0.04em] uppercase">
-                  AURA
+                  SANFA GLOBAL
                 </h1>
                 <p className="text-[9px] sm:text-[10px] md:text-xs text-black/30 mt-1.5 italic tracking-[0.2em] uppercase font-medium">
                   Your skin, your story
@@ -268,7 +268,7 @@ export function Hero() {
               <div className="hidden lg:flex flex-col items-center justify-center h-full">
                 <div className="text-center" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
                   <h1 className="font-display text-5xl xl:text-6xl text-black leading-none tracking-[-0.04em] uppercase whitespace-nowrap">
-                    AURA
+                    SANFA GLOBAL
                   </h1>
                   <p className="text-xs xl:text-sm text-black/30 mt-4 italic tracking-[0.3em] uppercase font-medium whitespace-nowrap">
                     Your skin, your story
@@ -391,7 +391,7 @@ export function Hero() {
               {/* CTA Button */}
               <div className="mt-4 sm:mt-5 md:mt-6 flex justify-center lg:justify-end">
                 <Link href="/products" className="glass-panel-heavy group inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 rounded-full border border-black/8 text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.15em] hover:bg-black hover:text-white hover:border-black active:scale-[.97] transition-all duration-300 shadow-sm hover:shadow-lg">
-                  <span>Explore Your Aura</span>
+                  <span>Explore Us</span>
                   <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>

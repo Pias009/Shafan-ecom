@@ -1,69 +1,38 @@
 "use client";
 
 import { useCountryStore } from "@/lib/country-store";
-import { useState, useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
-import { getFlagForCountry } from "@/lib/currency-rates";
+import { useState, useEffect } from "react";
 
 import { motion, AnimatePresence } from "framer-motion";
 
 const CURRENCY_LIST = [
-  { code: "KWD", name: "Kuwait", flag: "🇰🇼", symbol: "KWD" },
-  { code: "AED", name: "UAE", flag: "🇦🇪", symbol: "AED" },
-  { code: "SAR", name: "Saudi Arabia", flag: "🇸🇦", symbol: "SAR" },
-  { code: "BHD", name: "Bahrain", flag: "🇧🇭", symbol: "BHD" },
-  { code: "QAR", name: "Qatar", flag: "🇶🇦", symbol: "QAR" },
-  { code: "OMR", name: "Oman", flag: "🇴🇲", symbol: "OMR" },
-  { code: "BDT", name: "Bangladesh", flag: "🇧🇩", symbol: "BDT" },
+  { code: "KWD", name: "Kuwait", flag: "🇰🇼" },
+  { code: "AED", name: "UAE", flag: "🇦🇪" },
+  { code: "SAR", name: "Saudi Arabia", flag: "🇸🇦" },
+  { code: "BHD", name: "Bahrain", flag: "🇧🇭" },
+  { code: "QAR", name: "Qatar", flag: "🇶🇦" },
+  { code: "OMR", name: "Oman", flag: "🇴🇲" },
 ];
 
+import { useRef } from "react";
+
 export function CurrencySelector({ direction = "up", align = "right" }: { direction?: "up" | "down", align?: "left" | "right" }) {
-  const { selectedCountry, selectedCurrency, setCurrency: setCountryCurrency } = useCountryStore();
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  if (!mounted) return (
-    <div className="glass-panel h-9 w-24 rounded-full animate-pulse bg-black/5" />
-  );
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsOpen(!isOpen);
-  };
-
-  const handleCurrencySelect = (currencyCode: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCountryCurrency(currencyCode);
-    setIsOpen(false);
-  };
+  const { selectedCurrency, setCurrency } = useCountryStore();
+  const [open, setOpen] = useState(false);
+  const current = CURRENCY_LIST.find(c => c.code === selectedCurrency) || CURRENCY_LIST[0];
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative">
       <button
-        type="button"
-        onClick={handleToggle}
-        className="glass-panel flex h-9 items-center gap-2 rounded-full px-3 text-[10px] font-black uppercase tracking-widest text-black transition hover:bg-black/5 shadow-sm cursor-pointer"
-        aria-label="Select currency"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/5 hover:bg-black/10 transition"
       >
-        <span className="text-sm">{getFlagForCountry(selectedCountry)}</span>
-        <span className="font-mono" style={{ unicodeBidi: 'plaintext' }}>{selectedCurrency}</span>
-        <ChevronDown size={10} className={`text-black/20 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <span className="text-lg">{current.flag}</span>
+        <span className="text-sm font-semibold">{current.code}</span>
       </button>
 
       <AnimatePresence>
-        {isOpen && (
+        {open && (
           <motion.div
             initial={{ opacity: 0, y: direction === "up" ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -78,9 +47,12 @@ export function CurrencySelector({ direction = "up", align = "right" }: { direct
               {CURRENCY_LIST.map((currency) => (
                 <button
                   key={currency.code}
-                  onClick={(e) => handleCurrencySelect(currency.code, e)}
+                  onClick={() => {
+                    setCurrency(currency.code);
+                    setOpen(false);
+                  }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedCurrency === currency.code
-                      ? "bg-black/5 text-black border border-black/10 shadow-sm scale-[0.98]"
+                      ? "bg-black text-white border border-black/10 shadow-sm scale-[0.98]"
                       : "text-black/60 hover:bg-black/5 hover:text-black"
                     }`}
                 >
@@ -88,6 +60,9 @@ export function CurrencySelector({ direction = "up", align = "right" }: { direct
                     <span>{currency.flag}</span>
                     <span>{currency.name}</span>
                   </div>
+                  <span className={`text-[10px] ${selectedCurrency === currency.code ? "text-white/70" : "text-black/50"}`}>
+                    {currency.code}
+                  </span>
                 </button>
               ))}
             </div>
