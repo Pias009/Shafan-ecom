@@ -37,7 +37,7 @@ export function CurrencySelector({ direction = "up", align = "right" }: { direct
             initial={{ opacity: 0, y: direction === "up" ? 10 : -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: direction === "up" ? 10 : -10, scale: 0.95 }}
-            className={`absolute ${direction === "up" ? "bottom-full mb-2" : "top-full mt-2"} ${align === "right" ? "right-0" : "left-0"} w-48 glass-panel-heavy rounded-2xl p-2 border border-black/5 shadow-2xl z-[999999] bg-white/95 backdrop-blur-xl transition-all pointer-events-auto`}
+            className={`absolute ${direction === "up" ? "bottom-full mb-2" : "top-full mt-2"} ${align === "right" ? "right-0" : "left-0"} w-48 rounded-2xl p-2 border border-black/10 shadow-[0_20px_50px_rgba(0,0,0,0.2)] z-[999999] bg-white transition-all pointer-events-auto`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-3 py-2 text-[9px] font-black uppercase tracking-widest text-black/20 border-b border-black/5 mb-1">
@@ -53,7 +53,7 @@ export function CurrencySelector({ direction = "up", align = "right" }: { direct
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedCurrency === currency.code
                       ? "bg-black text-white border border-black/10 shadow-sm scale-[0.98]"
-                      : "text-black/60 hover:bg-black/5 hover:text-black"
+                      : "text-black/80 hover:bg-black/5 hover:text-black"
                     }`}
                 >
                   <div className="flex items-center gap-2">

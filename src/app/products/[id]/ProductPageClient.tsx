@@ -285,8 +285,8 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                         key={tab.key}
                         onClick={() => setShowDescription(tab.key)}
                         className={`px-3 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${showDescription === tab.key
-                            ? 'text-black border-b-2 border-black'
-                            : 'text-black/40 hover:text-black/60'
+                          ? 'text-black border-b-2 border-black'
+                          : 'text-black/40 hover:text-black/60'
                           }`}
                       >
                         {tab.label}

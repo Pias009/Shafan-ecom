@@ -210,11 +210,11 @@ export function Navbar() {
       >
       <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center px-0">
         {/* Mobile layout: Logo centered */}
-        <div className="flex items-center justify-between w-full lg:hidden px-4 py-1">
+        <div className="flex items-center justify-between w-full lg:hidden px-6 py-1">
           {/* Left: Menu button */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 -ml-2 text-black hover:bg-black/5 rounded-full transition-colors"
+            className="p-2 text-black hover:bg-black/5 rounded-full transition-colors"
             aria-label="Toggle menu"
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
@@ -239,13 +239,13 @@ export function Navbar() {
         </div>
 
         {/* Desktop layout - centered */}
-        <div className="hidden lg:flex items-center justify-center">
-          <div className="-ml-16">
+        <div className="hidden lg:flex items-center justify-between w-full px-8">
+          <div className="flex-shrink-0">
             <Logo />
           </div>
 
           {/* Navigation - centered */}
-          <div className="ml-16 mr-32 flex-1 flex justify-center">
+          <div className="flex-1 flex justify-center px-4">
             <div className="glass-panel rounded-full px-8 py-3">
               <div className="flex items-center gap-2">
                 {navLinks.map((link) => {
@@ -274,7 +274,7 @@ export function Navbar() {
           </div>
 
           {/* User + Actions dropdown */}
-          <div className="relative -ml-4 flex items-center gap-2">
+          <div className="relative flex items-center gap-2">
             {/* Search Button */}
             <button
               type="button"
@@ -478,9 +478,9 @@ export function Navbar() {
                             key={link.href}
                             href={link.href}
                             onClick={() => setMobileOpen(false)}
-                            className="flex items-center justify-between group"
+                            className="flex items-center justify-between group py-2"
                           >
-                            <span className={`text-4xl font-black tracking-tighter transition-all duration-300 ${isOffers ? "text-emerald-700 italic" : "text-black group-hover:pl-4"}`}>
+                            <span className={`text-2xl pl-4 font-black tracking-tighter transition-all duration-300 ${isOffers ? "text-emerald-700 italic" : "text-black group-hover:pl-8"}`}>
                               {link.label.replace("🎉 ", "")}
                             </span>
                             <span className={`w-8 h-px transition-all duration-300 ${isOffers ? "bg-emerald-700 opacity-50" : "bg-black/10 group-hover:w-16 group-hover:bg-black"}`} />
@@ -527,7 +527,7 @@ export function Navbar() {
                 </div>
 
                   {/* Bottom Sticky Section */}
-                <div className="mt-auto bg-white/60 backdrop-blur-xl border-t border-black/5 p-6 pb-10">
+                <div className="mt-auto bg-white/60 backdrop-blur-xl border-t border-black/5 p-6 pb-20">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <LanguageSelector align="left" direction="up" />

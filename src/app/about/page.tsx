@@ -28,8 +28,8 @@ export default function AboutPage() {
       {/* Header */}
       <div className="bg-black text-white py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-8 text-xs font-bold uppercase tracking-widest"
           >
             <ArrowRight className="rotate-180" size={14} /> Back to Home
@@ -107,7 +107,7 @@ export default function AboutPage() {
 
         {/* CTA */}
         <div className="mt-8 text-center">
-          <Link 
+          <Link
             href="/contact"
             className="inline-flex items-center gap-2 bg-black text-white px-8 py-4 rounded-full font-bold text-sm uppercase tracking-widest hover:bg-black/80 transition-colors"
           >

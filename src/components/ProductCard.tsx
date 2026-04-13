@@ -191,7 +191,7 @@ function ProductCard({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/products/${product.id}`);
+                onQuickView(product);
               }}
               className="bg-white text-black px-3 sm:px-4 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-100 active:scale-95 pointer-events-auto whitespace-nowrap"
             >

@@ -55,16 +55,6 @@ export function Footer() {
         { label: "Cookie Policy", href: "/privacy" },
       ],
     },
-    {
-      id: "privacy",
-      title: "Privacy & Returns",
-      links: [
-        { label: "Cookies: Experience, Prefs, Checkout", href: "/privacy" },
-        { label: "Data: No rental or sale", href: "/privacy" },
-        { label: "Returns: 2 days, Defective only", href: "/returns" },
-        { label: "Refunds: Online 5+bank, COD 14-21 days", href: "/returns" },
-      ],
-    },
   ];
 
   const toggleSection = (id: string) => {
@@ -129,7 +119,7 @@ export function Footer() {
       <div className="border-t border-white/10" />
 
       {/* Main Footer Links — Desktop */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-10 hidden md:grid md:grid-cols-5 gap-6">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-10 hidden md:grid md:grid-cols-4 gap-6">
         {sections.map((section) => (
           <div key={section.id}>
             <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-4 pb-2 border-b border-white/10">

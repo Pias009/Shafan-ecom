@@ -9,8 +9,8 @@ export default function ContactPage() {
     <div className="min-h-screen bg-white/40 backdrop-blur-sm">
       <div className="bg-black text-white py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-8 text-xs font-bold uppercase tracking-widest"
           >
             <ArrowLeft size={14} /> Back to Home
@@ -100,12 +100,12 @@ export default function ContactPage() {
                 </a>
                 <a href="https://www.tiktok.com/@shanfaglobal" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 transition" aria-label="TikTok">
                   <svg width={20} height={20} viewBox="0 0 24 24" fill="currentColor" className="text-black">
-                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93v6.6c0 2.67-1.89 4.98-4.46 5.27-2.44.28-4.72-.86-5.39-2.87-.71-2.14-.29-4.52 1.11-5.93 1.32-1.34 3.3-1.78 5.17-1.45V.02z"/>
+                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93v6.6c0 2.67-1.89 4.98-4.46 5.27-2.44.28-4.72-.86-5.39-2.87-.71-2.14-.29-4.52 1.11-5.93 1.32-1.34 3.3-1.78 5.17-1.45V.02z" />
                   </svg>
                 </a>
                 <a href="https://www.youtube.com/@Shanfaglobal" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-red-600/10 rounded-full flex items-center justify-center hover:bg-red-600/20 transition" aria-label="YouTube">
                   <svg width={20} height={20} viewBox="0 0 24 24" fill="currentColor" className="text-red-600">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.346 0 12 0 12s0 3.654.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.654 24 12 24 12s0-3.654-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.346 0 12 0 12s0 3.654.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.654 24 12 24 12s0-3.654-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
                   </svg>
                 </a>
               </div>
@@ -128,7 +128,7 @@ function ContactForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
+
     const formData = new FormData(e.currentTarget);
     const data = {
       name: formData.get("name"),
@@ -142,7 +142,7 @@ function ContactForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       });
-      
+
       if (res.ok) {
         setSuccess(true);
       }
@@ -173,6 +173,15 @@ function ContactForm() {
           name="name"
           required
           placeholder="Your Name"
+          className="w-full h-14 px-5 bg-black/5 border border-black/10 rounded-2xl font-bold text-black placeholder:text-black/30 focus:border-black focus:outline-none transition-colors"
+        />
+      </div>
+      <div>
+        <input
+          type="email"
+          name="email"
+          required
+          placeholder="Email Address"
           className="w-full h-14 px-5 bg-black/5 border border-black/10 rounded-2xl font-bold text-black placeholder:text-black/30 focus:border-black focus:outline-none transition-colors"
         />
       </div>
