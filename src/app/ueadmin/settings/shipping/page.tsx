@@ -121,7 +121,7 @@ export default function ShippoSettingsPage() {
             state: "Dubai",
             zip: "12345",
             country: "AE",
-            phone: "+971501234567",
+            
             email: "test@example.com",
           },
           parcel: {
@@ -293,7 +293,7 @@ export default function ShippoSettingsPage() {
               value={settings.shipperPhone}
               onChange={(e) => setSettings({ ...settings, shipperPhone: e.target.value })}
               className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm font-bold mt-1"
-              placeholder="+971501234567"
+              
             />
           </div>
           

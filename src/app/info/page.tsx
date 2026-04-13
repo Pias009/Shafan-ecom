@@ -8,21 +8,48 @@ export const metadata: Metadata = {
 const sections = [
   {
     id: "privacy",
-    title: "Privacy Policy",
-    content: `At Shafan, we value your privacy and are committed to protecting your personal information. This Privacy Policy outlines how we collect, use, and safeguard your data when you shop with us across the Gulf region including UAE, Kuwait, Saudi Arabia, Bahrain, Qatar, and Oman.
+    title: "Privacy Policy – Shanfa Global",
+    content: `Cookies
+• Improve experience
+• Login/Prefs
+• Checkout
+Settings available in browser.
 
-We collect information such as your name, contact details, payment information, and shopping preferences to provide you with a personalized shopping experience. Your data is encrypted using industry-standard protocols and is never shared with third parties except as necessary to process your orders.
+Data Sharing
+Partners:
+• Payment
+• Delivery
+• Fraud
 
-By using our website, you consent to the collection and use of information in accordance with this policy. We retain your data only for as long as necessary to fulfill your orders and comply with legal obligations.`,
+Your Rights
+• Access
+• Correct/Delete
+• Export`,
   },
   {
     id: "terms",
-    title: "Terms of Service",
-    content: `Welcome to Shafan. By accessing and purchasing from our website, you agree to be bound by the following terms and conditions.
+    title: "Terms & Conditions – Shanfa Global",
+    content: `1. General Use
+• Must be 18+ or under adult supervision
+• Terms can be updated at any time without notice
 
-All products are subject to availability. We reserve the right to refuse service to anyone for any reason at any time. Prices and promotions are subject to change without notice. For our Gulf customers in UAE, Kuwait, Saudi Arabia, Bahrain, Qatar, and Oman, all prices are displayed in local currencies.
+2. Products & Pricing
+• All products are subject to availability
+• Prices may change without prior notice
 
-Intellectual property rights for all content on this website remain with Shafan. You may not reproduce, distribute, or modify any content without our explicit written consent.`,
+3. Orders
+• Orders may be cancelled before dispatch
+• Cannot be modified after confirmation
+
+4. Payments
+• Online payment and Cash on Delivery (COD) supported
+• Payment required before dispatch
+
+5. Liability
+• Not responsible for indirect or consequential damages
+
+6. Governing Law
+• UAE Law applies to all terms and disputes`,
   },
   {
     id: "shipping",
@@ -35,21 +62,49 @@ All shipments are carefully packaged to ensure products arrive in perfect condit
   },
   {
     id: "refund",
-    title: "Refund Policy",
-    content: `We want you to be completely satisfied with your Shafan purchase. If for any reason you are not happy with your order, we offer a flexible refund policy across all Gulf countries.
+    title: "Returns & Cancellation Policy – Shanfa Global",
+    content: `Eligibility Rules:
+• Request within 2 days
+• Defective/Damaged only
+• Unused in original packaging
 
-To initiate a return, please contact our customer service team within 14 days of receiving your order. Products must be unused, in original packaging, and in resalable condition. Once we receive your return, refunds are processed within 5-7 business days.
+Non-Returnable:
+• Sale items
+• Gift cards
+• Opened products
 
-For defective products, we offer full refunds or replacements at no additional cost. Please note that shipping charges may apply for non-defective returns.`,
+Refund Timelines:
+• Online: 5 days + bank time
+• COD: 14-21 working days
+
+Cancellation:
+• Not allowed after confirmation.`,
   },
   {
     id: "about",
-    title: "About Us",
-    content: `Shafan is a premium skincare brand dedicated to helping you achieve radiant, healthy skin. Founded with a mission to bring nature's finest ingredients to the Gulf region, we serve customers across UAE, Kuwait, Saudi Arabia, Bahrain, Qatar, and Oman.
+    title: "About Us – Shanfa Global",
+    content: `Shanfa Global is a UAE-based skincare and cosmetics reseller dedicated to bringing authentic, high-quality beauty products from globally trusted brands to customers across the Middle East.
 
-Our products are crafted using carefully selected natural ingredients, formulated by skincare experts to address diverse skin concerns. We believe in transparency, quality, and sustainability in everything we do.
+We source products from the USA, Korea, Canada, and other international markets, ensuring only genuine and effective solutions.
 
-At Shafan, customer satisfaction is our top priority. Our dedicated support team is always ready to assist you with any questions or concerns. Join thousands of satisfied customers who have transformed their skincare routines with Shafan.`,
+Our Mission: To make world-class skincare accessible, affordable, and trustworthy.
+
+Our Promise: 100% original products from verified suppliers.
+
+We focus on solving:
+• Acne & breakouts
+• Dark spots & pigmentation
+• Melasma & uneven tone
+• Dryness & dehydration
+• Overall skin health
+
+Our Values:
+• Trust & Transparency
+• Quality Assurance
+• Customer Satisfaction
+• Accessibility
+
+We are not just a reseller — we are your skincare partner.`,
   },
 ];
 

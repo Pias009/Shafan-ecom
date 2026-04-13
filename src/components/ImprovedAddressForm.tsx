@@ -266,7 +266,7 @@ export function ImprovedAddressForm({
             value={formData.phone}
             onChange={handleInputChange}
             disabled={isLoading || submitting}
-            placeholder="e.g., +971 50 123 4567"
+            
             className={`w-full px-4 py-3 border-2 rounded-lg font-medium transition focus:outline-none focus:border-blue-500 ${
               errors.phone ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:bg-blue-50'
             }`}

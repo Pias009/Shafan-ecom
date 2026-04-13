@@ -3,7 +3,7 @@
 import { Toaster, Toast as ReactHotToast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Info, Loader2, X } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 const toastVariants = {
@@ -112,9 +112,22 @@ interface CustomToasterProps {
 }
 
 export function CustomToaster({ position = "bottom-center" }: CustomToasterProps) {
-  const getToastPosition = () => {
-    const base = "fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-[calc(100%-2rem)] sm:max-w-md px-4 pointer-events-auto";
+  const [scrollOffset, setScrollOffset] = useState(60);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollOffset(Math.max(60, window.scrollY + 60));
+    };
     
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  const getToastPosition = () => {
+    const base = "fixed left-1/2 -translate-x-1/2 z-[9999] w-full max-w-[calc(100%-2rem)] sm:max-w-md px-4 pointer-events-auto";
+    
+<<<<<<< HEAD
     if (position === "top-left") {
       return base.replace("bottom-8", "top-8").replace("left-1/2 -translate-x-1/2", "left-4 right-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
     }
@@ -123,14 +136,18 @@ export function CustomToaster({ position = "bottom-center" }: CustomToasterProps
     }
     if (position === "top-center") {
       return base.replace("bottom-8", "top-8");
+=======
+    if (position.includes("top") && !position.includes("bottom")) {
+      return `${base} top-[${scrollOffset}px]`;
+>>>>>>> 598ede5fb3175f90e4a2fb288ad69f1cde56222d
     }
     if (position.includes("left") && position.includes("bottom")) {
-      return base.replace("left-1/2 -translate-x-1/2", "left-4 right-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
+      return base.replace("bottom-8", "bottom-8").replace("left-1/2 -translate-x-1/2", "left-4 right-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
     }
     if (position.includes("right") && position.includes("bottom")) {
-      return base.replace("left-1/2 -translate-x-1/2", "right-4 left-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
+      return base.replace("bottom-8", "bottom-8").replace("left-1/2 -translate-x-1/2", "right-4 left-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
     }
-    return base;
+    return base.replace("fixed left", "fixed bottom-8 left");
   };
   
   return (

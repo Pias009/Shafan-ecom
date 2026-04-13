@@ -5,7 +5,6 @@ export async function createPaymentIntent(amount: number, orderId: string, custo
   
   try {
 
-    
     // Amount already normalized by caller using the Stripe normalization protocol:
     // 3-decimal currencies (KWD, BHD, OMR) × 1000, 2-decimal currencies (AED, SAR, QAR, USD) × 100
     const finalAmount = amount;
