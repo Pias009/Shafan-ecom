@@ -28,6 +28,15 @@ export function MobileBottomNav() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      
+      // Check if mobile menu is open by looking at body overflow
+      const isMenuOpen = document.body.style.overflow === "hidden";
+      
+      if (isMenuOpen) {
+        setVisible(false);
+        return;
+      }
+
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setVisible(false);
       } else {
@@ -36,8 +45,19 @@ export function MobileBottomNav() {
       setLastScrollY(currentScrollY);
     };
 
+    // Also check for menu open/close events if any, or just poll/use effect
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // Check initially and on a small interval for menu state changes (since overflow style change doesn't trigger scroll)
+    const interval = setInterval(() => {
+        if (document.body.style.overflow === "hidden") setVisible(false);
+        else if (window.scrollY <= lastScrollY) setVisible(true);
+    }, 500);
+
+    return () => {
+        window.removeEventListener("scroll", handleScroll);
+        clearInterval(interval);
+    };
   }, [lastScrollY]);
 
   if (!mounted) return null;

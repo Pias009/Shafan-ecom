@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search, CheckCircle } from "lucide-react";
+import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search, CheckCircle, ArrowRight } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -16,6 +16,7 @@ import { translations } from "@/lib/translations";
 import { Logo } from "./Logo";
 import { useCountryStore } from "@/lib/country-store";
 import { SearchOverlay } from "./SearchOverlay";
+import { createPortal } from "react-dom";
 
 export function Navbar() {
   const { data: session, status } = useSession();
@@ -142,11 +143,22 @@ export function Navbar() {
     }
   }, [isUserAuthenticated, setHasAddress]);
 
-  // Close menus on navigation
+  // Close menus on navigation and lock scroll
   useEffect(() => {
     setUserMenuOpen(false);
     setMobileOpen(false);
   }, [safePathname]);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [mobileOpen]);
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -373,128 +385,140 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu - Full page overlay with circular reveal */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="md:hidden fixed inset-0 z-50"
-          >
-            {/* Circular reveal animation */}
+      </header>
+
+      {/* Mobile menu - Rendered via Portal for absolute overlay */}
+      {mounted && typeof document !== "undefined" && createPortal(
+        <AnimatePresence>
+          {mobileOpen && (
             <motion.div
-              initial={{ scale: 0, borderRadius: "50%" }}
-              animate={{ 
-                scale: 1.175, 
-                borderRadius: "0%",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0
-              }}
-              exit={{ 
-                scale: 0, 
-                borderRadius: "50%",
-                transition: { delay: 0.1 }
-              }}
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              className="absolute inset-0 bg-white shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="md:hidden fixed inset-0 z-[99999] bg-white/40 backdrop-blur-3xl"
+              style={{ height: '100dvh' }}
             >
-              {/* Close button */}
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/5 hover:bg-black/10 transition-colors z-10"
-              >
-                <X size={24} className="text-black" />
-              </button>
+              {/* Background Accent */}
+              <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[40%] bg-emerald-100/50 rounded-full blur-[100px] pointer-events-none" />
+              <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[40%] bg-teal-50/50 rounded-full blur-[100px] pointer-events-none" />
 
-              {/* Centered content */}
-              <div className="flex flex-col items-center justify-center min-h-full py-20 px-6 space-y-6">
-                {/* User section */}
-                <div className="flex flex-col items-center gap-3 text-center mb-4">
-                  <div className="w-16 h-16 rounded-full bg-black/10 flex items-center justify-center">
-                    <UserRound size={28} className="text-black" />
-                  </div>
-                  <div className="font-bold text-lg text-black">
-                    {userLabel ? `Hello, ${userLabel}` : t.nav.signIn}
-                  </div>
+              <div className="relative flex flex-col h-full overflow-hidden">
+                {/* Header Section */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-black/5 bg-white/20 backdrop-blur-md">
+                  <Logo />
                   <button
-                    onClick={() => {
-                      if (status === "authenticated") {
-                        window.location.href = "/account";
-                      } else {
-                        setAuthOpen(true);
-                      }
-                      setMobileOpen(false);
-                    }}
-                    className="text-sm font-bold px-6 py-2 rounded-full bg-black text-white"
-                  >
-                    {status === "authenticated" ? "View Profile" : "Sign In"}
-                  </button>
-                </div>
-
-                {/* Settings row */}
-                <div className="flex items-center gap-4 py-2">
-                  <LanguageSelector />
-                  <CurrencySelector />
-                </div>
-
-                {/* Divider */}
-                <div className="w-32 h-px bg-black/10" />
-
-                {/* Navigation links - centered */}
-                <nav className="flex flex-col items-center gap-3">
-                  {navLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="w-full text-center px-8 py-3 text-base font-bold tracking-widest rounded-full transition-colors text-black hover:bg-black/5"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </nav>
-
-                {/* Divider */}
-                <div className="w-32 h-px bg-black/10" />
-
-                {/* Additional actions */}
-                <div className="flex flex-col items-center gap-3 w-full">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      setSearchOpen(true);
-                    }}
-                    className="w-full text-center px-8 py-3 text-base font-bold tracking-widest rounded-full hover:bg-black/5 text-black"
-                  >
-                    Search
-                  </button>
-
-                  <Link
-                    href="/cart"
                     onClick={() => setMobileOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full px-8 py-3 text-base font-bold tracking-widest rounded-full hover:bg-black/5 text-black"
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-black text-white shadow-xl shadow-black/20"
                   >
-                    <ShoppingBag size={20} />
-                    Cart
-                    {mounted && cartCount > 0 && (
-                      <span className="w-6 h-6 rounded-full bg-black text-white text-xs flex items-center justify-center font-bold">
-                        {cartCount}
-                      </span>
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto px-6 py-8 pb-32">
+                  {/* User Greeting Section */}
+                  <div className="flex items-center gap-4 mb-10 p-4 rounded-3xl bg-black/5 border border-black/5">
+                    <div className="w-14 h-14 rounded-full bg-black flex items-center justify-center text-white shadow-lg">
+                      <UserRound size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-black/30">Welcome back</p>
+                      <p className="font-bold text-lg text-black">{userLabel ?? "Guest User"}</p>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        if (status === "authenticated") router.push("/account");
+                        else setAuthOpen(true);
+                        setMobileOpen(false);
+                      }}
+                      className="p-3 rounded-2xl bg-white text-black shadow-sm"
+                    >
+                      <ArrowRight size={18} />
+                    </button>
+                  </div>
+
+                  {/* Main Navigation - High Level Links */}
+                  <div className="space-y-6 mb-12">
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/20 px-1">Shop Collections</p>
+                    <div className="flex flex-col gap-1">
+                      {navLinks.slice(0, 7).map((link, idx) => {
+                        const isOffers = link.href === "/offers";
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setMobileOpen(false)}
+                            className="flex items-center justify-between group"
+                          >
+                            <span className={`text-4xl font-black tracking-tighter transition-all duration-300 ${isOffers ? "text-emerald-700 italic" : "text-black group-hover:pl-4"}`}>
+                              {link.label.replace("🎉 ", "")}
+                            </span>
+                            <span className={`w-8 h-px transition-all duration-300 ${isOffers ? "bg-emerald-700 opacity-50" : "bg-black/10 group-hover:w-16 group-hover:bg-black"}`} />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Utility Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-12">
+                    <Link 
+                      href="/cart"
+                      onClick={() => setMobileOpen(false)}
+                      className="p-5 rounded-3xl bg-white border border-black/5 shadow-sm flex flex-col gap-3"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                        <ShoppingBag size={20} />
+                      </div>
+                      <div>
+                        <p className="font-black text-sm text-black">My Cart</p>
+                        <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest">{cartCount} Items</p>
+                      </div>
+                    </Link>
+                    <button 
+                      onClick={() => { setMobileOpen(false); setSearchOpen(true); }}
+                      className="p-5 rounded-3xl bg-white border border-black/5 shadow-sm flex flex-col gap-3 text-left"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center">
+                        <Search size={20} />
+                      </div>
+                      <div>
+                        <p className="font-black text-sm text-black">Search</p>
+                        <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest">Find Products</p>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Account & Support Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-10">
+                    <Link href="/account/orders" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl bg-black/5 text-black text-[11px] font-black uppercase tracking-widest text-center">My Orders</Link>
+                    <Link href="/contact" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl bg-black/5 text-black text-[11px] font-black uppercase tracking-widest text-center">Support</Link>
+                  </div>
+                </div>
+
+                {/* Bottom Sticky Section */}
+                <div className="mt-auto bg-white/60 backdrop-blur-xl border-t border-black/5 p-6 pb-10">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex gap-2">
+                      <LanguageSelector />
+                      <CurrencySelector />
+                    </div>
+                    {status === "authenticated" && (
+                      <button 
+                        onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/" }); }}
+                        className="text-[11px] font-black uppercase tracking-widest text-red-600 px-4 py-2"
+                      >
+                        Sign Out
+                      </button>
                     )}
-                  </Link>
+                  </div>
                 </div>
               </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      </header>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
       
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <AnimatePresence>
