@@ -18,11 +18,29 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
-  // Fetch recommendations filtered by store (other products in the same category)
-  const storeProducts = await getProducts(storeCode);
-  const recommendations = storeProducts
-    .filter((p: any) => p.id !== product.id && p.category?.name === product.category?.name)
-    .slice(0, 4);
+  // Fetch recommendations filtered by store (get more products for better recommendations)
+  const storeProducts = await getProducts(storeCode, 1, 500);
+  
+  // Get category name - handle different structures from getOptimizedProduct vs getProducts
+  const productCategoryName = product.category?.name || product.categoryName;
+  const productBrandName = typeof product.brand === 'string' ? product.brand : (product.brand?.name || product.brandName);
+  
+  // First: same category, then: same brand if needed
+  let recommendations = storeProducts
+    .filter((p: any) => p.id !== product.id && p.categoryName === productCategoryName)
+    .slice(0, 8);
+  
+  // If not enough, add from same brand
+  if (recommendations.length < 4) {
+    const brandRecs = storeProducts
+      .filter((p: any) => 
+        p.id !== product.id && 
+        !recommendations.find((r: any) => r.id === p.id) &&
+        p.brandName === productBrandName
+      )
+      .slice(0, 8 - recommendations.length);
+    recommendations = [...recommendations, ...brandRecs];
+  }
 
   return <ProductPageClient product={product} recommendations={recommendations} />;
 }

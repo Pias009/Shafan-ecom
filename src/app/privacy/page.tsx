@@ -1,6 +1,4 @@
 import { Metadata } from 'next';
-import { Footer } from '@/components/Footer';
-import { Navbar } from '@/components/Navbar';
 import { Shield, Database, CreditCard, Truck, UserCheck, Lock, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -11,9 +9,7 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white/40 backdrop-blur-sm">
-      <Navbar />
-      
-      <main className="flex-1 pt-24 pb-20 px-4">
+      <main className="flex-1 pt-8 pb-20 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
@@ -125,8 +121,6 @@ export default function PrivacyPolicyPage() {
           </div>
         </div>
       </main>
-      
-      <Footer />
     </div>
   );
 }

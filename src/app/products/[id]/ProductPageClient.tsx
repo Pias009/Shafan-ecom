@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Maximize2, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Maximize2, ArrowLeft, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Price } from "@/components/Price";
@@ -242,14 +242,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tighter text-black leading-tight">
                 {product.name}
               </h1>
-              <div className="flex items-center gap-2 text-black/30">
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} className={i < Math.round(product.averageRating || 5) ? "fill-black text-black" : "text-black/10"} />
-                  ))}
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-widest">({product.ratingCount || 0} reviews)</span>
-              </div>
+              
             </div>
 
             <div className="flex items-baseline gap-4">

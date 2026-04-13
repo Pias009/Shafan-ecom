@@ -8,6 +8,7 @@ import { translations } from "@/lib/translations";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -48,6 +49,7 @@ export function HomeProductCard({
   compact = false,
 }: HomeProductCardProps) {
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
@@ -123,12 +125,12 @@ export function HomeProductCard({
   };
 
   return (
-    <div className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden ${cardWidth} mx-auto flex flex-col`}>
+    <div 
+      onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.id}`); }}
+      className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden ${cardWidth} mx-auto flex flex-col cursor-pointer`}>
       {/* Image Section */}
       <div className="relative overflow-hidden aspect-square w-full bg-[#F9FAFB] flex-shrink-0 p-4">
-        <button
-          type="button"
-          onClick={() => onQuickView(product)}
+        <div
           className="w-full h-full relative block"
         >
           <Image
@@ -167,7 +169,7 @@ export function HomeProductCard({
               </div>
             )}
           </div>
-        </button>
+        </div>
 
         {/* Hover Background */}
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
@@ -194,7 +196,7 @@ export function HomeProductCard({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onQuickView(product);
+                router.push(`/products/${product.id}`);
               }}
               className={`bg-white text-black ${compact ? 'px-2.5 py-1.5' : 'px-3 sm:px-4 py-2'} rounded-full font-black ${fontSize.btn} uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-100 active:scale-95 pointer-events-auto whitespace-nowrap`}
             >
@@ -235,17 +237,7 @@ export function HomeProductCard({
           {brandName}
         </p>
 
-        {/* Star Rating */}
-        <div className="flex items-center gap-1 mb-1 sm:mb-1.5 flex-shrink-0">
-          <div className="flex">
-            {renderStars(product.averageRating || 0)}
-          </div>
-          {product.ratingCount !== undefined && (
-            <span className={`${fontSize.rating} text-gray-400 font-medium`}>
-              ({product.ratingCount})
-            </span>
-          )}
-        </div>
+        
 
         {/* Add to Cart Button */}
         <div className="flex justify-center flex-shrink-0">

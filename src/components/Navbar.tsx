@@ -79,7 +79,6 @@ export function Navbar() {
 
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [isAtTop, setIsAtTop] = useState(true);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -104,7 +103,6 @@ export function Navbar() {
     const onScroll = () => {
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 20);
-      setIsAtTop(currentScrollY <= 0);
       
       // Smart-Hide: Disable scroll hide when mobile menu is open (Force-Locked-Fixed)
       if (mobileOpen) {
@@ -113,14 +111,11 @@ export function Navbar() {
       }
       
       // Hide navbar when scrolling down, show when scrolling up
-      // Account for alert section by checking if we're past it
-      const scrollThreshold = 50; // Reduced threshold for faster hiding
-      
-      if (currentScrollY > lastScrollY && currentScrollY > scrollThreshold) {
-        // Scrolling down - hide completely
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        // Scrolling down - hide
         setVisible(false);
       } else if (currentScrollY < lastScrollY) {
-        // Scrolling up - show immediately
+        // Scrolling up - show
         setVisible(true);
       }
       setLastScrollY(currentScrollY);
@@ -184,7 +179,7 @@ export function Navbar() {
         } ${
           mobileOpen
             ? "translate-y-0 !fixed top-0 bg-white z-[100000]"
-            : visible || isAtTop
+            : visible
             ? "translate-y-0"
             : "-translate-y-full"
         }`}
