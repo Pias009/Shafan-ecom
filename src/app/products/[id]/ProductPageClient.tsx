@@ -147,7 +147,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     <div className="min-h-screen bg-[#FDFBF7] text-black">
       {/* Navbar handled globally */}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-20 sm:pb-28">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-32 pb-20 sm:pb-28">
         {/* Breadcrumbs */}
         <div className="mb-10 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-black/30">
           <Link href="/products" className="hover:text-black transition-colors">Products</Link>
@@ -157,9 +157,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-start">
           {/* Gallery Section */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div 
-              className="relative aspect-square rounded-[3rem] overflow-hidden bg-black/[0.02] border border-black/5 group cursor-zoom-in shadow-2xl shadow-black/5"
+              className="relative aspect-square rounded-2xl sm:rounded-[3rem] overflow-hidden bg-black/[0.02] border border-black/5 group cursor-zoom-in shadow-2xl shadow-black/5"
               onClick={() => setIsEnlarged(true)}
             >
               <AnimatePresence mode="wait">
@@ -205,12 +205,12 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
             {/* Thumbnails */}
             {allImages.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-2 sm:pb-4 scrollbar-hide">
                 {allImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
-                    className={`relative w-24 h-24 rounded-3xl overflow-hidden flex-shrink-0 transition-all border-2 ${
+                    className={`relative w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-3xl overflow-hidden flex-shrink-0 transition-all border-2 ${
                       currentImageIndex === idx ? "border-black scale-105 shadow-xl" : "border-transparent opacity-40 hover:opacity-100"
                     }`}
                   >
@@ -222,24 +222,24 @@ export default function ProductPageClient({ product, recommendations }: ProductP
           </div>
 
           {/* Info Section */}
-          <div className="space-y-10">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
+          <div className="space-y-6 sm:space-y-10">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
                 {product.categories?.map((cat: string, idx: number) => (
-                  <span key={idx} className="px-3 py-1 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-full">
+                  <span key={idx} className="px-2 sm:px-3 py-1 bg-black text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-full">
                     {cat}
                   </span>
                 ))}
                 {product.subCategory?.name && (
-                  <span className="px-3 py-1 bg-gray-200 text-black text-[9px] font-black uppercase tracking-widest rounded-full">
+                  <span className="px-2 sm:px-3 py-1 bg-gray-200 text-black text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-full">
                     {product.subCategory.name}
                   </span>
                 )}
                 {product.hot && (
-                  <span className="px-3 py-1 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full">Hot</span>
+                  <span className="px-2 sm:px-3 py-1 bg-red-500 text-white text-[8px] sm:text-[9px] font-black uppercase tracking-widest rounded-full">Hot</span>
                 )}
               </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tighter text-black leading-tight">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-5xl font-bold tracking-tighter text-black leading-tight">
                 {product.name}
               </h1>
               <div className="flex items-center gap-2 text-black/30">
@@ -252,27 +252,50 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               </div>
             </div>
 
-            <div className="flex items-baseline gap-4">
+            <div className="flex items-baseline gap-2 sm:gap-4">
               {isAvailable ? (
-                <Price amount={displayPrice} className="text-3xl sm:text-4xl lg:text-5xl font-black text-black" />
+                <Price amount={displayPrice} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-black" />
               ) : (
-                <span className="text-xl sm:text-2xl lg:text-3xl font-black text-red-500">Unavailable in this region</span>
+                <span className="text-base sm:text-xl md:text-2xl lg:text-3xl font-black text-red-500">Unavailable in this region</span>
               )}
             </div>
 
+            {/* Add to Cart & Order Now Buttons */}
+            <div className="flex gap-2 sm:gap-3 pt-2">
+              <button
+                onClick={() => addToCart()}
+                disabled={isAddingToCart}
+                className="flex-1 sm:flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 text-gray-700 text-xs sm:text-sm font-black uppercase tracking-[0.15em] hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-gray-200/50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                {isAddingToCart ? <Check size={16} className="text-green-500" /> : null}
+                {isAddingToCart ? 'Added' : 'Add to Cart'}
+              </button>
+              <button
+                onClick={() => orderNow()}
+                className="flex-1 sm:flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl shadow-xl shadow-black/20 text-xs sm:text-sm"
+              >
+                <span className="original font-black uppercase tracking-[0.15em]">Order Now</span>
+                <div className="letters text-xs">
+                  {Array.from("FAST").map((letter, index) => (
+                    <span key={index}>{letter}</span>
+                  ))}
+                </div>
+              </button>
+            </div>
+
             {availableTabs.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Details</div>
                 </div>
                 
-                <div className="border-b border-black/10">
-                  <div className="flex flex-wrap gap-1">
+                <div className="border-b border-black/10 overflow-x-auto">
+                  <div className="flex gap-0.5 min-w-max">
                     {availableTabs.map(tab => (
                       <button
                         key={tab.key}
                         onClick={() => setShowDescription(tab.key)}
-                        className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
+                        className={`px-3 sm:px-4 py-2 sm:py-3 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
                           showDescription === tab.key 
                             ? 'text-black border-b-2 border-black' 
                             : 'text-black/40 hover:text-black/60'
@@ -292,9 +315,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="py-4"
+                      className="py-2 sm:py-4"
                     >
-                      <div className="text-lg leading-relaxed text-black/60 font-medium prose prose-stone max-w-none">
+                      <div className="text-sm sm:text-base md:text-lg leading-relaxed text-black/60 font-medium prose prose-stone max-w-none">
                         {formatDescription((product as any)[showDescription] as string)}
                       </div>
                     </motion.div>
@@ -304,13 +327,13 @@ export default function ProductPageClient({ product, recommendations }: ProductP
             )}
 
             {product.features && product.features.length > 0 && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Specifications</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 sm:gap-4">
                   {product.features.map((f: string, i: number) => (
-                    <div key={i} className="flex items-center gap-3 p-4 bg-black/[0.02] border border-black/5 rounded-2xl">
-                      <div className="w-1.5 h-1.5 bg-black/20 rounded-full" />
-                      <span className="text-[11px] font-bold text-black/50 uppercase tracking-widest">{f}</span>
+                    <div key={i} className="flex items-center gap-2 sm:gap-3 p-2 sm:p-4 bg-black/[0.02] border border-black/5 rounded-xl sm:rounded-2xl">
+                      <div className="w-1.5 h-1.5 bg-black/20 rounded-full shrink-0" />
+                      <span className="text-[10px] sm:text-[11px] font-bold text-black/50 uppercase tracking-widest">{f}</span>
                     </div>
                   ))}
                 </div>
@@ -319,15 +342,15 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
             {/* Skin Tones */}
             {product.skinTones && product.skinTones.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Suitable for Skin Tones</div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                   {product.skinTones.map((tone: any, idx: number) => (
-                    <span key={idx} className="inline-flex items-center gap-2 px-4 py-2 bg-black/[0.03] border border-black/5 text-black text-[10px] font-bold uppercase tracking-widest rounded-full">
+                    <span key={idx} className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 bg-black/[0.03] border border-black/5 text-black text-[9px] sm:text-[10px] font-bold uppercase tracking-widest rounded-full">
                       {tone.hexColor && (
-                        <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: tone.hexColor }} />
+                        <span className="w-3 sm:w-4 h-3 sm:h-4 rounded-full border border-black/10 shrink-0" style={{ backgroundColor: tone.hexColor }} />
                       )}
-                      {tone.name}
+                      <span className="truncate max-w-[80px] sm:max-w-none">{tone.name}</span>
                     </span>
                   ))}
                 </div>
@@ -336,11 +359,11 @@ export default function ProductPageClient({ product, recommendations }: ProductP
 
             {/* Skin Concerns */}
             {product.skinConcerns && product.skinConcerns.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Addresses Skin Concerns</div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                   {product.skinConcerns.map((concern: string, idx: number) => (
-                    <span key={idx} className="px-4 py-2 bg-red-50 text-red-600 text-[10px] font-bold uppercase tracking-widest rounded-full border border-red-100">
+                    <span key={idx} className="px-2 sm:px-4 py-1 sm:py-2 bg-red-50 text-red-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest rounded-full border border-red-100">
                       {concern}
                     </span>
                   ))}
@@ -348,39 +371,19 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               </div>
             )}
 
-            <div className="hidden md:flex pt-6 sm:pt-8 border-t border-black/5 flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <button
-                onClick={orderNow}
-                className="btn-53 flex-[2] h-24 rounded-3xl shadow-xl shadow-black/20 text-xl"
-              >
-                <span className="original font-black uppercase tracking-[0.15em] text-lg">Order Now</span>
-                <div className="letters text-lg">
-                  {Array.from("FAST").map((letter, index) => (
-                    <span key={index}>{letter}</span>
-                  ))}
-                </div>
-              </button>
-              <button
-                onClick={addToCart}
-                className="flex-1 h-24 rounded-3xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 text-gray-700 text-sm font-black uppercase tracking-[0.2em] hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-gray-200/50 transition-all active:scale-[0.98]"
-              >
-                Add to Cart
-              </button>
-            </div>
-
             {/* Perks */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-8 sm:pt-10 border-t border-black/5 text-center">
-              <div className="space-y-2">
-                <div className="w-10 h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><Truck size={18} className="text-slate-700" /></div>
-                <div className="text-[8px] font-black uppercase tracking-widest text-slate-600">Free Shipping</div>
+            <div className="grid grid-cols-3 gap-1 sm:gap-4 pt-6 sm:pt-8 border-t border-black/5 text-center">
+              <div className="space-y-1 sm:space-y-2">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><Truck size={14} className="sm:hidden text-slate-700" /><Truck size={18} className="hidden sm:block text-slate-700" /></div>
+                <div className="text-[6px] sm:text-[8px] font-black uppercase tracking-widest text-slate-600">Free Shipping</div>
               </div>
-              <div className="space-y-2">
-                <div className="w-10 h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><RefreshCw size={18} className="text-slate-700" /></div>
-                <div className="text-[8px] font-black uppercase tracking-widest text-slate-600">Easy Returns</div>
+              <div className="space-y-1 sm:space-y-2">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><RefreshCw size={14} className="sm:hidden text-slate-700" /><RefreshCw size={18} className="hidden sm:block text-slate-700" /></div>
+                <div className="text-[6px] sm:text-[8px] font-black uppercase tracking-widest text-slate-600">Easy Returns</div>
               </div>
-              <div className="space-y-2">
-                <div className="w-10 h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><ShieldCheck size={18} className="text-slate-700" /></div>
-                <div className="text-[8px] font-black uppercase tracking-widest text-slate-600">Secured Payment</div>
+              <div className="space-y-1 sm:space-y-2">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-b from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto border border-gray-200"><ShieldCheck size={14} className="sm:hidden text-slate-700" /><ShieldCheck size={18} className="hidden sm:block text-slate-700" /></div>
+                <div className="text-[6px] sm:text-[8px] font-black uppercase tracking-widest text-slate-600">Secured Payment</div>
               </div>
             </div>
           </div>
@@ -419,93 +422,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         )}
       </main>
 
-
-      {/* Mobile Sticky Bar */}
-      <div className="md:hidden fixed bottom-4 left-4 right-4 z-[40] max-w-lg mx-auto">
-        <div className="glass-panel-heavy rounded-[2rem] p-2 sm:p-3 flex items-center gap-2 sm:gap-3 shadow-2xl shadow-black/20 border border-white/20">
-          <motion.button
-            onClick={addToCart}
-            disabled={isAddingToCart}
-            className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center ${
-              isAddingToCart 
-                ? 'bg-green-500 shadow-lg shadow-green-500/40' 
-                : 'bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200'
-            }`}
-            whileHover={!isAddingToCart ? { scale: 1.05 } : {}}
-            whileTap={!isAddingToCart ? { scale: 0.95 } : {}}
-            animate={isAddingToCart ? { scale: [1, 1.15, 1.05, 1] } : {}}
-            transition={{ duration: 0.3 }}
-          >
-            <AnimatePresence mode="wait">
-              {!isAddingToCart ? (
-                <motion.div
-                  key="bag"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <svg width="24" height="24" viewBox="0 0 64 64" className="w-6 h-6">
-                    <defs>
-                      <linearGradient id="cartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#f97316" />
-                        <stop offset="50%" stopColor="#ef4444" />
-                        <stop offset="100%" stopColor="#ec4899" />
-                      </linearGradient>
-                    </defs>
-                    <motion.path
-                      d="M4 12h8l4 16h28l-4-16H12l-8-4v0l4 20h8"
-                      fill="url(#cartGrad)"
-                      stroke="none"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 0.5 }}
-                    />
-                    <motion.circle
-                      cx="20"
-                      cy="52"
-                      r="6"
-                      fill="#f97316"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2 }}
-                    />
-                    <motion.circle
-                      cx="44"
-                      cy="52"
-                      r="6"
-                      fill="#ec4899"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.3 }}
-                    />
-                  </svg>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="check"
-                  initial={{ scale: 0.5, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                >
-                  <Check size={20} className="text-green-500" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.button>
-          <button
-            onClick={orderNow}
-            className="btn-53 flex-1 h-14 sm:h-16 rounded-2xl shadow-xl text-base"
-          >
-            <span className="original font-black uppercase tracking-[0.15em]">Order Now</span>
-            <div className="letters">
-              {Array.from("FAST").map((letter, index) => (
-                <span key={index}>{letter}</span>
-              ))}
-            </div>
-          </button>
-        </div>
-      </div>
 
       {/* Lightbox */}
       <AnimatePresence>

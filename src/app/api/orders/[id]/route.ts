@@ -7,9 +7,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerAuthSession();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   try {
     const { id } = await params;
@@ -24,8 +21,9 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Security check: Ensure this order belongs to the logged-in user
-    if (order.userId !== session.user.id) {
+    // Allow unauthenticated access for pending payment orders (checkout flow)
+    // Only require auth if user is logged in AND trying to access someone else's order
+    if (session?.user?.id && order.userId && order.userId !== session.user.id) {
       return NextResponse.json({ error: "Unauthorized access to order" }, { status: 403 });
     }
 

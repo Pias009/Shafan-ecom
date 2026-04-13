@@ -395,7 +395,7 @@ export function Navbar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 z-[99999] bg-white/40 backdrop-blur-3xl"
+              className="md:hidden fixed inset-0 z-[99998] bg-white/40 backdrop-blur-3xl"
               style={{ height: '100dvh' }}
             >
               {/* Background Accent */}
@@ -496,10 +496,10 @@ export function Navbar() {
                   </div>
                 </div>
 
-                {/* Bottom Sticky Section */}
+                  {/* Bottom Sticky Section */}
                 <div className="mt-auto bg-white/60 backdrop-blur-xl border-t border-black/5 p-6 pb-10">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <LanguageSelector />
                       <CurrencySelector />
                     </div>

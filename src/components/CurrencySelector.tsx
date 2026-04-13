@@ -61,8 +61,9 @@ export function CurrencySelector() {
       </button>
 
       {isOpen && (
+        <div className="fixed inset-0 z-[999999] pointer-events-none">
         <div 
-          className="absolute top-full right-0 mt-2 w-48 glass-panel-heavy rounded-2xl p-2 border border-black/5 shadow-2xl z-[9999] bg-white/95 backdrop-blur-xl transition-all animate-in fade-in zoom-in duration-200"
+          className="absolute top-full right-0 mt-2 w-48 glass-panel-heavy rounded-2xl p-2 border border-black/5 shadow-2xl z-[999999] bg-white/95 backdrop-blur-xl transition-all animate-in fade-in zoom-in duration-200 pointer-events-auto"
           style={{ position: 'fixed', bottom: 'auto' }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -87,6 +88,7 @@ export function CurrencySelector() {
               </button>
             ))}
           </div>
+        </div>
         </div>
       )}
     </div>
