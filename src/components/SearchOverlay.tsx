@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Search, X, Package } from "lucide-react";
 import { useSearchStore } from "@/lib/search-store";
@@ -17,10 +18,12 @@ export function SearchOverlay({ onClose }: SearchOverlayProps) {
   const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { setQuery: setStoreQuery, setIsSearching: setStoreIsSearching } = useSearchStore();
+  const [mounted, setMounted] = useState(false);
   const closedRef = useRef(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    setMounted(true);
     inputRef.current?.focus();
     document.body.style.overflow = "hidden";
     closedRef.current = false;
@@ -98,8 +101,10 @@ export function SearchOverlay({ onClose }: SearchOverlayProps) {
     setQuery(e.target.value);
   }, []);
 
-  return (
-    <div className="fixed inset-0 z-[100]">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[1001]">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -189,6 +194,7 @@ export function SearchOverlay({ onClose }: SearchOverlayProps) {
           </AnimatePresence>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 }

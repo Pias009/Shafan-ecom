@@ -48,9 +48,9 @@ export function FloatingCartButton() {
 
   if (!mounted || isAdminRoute) return null;
 
-  if (items.length === 0 && isHidden) return null;
-
+  // HIDDEN ON MOBILE to avoid overlap with professional Bottom Nav
   return (
+    <div className="hidden lg:block">
     <motion.div
       className="fixed bottom-6 right-6 z-40"
       initial={{ opacity: 0, y: 20 }}
@@ -124,5 +124,6 @@ export function FloatingCartButton() {
         )}
       </Link>
     </motion.div>
+    </div>
   );
 }

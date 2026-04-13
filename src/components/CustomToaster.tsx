@@ -115,8 +115,14 @@ export function CustomToaster({ position = "bottom-center" }: CustomToasterProps
   const getToastPosition = () => {
     const base = "fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-[calc(100%-2rem)] sm:max-w-md px-4 pointer-events-auto";
     
-    if (position.includes("top") && !position.includes("bottom")) {
-      return base.replace("bottom-8", "top-8").replace("bottom: 24", "top: 24");
+    if (position === "top-left") {
+      return base.replace("bottom-8", "top-8").replace("left-1/2 -translate-x-1/2", "left-4 right-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
+    }
+    if (position === "top-right") {
+      return base.replace("bottom-8", "top-8").replace("left-1/2 -translate-x-1/2", "right-4 left-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");
+    }
+    if (position === "top-center") {
+      return base.replace("bottom-8", "top-8");
     }
     if (position.includes("left") && position.includes("bottom")) {
       return base.replace("left-1/2 -translate-x-1/2", "left-4 right-auto translate-x-0").replace("w-full max-w-[calc(100%-2rem)] sm:max-w-md", "max-w-sm");

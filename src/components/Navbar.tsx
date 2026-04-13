@@ -177,30 +177,44 @@ export function Navbar() {
     >
       <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center px-0">
         {/* Mobile layout: Logo centered */}
-        <div className="flex items-center justify-between w-full lg:hidden px-2">
-          {/* Left: Search button */}
+        <div className="flex items-center justify-between w-full lg:hidden px-4 py-1">
+          {/* Left: Menu button */}
           <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            className="p-2 text-black hover:bg-black/5 rounded-lg transition-colors"
-            aria-label="Search"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2 -ml-2 text-black hover:bg-black/5 rounded-full transition-colors"
+            aria-label="Toggle menu"
           >
-            <Search size={18} />
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
           
-{/* Logo centered */}
-          <div className="flex-shrink-0">
+          {/* Logo centered */}
+          <div className="flex-shrink-0 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <Logo />
           </div>
           
-          {/* Right: Menu button */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 text-black hover:bg-black/5 rounded-lg transition-colors"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          {/* Right: Actions */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="p-2 text-black hover:bg-black/5 rounded-full transition-colors"
+              aria-label="Search"
+            >
+              <Search size={20} />
+            </button>
+            <Link 
+              href="/cart"
+              className="p-2 -mr-2 text-black hover:bg-black/5 rounded-full transition-colors relative"
+              aria-label="Cart"
+            >
+              <ShoppingBag size={20} />
+              {mounted && cartCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[8px] flex items-center justify-center font-bold">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
 
         {/* Desktop layout - centered */}

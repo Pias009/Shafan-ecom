@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Globe } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLanguageStore } from "@/lib/language-store";
 import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
 import { translations } from "@/lib/translations";
@@ -54,7 +55,10 @@ export function AuthModal({
     }
   }, [open, mode, currentCurrency.code, country]);
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     if (!open) return;
     setMode(defaultMode);
     setError(null);
@@ -107,11 +111,13 @@ export function AuthModal({
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open ? (
         <motion.div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-[9999] grid place-items-center p-4 overflow-y-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -259,6 +265,7 @@ export function AuthModal({
           </motion.div>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

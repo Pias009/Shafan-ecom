@@ -1,6 +1,7 @@
 import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
@@ -65,6 +66,11 @@ export function ProductQuickViewModal({
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // STRICT: Compute price using selectedCountry - no fallbacks
   const { displayPrice, originalPrice, isAvailable } = useMemo(() => {
@@ -111,10 +117,42 @@ export function ProductQuickViewModal({
   }, [product, selectedCountry]);
 
   // Combine main image with gallery images, filtering out duplicates
-  const allImages = [
-    product?.imageUrl,
-    ...(product?.images || [])
-  ].filter((img, index, self) => img && self.indexOf(img) === index) as string[];
+  const { allImages, brandName, categoryName, categories, subCategoryName, skinTones, skinConcerns } = useMemo(() => {
+    if (!product) {
+      return {
+        allImages: [] as string[],
+        brandName: "Shafan Global",
+        categoryName: "General",
+        categories: [] as string[],
+        subCategoryName: undefined as string | undefined,
+        skinTones: [] as any[],
+        skinConcerns: [] as string[],
+      };
+    }
+
+    const imgs = [
+      product.imageUrl,
+      ...(product.images || [])
+    ].filter((img, index, self) => img && self.indexOf(img) === index) as string[];
+
+    const bName = typeof product.brand === "string" 
+      ? product.brand 
+      : product.brand?.name || "Shafan Global";
+
+    const cName = typeof product.category === "string" 
+      ? product.category 
+      : product.category?.name || "General";
+
+    return {
+      allImages: imgs,
+      brandName: bName,
+      categoryName: cName,
+      categories: product.categories || [],
+      subCategoryName: product.subCategory?.name,
+      skinTones: product.skinTones || [],
+      skinConcerns: product.skinConcerns || [],
+    };
+  }, [product]);
 
   // Auto-slide effect
   useEffect(() => {
@@ -127,22 +165,9 @@ export function ProductQuickViewModal({
     return () => clearInterval(timer);
   }, [product, allImages.length, isEnlarged]);
 
-  if (!product) return <AnimatePresence />;
+  if (!mounted) return null;
 
-  const brandName = typeof product.brand === "string" 
-    ? product.brand 
-    : product.brand?.name || "Shafan Global";
-
-  const categoryName = typeof product.category === "string" 
-    ? product.category 
-    : product.category?.name || "General";
-
-  const categories = product.categories || [];
-  const subCategoryName = product.subCategory?.name;
-  const skinTones = product.skinTones || [];
-  const skinConcerns = product.skinConcerns || [];
-
-  return (
+  return createPortal(
     <AnimatePresence>
       {product ? (
         <motion.div
@@ -440,7 +465,8 @@ export function ProductQuickViewModal({
           </AnimatePresence>
         </motion.div>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 

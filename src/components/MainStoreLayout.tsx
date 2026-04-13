@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 export function MainStoreLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -19,6 +20,7 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 }
