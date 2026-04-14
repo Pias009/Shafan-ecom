@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { OffersClient } from "./OffersClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 interface ProductWithDiscount {
   id: string;

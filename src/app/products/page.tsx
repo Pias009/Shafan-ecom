@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 3600;
-export const dynamic = 'force-dynamic';
 
 async function getBanners() {
   try {

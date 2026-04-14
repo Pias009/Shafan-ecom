@@ -4,8 +4,7 @@ import { getStoreCode } from "@/lib/server/store-utils";
 import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
 
-export const dynamic = 'force-dynamic'; // Force dynamic rendering due to useSearchParams
-export const revalidate = 0; // No ISR when dynamic
+export const revalidate = 60; // Cache for 60 seconds
 
 export default async function HomePage() {
   const storeCode = await getStoreCode();

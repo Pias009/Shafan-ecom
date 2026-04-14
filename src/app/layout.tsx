@@ -6,7 +6,7 @@ import { MainStoreLayout } from "@/components/MainStoreLayout";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import ClientLayout from "@/components/ClientLayout";
-import { WebVitalsReporter } from "@/components/WebVitalsReporter";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -28,7 +28,6 @@ export const metadata: Metadata = {
   description: "Premium skincare crafted with nature's finest ingredients.",
 };
 
-export const dynamic = 'force-dynamic';
 
 export default function RootLayout({
   children,
@@ -43,7 +42,7 @@ export default function RootLayout({
       <body
         className={`${playfairDisplay.variable} ${dmSans.variable} antialiased overflow-x-hidden max-w-full`}
       >
-        <WebVitalsReporter />
+        <SpeedInsights />
         <Providers>
           <ClientLayout>
             <Suspense fallback={

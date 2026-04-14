@@ -32,6 +32,16 @@ export function Navbar() {
       const recentOrder = localStorage.getItem('recent_order');
       if (recentOrder) {
         setOrderNotification(recentOrder);
+        
+        // Remove from storage immediately so it only shows once
+        localStorage.removeItem('recent_order');
+        
+        // Auto hide after 3 seconds
+        const timer = setTimeout(() => {
+          setOrderNotification(null);
+        }, 3000);
+        
+        return () => clearTimeout(timer);
       }
     }
   }, []);
@@ -306,14 +316,6 @@ export function Navbar() {
                 <UserRound size={24} />
               </div>
               <span className="uppercase tracking-wide">{userLabel ?? t.nav.signIn}</span>
-              {mounted && cartCount > 0 && (
-                <div className="relative flex items-center ml-2">
-                  <ShoppingBag size={24} />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[8px] flex items-center justify-center font-bold">
-                    {cartCount > 9 ? "9+" : cartCount}
-                  </span>
-                </div>
-              )}
             </button>
             
             {/* Dropdown with User options, Currency, Language, Cart */}

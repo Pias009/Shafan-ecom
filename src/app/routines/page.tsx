@@ -3,7 +3,6 @@ import { getStoreCode } from "@/lib/server/store-utils";
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 3600;
-export const dynamic = 'force-dynamic';
 
 function getCountryCodeFromStore(storeCode: string | null): string {
   const map: Record<string, string> = {
