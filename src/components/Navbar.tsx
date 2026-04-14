@@ -186,7 +186,7 @@ export function Navbar() {
   return (
     <>
 <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 glass-nav ${
+        className={`fixed top-0 left-0 right-0 z-40 transition-[transform,background-color,backdrop-filter] duration-300 glass-nav ${
           scrolled ? "shadow-md" : "lg:shadow-none shadow-sm"
         } ${
           mobileOpen
@@ -195,18 +195,17 @@ export function Navbar() {
             ? "translate-y-0"
             : "-translate-y-full"
         }`}
-        style={
-          mobileOpen
-            ? {
-                position: "fixed",
-                top: 0,
-                background: "#ffffff",
-                opacity: 1,
-                zIndex: 100000,
-                transform: "translateY(0)",
-              }
-            : undefined
-        }
+        style={{
+          willChange: "transform",
+          ...(mobileOpen ? {
+            position: "fixed",
+            top: 0,
+            background: "#ffffff",
+            opacity: 1,
+            zIndex: 100000,
+            transform: "translateY(0)",
+          } : {})
+        }}
       >
       <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center px-0">
         {/* Mobile layout: Logo centered */}
@@ -401,31 +400,32 @@ export function Navbar() {
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
-              initial={{ scale: 0, borderRadius: "50%" }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ 
-                scale: 1.175, 
-                borderRadius: "0%",
+                opacity: 1,
+                y: 0,
                 top: 0,
                 left: 0,
                 right: 0,
                 bottom: 0
               }}
               exit={{ 
-                scale: 0, 
-                borderRadius: "50%",
-                transition: { delay: 0.1 }
+                opacity: 0,
+                y: 20,
+                transition: { duration: 0.2 }
               }}
-              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               className="md:hidden fixed inset-0 z-[99999]"
               style={{
-                background: "rgba(255, 255, 255, 0.98)",
-                backdropFilter: "blur(30px) saturate(150%)",
-                WebkitBackdropFilter: "blur(30px) saturate(150%)",
+                background: "rgba(255, 255, 255, 0.96)",
+                backdropFilter: "blur(12px) saturate(120%)",
+                WebkitBackdropFilter: "blur(12px) saturate(120%)",
                 position: "fixed",
                 top: 0,
                 left: 0,
                 width: "100vw",
                 height: "100dvh",
+                willChange: "transform, opacity",
               }}
             >
               {/* Background Accent */}

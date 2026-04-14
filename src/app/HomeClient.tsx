@@ -327,6 +327,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                 animate={{ opacity: 1, y: 0, height: "auto" }}
                 exit={{ opacity: 0, y: -20, height: 0 }}
                 className="overflow-hidden mb-12"
+                style={{ willChange: "transform, opacity, height" }}
               >
                 <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 items-stretch md:items-end shadow-lg border border-black/5">
                   <div className="col-span-2 md:col-span-1">
@@ -433,6 +434,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
                   className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/80 text-black shadow-md border border-black/10"
                   whileHover={{ scale: 1.1, x: 4 }}
                   whileTap={{ scale: 0.95 }}
+                  style={{ willChange: "transform" }}
                 >
                   <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
                 </motion.div>
@@ -467,7 +469,8 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
           imageUrl: quickView.mainImage,
           brand: quickView.brand?.name,
           countryPrices: quickView.countryPrices || [],
-          hot: quickView.hot
+          hot: quickView.hot,
+          trending: quickView.trending
         } : null}
         onClose={() => setQuickView(null)}
         onAddToCart={(p) => addToCart(p)}

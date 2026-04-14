@@ -236,7 +236,14 @@ export default function ProductsClient({
       const res = await fetch(`/api/products?page=${nextPage}&limit=${limit}`);
       const newProducts = await res.json();
       if (newProducts.length > 0) {
-        setProducts(prev => [...prev, ...newProducts]);
+        const transformedNew = newProducts.map((p: any) => ({
+          ...p,
+          brandName: p.brandName || p.brand?.name || "Generic",
+          categoryName: p.categoryName || p.category?.name || "General",
+          imageUrl: p.mainImage || p.imageUrl,
+          images: p.images || []
+        }));
+        setProducts(prev => [...prev, ...transformedNew]);
         setPage(nextPage);
         setHasMore(newProducts.length === limit);
       } else {

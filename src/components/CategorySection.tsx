@@ -30,6 +30,7 @@ export function CategorySection({
             type="button"
             onClick={() => onPick(c.label)}
             className="glass-panel flex-shrink-0 px-3 md:px-10 py-1.5 md:py-5 rounded-xl md:rounded-[2.5rem] font-display text-xs md:text-xl text-black font-black tracking-wider transition-all duration-300 hover:bg-black hover:text-white group border border-black/5 hover:scale-105 active:scale-95 shadow-sm hover:shadow-xl min-w-max"
+            style={{ willChange: "transform" }}
           >
             <span className="block text-[5px] md:text-[8px] font-black uppercase tracking-widest text-black/30 group-hover:text-white/50 mb-0.5 md:mb-1">
               {c.description ?? (currentLanguage.code === "ar" ? "فئة" : "Category")}

@@ -11,9 +11,10 @@ const skinTypes = ["Oily", "Dry", "Combination", "Sensitive", "Normal"];
 function AnimatedText({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0)" }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+      style={{ willChange: "transform, opacity" }}
     >
       {children}
     </motion.div>
@@ -37,6 +38,7 @@ function SkinTypeCard() {
       transition={{ delay: 0.5, duration: 0.5 }}
       whileHover={{ y: -6 }}
       className="glass-panel-heavy p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl border border-white/60 shadow-sm cursor-pointer group relative overflow-hidden"
+      style={{ willChange: "transform, opacity" }}
       onClick={() => toast.success("Coming Soon!")}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-pink-50/50 to-transparent pointer-events-none rounded-2xl" />
@@ -45,6 +47,7 @@ function SkinTypeCard() {
           className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-gradient-to-br from-pink-400 to-rose-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-pink-200/60"
           animate={{ rotate: [0, 12, -12, 0] }}
           transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+          style={{ willChange: "transform" }}
         >
           <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white" />
         </motion.div>
@@ -86,6 +89,7 @@ function SkinConcernCard() {
       transition={{ delay: 0.6, duration: 0.5 }}
       whileHover={{ y: -6 }}
       className="glass-panel-heavy p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl border border-white/60 shadow-sm cursor-pointer group relative overflow-hidden"
+      style={{ willChange: "transform, opacity" }}
       onClick={() => toast.success("Coming Soon!")}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-violet-50/50 to-transparent pointer-events-none rounded-2xl" />
@@ -133,6 +137,7 @@ function ExpertsCard() {
       transition={{ delay: 0.7, duration: 0.5 }}
       whileHover={{ y: -6 }}
       className="glass-panel-heavy p-3 sm:p-4 md:p-5 lg:p-6 rounded-xl sm:rounded-2xl border border-white/60 shadow-sm cursor-pointer group relative overflow-hidden"
+      style={{ willChange: "transform, opacity" }}
       onClick={() => toast.success("Coming Soon!")}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 to-transparent pointer-events-none rounded-2xl" />
@@ -189,7 +194,7 @@ function Marquee() {
       transition={{ delay: 0.8, duration: 0.6 }}
       className="glass-panel rounded-xl sm:rounded-2xl border border-white/50 overflow-hidden py-2 sm:py-2.5"
     >
-      <div className="flex whitespace-nowrap select-none animate-marquee">
+      <div className="flex whitespace-nowrap select-none animate-marquee" style={{ transform: 'translateZ(0)' }}>
         {[...marqueeItems, ...marqueeItems, ...marqueeItems, ...marqueeItems].map((item, i) => (
           <span key={i} className="inline-flex items-center gap-1.5 mx-4 sm:mx-5 text-[9px] sm:text-[10px] font-bold text-black/30 uppercase tracking-[0.15em]">
             <span className={item.color}>{item.icon}</span> {item.text}
@@ -228,6 +233,7 @@ export function Hero() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="glass-panel rounded-[1.5rem] sm:rounded-[2rem] md:rounded-[2.5rem] lg:rounded-[3rem] w-full flex flex-col lg:flex-row items-stretch overflow-hidden shadow-lg sm:shadow-xl md:shadow-2xl border border-white/60 min-h-[340px] sm:min-h-[380px] md:min-h-[440px] lg:h-[520px] xl:h-[560px]"
+            style={{ willChange: "transform, opacity" }}
           >
             {/* White accent bar */}
             <div className="absolute top-0 left-0 right-0 h-[2.5px] rounded-t-[3rem] bg-white/60" />

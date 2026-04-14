@@ -79,6 +79,7 @@ export function MobileBottomNav() {
           animate={{ y: 0 }}
           exit={{ y: 100 }}
           className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]"
+          style={{ willChange: "transform" }}
         >
           <div className="bg-white/90 backdrop-blur-xl border border-black/5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-3xl px-6 py-3 flex items-center justify-between">
             {navItems.map((item) => {

@@ -1,4 +1,4 @@
-import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag, ArrowRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag, ArrowRight, Flame } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -8,6 +8,7 @@ import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
 import { formatDescription } from "@/utils/formatText";
+import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -46,6 +47,7 @@ interface QuickViewProduct {
   howToUse?: string;
   features?: string[];
   hot?: boolean;
+  trending?: boolean;
 }
 
 export function ProductQuickViewModal({
@@ -133,6 +135,7 @@ export function ProductQuickViewModal({
 
     const imgs = [
       product.imageUrl,
+      (product as any).mainImage,
       ...(product.images || [])
     ].filter((img, index, self) => img && self.indexOf(img) === index) as string[];
 
@@ -188,32 +191,24 @@ export function ProductQuickViewModal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative mx-auto w-full md:w-[95%] max-w-5xl h-[75vh] md:h-auto md:max-h-[70vh] rounded-t-[2.5rem] md:rounded-[2.5rem] bg-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] flex flex-col md:flex-row pointer-events-auto overflow-hidden mt-auto md:mt-0"
+            className="relative mx-auto w-full md:w-[95%] max-w-5xl h-[80vh] md:h-auto md:min-h-[500px] rounded-t-[2.5rem] md:rounded-[2.5rem] bg-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] flex flex-col md:flex-row items-stretch pointer-events-auto overflow-hidden mt-auto md:mt-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="md:w-[45%] h-[35%] md:h-auto relative bg-white flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0 overflow-hidden">
+            <div className="md:w-[48%] h-[40vh] md:h-full relative bg-white flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0 overflow-hidden">
               <div 
-                className="relative aspect-square h-full max-h-full rounded-[2rem] md:rounded-[3rem] overflow-hidden group cursor-zoom-in" 
+                className="relative w-full h-[40vh] md:h-full min-h-[300px] md:min-h-[500px] p-4 md:p-8 overflow-hidden group cursor-zoom-in flex flex-col" 
                 onClick={() => setIsEnlarged(true)}
               >
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentImageIndex}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.05 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="relative w-full h-full"
-                  >
-                    <Image
-                      src={isValidImageUrl(allImages[currentImageIndex]) ? allImages[currentImageIndex] : "/placeholder-product.png"}
-                      alt={product.name}
-                      fill
-                      className="object-contain"
-                      priority
-                    />
-                  </motion.div>
-                </AnimatePresence>
+                <div className="relative w-full flex-1 min-h-[250px] md:min-h-[400px] flex items-center justify-center">
+                  <Image
+                    src={isValidImageUrl(allImages[currentImageIndex]) ? getOptimizedUrl(allImages[currentImageIndex], 800) : "/placeholder-product.png"}
+                    alt={product.name}
+                    fill
+                    className="object-contain"
+                    priority={true}
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                </div>
                 {allImages.length > 1 && (
                   <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity z-30">
                     <button 
@@ -230,15 +225,15 @@ export function ProductQuickViewModal({
                     </button>
                   </div>
                 )}
-                <div className="absolute top-6 left-6 flex flex-col gap-2 z-20">
-                  {product.hot && (
+                <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
+                  {(product.hot || product.trending) && (
                     <motion.span 
                       initial={{ x: -10, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
-                      className="bg-black text-white text-[10px] px-4 py-2 font-black uppercase tracking-[0.2em] rounded-full shadow-2xl flex items-center gap-2"
+                      className="bg-red-600 text-white text-[8px] px-2 py-0.5 font-black uppercase tracking-widest rounded shadow-xl flex items-center gap-1 border border-white/20"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                      {t.home.trendingNow}
+                      <Flame size={10} className="fill-white" />
+                      Trending
                     </motion.span>
                   )}
                 </div>
@@ -271,14 +266,20 @@ export function ProductQuickViewModal({
                           currentImageIndex === idx ? "border-black scale-105 shadow-xl bg-white" : "border-white/50 bg-white/80 backdrop-blur-sm opacity-60 hover:opacity-100"
                         }`}
                       >
-                        <Image src={isValidImageUrl(img) ? img : "/placeholder-product.png"} alt="Thumb" fill className="object-cover p-1" />
+                        <Image 
+                          src={isValidImageUrl(img) ? getOptimizedUrl(img, 100) : "/placeholder-product.png"} 
+                          alt="Thumb" 
+                          fill 
+                          className="object-cover p-1"
+                          sizes="100px"
+                        />
                       </button>
                     ))}
                   </div>
                 )}
               </div>
             </div>
-            <div className="md:w-[55%] p-4 md:p-12 flex flex-col justify-start bg-white relative overflow-hidden">
+            <div className="md:w-[55%] p-4 md:p-8 flex flex-col justify-start bg-white relative overflow-hidden">
               <button
                 type="button"
                 onClick={onClose}
@@ -286,11 +287,11 @@ export function ProductQuickViewModal({
               >
                 <X className="h-6 w-6 transition-transform group-hover:rotate-90" />
               </button>
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                <div className="space-y-4 md:space-y-8">
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar text-left">
+                <div className="space-y-3 md:space-y-6">
                   <div>
                     <div className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] text-emerald-600 mb-2 md:mb-3">{brandName}</div>
-                    <h2 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tight text-black leading-tight italic decoration-emerald-500/30 underline-offset-8">
+                    <h2 className="text-lg md:text-2xl lg:text-3xl font-black tracking-tight text-black leading-tight italic decoration-emerald-500/30 underline-offset-8">
                       {product.name}
                     </h2>
                     <div className="mt-4 md:mt-6 flex flex-wrap gap-2 sm:gap-3">
@@ -405,7 +406,7 @@ export function ProductQuickViewModal({
                 >
                   <X size={32} />
                 </button>
-                <div className="relative w-full h-full max-w-6xl max-h-[80vh]">
+                <div className="relative w-full h-[60vh] md:h-[80vh] min-h-[300px] max-w-6xl mx-auto flex-1">
                   <Image 
                     src={isValidImageUrl(allImages[currentImageIndex]) ? allImages[currentImageIndex] : "/placeholder-product.png"} 
                     alt="Full View" 

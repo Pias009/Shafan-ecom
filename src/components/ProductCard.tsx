@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { ShoppingBag, Star, Package, ShoppingCart, Truck } from "lucide-react";
+import { ShoppingBag, Star, Package, ShoppingCart, Truck, Flame } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -25,6 +25,7 @@ interface ProductCardProps {
     discountPrice?: number;
     imageUrl: string;
     hot?: boolean;
+    trending?: boolean;
     averageRating?: number;
     ratingCount?: number;
     stockQuantity?: number;
@@ -125,7 +126,7 @@ function ProductCard({
           className="w-full h-full relative block"
         >
           <Image
-            src={isValidImageUrl(product.imageUrl) ? getOptimizedUrl(product.imageUrl, 400) : "/placeholder-product.png"}
+            src={isValidImageUrl(product.imageUrl || (product as any).mainImage) ? getOptimizedUrl(product.imageUrl || (product as any).mainImage, 400) : "/placeholder-product.png"}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
@@ -134,10 +135,11 @@ function ProductCard({
           />
 
           {/* Badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
-            {product.hot && (
-              <span className="bg-black text-white text-[8px] px-2 py-1 font-black uppercase tracking-widest rounded-full shadow-lg">
-                {t.home.trendingNow}
+          <div className="absolute top-1 left-1 flex flex-col gap-1 z-20">
+            {(product.hot || product.trending) && (
+              <span className="bg-red-600 text-white text-[7px] px-1.5 py-0.5 font-black uppercase tracking-tight rounded-sm shadow-lg flex items-center gap-0.5 border border-white/10">
+                <Flame size={8} className="fill-white" />
+                HOT
               </span>
             )}
           </div>
