@@ -200,6 +200,9 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
         orderId={order.id.toString()} 
         status={order.status} 
         createdAt={order.createdAt} 
+        cancelRequest={order.cancelRequest}
+        returnRequest={order.returnRequest}
+        returnStatus={order.returnStatus}
       />
     </div>
   );

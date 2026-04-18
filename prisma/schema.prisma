@@ -31,6 +31,14 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum ReturnStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
 enum DiscountType {
   PERCENTAGE
   FIXED_AMOUNT
@@ -345,6 +353,17 @@ model Order {
   items                 OrderItem[]
   shipment              Shipment?
   discountUsages        DiscountUsage[]
+  // Cancellation
+  cancelRequest         Boolean         @default(false)
+  cancelReason          String?
+  cancelRequestedAt     DateTime?
+  
+  // Returns
+  returnRequest         Boolean         @default(false)
+  returnReason          String?
+  returnRequestedAt     DateTime?
+  returnStatus          ReturnStatus    @default(NONE)
+
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 }

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { Sparkles, Brain, MessageCircleQuestion } from "lucide-react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
@@ -262,7 +263,7 @@ export function Hero() {
                   <p className="text-[9px] sm:text-[10px] text-black/30 font-bold tracking-[0.4em] uppercase">Skincare</p>
                   <div className="w-2 h-2 rounded-full bg-gradient-to-br from-violet-400 to-sky-400" />
                 </div>
-                <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-black leading-none tracking-[-0.04em] uppercase">
+                <h1 className="font-display font-black text-3xl sm:text-4xl md:text-5xl bg-gradient-to-br from-[#6366F1] via-[#8B5CF6] to-[#A855F7] text-transparent bg-clip-text leading-none tracking-[-0.04em] uppercase">
                   RADIANT SKIN
                 </h1>
                 <p className="text-[9px] sm:text-[10px] md:text-xs text-black/30 mt-1.5 italic tracking-[0.2em] uppercase font-medium">
@@ -273,7 +274,7 @@ export function Hero() {
               {/* Desktop: vertical */}
               <div className="hidden lg:flex flex-col items-center justify-center h-full">
                 <div className="text-center" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
-                  <h1 className="font-display text-5xl xl:text-6xl text-black leading-none tracking-[-0.04em] uppercase whitespace-nowrap">
+                  <h1 className="font-display font-black text-5xl xl:text-6xl bg-gradient-to-br from-[#6366F1] via-[#8B5CF6] to-[#A855F7] text-transparent bg-clip-text leading-none tracking-[-0.04em] uppercase whitespace-nowrap">
                     RADIANT SKIN
                   </h1>
                   <p className="text-xs xl:text-sm text-black/30 mt-4 italic tracking-[0.3em] uppercase font-medium whitespace-nowrap">
@@ -296,14 +297,14 @@ export function Hero() {
             >
               {/* Girl image with floating animation */}
               <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                 className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[28rem] xl:h-[28rem] relative flex items-center justify-center"
               >
-                <img
+                <Image
                   src="/images/hero-card.svg"
                   alt="Beautiful girl with radiant skin"
-                  className="w-full h-full object-contain rounded-full"
+                  fill
+                  priority
+                  className="object-contain rounded-full"
                 />
               </motion.div>
 
@@ -374,31 +375,32 @@ export function Hero() {
               {/* Emotional Words */}
               <div className="space-y-0 lg:space-y-1">
                 <AnimatedText delay={0.3}>
-                  <p className="font-display italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] xl:text-5xl text-black leading-[1] tracking-tight uppercase" style={{ textShadow: "0 0 40px rgba(236,72,153,0.15)" }}>
+                  <p className="font-display italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] xl:text-5xl text-[#6366F1] leading-[1] tracking-tight uppercase" style={{ textShadow: "0 0 30px rgba(99,102,241,0.3)" }}>
                     Feel.
                   </p>
                 </AnimatedText>
                 <AnimatedText delay={0.6}>
-                  <p className="font-display italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] xl:text-5xl text-black/70 leading-[1] tracking-tight uppercase">
+                  <p className="font-display italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] xl:text-5xl text-[#8B5CF6] leading-[1] tracking-tight uppercase" style={{ textShadow: "0 0 30px rgba(139,92,246,0.3)" }}>
                     Believe.
                   </p>
                 </AnimatedText>
                 <AnimatedText delay={0.9}>
-                  <p className="font-display italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] xl:text-5xl text-black/30 leading-[1] tracking-tight uppercase">
+                  <p className="font-display italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] xl:text-5xl text-[#A855F7] leading-[1] tracking-tight uppercase" style={{ textShadow: "0 0 30px rgba(168,85,247,0.3)" }}>
                     Bloom.
                   </p>
                 </AnimatedText>
               </div>
 
-              <p className="mt-3 sm:mt-4 text-[9px] sm:text-[10px] md:text-xs text-black/30 font-semibold tracking-[0.15em] uppercase">
+              <p className="mt-3 sm:mt-4 text-[9px] sm:text-[10px] md:text-xs text-[#6366F1]/60 font-black tracking-[0.2em] uppercase">
                 Because you deserve to glow
               </p>
 
               {/* CTA Button */}
               <div className="mt-4 sm:mt-5 md:mt-6 flex justify-center lg:justify-end">
-                <Link href="/products" className="glass-panel-heavy group inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 rounded-full border border-black/8 text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.15em] hover:bg-black hover:text-white hover:border-black active:scale-[.97] transition-all duration-300 shadow-sm hover:shadow-lg">
-                  <span>Explore Us</span>
-                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <Link href="/products" className="glass-panel-heavy group relative inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 md:px-7 py-2 sm:py-2.5 md:py-3 rounded-full border border-black/8 text-[9px] sm:text-[10px] md:text-xs font-black uppercase tracking-[0.15em] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-xl hover:border-transparent active:scale-[.97]">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#A855F7] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <span className="relative z-10 group-hover:text-white transition-colors">Explore Us</span>
+                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 relative z-10 group-hover:translate-x-0.5 group-hover:text-white transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                 </Link>

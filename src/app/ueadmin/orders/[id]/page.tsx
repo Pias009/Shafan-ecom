@@ -7,6 +7,7 @@ import ShippingPanel from './_components/ShippingPanel';
 import PaymentActions from './_components/PaymentActions';
 import PaymentStatusEditor from './_components/PaymentStatusEditor';
 import { OrderStatus } from '@prisma/client';
+import RequestAlerts from './RequestAlerts';
 
 function formatPrice(amount: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
@@ -100,6 +101,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {/* Main Content - Single Column with Sections */}
       <div className="space-y-6">
         
+        {/* Cancellation/Return Requests */}
+        <RequestAlerts 
+          orderId={order.id}
+          cancelRequest={order.cancelRequest}
+          cancelReason={order.cancelReason}
+          returnRequest={order.returnRequest}
+          returnReason={order.returnReason}
+          returnStatus={order.returnStatus}
+        />
+
         {/* Order Status & Actions */}
         <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white">
           <div className="flex items-center justify-between mb-6">
