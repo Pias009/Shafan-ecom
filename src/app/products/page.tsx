@@ -63,6 +63,22 @@ export default async function ProductsPage({
   const searchQuery = params.q || "";
   const banners = await getBanners();
   
+  const [allCategories, allSubCategories, allBrands, allSkinTones, allSkinConcerns] = await Promise.all([
+    prisma.category.findMany({ select: { name: true } }),
+    prisma.subCategory.findMany({ select: { name: true } }),
+    prisma.brand.findMany({ select: { name: true } }),
+    prisma.skinTone.findMany({ select: { name: true } }),
+    prisma.skinConcern.findMany({ select: { name: true } }),
+  ]);
+
+  const filterOptions = {
+    categories: allCategories.map(c => c.name),
+    subCategories: allSubCategories.map(c => c.name),
+    brands: allBrands.map(b => b.name),
+    skinTones: allSkinTones.map(s => s.name),
+    skinConcerns: allSkinConcerns.map(s => s.name),
+  };
+  
   const countryCode = getCountryCodeFromStore(storeCode);
   
   const transformed = products.map((p: any) => {
@@ -95,5 +111,6 @@ export default async function ProductsPage({
     totalCount={totalCount}
     currentPage={page}
     limit={limit}
+    filterOptions={filterOptions}
   />;
 }

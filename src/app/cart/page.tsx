@@ -4,6 +4,7 @@ import { useCartStore } from "@/lib/cart-store";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Minus, Plus, Trash2, Info, CheckCircle, Circle } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Footer } from "@/components/Footer";
@@ -33,6 +34,7 @@ function isValidImageUrl(url: any): boolean {
 function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, couponMaxLimit, removeCoupon, subtotal, discount, total, shipping, freeDelivery, t, selectedCountry, applyCoupon }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
+  const { data: session } = useSession();
   const [couponInput, setCouponInput] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("stripe");
@@ -63,16 +65,35 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
     toast.loading(t.cart.creatingOrder, { id: "checkout" });
 
     try {
-      const addressRes = await fetch("/api/account/address");
       let billing = null;
       let shipping = null;
 
-      if (addressRes.ok) {
-        const addressData = await addressRes.json();
-        if (addressData) {
-          billing = addressData;
-          shipping = addressData;
+      if (session) {
+        const addressRes = await fetch("/api/account/address");
+        if (addressRes.ok) {
+          const addressData = await addressRes.json();
+          if (addressData) {
+            billing = addressData;
+            shipping = addressData;
+          }
         }
+      } else {
+        const guestStr = localStorage.getItem('guest_address');
+        if (guestStr) {
+          try {
+            const guestData = JSON.parse(guestStr);
+            billing = guestData;
+            shipping = guestData;
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+
+      if (!billing) {
+        toast.error("Please provide your shipping address", { id: "checkout" });
+        router.push("/account/address");
+        return;
       }
 
       // Build order items first

@@ -25,7 +25,8 @@ export default function ProductsClient({
   totalCount = 0,
   currentPage = 1,
   limit = 20,
-  isRoutinesPage = false
+  isRoutinesPage = false,
+  filterOptions
 }: { 
   initialProducts: any[], 
   category?: string, 
@@ -35,7 +36,14 @@ export default function ProductsClient({
   totalCount?: number,
   currentPage?: number,
   limit?: number,
-  isRoutinesPage?: boolean
+  isRoutinesPage?: boolean,
+  filterOptions?: {
+    categories: string[];
+    subCategories: string[];
+    brands: string[];
+    skinTones: string[];
+    skinConcerns: string[];
+  }
 }) {
   const [products, setProducts] = useState<any[]>(initialProducts);
   const [loading, setLoading] = useState(false);
@@ -104,24 +112,36 @@ export default function ProductsClient({
   const { selectedCountry } = useCountryStore();
 
   const brands = useMemo(() => {
+    if (filterOptions?.brands) {
+      return [t.product.all, ...[...filterOptions.brands].sort()];
+    }
     const set = new Set(products.map(p => p.brandName).filter(Boolean));
     return [t.product.all, ...Array.from(set).sort()];
-  }, [products, t.product.all]);
+  }, [products, t.product.all, filterOptions]);
 
-  const categories = useMemo(() => {
+  const categoriesList = useMemo(() => {
+    if (filterOptions?.categories) {
+      return [t.product.all, ...[...filterOptions.categories].sort()];
+    }
     const set = new Set(products.map(p => p.categoryName).filter(Boolean));
     return [t.product.all, ...Array.from(set).sort()];
-  }, [products, t.product.all]);
+  }, [products, t.product.all, filterOptions]);
 
   const subCategories = useMemo(() => {
+    if (filterOptions?.subCategories) {
+      return ['All', ...[...filterOptions.subCategories].sort()];
+    }
     const filteredProducts = selectedCategory === t.product.all 
       ? products 
       : products.filter(p => p.categoryName === selectedCategory);
     const set = new Set(filteredProducts.map(p => p.subCategoryName).filter(Boolean));
     return ['All', ...Array.from(set).sort()];
-  }, [products, selectedCategory, t.product.all]);
+  }, [products, selectedCategory, t.product.all, filterOptions]);
 
   const skinTones = useMemo(() => {
+    if (filterOptions?.skinTones) {
+      return ['All', ...[...filterOptions.skinTones].sort()];
+    }
     const filteredProducts = selectedCategory === t.product.all 
       ? products 
       : products.filter(p => p.categoryName === selectedCategory);
@@ -134,9 +154,12 @@ export default function ProductsClient({
       }
     });
     return ['All', ...Array.from(skinToneSet).sort()];
-  }, [products, selectedCategory, t.product.all]);
+  }, [products, selectedCategory, t.product.all, filterOptions]);
 
   const skinConcernsList = useMemo(() => {
+    if (filterOptions?.skinConcerns) {
+      return ['All', ...[...filterOptions.skinConcerns].sort()];
+    }
     const filteredProducts = selectedCategory === t.product.all 
       ? products 
       : products.filter(p => p.categoryName === selectedCategory);
@@ -149,7 +172,7 @@ export default function ProductsClient({
       }
     });
     return ['All', ...Array.from(concernSet).sort()];
-  }, [products, selectedCategory, t.product.all]);
+  }, [products, selectedCategory, t.product.all, filterOptions]);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -202,6 +225,37 @@ export default function ProductsClient({
         ? Number(countryPrice.price)
         : (product.discountPrice ?? product.price);
 
+      let billing = null;
+      let shipping = null;
+
+      try {
+        const addressRes = await fetch("/api/account/address");
+        if (addressRes.ok) {
+          const addressData = await addressRes.json();
+          if (addressData) {
+            billing = addressData;
+            shipping = addressData;
+          }
+        }
+      } catch (e) {}
+
+      if (!billing) {
+        const guestStr = localStorage.getItem('guest_address');
+        if (guestStr) {
+          try {
+            const guestData = JSON.parse(guestStr);
+            billing = guestData;
+            shipping = guestData;
+          } catch (e) {}
+        }
+      }
+
+      if (!billing) {
+        toast.error("Please provide your shipping address", { id: tid });
+        router.push("/account/address");
+        return;
+      }
+
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -209,9 +263,12 @@ export default function ProductsClient({
           items: [{ 
             productId: product.id, 
             quantity: 1,
-            unitPrice
+            unitPrice,
+            price: unitPrice
           }],
-          country: selectedCountry
+          country: selectedCountry,
+          billing,
+          shipping
         }),
       });
       const data = await res.json();
@@ -357,7 +414,7 @@ export default function ProductsClient({
                     }}
                     className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
                   >
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                    {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
 
@@ -423,7 +480,7 @@ export default function ProductsClient({
         </AnimatePresence>
 
           <div className="mt-12 md:mt-20 space-y-12 md:space-y-24">
-            {categories.filter(cat => cat !== t.product.all && cat !== 'All').map((cat) => {
+            {categoriesList.filter(cat => cat !== t.product.all && cat !== 'All').map((cat) => {
               const productsInCat = filtered.filter(p => p.categoryName === cat);
               if (productsInCat.length === 0) return null;
 

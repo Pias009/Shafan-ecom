@@ -300,23 +300,36 @@ export function Navbar() {
             )}
             
             {/* User Button - SEPARATE */}
-            <button
-              type="button"
-              onClick={() => {
-                if (status === "authenticated") {
-                  setUserMenuOpen(!userMenuOpen);
-                } else {
-                  setAuthOpen(true);
-                }
-              }}
-              className="inline-flex h-16 items-center gap-2 rounded-full px-2 text-lg font-semibold text-black transition hover:bg-black/5"
-              aria-label={userLabel ? "Open user menu" : "Sign in"}
-            >
-              <div className="relative flex items-center">
-                <UserRound size={24} />
+            {status === "authenticated" ? (
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="user-dropdown-container inline-flex h-16 items-center gap-2 rounded-full px-2 text-lg font-semibold text-black transition hover:bg-black/5"
+                aria-label="Open user menu"
+              >
+                <div className="relative flex items-center">
+                  <UserRound size={24} />
+                </div>
+                <span className="uppercase tracking-wide">{userLabel}</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link 
+                  href="/account"
+                  className="flex items-center justify-center w-10 h-10 text-black hover:bg-black/5 rounded-full transition-colors"
+                  aria-label="Dashboard"
+                >
+                  <UserRound size={24} />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setAuthOpen(true)}
+                  className="text-[10px] font-black uppercase tracking-widest text-black/60 hover:text-black transition-colors"
+                >
+                  Signup
+                </button>
               </div>
-              <span className="uppercase tracking-wide">{userLabel ?? t.nav.signIn}</span>
-            </button>
+            )}
             
             {/* Dropdown with User options, Currency, Language, Cart */}
             {userMenuOpen && (
@@ -459,8 +472,7 @@ export function Navbar() {
                     </div>
                     <button 
                       onClick={() => {
-                        if (status === "authenticated") router.push("/account");
-                        else setAuthOpen(true);
+                        router.push("/account");
                         setMobileOpen(false);
                       }}
                       className="p-3 rounded-2xl bg-white text-black shadow-sm"

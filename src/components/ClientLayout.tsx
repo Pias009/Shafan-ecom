@@ -1,11 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import LoadingScreen from "./LoadingScreen";
 import { FloatingCartButton } from "./FloatingCartButton";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
+}
+
+function NavigationScroll() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname, searchParams]);
+
+  return null;
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
@@ -15,13 +27,19 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   useEffect(() => {
     setMounted(true);
-    sessionStorage.removeItem("shafan-loaded-v2");
+    const hasLoaded = sessionStorage.getItem("shafan-loaded-v2");
+    
+    if (hasLoaded) {
+      setIsLoading(false);
+      setShowContent(true);
+      return;
+    }
     
     const timer = setTimeout(() => {
       setIsLoading(false);
       setShowContent(true);
       sessionStorage.setItem("shafan-loaded-v2", "true");
-    }, 3500);
+    }, 2500); // Reduced from 3500 to 2500 for better feel
     
     return () => clearTimeout(timer);
   }, []);
@@ -42,6 +60,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       {isLoading && <LoadingScreen onLoadingComplete={handleLoadingComplete} />}
       {showContent && (
         <>
+          <Suspense fallback={null}>
+            <NavigationScroll />
+          </Suspense>
           {children}
           <FloatingCartButton />
         </>

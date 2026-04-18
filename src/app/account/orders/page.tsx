@@ -15,23 +15,27 @@ function formatPrice(amountCents: number, currency: string): string {
   })}`;
 }
 
-export default async function OrdersPage() {
+export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ email?: string }> }) {
   const session = await getServerAuthSession();
-  if (!session?.user?.email) return redirect("/?login=true");
+  const sp = await searchParams;
+  const guestEmail = sp?.email;
+  const userEmail = session?.user?.email || guestEmail;
+
+  if (!userEmail) return redirect("/?login=true");
 
   let orders: any[] = [];
   try {
-    // First, get the user ID from the session email
-    const user = await prisma.user.findUnique({
+    // First, get the user ID from the session email if available
+    const user = session?.user?.email ? await prisma.user.findUnique({
       where: { email: session.user.email }
-    });
+    }) : null;
     
     const dbOrders = await (prisma as any).order.findMany({
       where: {
         OR: [
-          { userId: user?.id },
-          { user: { email: session.user.email } },
-          { email: session.user.email }
+          ...(user?.id ? [{ userId: user.id }] : []),
+          ...(session?.user?.email ? [{ user: { email: session.user.email } }] : []),
+          { email: userEmail }
         ]
       },
       include: {
@@ -146,7 +150,7 @@ export default async function OrdersPage() {
                 </div>
 
                 <div className="flex items-center gap-3 active:scale-95 transition-transform">
-                  <Link href={`/account/orders/${order.id}`} className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-3 rounded-full bg-black text-white text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-black/20 transition hover:bg-black/80">
+                  <Link href={guestEmail ? `/account/orders/${order.id}?email=${encodeURIComponent(guestEmail)}` : `/account/orders/${order.id}`} className="flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-3 rounded-full bg-black text-white text-[10px] font-black uppercase tracking-widest shadow-2xl shadow-black/20 transition hover:bg-black/80">
                     View Receipt
                     <ExternalLink className="w-4 h-4" />
                   </Link>

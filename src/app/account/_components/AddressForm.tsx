@@ -5,6 +5,7 @@ import { Save, Loader2, ChevronDown, MapPin } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
+import { useSession } from "next-auth/react";
 
 // Country list for MENA region (countries with pricing configured)
 const COUNTRIES = [
@@ -15,6 +16,15 @@ const COUNTRIES = [
   "Qatar",
   "Oman"
 ];
+
+const COUNTRY_CODES: Record<string, string> = {
+  "United Arab Emirates": "+971",
+  "Saudi Arabia": "+966",
+  "Kuwait": "+965",
+  "Bahrain": "+973",
+  "Qatar": "+974",
+  "Oman": "+968"
+};
 
 // Saudi Arabia regions
 const SAUDI_REGIONS = [
@@ -71,6 +81,7 @@ export default function AddressForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setHasAddress = useCartStore(state => state.setHasAddress);
+  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showRegionDropdown, setShowRegionDropdown] = useState(false);
@@ -163,21 +174,43 @@ export default function AddressForm() {
   }, []);
 
   useEffect(() => {
+    if (status === 'loading') return;
     async function fetchAddress() {
       try {
-        const res = await fetch("/api/account/address");
-        if (res.ok) {
-          const data = await res.json();
-          if (data) setFormData({
-            fullName: data.fullName || "",
-            phone: data.phone || "",
-            email: data.email || "",
-            country: data.country || "Saudi Arabia",
-            city: data.city || "",
-            address1: data.address1 || "",
-            address2: data.address2 || "",
-            postalCode: data.postalCode || "",
-          });
+        if (session) {
+          const res = await fetch("/api/account/address");
+          if (res.ok) {
+            const data = await res.json();
+            if (data) {
+              setFormData({
+                fullName: data.fullName || "",
+                phone: data.phone || "",
+                email: data.email || "",
+                country: data.country || "Saudi Arabia",
+                city: data.city || "",
+                address1: data.address1 || "",
+                address2: data.address2 || "",
+                postalCode: data.postalCode || "",
+              });
+              setHasAddress(true);
+            }
+          }
+        } else {
+          const guestStr = localStorage.getItem('guest_address');
+          if (guestStr) {
+            const data = JSON.parse(guestStr);
+            setFormData({
+              fullName: data.fullName || "",
+              phone: data.phone || "",
+              email: data.email || "",
+              country: data.country || "Saudi Arabia",
+              city: data.city || "",
+              address1: data.address1 || "",
+              address2: data.address2 || "",
+              postalCode: data.postalCode || "",
+            });
+            setHasAddress(true);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -186,7 +219,7 @@ export default function AddressForm() {
       }
     }
     fetchAddress();
-  }, []);
+  }, [session, status, setHasAddress]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -196,11 +229,26 @@ export default function AddressForm() {
       toast.error("Please enter your full name");
       return;
     }
-    if (!formData.phone.trim() || formData.phone.length < 8) {
-      toast.error("Please enter a valid phone number");
+    
+    const countryCode = COUNTRY_CODES[formData.country] || "+966";
+    let rawPhone = formData.phone;
+    if (rawPhone.startsWith(countryCode)) {
+      rawPhone = rawPhone.slice(countryCode.length).trim();
+    } else if (rawPhone.startsWith(countryCode.replace("+", ""))) {
+      rawPhone = rawPhone.slice(countryCode.length - 1).trim();
+    }
+    
+    const digitsOnly = rawPhone.replace(/\D/g, '');
+    if (!digitsOnly || digitsOnly.length < 8 || digitsOnly.length > 10) {
+      toast.error(`Please enter a valid ${formData.country} mobile number`);
       return;
     }
-    if (!formData.city.trim()) {
+
+    // Ensure phone number starts with country code before saving
+    const finalizedPhone = `${countryCode}${digitsOnly}`;
+    const dataToSave = { ...formData, phone: finalizedPhone };
+
+    if (!dataToSave.city.trim()) {
       toast.error("Please select your city");
       return;
     }
@@ -211,14 +259,21 @@ export default function AddressForm() {
 
     setSaving(true);
     try {
-      const res = await fetch("/api/account/address", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Update failed");
+      if (session) {
+        const res = await fetch("/api/account/address", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dataToSave),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Update failed");
+        }
+      } else {
+        localStorage.setItem('guest_address', JSON.stringify(dataToSave));
+        if (dataToSave.email) {
+          localStorage.setItem('guest_email', dataToSave.email);
+        }
       }
       toast.success("Address saved successfully!");
       setHasAddress(true);
@@ -235,7 +290,8 @@ export default function AddressForm() {
   }
 
   function selectRegion(region: string) {
-    setFormData({...formData, country: region});
+    // If country changes, clear phone to ensure they enter new one matching new country
+    setFormData({...formData, country: region, city: "", phone: ""});
     setShowRegionDropdown(false);
   }
 
@@ -259,17 +315,17 @@ export default function AddressForm() {
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-6 relative" style={{ isolation: 'isolate' }}>
       <div className="rounded-3xl p-8 border border-black/5 shadow-xl bg-white relative" style={{ zIndex: 1 }}>
-        <div className="flex items-center justify-between mb-8 relative" style={{ zIndex: 10 }}>
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-black">Shipping Address</h2>
-            <p className="text-sm text-black/50 mt-1 font-medium">Required for completing orders.</p>
+        <div className="flex items-start md:items-center justify-between gap-4 mb-8 relative" style={{ zIndex: 10 }}>
+          <div className="flex-1">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-black">Shipping Address</h2>
+            <p className="text-xs md:text-sm text-black/50 mt-1 font-medium">Required for completing orders.</p>
           </div>
           <button 
             type="submit"
             disabled={saving}
-            className="bg-black text-white rounded-full px-8 py-2.5 text-sm font-bold shadow-lg shadow-black/20 transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
+            className="bg-black text-white rounded-full px-4 py-2 md:px-8 md:py-2.5 text-[10px] md:text-sm font-bold shadow-lg shadow-black/20 transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 md:gap-2 shrink-0"
           >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {saving ? <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Save className="w-3 h-3 md:w-4 md:h-4" />}
             Save Address
           </button>
         </div>
@@ -292,13 +348,30 @@ export default function AddressForm() {
           {/* Phone */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-[0.2em] text-black/50 ml-1">Phone Number *</label>
-            <input 
-              required
-              value={formData.phone}
-              onChange={e => setFormData({...formData, phone: e.target.value})}
-              placeholder="+966 5XX XXX XXXX"
-              className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white"
-            />
+            <div className="flex gap-2">
+              <div className="w-24 shrink-0 flex items-center justify-center rounded-2xl bg-black/5 border-2 border-transparent text-black font-bold">
+                {COUNTRY_CODES[formData.country] || "+966"}
+              </div>
+              <input 
+                required
+                type="tel"
+                value={(() => {
+                  const code = COUNTRY_CODES[formData.country] || "+966";
+                  let p = formData.phone;
+                  if (p.startsWith(code)) p = p.slice(code.length);
+                  else if (p.startsWith(code.replace("+", ""))) p = p.slice(code.length - 1);
+                  return p.trim();
+                })()}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^\d]/g, '');
+                  const code = COUNTRY_CODES[formData.country] || "+966";
+                  setFormData({...formData, phone: `${code} ${val}`});
+                }}
+                placeholder="5XX XXX XXXX"
+                maxLength={10}
+                className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white"
+              />
+            </div>
           </div>
 
           {/* Country - Dropdown */}

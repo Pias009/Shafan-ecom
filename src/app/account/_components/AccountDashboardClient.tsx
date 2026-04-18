@@ -25,12 +25,20 @@ export default function AccountDashboardClient() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [guestEmailState, setGuestEmailState] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    const guestEmail = localStorage.getItem('guest_email');
+    setGuestEmailState(guestEmail);
     async function fetchDashboard() {
       try {
-        const res = await fetch("/api/account/dashboard"); // We'll create this next
+        let apiUrl = "/api/account/dashboard";
+        const guestEmail = localStorage.getItem('guest_email');
+        if (guestEmail) {
+          apiUrl += `?email=${encodeURIComponent(guestEmail)}`;
+        }
+        const res = await fetch(apiUrl);
         if (res.ok) {
           setData(await res.json());
         }
@@ -105,8 +113,8 @@ export default function AccountDashboardClient() {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-black break-words">{item.name}</div>
-                    <div className="text-xs text-black/40 font-bold uppercase tracking-tighter">{item.brand}</div>
+                    <div className="text-xs md:text-sm font-bold text-black line-clamp-2">{item.name}</div>
+                    <div className="text-[10px] md:text-xs text-black/40 font-bold uppercase tracking-tighter mt-0.5">{item.brand}</div>
                   </div>
                   <div className="text-sm font-black text-black">
                     <Price amount={item.discountPrice ?? item.price} countryPrices={item.countryPrices} />
@@ -137,7 +145,7 @@ export default function AccountDashboardClient() {
             <h3 className="text-xl font-bold text-black flex items-center gap-2">
               <Package className="w-5 h-5" /> Recent Orders
             </h3>
-            <Link href="/account/orders" className="text-xs font-bold text-black/40 hover:text-black transition flex items-center gap-1">
+            <Link href={guestEmailState ? `/account/orders?email=${encodeURIComponent(guestEmailState)}` : `/account/orders`} className="text-xs font-bold text-black/40 hover:text-black transition flex items-center gap-1">
               History <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
@@ -172,7 +180,7 @@ export default function AccountDashboardClient() {
                         <div className="p-1 bg-black/5 rounded-lg">
                           <Package className="w-3 h-3 text-black/20" />
                         </div>
-                  <span className="text-[11px] font-bold text-black/70 break-words flex-1">{item.name}</span>
+                  <span className="text-[10px] md:text-[11px] font-bold text-black/70 line-clamp-1 flex-1">{item.name}</span>
                         <span className="text-[10px] font-black text-black/30">×{item.quantity}</span>
                       </div>
                     ))}
@@ -185,7 +193,7 @@ export default function AccountDashboardClient() {
                       </div>
                       <div className="text-[10px] font-bold text-black/30 uppercase">{new Date(order.createdAt).toLocaleDateString()}</div>
                     </div>
-                    <Link href={`/account/orders`} className="p-2 rounded-full hover:bg-black/5 transition">
+                    <Link href={guestEmailState ? `/account/orders/${order.id}?email=${encodeURIComponent(guestEmailState)}` : `/account/orders/${order.id}`} className="p-2 rounded-full hover:bg-black/5 transition">
                       <ArrowRight className="w-4 h-4 text-black/40" />
                     </Link>
                   </div>

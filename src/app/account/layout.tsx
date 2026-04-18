@@ -14,9 +14,6 @@ export default async function AccountLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerAuthSession();
-  if (!session?.user) {
-    return redirect("/?login=true");
-  }
 
   return (
     <div className="mx-auto max-w-7xl px-3 md:px-6 py-4 md:py-10 min-h-screen">

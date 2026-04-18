@@ -14,12 +14,19 @@ export function AccountNav() {
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
 
-  const links = [
+  let links = [
     { href: "/account", label: t.account.overview, icon: LayoutDashboard },
     { href: "/account/profile", label: t.account.profile, icon: User },
     { href: "/account/address", label: t.account.address, icon: MapPin },
     { href: "/account/orders", label: t.account.orders, icon: Package },
   ];
+  
+  if (!data?.user) {
+    links = [
+      { href: "/account", label: t.account.overview, icon: LayoutDashboard },
+      { href: "/account/address", label: t.account.address, icon: MapPin },
+    ];
+  }
 
   return (
     <nav className="glass-panel-heavy border border-black/5 rounded-3xl p-1.5 md:p-4 h-fit shadow-xl w-full md:w-auto">

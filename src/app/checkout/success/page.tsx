@@ -14,6 +14,7 @@ function SuccessContent() {
   const router = useRouter();
   const [valid, setValid] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [countdown, setCountdown] = useState(5);
   
   const sessionId = searchParams?.get("session_id");
   const orderId = searchParams?.get("order_id");
@@ -23,7 +24,7 @@ function SuccessContent() {
   useEffect(() => {
     async function validateOrder() {
       if (!orderId && !sessionId) {
-        router.push("/");
+        router.push("/account");
         return;
       }
 
@@ -32,11 +33,11 @@ function SuccessContent() {
           const res = await fetch(`/api/orders/${orderId}`);
           const data = await res.json();
           if (data.error || !data.id) {
-            router.push("/");
+            router.push("/account");
             return;
           }
         } catch (e) {
-          router.push("/");
+          router.push("/account");
           return;
         }
       }
@@ -53,6 +54,16 @@ function SuccessContent() {
       clearCart();
     }
   }, [valid, clearCart]);
+
+  useEffect(() => {
+    if (!valid) return;
+    if (countdown <= 0) {
+      router.push("/account");
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [valid, countdown, router]);
 
   if (checking) {
     return (
@@ -87,8 +98,11 @@ function SuccessContent() {
               : "Your order has been received and is being processed."}
           </p>
           {(orderId || sessionId) && (
-            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/20 mb-6 md:mb-8">Ref: {orderId ? `#${orderId}` : sessionId?.slice(0, 20)}</p>
+            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/20 mb-4">Ref: {orderId ? `#${orderId}` : sessionId?.slice(0, 20)}</p>
           )}
+          <p className="text-xs text-black/40 mb-6 md:mb-8">
+            Redirecting to your dashboard in <span className="font-bold text-black/60">{countdown}s</span>…
+          </p>
 
           {/* Celebration wishes */}
           <div className="bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 rounded-2xl p-4 md:p-6 mb-6 md:mb-8 border border-pink-100">

@@ -3,17 +3,20 @@ import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const guestEmail = url.searchParams.get("email");
   const session = await getServerAuthSession();
-  if (!session?.user?.id) {
+  
+  if (!session?.user?.id && !guestEmail) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const dbOrders = await prisma.order.findMany({
-      where: {
-        userId: session.user.id
-      },
+      where: session?.user?.id 
+        ? { userId: session.user.id } 
+        : { email: guestEmail || "" },
       include: {
         items: true
       },

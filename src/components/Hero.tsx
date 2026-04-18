@@ -263,7 +263,7 @@ export function Hero() {
                   <div className="w-2 h-2 rounded-full bg-gradient-to-br from-violet-400 to-sky-400" />
                 </div>
                 <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-black leading-none tracking-[-0.04em] uppercase">
-                  SANFA GLOBAL
+                  RADIANT SKIN
                 </h1>
                 <p className="text-[9px] sm:text-[10px] md:text-xs text-black/30 mt-1.5 italic tracking-[0.2em] uppercase font-medium">
                   Your skin, your story
@@ -274,7 +274,7 @@ export function Hero() {
               <div className="hidden lg:flex flex-col items-center justify-center h-full">
                 <div className="text-center" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
                   <h1 className="font-display text-5xl xl:text-6xl text-black leading-none tracking-[-0.04em] uppercase whitespace-nowrap">
-                    SANFA GLOBAL
+                    RADIANT SKIN
                   </h1>
                   <p className="text-xs xl:text-sm text-black/30 mt-4 italic tracking-[0.3em] uppercase font-medium whitespace-nowrap">
                     Your skin, your story

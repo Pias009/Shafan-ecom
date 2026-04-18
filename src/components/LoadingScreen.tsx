@@ -37,6 +37,7 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
         scale: 1,
         duration: 0.8,
         ease: "power2.in",
+        force3D: true,
       });
 
       tl.to(dropletRef.current, {
@@ -140,6 +141,7 @@ export default function LoadingScreen({ onLoadingComplete }: LoadingScreenProps)
       style={{
         perspective: "1200px",
         transformStyle: "preserve-3d",
+        willChange: "transform, opacity",
       }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-neutral-50 via-white to-neutral-100 dark:from-neutral-900 dark:via-neutral-950 dark:to-black opacity-80" />

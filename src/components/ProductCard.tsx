@@ -119,7 +119,9 @@ function ProductCard({
   return (
     <div 
       onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.id}`); }}
-      className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden w-full h-full flex flex-col cursor-pointer`}>
+      className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden w-full h-full flex flex-col cursor-pointer`}
+      style={{ willChange: "transform" }}
+    >
       {/* Image Section */}
       <div className="relative overflow-hidden aspect-square w-full bg-[#F9FAFB] flex-shrink-0 p-2 sm:p-4">
         <div

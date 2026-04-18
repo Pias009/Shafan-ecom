@@ -62,7 +62,7 @@ export const demoCategories = [
   },
   {
     id: "c4",
-    label: "Fragrance",
+    label: "Fragrances",
     description: "Cool, modern notes.",
   },
 ] as const;

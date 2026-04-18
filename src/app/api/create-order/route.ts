@@ -253,6 +253,8 @@ export async function POST(req: Request) {
     
     const { items, billing, shipping, payment_method, payment_method_title, couponCode, storeCode, country, total: clientTotal, subtotal: clientSubtotal, shippingFee: clientShippingFee, discountAmount: clientDiscount } = body;
 
+    // Allow guest orders
+
     // Validate items array
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -301,6 +303,10 @@ export async function POST(req: Request) {
           if (!finalShipping) finalShipping = addressJson;
         }
       }
+    }
+
+    if (!finalBilling || !finalShipping) {
+      return NextResponse.json({ error: "Shipping address is required to place an order." }, { status: 400 });
     }
 
     // Get currency for the country

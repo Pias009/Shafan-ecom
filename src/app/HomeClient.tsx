@@ -176,13 +176,8 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   }
 
   async function orderNow(product: any) {
-    if (status !== "authenticated") {
-      setAuthOpen(true);
-      return;
-    }
-
     if (!hasAddress) {
-      toast.error("Please add your shipping address in Dashboard first!", { duration: 3000 });
+      toast.error("Please add your shipping address first!", { duration: 3000 });
       router.push(`/account/address?redirect=order&productId=${product.id}`);
       return;
     }
@@ -197,6 +192,37 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         ? Number(countryPrice.price)
         : (product.discountPrice ?? product.price);
 
+      let billing = null;
+      let shipping = null;
+
+      try {
+        const addressRes = await fetch("/api/account/address");
+        if (addressRes.ok) {
+          const addressData = await addressRes.json();
+          if (addressData) {
+            billing = addressData;
+            shipping = addressData;
+          }
+        }
+      } catch (e) {}
+
+      if (!billing) {
+        const guestStr = localStorage.getItem('guest_address');
+        if (guestStr) {
+          try {
+            const guestData = JSON.parse(guestStr);
+            billing = guestData;
+            shipping = guestData;
+          } catch (e) {}
+        }
+      }
+
+      if (!billing) {
+        toast.error("Please provide your shipping address", { id: tid });
+        router.push("/account/address");
+        return;
+      }
+
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -204,9 +230,12 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
           items: [{
             productId: product.id,
             quantity: 1,
-            unitPrice
+            unitPrice,
+            price: unitPrice
           }],
-          country: selectedCountry
+          country: selectedCountry,
+          billing,
+          shipping
         }),
       });
       const data = await res.json();

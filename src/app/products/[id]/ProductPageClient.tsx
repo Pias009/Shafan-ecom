@@ -117,6 +117,37 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         ? Number(countryPrice.price)
         : (p.salePrice || p.price);
 
+      let billing = null;
+      let shipping = null;
+
+      try {
+        const addressRes = await fetch("/api/account/address");
+        if (addressRes.ok) {
+          const addressData = await addressRes.json();
+          if (addressData) {
+            billing = addressData;
+            shipping = addressData;
+          }
+        }
+      } catch (e) {}
+
+      if (!billing) {
+        const guestStr = localStorage.getItem('guest_address');
+        if (guestStr) {
+          try {
+            const guestData = JSON.parse(guestStr);
+            billing = guestData;
+            shipping = guestData;
+          } catch (e) {}
+        }
+      }
+
+      if (!billing) {
+        toast.error("Please provide your shipping address", { id: tid });
+        router.push("/account/address");
+        return;
+      }
+
       const res = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,9 +155,12 @@ export default function ProductPageClient({ product, recommendations }: ProductP
           items: [{
             productId: p.id,
             quantity: 1,
-            unitPrice
+            unitPrice,
+            price: unitPrice
           }],
-          country: userCountry
+          country: userCountry,
+          billing,
+          shipping
         }),
       });
       const data = await res.json();

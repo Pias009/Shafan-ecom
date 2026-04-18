@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getShippingRates, purchaseShippingLabel, getTrackingInfo, listCarriers, ShippoAddress, ShippoParcel } from "@/services/shipping/shippo";
 import { shippingService } from "@/services/shipping";
 import { aramexService } from "@/services/shipping/aramex";
-import { createNaqelShipment, trackNaqelShipment, getNaqelLabel } from "@/services/shipping/naqel-api";
+import { createNaqelShipment, trackNaqelShipment, bulkTrackNaqelShipments, getNaqelLabel } from "@/services/shipping/naqel-api";
 import { getAdminApiSession } from "@/lib/admin-api-session";
 
 export const dynamic = "force-dynamic";
@@ -156,13 +156,67 @@ export async function POST(request: NextRequest) {
       // Naqel
       if (rateId === 'naqel-dlv' || rateData?.provider === 'Naqel') {
         try {
-          const result = await createNaqelShipment(shipmentData);
+          const addr = shipmentData;
+          const naqelRequest = {
+            descriptionOfGoods: "Skincare Products",
+            productType: "DLV" as const,
+            cod: 0,
+            customsDeclaredValue: 10,
+            customsDeclaredValueCurrency: "USD",
+            consignee: {
+              consigneeContact: {
+                personName: addr?.recipientName || "Customer",
+                phoneNumber1: addr?.phone || "0000000000",
+                cellPhone: addr?.phone || "0000000000",
+                emailAddress: addr?.email || "customer@example.com",
+                type: "Business",
+              },
+              consigneeAddress: {
+                countryCode: addr?.country || "ARE",
+                city: addr?.city || "Dubai",
+                line1: addr?.address || "N/A",
+                postCode: addr?.postalCode || "",
+              },
+            },
+            shipper: {
+              shipperAddress: {
+                countryCode: process.env.NAQEL_SHIPPER_COUNTRY || "SAU",
+                city: process.env.NAQEL_SHIPPER_CITY || "Riyadh",
+                line1: process.env.NAQEL_SHIPPER_ADDRESS || "456 Street",
+              },
+              shipperContact: {
+                personName: process.env.NAQEL_SHIPPER_NAME || "Shanfa Global",
+                companyName: process.env.NAQEL_SHIPPER_COMPANY || "Shanfa Global Trading",
+                phoneNumber1: process.env.NAQEL_SHIPPER_PHONE || "0000000000",
+                cellPhone: process.env.NAQEL_SHIPPER_PHONE || "0000000000",
+                emailAddress: process.env.NAQEL_SHIPPER_EMAIL || "info@shanfa.com",
+              },
+            },
+            items: [
+              {
+                quantity: 1,
+                weight: { unit: 1, value: 1 },
+                customsValue: { currencyCode: "USD", value: 10 },
+                goodsDescription: "Skincare Products",
+                packageType: "Box",
+                containsDangerousGoods: false,
+              },
+            ],
+            shipmentWeight: { value: 1, weightUnit: 1, length: 20, width: 15, height: 10, dimensionUnit: 1 },
+            reference: { shipperReference1: addr?.orderId || "", shipperNote1: "" },
+          };
+          const result = await createNaqelShipment(naqelRequest);
+          // Naqel returns a single object (not array) with these fields:
+          // { status, airwaybill, airwaybillId, shipmentLabel (base64), labelDownloadUrl (S3), ... }
+          const shipment = Array.isArray(result) ? result[0] : result;
+          const awb = shipment?.airwaybill || shipment?.airwaybillNumber || shipment?.AWBNumber || shipment?.awb;
+          const labelUrl = shipment?.labelDownloadUrl || shipment?.labelUrl || shipment?.label || null;
           return NextResponse.json({
             success: true,
             provider: 'Naqel',
-            trackingNumber: result[0]?.airwaybillNumber || result[0]?.AWBNumber,
-            trackingUrl: `https://www.naqel.com/track/${result[0]?.airwaybillNumber || result[0]?.AWBNumber}`,
-            labelUrl: result[0]?.labelUrl || result[0]?.label,
+            trackingNumber: awb,
+            trackingUrl: awb ? `https://www.naqelexpress.com/tracking/${awb}` : null,
+            labelUrl,
           });
         } catch (e: any) {
           return NextResponse.json({ error: e.message }, { status: 500 });
@@ -178,7 +232,7 @@ export async function POST(request: NextRequest) {
       const { trackingNumber, carrier } = body;
       
       // Aramex tracking
-      if (carrier?.toLowerCase() === 'aramex') {
+      if (carrier?.toLowerCase().includes('aramex')) {
         try {
           const result = await aramexService.trackShipment(trackingNumber);
           return NextResponse.json(result);
@@ -188,10 +242,21 @@ export async function POST(request: NextRequest) {
       }
       
       // Naqel tracking
-      if (carrier?.toLowerCase() === 'naqel') {
+      if (carrier?.toLowerCase().includes('naqel')) {
         try {
           const result = await trackNaqelShipment(trackingNumber);
-          return NextResponse.json(result);
+          
+          // Normalize Naqel tracking response
+          let events = [];
+          if (Array.isArray(result)) {
+            events = result;
+          } else if (result?.trackingHistory) {
+            events = result.trackingHistory;
+          } else if (result?.events) {
+            events = result.events;
+          }
+
+          return NextResponse.json({ success: true, events, raw: result });
         } catch (e: any) {
           return NextResponse.json({ error: e.message }, { status: 500 });
         }
@@ -202,12 +267,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(result);
     }
 
-    // Naqel shipment creation
+    // Naqel shipment creation (direct, with pre-built NaqelShipmentRequest)
     if (action === 'naqel-create') {
       try {
         const { shipmentData } = body;
         const result = await createNaqelShipment(shipmentData);
-        return NextResponse.json({ success: true, ...result });
+        return NextResponse.json({ success: true, data: result });
+      } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
+      }
+    }
+
+    // Naqel bulk tracking
+    if (action === 'naqel-bulk-tracking') {
+      try {
+        const { airwaybills } = body;
+        if (!Array.isArray(airwaybills) || airwaybills.length === 0) {
+          return NextResponse.json({ error: 'airwaybills array is required' }, { status: 400 });
+        }
+        const result = await bulkTrackNaqelShipments(airwaybills);
+        return NextResponse.json({ success: true, data: result });
       } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
       }

@@ -55,6 +55,7 @@ interface Order {
   user: User | null;
   store: Store | null;
   items: OrderItem[];
+  shipment: { courier: string; trackingCode: string; trackingUrl: string } | null;
 }
 
 function formatPrice(amountCents: number, currency: string): string {
@@ -187,7 +188,8 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     include: {
       user: true,
       store: { select: { code: true, name: true } },
-      items: true
+      items: true,
+      shipment: true
     },
     orderBy: {
       createdAt: 'desc'
@@ -288,9 +290,22 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
                             </span>
                           </td>
                           <td className="px-4 md:px-6 py-4">
-                            <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getStatusColor(o.status)}`}>
-                              {o.status}
-                            </span>
+                            <div className="flex flex-col items-start gap-2">
+                              <span className={`px-2 md:px-3 py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest border ${getStatusColor(o.status)}`}>
+                                {o.status}
+                              </span>
+                              {o.shipment && (
+                                <a 
+                                  href={o.shipment.trackingUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1.5 px-2 py-1 bg-black/5 rounded text-[9px] font-bold text-black hover:bg-black/10 transition-colors"
+                                >
+                                  {o.shipment.courier?.toLowerCase().includes('naqel') ? '📦' : o.shipment.courier?.toLowerCase().includes('aramex') ? '🚚' : '🛵'} 
+                                  {o.shipment.trackingCode}
+                                </a>
+                              )}
+                            </div>
                           </td>
                           <td className="px-4 md:px-6 py-4 text-right">
                             <Link href={`/ueadmin/orders/${o.id}`} className="bg-black text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest px-3 md:px-4 py-2 rounded-full hover:scale-105 transition">View</Link>

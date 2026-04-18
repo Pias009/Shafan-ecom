@@ -19,9 +19,13 @@ function formatPrice(amountCents: number, currency: string): string {
 
 export const dynamic = 'force-dynamic';
 
-export default async function UserOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function UserOrderDetailPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ email?: string }> }) {
   const session = await getServerAuthSession();
-  if (!session?.user?.email) return redirect("/?login=true");
+  const sp = await searchParams;
+  const guestEmail = sp?.email;
+  const userEmail = session?.user?.email || guestEmail;
+
+  if (!userEmail) return redirect("/?login=true");
 
   const { id } = await params;
   let order;
@@ -39,12 +43,12 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
 
     // Security check: Ensure this order belongs to the logged-in user
     const orderEmail = data.email?.toLowerCase() || data.user?.email?.toLowerCase();
-    if (orderEmail !== session.user.email.toLowerCase()) {
+    if (orderEmail !== userEmail.toLowerCase()) {
       return (
         <div className="pt-20 text-center">
           <h2 className="text-xl font-bold">Unauthorized Access</h2>
           <p className="text-black/40 mt-2">You do not have permission to view this order.</p>
-          <Link href="/account/orders" className="text-black underline mt-4 inline-block font-bold">Back to My Orders</Link>
+          <Link href={guestEmail ? `/account/orders?email=${encodeURIComponent(guestEmail)}` : `/account/orders`} className="text-black underline mt-4 inline-block font-bold">Back to My Orders</Link>
         </div>
       );
     }
@@ -53,7 +57,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
     return (
       <div className="pt-20 text-center">
         <h2 className="text-xl font-bold">Order Not Found</h2>
-        <Link href="/account/orders" className="text-black underline mt-4 inline-block font-bold">Back to My Orders</Link>
+        <Link href={guestEmail ? `/account/orders?email=${encodeURIComponent(guestEmail)}` : `/account/orders`} className="text-black underline mt-4 inline-block font-bold">Back to My Orders</Link>
       </div>
     );
   }
@@ -63,7 +67,7 @@ export default async function UserOrderDetailPage({ params }: { params: Promise<
 
   return (
     <div className="max-w-4xl mx-auto py-8 md:py-16 px-4 md:px-6 space-y-8 md:space-y-12">
-      <Link href="/account/orders" className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-black/30 hover:text-black transition">
+      <Link href={guestEmail ? `/account/orders?email=${encodeURIComponent(guestEmail)}` : `/account/orders`} className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-black/30 hover:text-black transition">
         <ArrowLeft size={14} /> Back to My Orders
       </Link>
 
