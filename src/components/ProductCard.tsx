@@ -123,7 +123,7 @@ function ProductCard({
       style={{ willChange: "transform" }}
     >
       {/* Image Section */}
-      <div className="relative overflow-hidden aspect-square w-full bg-[#F9FAFB] flex-shrink-0 p-2 sm:p-4">
+      <div className="relative overflow-hidden aspect-square w-full bg-white flex-shrink-0 p-0">
         <div
           className="w-full h-full relative block"
         >
@@ -132,12 +132,12 @@ function ProductCard({
             alt={product.name}
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-contain transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
+            className="object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
             priority={false}
           />
 
           {/* Badges */}
-          <div className="absolute top-1 left-1 flex flex-col gap-1 z-20">
+          <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
             {(product.hot || product.trending) && (
               <span className="bg-red-600 text-white text-[7px] px-1.5 py-0.5 font-black uppercase tracking-tight rounded-sm shadow-lg flex items-center gap-0.5 border border-white/10">
                 <Flame size={8} className="fill-white" />
@@ -228,14 +228,22 @@ function ProductCard({
         </div>
 
         {/* Product Name */}
-        <h3 className="text-xs sm:text-sm font-semibold text-black leading-tight line-clamp-2 mb-1 overflow-hidden break-words">
-          {product.name}
-        </h3>
+        <div className="h-10 sm:h-12 mb-2 flex items-start overflow-hidden">
+          <h3 className="text-xs sm:text-sm font-bold text-black leading-tight line-clamp-2 break-words">
+            {product.name}
+          </h3>
+        </div>
         
         {/* Brand Name */}
-        <p className="text-[8px] sm:text-[9px] uppercase text-gray-400 tracking-wider mb-2 flex-shrink-0">
+        <p className="text-[8px] sm:text-[9px] uppercase text-gray-400 tracking-wider mb-1">
           {brandName}
         </p>
+
+        {/* Stars */}
+        <div className="flex items-center gap-0.5 mb-2 flex-shrink-0">
+          {renderStars(product.averageRating || 0)}
+          <span className="text-[8px] sm:text-[9px] text-gray-400 font-bold ml-1">({product.ratingCount || 0})</span>
+        </div>
 
         
 

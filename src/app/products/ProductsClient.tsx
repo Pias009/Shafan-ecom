@@ -179,8 +179,11 @@ export default function ProductsClient({
       if (!hasValidPrice(p, selectedCountry)) return false;
       
       const price = p.discountPrice ?? p.price ?? 0;
-      const matchesSearch = !searchInput || p.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-        (p.brandName || '').toLowerCase().includes(searchInput.toLowerCase());
+      const matchesSearch = !searchInput || 
+        p.name.toLowerCase().includes(searchInput.toLowerCase()) ||
+        (p.brandName || '').toLowerCase().includes(searchInput.toLowerCase()) ||
+        (p.categoryName || '').toLowerCase().includes(searchInput.toLowerCase()) ||
+        (p.subCategoryName || '').toLowerCase().includes(searchInput.toLowerCase());
       const matchesBrand = brand === t.product.all || p.brandName === brand;
       const matchesPrice = price <= maxPrice;
       const matchesCategory = selectedCategory === t.product.all || p.categoryName === selectedCategory;
@@ -193,6 +196,7 @@ export default function ProductsClient({
       return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone && matchesSkinConcern;
     });
   }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, selectedCountry]);
+
 
   function addToCart(product: any) {
     const cartItem = {
@@ -312,6 +316,16 @@ export default function ProductsClient({
       setLoading(false);
     }
   }, [loading, hasMore, page, limit]);
+
+  // Auto-load more if current filters result in 0 products but more exist on server
+  useEffect(() => {
+    if (filtered.length === 0 && hasMore && !loading) {
+      const timer = setTimeout(() => {
+        loadMore();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [filtered.length, hasMore, loading, loadMore]);
 
   return (
     <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black">
@@ -494,7 +508,7 @@ export default function ProductsClient({
                     </span>
                   </div>
 
-                  <div className="grid gap-x-2 md:gap-x-8 gap-y-3 md:gap-y-12 grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-items-center">
+                  <div className="grid gap-x-3 md:gap-x-8 gap-y-6 md:gap-y-12 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                     {productsInCat.map((product, idx) => (
                       <motion.div
                         key={product.id}
@@ -557,7 +571,19 @@ export default function ProductsClient({
           </div>
         )}
 
-        {hasMore && filtered.length > 0 && (
+        {filtered.length === 0 && hasMore && (
+          <div className="py-20 text-center">
+            <p className="text-black/40 italic">Keep loading to see more products matching your filters...</p>
+            <button
+              onClick={loadMore}
+              className="mt-4 px-6 py-2 bg-black/5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all"
+            >
+              Load Next Page
+            </button>
+          </div>
+        )}
+
+        {hasMore && (
           <div className="flex justify-center mt-16">
             <button
               onClick={loadMore}

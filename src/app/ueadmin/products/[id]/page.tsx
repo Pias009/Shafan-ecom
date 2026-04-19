@@ -12,7 +12,7 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
     const session = await getServerAuthSession();
     const isSuper = session?.user?.email === "pvs178380@gmail.com";
 
-    const [product, categories, subCategories, skinTones, skinConcerns] = await Promise.all([
+    const [product, categories, subCategories, skinTones, skinConcerns, brands] = await Promise.all([
       prisma.product.findUnique({
         where: { id },
         include: {
@@ -48,6 +48,10 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       prisma.skinConcern.findMany({
         select: { id: true, name: true },
         orderBy: { name: 'asc' }
+      }),
+      prisma.brand.findMany({
+        select: { name: true },
+        orderBy: { name: 'asc' }
       })
     ]);
 
@@ -76,7 +80,7 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       isSuper
     };
 
-    return <EditProductForm product={productWithGlobal} categories={categories} subCategories={subCategories} skinTones={skinTones} skinConcerns={skinConcerns} />;
+    return <EditProductForm product={productWithGlobal} categories={categories} subCategories={subCategories} skinTones={skinTones} skinConcerns={skinConcerns} brands={brands} />;
   } catch (error) {
     console.error("Error loading product:", error);
     return (

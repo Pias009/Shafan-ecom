@@ -1,15 +1,38 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
-import { User, Mail, ShieldAlert, Check, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Mail, ShieldAlert, Check, Loader2, Phone, MapPin, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 
 export default function AccountProfileClient() {
   const { data: session, update } = useSession();
   const [name, setName] = useState(session?.user?.name || "");
+  const [email, setEmail] = useState(session?.user?.email || "");
+  const [phone, setPhone] = useState("");
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const res = await fetch("/api/account/profile");
+        if (res.ok) {
+          const data = await res.json();
+          setName(data.name || "");
+          setEmail(data.email || "");
+          setPhone(data.phone || "");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setInitialLoading(false);
+      }
+    }
+    fetchProfile();
+  }, []);
 
   async function handleSave() {
     if (!name.trim()) return;
@@ -18,18 +41,29 @@ export default function AccountProfileClient() {
       const res = await fetch("/api/account/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, email, phone }),
       });
-      if (!res.ok) throw new Error("Failed to update");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to update");
+      }
       
-      await update({ name });
+      await update({ name, email });
       setEditing(false);
       toast.success("Profile updated!");
-    } catch (err) {
-      toast.error("Update failed.");
+    } catch (err: any) {
+      toast.error(err.message || "Update failed.");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (initialLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-black/20" />
+      </div>
+    );
   }
 
   return (
@@ -76,16 +110,57 @@ export default function AccountProfileClient() {
                 </div>
               </div>
 
-              {/* Email - Read Only */}
-              <div className="glass-panel rounded-2xl p-5 flex items-start gap-4 opacity-70">
+              <div className={"glass-panel rounded-2xl p-5 flex items-start gap-4 transition " + (editing ? 'ring-2 ring-black/10 bg-black/[0.01]' : 'hover:bg-black/[0.02]')}>
                 <div className="p-3 bg-black/5 rounded-xl ring-1 ring-black/10">
                   <Mail className="w-5 h-5 text-black" />
                 </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-[0.2em] text-black/50">Email Address (Fixed)</label>
-                  <div className="mt-1 text-lg font-bold text-black">{session?.user?.email}</div>
+                <div className="flex-1">
+                  <label className="text-xs font-bold uppercase tracking-[0.2em] text-black/50">Email Address</label>
+                  {editing ? (
+                    <input 
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="mt-1 w-full bg-transparent text-lg font-bold text-black outline-none border-b border-black/10 focus:border-black"
+                    />
+                  ) : (
+                    <div className="mt-1 text-lg font-bold text-black">{email || "Not provided"}</div>
+                  )}
                 </div>
               </div>
+
+              <div className={"glass-panel rounded-2xl p-5 flex items-start gap-4 transition " + (editing ? 'ring-2 ring-black/10 bg-black/[0.01]' : 'hover:bg-black/[0.02]')}>
+                <div className="p-3 bg-black/5 rounded-xl ring-1 ring-black/10">
+                  <Phone className="w-5 h-5 text-black" />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs font-bold uppercase tracking-[0.2em] text-black/50">Phone Number</label>
+                  {editing ? (
+                    <input 
+                      type="tel"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      placeholder="+971 5X XXX XXXX"
+                      className="mt-1 w-full bg-transparent text-lg font-bold text-black outline-none border-b border-black/10 focus:border-black"
+                    />
+                  ) : (
+                    <div className="mt-1 text-lg font-bold text-black">{phone || "Not provided"}</div>
+                  )}
+                </div>
+              </div>
+
+              <Link href="/account/address" className="glass-panel rounded-2xl p-5 flex items-center justify-between gap-4 hover:bg-black/[0.02] group transition">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-black/5 rounded-xl ring-1 ring-black/10">
+                    <MapPin className="w-5 h-5 text-black" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-[0.2em] text-black/50">Shipping Address</label>
+                    <div className="mt-1 text-lg font-bold text-black">Manage Addresses</div>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-black/20 group-hover:translate-x-1 transition-transform" />
+              </Link>
 
               {/* Role - Read Only */}
               <div className="glass-panel rounded-2xl p-5 flex items-start gap-4 opacity-70">

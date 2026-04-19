@@ -122,12 +122,17 @@ export const userAuthOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.name = user.name;
+        token.email = user.email;
         token.role = (user as { role?: string }).role;
         token.isAdminSession = false;
+      }
+      if (trigger === "update" && session) {
+        if (session.name) token.name = session.name;
+        if (session.email) token.email = session.email;
       }
       return token;
     },
@@ -136,6 +141,7 @@ export const userAuthOptions: NextAuthOptions = {
         session.user.id = (token.id as string) ?? session.user.id;
         session.user.role = (token.role as "USER" | "ADMIN" | "SUPERADMIN") ?? session.user.role;
         session.user.name = token.name ?? session.user.name;
+        session.user.email = (token.email as string) ?? session.user.email;
         (session.user as any).isAdminSession = false;
       }
       return session;

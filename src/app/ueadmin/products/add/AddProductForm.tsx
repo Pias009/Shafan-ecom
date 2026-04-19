@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box } from 'lucide-react';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { autoCompleteCountryPrices } from '@/lib/country-pricing';
@@ -114,6 +115,10 @@ export function AddProductForm({
     tags: [] as string[],
   });
 
+  const [showAddBrand, setShowAddBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [availableBrands, setAvailableBrands] = useState(brands);
+
   // Filter sub-categories based on selected categories (first category) - now showing all
   const filteredSubCategories = subCategories;
 
@@ -194,6 +199,35 @@ export function AddProductForm({
         };
       }
     });
+  };
+
+  const handleAddBrand = async () => {
+    if (!newBrandName.trim()) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/brands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newBrandName.trim() })
+      });
+      
+      if (res.ok) {
+        const createdBrand = await res.json();
+        toast.success(`Brand "${createdBrand.name}" created!`);
+        setAvailableBrands((prev: any[]) => [...prev, createdBrand].sort((a, b) => a.name.localeCompare(b.name)));
+        setFormData((prev: any) => ({ ...prev, brandName: createdBrand.name }));
+        setNewBrandName("");
+        setShowAddBrand(false);
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to create brand');
+      }
+    } catch (error) {
+      toast.error('Error creating brand');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSkinConcernToggle = (concernId: string) => {
@@ -351,19 +385,60 @@ export function AddProductForm({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Brand</label>
-                <div className="relative">
-                  <select
-                    name="brandName"
-                    value={formData.brandName}
-                    onChange={handleChange}
-                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <select
+                      name="brandName"
+                      value={formData.brandName}
+                      onChange={handleChange}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select Brand</option>
+                      {availableBrands.map(b => (
+                        <option key={b.name} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
+                    <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddBrand(!showAddBrand)}
+                    className="p-4 bg-black/5 rounded-2xl hover:bg-black hover:text-white transition-all text-black/40"
+                    title="Add New Brand"
                   >
-                    {brands.map(b => (
-                      <option key={b.name} value={b.name}>{b.name}</option>
-                    ))}
-                  </select>
-                  <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
+                    <Plus size={20} />
+                  </button>
                 </div>
+
+                {showAddBrand && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-3 p-4 bg-black/5 rounded-2xl border border-dashed border-black/10 flex gap-2 items-center"
+                  >
+                    <input
+                      type="text"
+                      placeholder="New brand name..."
+                      value={newBrandName}
+                      onChange={(e) => setNewBrandName(e.target.value)}
+                      className="flex-1 bg-white border-none rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddBrand}
+                      className="px-4 py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddBrand(false)}
+                      className="p-2 text-black/30 hover:text-red-500 transition-colors"
+                    >
+                      <X size={16} />
+                    </button>
+                  </motion.div>
+                )}
               </div>
             </div>
 

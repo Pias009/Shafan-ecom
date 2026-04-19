@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { parseCommaSeparatedPriceInput, formatPriceForAdmin } from '@/lib/money';
@@ -13,11 +14,15 @@ interface EditProductFormProps {
   subCategories: { id: string; name: string; categoryId: string; category: { name: string } }[];
   skinTones: { id: string; name: string; hexColor: string | null }[];
   skinConcerns: { id: string; name: string }[];
+  brands: { name: string }[];
 }
 
-export function EditProductForm({ product: initialProduct, categories, subCategories, skinTones, skinConcerns }: EditProductFormProps) {
+export function EditProductForm({ product: initialProduct, categories, subCategories, skinTones, skinConcerns, brands }: EditProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showAddBrand, setShowAddBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [availableBrands, setAvailableBrands] = useState(brands);
   
   // Ensure numeric fields are properly converted to numbers
   const normalizedProduct = {
@@ -29,6 +34,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     subCategoryIds: initialProduct.subCategory?.id ? [initialProduct.subCategory.id] : [],
     skinToneIds: initialProduct.skinTones?.map((s: any) => s.id) || [],
     skinConcernIds: initialProduct.skinConcerns?.map((sc: any) => sc.id) || [],
+    brandName: initialProduct.brand?.name || '',
   };
   
   const [product, setProduct] = useState(normalizedProduct);
@@ -45,6 +51,35 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     }
     
     setProduct((prev: any) => ({ ...prev, [name]: finalValue }));
+  };
+
+  const handleAddBrand = async () => {
+    if (!newBrandName.trim()) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/brands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newBrandName.trim() })
+      });
+      
+      if (res.ok) {
+        const createdBrand = await res.json();
+        toast.success(`Brand "${createdBrand.name}" created!`);
+        setAvailableBrands((prev: any[]) => [...prev, createdBrand].sort((a, b) => a.name.localeCompare(b.name)));
+        setProduct((prev: any) => ({ ...prev, brandName: createdBrand.name }));
+        setNewBrandName("");
+        setShowAddBrand(false);
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to create brand');
+      }
+    } catch (error) {
+      toast.error('Error creating brand');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePriceInputChange = (countryCode: string, rawValue: string) => {
@@ -277,7 +312,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
         active: product.active,
         mainImage: product.mainImage || '',
         images: product.images || [],
-        brandName: product.brand?.name,
+        brandName: product.brandName,
         categoryIds: product.categoryIds,
         skinToneIds: product.skinToneIds,
         skinConcernIds: product.skinConcernIds,
@@ -353,9 +388,60 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
 
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Brand</label>
-                  <div className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold">
-                    {product.brand?.name || 'N/A'}
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <select
+                        name="brandName"
+                        value={product.brandName}
+                        onChange={handleChange}
+                        className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                      >
+                        <option value="">Select Brand</option>
+                        {availableBrands.map(b => (
+                          <option key={b.name} value={b.name}>{b.name}</option>
+                        ))}
+                      </select>
+                      <Tag className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddBrand(!showAddBrand)}
+                      className="p-4 bg-black/5 rounded-2xl hover:bg-black hover:text-white transition-all text-black/40"
+                      title="Add New Brand"
+                    >
+                      <Plus size={20} />
+                    </button>
                   </div>
+
+                  {showAddBrand && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }} 
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-3 p-4 bg-black/5 rounded-2xl border border-dashed border-black/10 flex gap-2 items-center"
+                    >
+                      <input
+                        type="text"
+                        placeholder="New brand name..."
+                        value={newBrandName}
+                        onChange={(e) => setNewBrandName(e.target.value)}
+                        className="flex-1 bg-white border-none rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddBrand}
+                        className="px-4 py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 active:scale-95 transition-all"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddBrand(false)}
+                        className="p-2 text-black/30 hover:text-red-500 transition-colors"
+                      >
+                        <X size={16} />
+                      </button>
+                    </motion.div>
+                  )}
                 </div>
               </div>
 

@@ -8,6 +8,7 @@ import PaymentActions from './_components/PaymentActions';
 import PaymentStatusEditor from './_components/PaymentStatusEditor';
 import { OrderStatus } from '@prisma/client';
 import RequestAlerts from './RequestAlerts';
+import OrderEditor from './_components/OrderEditor';
 
 function formatPrice(amount: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
@@ -93,6 +94,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           
           {/* Quick Stats & Actions */}
           <div className="flex flex-wrap items-center gap-3">
+            <OrderEditor order={order} />
             <InvoiceDownload orderId={order.id} />
           </div>
         </div>

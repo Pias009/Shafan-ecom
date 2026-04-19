@@ -42,42 +42,67 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     
     const body = await request.json();
-    const { action, status, reason } = body; 
+    const { action, status, shippingAddress, billingAddress, items, total, subtotal } = body; 
 
     let updateData: any = {};
     
-    switch (action) {
-      case 'APPROVE_CANCEL':
-        updateData = { 
-          status: OrderStatus.CANCELLED,
-          cancelRequest: false,
-        };
-        break;
-      case 'REJECT_CANCEL':
-        updateData = { 
-          cancelRequest: false,
-        };
-        break;
-      case 'APPROVE_RETURN':
-        updateData = { 
-          returnStatus: ReturnStatus.APPROVED,
-        };
-        break;
-      case 'REJECT_RETURN':
-        updateData = { 
-          returnStatus: ReturnStatus.REJECTED,
-          returnRequest: false,
-        };
-        break;
-      case 'COMPLETE_RETURN':
-        updateData = { 
-          status: OrderStatus.REFUNDED,
-          returnStatus: ReturnStatus.COMPLETED,
-          returnRequest: false,
-        };
-        break;
-      default:
-        if (status) updateData.status = status;
+    if (action) {
+      switch (action) {
+        case 'APPROVE_CANCEL':
+          updateData = { 
+            status: OrderStatus.CANCELLED,
+            cancelRequest: false,
+          };
+          break;
+        case 'REJECT_CANCEL':
+          updateData = { 
+            cancelRequest: false,
+          };
+          break;
+        case 'APPROVE_RETURN':
+          updateData = { 
+            returnStatus: ReturnStatus.APPROVED,
+          };
+          break;
+        case 'REJECT_RETURN':
+          updateData = { 
+            returnStatus: ReturnStatus.REJECTED,
+            returnRequest: false,
+          };
+          break;
+        case 'COMPLETE_RETURN':
+          updateData = { 
+            status: OrderStatus.REFUNDED,
+            returnStatus: ReturnStatus.COMPLETED,
+            returnRequest: false,
+          };
+          break;
+      }
+    } else {
+      // Manual updates from admin panel
+      if (status) updateData.status = status;
+      if (shippingAddress) updateData.shippingAddress = shippingAddress;
+      if (billingAddress) updateData.billingAddress = billingAddress;
+      if (typeof total === 'number') updateData.total = total;
+      if (typeof subtotal === 'number') updateData.subtotal = subtotal;
+
+      // Handle items update
+      if (items && Array.isArray(items)) {
+        // Delete old items and create new ones (simplest way to handle updates for complex items)
+        // Or we can update them individually if we have IDs.
+        // Assuming items have IDs, we update quantity.
+        for (const item of items) {
+          if (item.id) {
+            await (prisma as any).orderItem.update({
+              where: { id: item.id },
+              data: {
+                quantity: item.quantity,
+                // price can also be updated if needed
+              }
+            });
+          }
+        }
+      }
     }
 
     const order = await prisma.order.update({

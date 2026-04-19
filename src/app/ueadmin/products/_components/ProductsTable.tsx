@@ -1,9 +1,10 @@
 "use client";
 
 import Link from 'next/link';
-import { Plus, Tag, Trash2, Check, Square } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Plus, Tag, Trash2, Check, Square, Filter, X } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Product {
   id: string;
@@ -17,9 +18,45 @@ interface Product {
 }
 
 export function ProductsTable({ initialProducts }: { initialProducts: Product[] }) {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedBrand, setSelectedBrand] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [maxPrice, setMaxPrice] = useState(100000);
+  
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectAll, setSelectAll] = useState(false);
+
+  // Derive unique brands and categories for filters
+  const brands = useMemo(() => {
+    const set = new Set(initialProducts.map(p => p.brand?.name).filter(Boolean));
+    return ["All", ...Array.from(set).sort()];
+  }, [initialProducts]);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    initialProducts.forEach(p => {
+      p.productCategories?.forEach(pc => {
+        if (pc.category?.name) set.add(pc.category.name);
+      });
+    });
+    return ["All", ...Array.from(set).sort()];
+  }, [initialProducts]);
+
+  const filteredProducts = useMemo(() => {
+    return initialProducts.filter(p => {
+      const matchesSearch = !searchInput || p.name.toLowerCase().includes(searchInput.toLowerCase()) || 
+                           p.id.toLowerCase().includes(searchInput.toLowerCase());
+      const matchesBrand = selectedBrand === "All" || p.brand?.name === selectedBrand;
+      const matchesCategory = selectedCategory === "All" || 
+                             p.productCategories?.some(pc => pc.category.name === selectedCategory);
+      
+      const price = p.countryPrices?.[0]?.price || 0;
+      const matchesPrice = price <= maxPrice || maxPrice === 100000;
+
+      return matchesSearch && matchesBrand && matchesCategory && matchesPrice;
+    });
+  }, [initialProducts, searchInput, selectedBrand, selectedCategory, maxPrice]);
 
   const toggleSelect = (id: string) => {
     const newSelected = new Set(selectedIds);
@@ -29,14 +66,14 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
       newSelected.add(id);
     }
     setSelectedIds(newSelected);
-    setSelectAll(newSelected.size === products.length);
+    setSelectAll(newSelected.size === filteredProducts.length);
   };
 
   const toggleSelectAll = () => {
     if (selectAll) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(products.map(p => p.id)));
+      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
     }
     setSelectAll(!selectAll);
   };
@@ -53,25 +90,11 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
         body: JSON.stringify({ ids: Array.from(selectedIds) })
       });
       
-      const result = await res.json().catch(() => ({}));
-      
       if (res.ok) {
-        const { deleted = 0, failed = 0 } = result;
-        if (failed > 0 && deleted === 0) {
-          toast.error(`Failed to delete products. Check server logs.`);
-        } else if (failed > 0) {
-          toast.error(`Deleted ${deleted}, but ${failed} failed. They may have pending orders.`);
-          setProducts(products.filter(p => !selectedIds.has(p.id)));
-          setSelectedIds(new Set());
-          setSelectAll(false);
-        } else {
-          toast.success(`Deleted ${deleted} product(s)`);
-          setProducts(products.filter(p => !selectedIds.has(p.id)));
-          setSelectedIds(new Set());
-          setSelectAll(false);
-        }
+        toast.success('Selected products deleted');
+        window.location.reload(); // Refresh to get updated list
       } else {
-        toast.error(result?.error || 'Failed to delete products');
+        toast.error('Failed to delete products');
       }
     } catch (error) {
       toast.error('Failed to delete products');
@@ -90,7 +113,7 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
       
       if (res.ok) {
         toast.success('Product deleted');
-        setProducts(products.filter(p => p.id !== id));
+        window.location.reload();
       } else {
         toast.error('Failed to delete product');
       }
@@ -101,6 +124,89 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
 
   return (
     <>
+      <div className="flex justify-start mb-6">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
+            showFilters ? "bg-black text-white" : "glass-panel text-black hover:bg-black hover:text-white"
+          }`}
+        >
+          {showFilters ? <X size={14} /> : <Filter size={14} />}
+          {showFilters ? "Hide Filters" : "Show Filters"}
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -20, height: 0 }}
+            className="overflow-hidden mb-8"
+          >
+            <div className="glass-panel rounded-[2rem] p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-stretch shadow-lg border border-black/5 bg-white/50">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  Search
+                </label>
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Name or ID..."
+                  className="h-12 w-full bg-white border border-black/5 rounded-2xl px-5 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none placeholder:text-black/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  Brand
+                </label>
+                <select
+                  value={selectedBrand}
+                  onChange={(e) => setSelectedBrand(e.target.value)}
+                  className="h-12 w-full bg-white border border-black/5 rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                >
+                  {brands.map(b => <option key={b || 'unknown'} value={b || 'All'}>{b || 'All'}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  Category
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="h-12 w-full bg-white border border-black/5 rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                >
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  Max Price: {maxPrice === 100000 ? 'All' : maxPrice}
+                </label>
+                <div className="h-12 flex items-center px-4 bg-white border border-black/5 rounded-2xl">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100000"
+                    step="1000"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(Number(e.target.value))}
+                    className="flex-1 h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
+
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-4 p-4 bg-red-50 rounded-2xl border border-red-200">
           <span className="text-sm font-bold text-red-700">
@@ -138,7 +244,7 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {products.map((p) => (
+              {filteredProducts.map((p) => (
                 <tr 
                   key={p.id} 
                   className={`hover:bg-black/[0.01] transition-colors ${selectedIds.has(p.id) ? 'bg-green-50' : ''}`}

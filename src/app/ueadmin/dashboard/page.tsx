@@ -110,44 +110,46 @@ export default async function Dashboard() {
         </div>
 
         <div className="glass-panel-heavy rounded-[2.5rem] border border-black/5 bg-white shadow-xl overflow-hidden">
-           <table className="w-full text-left">
-              <thead>
-                <tr className="bg-black text-white">
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Customer</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Store</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Status</th>
-                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5">
-                {recentOrders.map((o: any) => (
-                  <tr key={o.id} className="hover:bg-black/[0.01] transition-colors">
-                    <td className="px-8 py-5">
-                      <div className="font-black text-sm">#{o.id.substring(0, 8)}</div>
-                      <div className="text-[9px] font-bold text-black/50 uppercase">{new Date(o.createdAt).toLocaleDateString()}</div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <div className="font-bold text-sm">{o.user?.name || 'Guest'}</div>
-                      <div className="text-[9px] font-bold text-black/60">{o.user?.email || 'No email'}</div>
-                    </td>
-                    <td className="px-8 py-5">
-                      <span className="px-2 py-1 rounded-full text-[9px] font-black uppercase bg-black/5 text-black/60">
-                        {o.store?.code || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5">
-                      <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${getStatusColor(o.status)}`}>
-                        {o.status}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-right font-black text-sm">
-                      {o.currency?.toUpperCase() || 'AED'} {Number(o.total || 0).toFixed(2)}
-                    </td>
+           <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+             <table className="w-full text-left">
+                <thead className="sticky top-0 z-10">
+                  <tr className="bg-black text-white">
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Order</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Customer</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Store</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest">Status</th>
+                    <th className="px-8 py-5 text-[10px] font-black uppercase tracking-widest text-right">Amount</th>
                   </tr>
-                ))}
-              </tbody>
-           </table>
+                </thead>
+                <tbody className="divide-y divide-black/5">
+                  {recentOrders.map((o: any) => (
+                    <tr key={o.id} className="hover:bg-black/[0.01] transition-colors">
+                      <td className="px-8 py-5">
+                        <div className="font-black text-sm">#{o.id.substring(0, 8)}</div>
+                        <div className="text-[9px] font-bold text-black/50 uppercase">{new Date(o.createdAt).toLocaleDateString()}</div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="font-bold text-sm">{o.user?.name || 'Guest'}</div>
+                        <div className="text-[9px] font-bold text-black/60">{o.user?.email || 'No email'}</div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="px-2 py-1 rounded-full text-[9px] font-black uppercase bg-black/5 text-black/60">
+                          {o.store?.code || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${getStatusColor(o.status)}`}>
+                          {o.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5 text-right font-black text-sm">
+                        {o.currency?.toUpperCase() || 'AED'} {Number(o.total || 0).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+             </table>
+           </div>
         </div>
       </section>
     </div>
