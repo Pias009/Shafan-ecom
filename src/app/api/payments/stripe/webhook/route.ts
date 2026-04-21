@@ -105,9 +105,10 @@ export async function POST(req: Request) {
         }
 
         // Send confirmation email to client
-        if (updatedOrder.user?.email) {
+        const customerEmail = updatedOrder.email || updatedOrder.user?.email;
+        if (customerEmail) {
           sendEmail({
-            to: updatedOrder.user.email,
+            to: customerEmail,
             subject: `Order Confirmation #${updatedOrder.id}`,
             html: `
               <h1>Thank you for your order!</h1>
@@ -123,7 +124,7 @@ export async function POST(req: Request) {
           sendEmail({
             to: process.env.ADMIN_EMAIL,
             subject: `New PAID Order - #${updatedOrder.id}`,
-            html: `<p>New order paid. Customer: ${updatedOrder.user?.email || 'Guest'}. Amount: ${(updatedOrder.total || 0).toFixed(2)} ${updatedOrder.currency.toUpperCase()}</p>`
+            html: `<p>New order paid. Customer: ${customerEmail || 'Guest'}. Amount: ${(updatedOrder.total || 0).toFixed(2)} ${updatedOrder.currency.toUpperCase()}</p>`
           }).catch(console.error);
         }
       }

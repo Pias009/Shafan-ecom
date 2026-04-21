@@ -1,6 +1,8 @@
 
+import 'dotenv/config';
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = 'onboarding@resend.dev';
+const FROM_EMAIL = 'orders@mail.shanfaglobal.it';
 const TEST_RECIPIENT = 'shanfaglobal.it@gmail.com';
 
 console.log('Testing Resend API with Key:', RESEND_API_KEY ? 'Present' : 'Missing');

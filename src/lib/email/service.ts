@@ -122,7 +122,7 @@ export class EmailService {
         if (result.error) {
           throw new Error(result.error.message);
         }
-      } else if (this.config.provider === 'mock' || this.config.testMode) {
+      } else if (this.config.provider === 'mock') {
         // Mock sending for testing/development
         result = { id: `mock-${Date.now()}` };
         console.log('[Mock Email] Sent:', {
@@ -134,7 +134,7 @@ export class EmailService {
         throw new Error(`Unsupported email provider: ${this.config.provider}`);
       }
 
-      const messageId = 'id' in result ? result.id : undefined;
+      const messageId = result.data?.id || undefined;
       
       // Log successful email
       this.logEmail({

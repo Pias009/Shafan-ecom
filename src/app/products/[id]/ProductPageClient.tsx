@@ -295,14 +295,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               </button>
               <button
                 onClick={() => orderNow()}
-                className="flex-1 sm:flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl shadow-xl shadow-black/20 text-xs sm:text-sm"
+                className="flex-1 sm:flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-black text-white font-black uppercase tracking-[0.15em] text-xs sm:text-sm shadow-xl shadow-black/20 hover:bg-gray-800 transition-all"
               >
-                <span className="original font-black uppercase tracking-[0.15em]">Order Now</span>
-                <div className="letters text-xs">
-                  {Array.from("FAST").map((letter, index) => (
-                    <span key={index}>{letter}</span>
-                  ))}
-                </div>
+                Order Now
               </button>
             </div>
 
