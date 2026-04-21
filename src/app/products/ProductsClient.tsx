@@ -92,6 +92,11 @@ export default function ProductsClient({
   const { query: q, clearQuery } = useSearchStore();
   const isRoutines = isRoutinesPage;
 
+  const { addItem, hasAddress } = useCartStore();
+  const { currentLanguage } = useLanguageStore();
+  const t = translations[currentLanguage.code as keyof typeof translations];
+  const { selectedCountry } = useCountryStore();
+
   useEffect(() => {
     if (q) {
       setSearchInput(q);
@@ -126,20 +131,22 @@ export default function ProductsClient({
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchInput) params.set("q", searchInput);
-    if (brand && brand !== "All") params.set("brand", brand);
-    if (selectedCategory && selectedCategory !== "All") params.set("category", selectedCategory);
+    if (brand && brand !== "All" && brand !== t.product.all) params.set("brand", brand);
+    if (selectedCategory && selectedCategory !== "All" && selectedCategory !== t.product.all) params.set("category", selectedCategory);
     if (selectedSubCategory && selectedSubCategory !== "All") params.set("subcategory", selectedSubCategory);
     if (selectedSkinTone && selectedSkinTone !== "All") params.set("skinTone", selectedSkinTone);
     if (selectedSkinConcern && selectedSkinConcern !== "All") params.set("concern", selectedSkinConcern);
     if (maxPrice < 100000) params.set("maxPrice", maxPrice.toString());
     
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [searchInput, brand, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, maxPrice, router]);
+    const newQuery = params.toString();
+    const currentQuery = window.location.search.replace(/^\?/, '');
+    
+    if (newQuery !== currentQuery) {
+        router.replace(`?${newQuery}`, { scroll: false });
+    }
+  }, [searchInput, brand, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, maxPrice, router, t.product.all]);
 
-  const { addItem, hasAddress } = useCartStore();
-  const { currentLanguage } = useLanguageStore();
-  const t = translations[currentLanguage.code as keyof typeof translations];
-  const { selectedCountry } = useCountryStore();
+
 
   const brands = useMemo(() => {
     if (filterOptions?.brands) {

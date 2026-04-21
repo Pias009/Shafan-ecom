@@ -11,8 +11,9 @@ export async function middleware(req: NextRequest) {
   const isStaticAsset = pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|mp4|webm)$/)
   const isApi = pathname.startsWith('/api/')
   const isNextInternal = pathname.startsWith('/_next/')
+  const isLockStatusApi = pathname === '/api/lock/status'
   
-  if (isStaticAsset || isNextInternal) return NextResponse.next()
+  if (isStaticAsset || isNextInternal || isLockStatusApi) return NextResponse.next()
 
   // 2. ADMIN PROTECTION
   if (pathname.startsWith('/ueadmin')) {
