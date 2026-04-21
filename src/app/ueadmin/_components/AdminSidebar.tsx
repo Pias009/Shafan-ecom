@@ -42,11 +42,11 @@ export function AdminSidebar() {
   ];
 
   return (
-    <aside className="w-80 h-full border-r border-black/5 bg-white p-10 flex flex-col space-y-12 shrink-0 glass-panel">
+    <aside className="w-80 h-full border-r border-black/5 bg-white p-10 flex flex-col space-y-12 shrink-0 glass-panel overflow-y-auto custom-scrollbar">
        <div className="flex items-center gap-4 group cursor-pointer">
           <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-2xl shadow-black/20 group-hover:rotate-12 transition-transform">S</div>
           <div>
-            <h2 className="font-black text-xs uppercase tracking-widest text-black">Shafan Admin</h2>
+            <h2 className="font-black text-xs uppercase tracking-widest text-black">SHANFA Admin</h2>
             <p className="text-[10px] font-bold text-black/60 uppercase tracking-[0.2em]">Admin Panel</p>
           </div>
        </div>
@@ -78,7 +78,7 @@ export function AdminSidebar() {
                  href="/ueadmin/discounts"
                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
               >
-                 <Tag size={18} /> Discounts & Coupons
+                 <Tag size={18} /> Offers & Discounts
               </Link>
                <Link
                   href="/ueadmin/banners"

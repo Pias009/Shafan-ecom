@@ -152,7 +152,7 @@ export default async function SuperAdminConsole() {
                            type="email" 
                            name="email"
                            required
-                           placeholder="admin@shafan.com"
+                           placeholder="admin@shanfa.com"
                            className="w-full h-16 pl-14 pr-6 rounded-full bg-black/5 border-none font-bold text-sm focus:ring-2 focus:ring-black transition-all"
                          />
                       </div>

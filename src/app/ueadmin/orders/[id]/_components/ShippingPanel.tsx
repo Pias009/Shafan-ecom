@@ -45,11 +45,13 @@ export default function ShippingPanel({
   orderId,
   shippingAddress,
   existingShipment,
+  totalWeight,
   onShipmentCreated,
 }: {
   orderId: string;
   shippingAddress: any;
   existingShipment?: any;
+  totalWeight?: number;
   onShipmentCreated?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -59,7 +61,12 @@ export default function ShippingPanel({
   const [rates, setRates] = useState<any[]>([]);
   const [tracking, setTracking] = useState<any>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
-  const [parcelSize, setParcelSize] = useState({ length: 20, width: 15, height: 10, weight: 1 });
+  const [parcelSize, setParcelSize] = useState({ 
+    length: 20, 
+    width: 15, 
+    height: 10, 
+    weight: typeof totalWeight === 'number' && totalWeight > 0 ? totalWeight : 1 
+  });
   const [showShippo, setShowShippo] = useState(false);
 
   // Populate from existing DB shipment

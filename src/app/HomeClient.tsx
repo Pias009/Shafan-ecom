@@ -28,6 +28,36 @@ import HomeBannerSlider from "@/components/HomeBannerSlider";
 import { GoogleReviewsSection } from "@/components/GoogleReviewsSection";
 import { hasValidPrice } from "@/lib/product-utils";
 
+const DUMMY_PRODUCT_NAMES = [
+  "Icy Gel Cleanser",
+  "Glass Skin Serum",
+  "Mint Cloud Mist",
+  "Silk Glass Shampoo",
+  "Mirror Gloss Conditioner",
+  "Violet Night Eau",
+  "Vitamin C Brightening Serum",
+  "Velvet Matte Lipstick",
+  "Glow Foundation SPF 15",
+  "Crystal Musk",
+  "Amber Glow",
+  "Silver Cedar Intense"
+];
+
+const DUMMY_BRANDS = [
+  "HEALTH",
+  "MAKEUP",
+  "VIOLET LAB",
+  "SKYPEARL"
+];
+
+const isDummyProduct = (p: any) => {
+  const name = (p.name || "").trim().toLowerCase();
+  const brand = (typeof p.brand === 'string' ? p.brand : p.brand?.name || "").trim().toLowerCase();
+  
+  return DUMMY_PRODUCT_NAMES.some(dn => name.includes(dn.toLowerCase())) || 
+         DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
+};
+
 export default function HomeClient({ initialProducts, newArrivals = [] }: { initialProducts: any[], newArrivals?: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
   const [q, setQ] = useState("");
@@ -133,6 +163,7 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return products.filter((p) => {
+      if (isDummyProduct(p)) return false;
       if (!hasValidPrice(p, selectedCountry)) return false;
 
       const price = p.price || 0;
@@ -146,18 +177,18 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
         p.category?.name?.toLowerCase().includes(query)
       );
     });
-  }, [q, category, brand, maxPrice, products, selectedCountry, selectedCurrency]);
+  }, [q, category, brand, maxPrice, products, selectedCountry, selectedCurrency, isDummyProduct]);
 
   const hot = useMemo(() => products.filter((p) => p.hot), [products]);
 
-  // Filter newArrivals based on country support
+  // Filter newArrivals based on country support and remove dummy products
   const filteredNewArrivals = useMemo(() => {
-    return newArrivals.filter((p) => hasValidPrice(p, selectedCountry));
+    return newArrivals.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [newArrivals, selectedCountry, selectedCurrency]);
 
-  // Filter hot products based on country support
+  // Filter hot products based on country support and remove dummy products
   const filteredHot = useMemo(() => {
-    return hot.filter((p) => hasValidPrice(p, selectedCountry));
+    return hot.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [hot, selectedCountry, selectedCurrency]);
 
   function addToCart(product: any) {

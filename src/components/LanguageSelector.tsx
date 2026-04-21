@@ -8,10 +8,27 @@ import { motion, AnimatePresence } from "framer-motion";
 export function LanguageSelector({ direction = "up", align = "right" }: { direction?: "up" | "down", align?: "left" | "right" }) {
   const { currentLanguage, setLanguage } = useLanguageStore();
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const current = SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage.code) || SUPPORTED_LANGUAGES[0];
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/5 hover:bg-black/10 transition"

@@ -3,8 +3,8 @@ import { ArrowRight, Shield, Package, CreditCard, AlertTriangle, Globe, Scale } 
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions | Shafan",
-  description: "Shafan Terms and Conditions - General use, products, orders, payments, liability, and governing law.",
+  title: "Terms & Conditions | SHANFA",
+  description: "SHANFA Terms and Conditions - General use, products, orders, payments, liability, and governing law.",
 };
 
 const sections = [

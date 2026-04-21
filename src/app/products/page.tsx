@@ -52,24 +52,28 @@ export default async function ProductsPage({
 }: {
   searchParams: Promise<{ category?: string; brand?: string; q?: string; page?: string }>;
 }) {
-  const storeCode = await getStoreCode();
-  const params = await searchParams;
+  const [storeCode, params] = await Promise.all([
+    getStoreCode(),
+    searchParams
+  ]);
+  
   const page = parseInt(params.page || '1', 10);
   const limit = 20;
-  const products = await getProducts(storeCode, page, limit);
-  const totalCount = await getProductCount(storeCode);
-  const category = params.category;
-  const brand = params.brand;
-  const searchQuery = params.q || "";
-  const banners = await getBanners();
-  
-  const [allCategories, allSubCategories, allBrands, allSkinTones, allSkinConcerns] = await Promise.all([
+
+  // Parallelize products, total count, banners and all filter options
+  const [products, totalCount, banners, allCategories, allSubCategories, allBrands, allSkinTones, allSkinConcerns] = await Promise.all([
+    getProducts(storeCode, page, limit),
+    getProductCount(storeCode),
+    getBanners(),
     prisma.category.findMany({ select: { name: true } }),
     prisma.subCategory.findMany({ select: { name: true } }),
     prisma.brand.findMany({ select: { name: true } }),
     prisma.skinTone.findMany({ select: { name: true } }),
     prisma.skinConcern.findMany({ select: { name: true } }),
   ]);
+
+  const category = params.category;
+  const brand = params.brand;
 
   const filterOptions = {
     categories: allCategories.map(c => c.name),

@@ -206,6 +206,10 @@ model Product {
   ratingCount   Int      @default(0)
   totalSales    Int      @default(0)
   
+  // Weight fields
+  weight        Float?
+  weightUnit    String   @default("kg") // "g" or "kg"
+  
   // SEO fields
   tags            String[]
   metaTitle       String?
@@ -338,6 +342,8 @@ model Order {
   subtotal              Float?
   shipping              Float?          @default(0)
   discount              Float?          @default(0)
+  taxRate               Float?          @default(0)  // e.g. 0.05 for 5%
+  taxAmount             Float?          @default(0)  // calculated tax value
   total                 Float?
   paymentMethod         String?
   paymentMethodTitle    String?
@@ -352,6 +358,7 @@ model Order {
   discountAmount        Float? // Amount saved from discount
   couponCode            String? // Coupon code used
   items                 OrderItem[]
+  totalWeight           Float?          @default(0)
   shipment              Shipment?
   discountUsages        DiscountUsage[]
   // Cancellation
@@ -377,6 +384,8 @@ model OrderItem {
   unitPrice      Float?
   nameSnapshot   String
   imageSnapshot  String?
+  weightSnapshot Float?
+  weightUnitSnapshot String?
   order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product        Product @relation(fields: [productId], references: [id])
 }

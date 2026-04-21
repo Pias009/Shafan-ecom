@@ -3,8 +3,8 @@ import { ArrowRight, HelpCircle, Package, Truck, CreditCard, Shield, MessageCirc
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "FAQ | Shafan",
-  description: "Frequently asked questions about Shafan orders, shipping, payments, returns, and products.",
+  title: "FAQ | SHANFA",
+  description: "Frequently asked questions about SHANFA orders, shipping, payments, returns, and products.",
 };
 
 const faqCategories = [

@@ -100,6 +100,8 @@ export async function GET(
       subtotal: formatPriceUnits(order.subtotal, order.currency),
       shipping: formatPriceUnits(order.shipping || 0, order.currency),
       discount: order.discount > 0 ? formatPriceUnits(order.discount, order.currency) : '0.00',
+      taxRate: order.taxRate ? (order.taxRate * 100).toFixed(0) : '0',
+      taxAmount: order.taxAmount ? formatPriceUnits(order.taxAmount, order.currency) : '0.00',
       total: formatPriceUnits(order.total, order.currency),
       currency: order.currency,
       

@@ -79,7 +79,7 @@ async function dispatchAramex(order: any, dimensions: any) {
             CountryCode: process.env.ARAMEX_SHIPPER_COUNTRY || "AE",
           },
           Contact: {
-            PersonName: process.env.ARAMEX_SHIPPER_NAME || "Shafan Store",
+            PersonName: process.env.ARAMEX_SHIPPER_NAME || "SHANFA STORE",
             PhoneNumber1: process.env.ARAMEX_SHIPPER_PHONE || "+971000000000",
             EmailAddress: process.env.ARAMEX_SHIPPER_EMAIL || "info@shanfaglobal.com",
           },
@@ -227,7 +227,7 @@ async function dispatchNaqel(order: any, dimensions: any) {
         locationCode3: "",
       },
       shipperContact: {
-        personName: process.env.ARAMEX_SHIPPER_NAME || "Shafan Store",
+        personName: process.env.ARAMEX_SHIPPER_NAME || "SHANFA STORE",
         companyName: "Al Shanfa General Trading Co.",
         phoneNumber1: sanitizePhone(process.env.ARAMEX_SHIPPER_PHONE),
         phoneNumber2: sanitizePhone(process.env.ARAMEX_SHIPPER_PHONE),
@@ -294,7 +294,7 @@ export async function POST(
   }
 
   const body = await req.json();
-  const { courier, weight = 1, length = 20, width = 15, height = 10 } = body;
+  const { courier, weight: bodyWeight, length = 20, width = 15, height = 10 } = body;
 
   if (!courier || !["naqel", "aramex", "shanfa"].includes(courier)) {
     return NextResponse.json(
@@ -317,6 +317,8 @@ export async function POST(
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
+  // Use body weight if provided, otherwise use order's totalWeight, otherwise default to 1
+  const weight = bodyWeight !== undefined ? bodyWeight : (order.totalWeight || 1);
   const dimensions = { weight, length, width, height };
 
   try {

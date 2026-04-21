@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-const SYNC_SUPER_SECRET = process.env.SYNC_SUPER_SECRET || "shafan-sync-secret-2024";
+const SYNC_SUPER_SECRET = process.env.SYNC_SUPER_SECRET || "shanfa-sync-secret-2024";
 
 function verifySyncSecret(req: Request): boolean {
   const secret = req.headers.get("x-sync-secret");

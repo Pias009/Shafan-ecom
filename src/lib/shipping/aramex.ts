@@ -10,7 +10,7 @@ const ARAMEX_CREDENTIALS = {
     AccountPin: process.env.ARAMEX_ACCOUNT_PIN,
   },
   Transaction: {
-    Reference1: 'Shafan Order',
+    Reference1: 'SHANFA Order',
   },
 };
 
@@ -63,7 +63,7 @@ export async function createAramexShipment(data: ShipmentData) {
         Reference2: '',
         Reference3: '',
         Shipper: {
-          Name: process.env.ARAMEX_SHIPPER_NAME || 'Shafan Store',
+          Name: process.env.ARAMEX_SHIPPER_NAME || 'SHANFA STORE',
           CompanyName: 'Al Shafa General Trading Co. L.L.C',
           PhoneNumber1: process.env.ARAMEX_SHIPPER_PHONE || '+971048387827',
           PhoneNumber1Ext: '',

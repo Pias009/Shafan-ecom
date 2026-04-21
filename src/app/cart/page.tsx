@@ -31,7 +31,7 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
-function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, couponMaxLimit, removeCoupon, subtotal, discount, total, shipping, freeDelivery, t, selectedCountry, applyCoupon }: any) {
+function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, couponMaxLimit, removeCoupon, subtotal, discount, total, shipping, taxRate, taxAmount, freeDelivery, t, selectedCountry, applyCoupon }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
   const { data: session } = useSession();
@@ -117,8 +117,13 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       // Calculate discount amount (from coupon if applied)
       const discountAmount = (couponDiscount && typeof couponDiscount === 'number') ? couponDiscount : 0;
       
-      // Calculate final total: (subtotal - discount) + shipping
-      const total = Number((subtotal - discountAmount + shippingFee).toFixed(2));
+      // Calculate VAT tax on pre-tax total
+      const preTaxTotal = subtotal - discountAmount + shippingFee;
+      const taxRate = deliveryConfig?.taxRate || 0;
+      const taxAmount = Math.round(preTaxTotal * taxRate * 100) / 100;
+
+      // Calculate final total: (subtotal - discount) + shipping + tax
+      const total = Number((preTaxTotal + taxAmount).toFixed(2));
       
       // MOV check: Minimum Order Value
       const minOrderValue = deliveryConfig?.minOrder || 80;
@@ -139,6 +144,8 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
           subtotal,
           shippingFee: Number(shippingFee),
           discountAmount: Number(discountAmount),
+          taxAmount,
+          taxRate,
           total,
           ...(couponCode && { couponCode }),
           billing,
@@ -332,6 +339,13 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 </div>
               </div>
 
+              {taxRate > 0 && (
+                <div className="flex items-center justify-between font-body text-[10px] md:text-sm text-orange-600 font-bold uppercase tracking-wider">
+                  <div>VAT ({(taxRate * 100).toFixed(0)}%)</div>
+                  <div className="font-black"><Price amount={taxAmount} /></div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between pt-6 border-t border-black/5">
                 <div className="font-black text-xs md:text-sm uppercase tracking-widest">{t.cart.total}</div>
                 <Price amount={total} className="text-2xl md:text-3xl font-black text-black" />
@@ -429,7 +443,10 @@ export default function CartPage() {
   
   // Use raw units for comparison as per user request
   const shipping = subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee;
-  const total = subtotal - discount + shipping;
+  const preTaxTotal = subtotal - discount + shipping;
+  const taxRate = deliveryConfig.taxRate || 0;
+  const taxAmount = Math.round(preTaxTotal * taxRate * 100) / 100;
+  const total = preTaxTotal + taxAmount;
 
   if (items.length === 0) {
     return (
@@ -462,6 +479,8 @@ export default function CartPage() {
       discount={discount}
       total={total}
       shipping={shipping}
+      taxRate={taxRate}
+      taxAmount={taxAmount}
       freeDelivery={shipping === 0}
       applyCoupon={applyCoupon}
       t={t}

@@ -178,6 +178,36 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
           </table>
         </div>
       </section>
+ 
+       {/* Order Summary Breakdown */}
+       <div className="flex justify-end mt-4 mb-8">
+         <div className="glass-panel-heavy rounded-3xl border border-black/5 p-8 bg-white shadow-lg w-full md:w-96 space-y-4">
+           <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-black/40">
+             <span>Subtotal</span>
+             <span className="text-black">{formatPrice(order.subtotal, order.currency)}</span>
+           </div>
+           {(order.discountAmount > 0 || order.discount > 0) && (
+             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-green-600">
+               <span>Discount</span>
+               <span>-{formatPrice(order.discountAmount || order.discount, order.currency)}</span>
+             </div>
+           )}
+           <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-black/40">
+             <span>Shipping</span>
+             <span className="text-black">{formatPrice(order.shipping, order.currency)}</span>
+           </div>
+           {order.taxAmount > 0 && (
+             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-orange-600">
+               <span>VAT ({(order.taxRate * 100).toFixed(0)}%)</span>
+               <span>{formatPrice(order.taxAmount, order.currency)}</span>
+             </div>
+           )}
+           <div className="pt-4 border-t border-black/5 flex justify-between items-center">
+             <span className="text-sm font-black uppercase tracking-widest">Total</span>
+             <span className="text-2xl font-black">{formatPrice(order.total, order.currency)}</span>
+           </div>
+         </div>
+       </div>
 
       <section className="bg-black rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-12 text-white shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
         <div className="flex items-center gap-6">

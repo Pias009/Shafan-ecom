@@ -24,8 +24,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Shafan — Radiant Skin Store",
-  description: "Premium skincare crafted with nature's finest ingredients.",
+  title: "SHANFA — Radiant Skin Store",
+  description: "Premium Skin Care crafted with nature's finest ingredients.",
 };
 
 
@@ -45,20 +45,7 @@ export default function RootLayout({
         <SpeedInsights />
         <Providers>
           <ClientLayout>
-            <Suspense fallback={
-              <div className="min-h-screen bg-cream flex flex-col items-center justify-center gap-6">
-                <div className="relative">
-                  <div className="w-16 h-16 border-4 border-black/10 rounded-full"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-black" />
-                  </div>
-                </div>
-                <div className="text-center space-y-2">
-                  <h2 className="font-display text-2xl font-bold text-black tracking-tight">Shafan</h2>
-                  <p className="font-body text-xs text-black/40 font-bold uppercase tracking-[0.2em]">Loading...</p>
-                </div>
-              </div>
-            }>
+            <Suspense fallback={null}>
               <MainStoreLayout>
                 {children}
               </MainStoreLayout>

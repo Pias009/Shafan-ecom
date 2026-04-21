@@ -124,7 +124,7 @@ export function ProductQuickViewModal({
     if (!product) {
       return {
         allImages: [] as string[],
-        brandName: "Shafan Global",
+        brandName: "SHANFA GLOBAL",
         categoryName: "General",
         categories: [] as string[],
         subCategoryName: undefined as string | undefined,
@@ -141,7 +141,7 @@ export function ProductQuickViewModal({
 
     const bName = typeof product.brand === "string" 
       ? product.brand 
-      : product.brand?.name || "Shafan Global";
+      : product.brand?.name || "SHANFA GLOBAL";
 
     const cName = typeof product.category === "string" 
       ? product.category 

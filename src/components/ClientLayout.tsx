@@ -21,33 +21,18 @@ function NavigationScroll() {
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [showContent, setShowContent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showContent, setShowContent] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const hasLoaded = sessionStorage.getItem("shafan-loaded-v2");
-    
-    if (hasLoaded) {
-      setIsLoading(false);
-      setShowContent(true);
-      return;
-    }
-    
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setShowContent(true);
-      sessionStorage.setItem("shafan-loaded-v2", "true");
-    }, 2500); // Reduced from 3500 to 2500 for better feel
-    
-    return () => clearTimeout(timer);
   }, []);
 
   const handleLoadingComplete = () => {
     setIsLoading(false);
     setShowContent(true);
-    sessionStorage.setItem("shafan-loaded-v2", "true");
+    sessionStorage.setItem("shanfa-loaded-v2", "true");
   };
 
   // Always render null on server to match client
@@ -57,7 +42,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <>
-      {isLoading && <LoadingScreen onLoadingComplete={handleLoadingComplete} />}
+      {/* Loading screen removed */}
       {showContent && (
         <>
           <Suspense fallback={null}>

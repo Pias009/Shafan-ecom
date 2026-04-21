@@ -260,7 +260,7 @@ export function Hero() {
               <div className="lg:hidden text-center">
                 <div className="inline-flex items-center gap-2 mb-1.5">
                   <div className="w-2 h-2 rounded-full bg-gradient-to-br from-pink-400 to-violet-400" />
-                  <p className="text-[9px] sm:text-[10px] text-black/30 font-bold tracking-[0.4em] uppercase">Skincare</p>
+                  <p className="text-[9px] sm:text-[10px] text-black/30 font-bold tracking-[0.4em] uppercase">Skin Care</p>
                   <div className="w-2 h-2 rounded-full bg-gradient-to-br from-violet-400 to-sky-400" />
                 </div>
                 <h1 className="font-display font-black text-3xl sm:text-4xl md:text-5xl bg-gradient-to-br from-[#6366F1] via-[#8B5CF6] to-[#A855F7] text-transparent bg-clip-text leading-none tracking-[-0.04em] uppercase">

@@ -85,7 +85,7 @@ export function HomeProductCard({
 
   const brandName = typeof product.brand === "string"
     ? product.brand
-    : product.brand?.name || "Shafan Global";
+    : product.brand?.name || "SHANFA GLOBAL";
 
   const renderStars = (rating: number = 0) => {
     const stars = [];

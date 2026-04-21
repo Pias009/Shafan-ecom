@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Info - Shafan",
+  title: "Info - SHANFA",
   description: "Privacy Policy, Terms of Service, Shipping Info, Refund Policy, and About Us",
 };
 
@@ -54,7 +54,7 @@ Your Rights
   {
     id: "shipping",
     title: "Shipping Information",
-    content: `Shafan offers reliable shipping across all Gulf countries. Our delivery network covers UAE, Kuwait, Saudi Arabia, Bahrain, Qatar, and Oman with competitive shipping rates and fast delivery times.
+    content: `SHANFA offers reliable shipping across all Gulf countries. Our delivery network covers UAE, Kuwait, Saudi Arabia, Bahrain, Qatar, and Oman with competitive shipping rates and fast delivery times.
 
 Standard delivery takes 3-5 business days within the same country and 5-10 business days for cross-border shipments. Express shipping options are available for urgent orders. Free shipping is offered on orders exceeding the minimum threshold in each country.
 
@@ -118,7 +118,7 @@ export default function InfoPage() {
             Information Center
           </h1>
           <p className="text-black/60 max-w-xl mx-auto">
-            Everything you need to know about Shafan policies, shipping, and more.
+            Everything you need to know about SHANFA policies, shipping, and more.
           </p>
         </div>
 

@@ -25,7 +25,7 @@ export const AdminLoginAlertTemplate = ({
       title="Admin Login Alert 🔒"
     >
       <Text style={paragraph}>
-        A new admin login was detected for your Shafan Store account.
+        A new admin login was detected for your SHANFA STORE account.
       </Text>
 
       <Section style={alertBox}>
@@ -152,11 +152,11 @@ export const AdminLoginAlertTemplate = ({
       <Hr style={divider} />
 
       <Text style={footerText}>
-        This is an automated security alert from Shafan Store. 
+        This is an automated security alert from SHANFA STORE. 
         If you have any concerns about your account security, please contact our 
         security team immediately at{' '}
-        <a href="mailto:security@shafan-store.com" style={link}>
-          security@shafan-store.com
+        <a href="mailto:security@shanfa-store.com" style={link}>
+          security@shanfa-store.com
         </a>
       </Text>
     </BaseTemplate>

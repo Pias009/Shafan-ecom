@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         result = await sendMagicLinkEmail(
           testEmail,
           testName,
-          'https://shafan-store.com/auth/magic-link?token=test-token',
+          'https://shanfa-store.com/auth/magic-link?token=test-token',
           '15 minutes'
         );
         break;
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         result = await sendWelcomeEmail(
           testEmail,
           testName,
-          'https://shafan-store.com/dashboard'
+          'https://shanfa-store.com/dashboard'
         );
         break;
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         result = await sendPasswordResetEmail(
           testEmail,
           testName,
-          'https://shafan-store.com/auth/reset-password?token=test-token',
+          'https://shanfa-store.com/auth/reset-password?token=test-token',
           '1 hour'
         );
         break;
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
           ],
           109.97,
           '123 Main St, City, State 12345',
-          'https://shafan-store.com/track/ORD-12345'
+          'https://shanfa-store.com/track/ORD-12345'
         );
         break;
 

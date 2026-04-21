@@ -72,7 +72,7 @@ export function Footer() {
           <div className="flex flex-col items-center lg:items-start">
             <Logo className="mb-4" />
             <p className="text-xs font-medium text-white/50 text-center lg:text-left max-w-[200px]">
-              Discover the essence of natural beauty with our premium skincare collection.
+              Discover the essence of natural beauty with our premium Skin Care collection.
             </p>
           </div>
 

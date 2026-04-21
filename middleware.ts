@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server'
 
-const SECRET_PATH = process.env.SECRET_LOCK_PATH || `/master-${Math.random().toString(36).substring(2, 18)}`;
+const DEFAULT_SECRET_PATH = '/master-shanfa-global-secure';
+const SECRET_PATH = process.env.SECRET_LOCK_PATH || DEFAULT_SECRET_PATH;
 
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone()
@@ -13,23 +14,7 @@ export async function middleware(req: NextRequest) {
   
   if (isStaticAsset || isNextInternal) return NextResponse.next()
 
-  // 2. SECRET PATH HANDLING
-  const isSecretPath = pathname.startsWith(SECRET_PATH)
-  if (isSecretPath) {
-    // Fire and forget logging
-    fetch(`${req.nextUrl.origin}/api/lock/log-access`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        path: pathname, 
-        ipAddress: req.headers.get('x-forwarded-for') || 'unknown',
-        userAgent: req.headers.get('user-agent'),
-        reason: 'Access attempt' 
-      })
-    }).catch(() => {});
-  }
-
-  // 3. ADMIN PROTECTION
+  // 2. ADMIN PROTECTION
   if (pathname.startsWith('/ueadmin')) {
     const activeAdmin = process.env.ACTIVE_ADMIN_PANELS === 'true'
     if (!activeAdmin) return new NextResponse("Admin Panels are currently deactivated.", { status: 403 })
@@ -47,14 +32,26 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // 4. WEBSITE LOCK ENFORCEMENT
-  // Only check lock for non-API page requests. Add caching.
-  if (!isSecretPath && !isApi && !pathname.includes('ueadmin')) {
+  // 3. WEBSITE LOCK ENFORCEMENT (Optimized)
+  // Skip lock check in development to avoid 5s lag from internal API calls
+  // In production, this should ideally use an Edge-compatible store (like Vercel KV) 
+  // instead of fetching an internal API that hits MongoDB.
+  const isSecretPath = pathname.startsWith(SECRET_PATH)
+  const isDev = process.env.NODE_ENV === 'development'
+  const lockEnabled = process.env.WEBSITE_LOCK_ENABLED === 'true'
+
+  if (!isDev && lockEnabled && !isSecretPath && !isApi && !pathname.includes('ueadmin')) {
     try {
+      // Use a shorter timeout for the lock check to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
+      
       const lockCheckRes = await fetch(`${req.nextUrl.origin}/api/lock/status`, {
         headers: { 'x-internal': 'true' },
-        next: { revalidate: 60 } // Cache for 60 seconds for speed
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (lockCheckRes.ok) {
         const lockData = await lockCheckRes.json();
@@ -65,13 +62,14 @@ export async function middleware(req: NextRequest) {
           })
         }
       }
-    } catch (error) {}
+    } catch (error) {
+      // On failure, fail open to avoid blocking the site
+      console.warn('Lock check bypassed due to error');
+    }
   }
 
-  // 5. STORE RESOLUTION
-  const cookies = req.cookies
-  const hasStore = cookies.get('store_code')
-  
+  // 4. STORE RESOLUTION
+  const hasStore = req.cookies.get('store_code')
   if (hasStore) return NextResponse.next()
 
   const res = NextResponse.next()

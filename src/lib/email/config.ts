@@ -11,8 +11,8 @@ export const getEmailConfig = (): EmailConfig => {
   const testMode = process.env.NODE_ENV !== 'production';
   
   // Use development from email if specified, otherwise use configured from email
-  let fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@shafan-store.com';
-  const fromName = process.env.RESEND_FROM_NAME || 'Shafan Store';
+  let fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@shanfa-store.com';
+  const fromName = process.env.RESEND_FROM_NAME || 'SHANFA STORE';
   
   // Allow override for development testing
   if (testMode && process.env.DEV_FROM_EMAIL) {

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       if (rates.length === 0) {
         try {
           const fromAddress: ShippoAddress = {
-            name: process.env.SHIPPO_SHIPPER_NAME || 'Shafan Store',
+            name: process.env.SHIPPO_SHIPPER_NAME || 'SHANFA STORE',
             street1: process.env.SHIPPO_SHIPPER_ADDRESS || 'Dubai',
             city: process.env.SHIPPO_SHIPPER_CITY || 'Dubai',
             state: process.env.SHIPPO_SHIPPER_STATE || 'Dubai',

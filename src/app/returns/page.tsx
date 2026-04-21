@@ -3,8 +3,8 @@ import { ArrowRight, Package, Clock, Shield, RefreshCw, Truck, CheckCircle } fro
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Returns & Exchanges | Shafan",
-  description: "Learn about Shafan's return and exchange policy. Easy returns within 14 days for unused products in original packaging.",
+  title: "Returns & Exchanges | SHANFA",
+  description: "Learn about SHANFA's return and exchange policy. Easy returns within 14 days for unused products in original packaging.",
 };
 
 const returnSteps = [

@@ -30,15 +30,15 @@ const CountryPriceSchema = z.object({
 
 const ProductCreateSchema = z.object({
   name: z.string().min(1, { message: "Product name is required" }),
-  sku: z.string().optional(),
-  description: z.string().optional(),
-  shortDescription: z.string().optional(),
-  benefits: z.string().optional(),
-  ingredients: z.string().optional(),
-  howToUse: z.string().optional(),
+  sku: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  shortDescription: z.string().nullable().optional(),
+  benefits: z.string().nullable().optional(),
+  ingredients: z.string().nullable().optional(),
+  howToUse: z.string().nullable().optional(),
   features: z.array(z.string()).optional(),
   images: z.array(z.string()).optional(),
-  mainImage: z.string().optional(),
+  mainImage: z.string().nullable().optional(),
   trending: z.boolean().optional(),
   price: z.number().min(0, { message: "Product price must be 0 or more" }),
   discountPrice: z.number().min(0).optional(),
@@ -51,6 +51,8 @@ const ProductCreateSchema = z.object({
   hot: z.boolean().optional(),
   storeId: z.string().optional(),
   tags: z.array(z.string()).optional().default([]),
+  weight: z.number().optional().default(0),
+  weightUnit: z.string().optional().default('kg'),
   countryPrices: z.array(CountryPriceSchema)
     .optional()
     .default([])
@@ -211,6 +213,9 @@ export async function POST(req: Request) {
     }
     if (processedBody.stockQuantity !== undefined && processedBody.stockQuantity !== null) {
       processedBody.stockQuantity = Number(processedBody.stockQuantity);
+    }
+    if (processedBody.weight !== undefined && processedBody.weight !== null) {
+      processedBody.weight = Number(processedBody.weight);
     }
     if (processedBody.countryPrices && Array.isArray(processedBody.countryPrices)) {
       processedBody.countryPrices = processedBody.countryPrices.map((cp: any) => ({
@@ -380,6 +385,8 @@ export async function POST(req: Request) {
       storeId,
       currency: 'USD',
       tags: productData.tags ?? [],
+      weight: productData.weight ?? 0,
+      weightUnit: productData.weightUnit ?? 'kg',
     };
 
     // Use upsert to handle existing products atomically

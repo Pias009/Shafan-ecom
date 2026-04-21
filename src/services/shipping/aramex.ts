@@ -45,7 +45,7 @@ export class AramexService {
       accountCountryCode: process.env.ARAMEX_COUNTRYCODE || "AE",
     };
     this.shipper = {
-      name: process.env.ARAMEX_SHIPPER_NAME || "Shafan Store",
+      name: process.env.ARAMEX_SHIPPER_NAME || "SHANFA STORE",
       phone: process.env.ARAMEX_SHIPPER_PHONE || "",
       email: process.env.ARAMEX_SHIPPER_EMAIL || "",
       address: {

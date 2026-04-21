@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, ShieldCheck, Info, DollarSign, ShoppingCart, Globe, Store } from 'lucide-react';
+import { ArrowLeft, Package, User, MapPin, CreditCard, Clock, Truck, ShieldCheck, Info, DollarSign, ShoppingCart, Globe, Store, Scale } from 'lucide-react';
 import OrderStatusActions from './OrderStatusActions';
 import InvoiceDownload from './_components/InvoiceDownload';
 import ShippingPanel from './_components/ShippingPanel';
@@ -174,6 +174,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     <span>×</span>
                     <span>{formatPrice(item.unitPrice as number, order.currency)}</span>
                     {(item.sku as string) && <span className="text-slate-400">SKU: {item.sku as string}</span>}
+                    {(item.weightSnapshot as number) > 0 && (
+                      <span className="flex items-center gap-1 text-[10px] bg-black/5 px-2 py-0.5 rounded-full">
+                        <Scale size={10} /> {item.weightSnapshot as number} {item.weightUnitSnapshot as string || 'kg'}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="text-right">
@@ -283,6 +288,21 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <span className="font-black text-green-600">-{formatPrice(order.discountAmount || 0, order.currency)}</span>
               </div>
             )}
+            {(order.taxAmount || 0) > 0 && (
+              <div className="flex justify-between items-center py-2 border-b border-black/5">
+                <span className="text-xs font-bold uppercase tracking-widest text-orange-600">VAT ({(order.taxRate * 100).toFixed(0)}%)</span>
+                <span className="font-black text-orange-600">{formatPrice(order.taxAmount || 0, order.currency)}</span>
+              </div>
+            )}
+            {(order.totalWeight || 0) > 0 && (
+              <div className="flex justify-between items-center py-2 border-b border-black/5">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-600">Total Weight</span>
+                <span className="font-black text-slate-900 flex items-center gap-2">
+                  <Scale size={14} className="text-slate-400" />
+                  {order.totalWeight.toFixed(2)} KG
+                </span>
+              </div>
+            )}
             {order.appliedDiscount && (
               <div className="flex justify-between items-center py-2 bg-green-50 px-3 rounded-lg -mx-3">
                 <span className="text-xs font-bold uppercase tracking-widest text-green-700">Applied Coupon</span>
@@ -367,6 +387,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             orderId={order.id} 
             shippingAddress={shipping}
             existingShipment={order.shipment}
+            totalWeight={order.totalWeight}
           />
         </section>
 

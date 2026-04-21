@@ -96,7 +96,7 @@ function ProductCard({
   // Safely get the brand name as a string
   const brandName = typeof product.brand === "string"
     ? product.brand
-    : product.brand?.name || "Shafan Global";
+    : product.brand?.name || "SHANFA GLOBAL";
 
   // Generate star rating display
   const renderStars = (rating: number = 0) => {

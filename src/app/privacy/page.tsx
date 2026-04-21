@@ -3,8 +3,8 @@ import { ArrowRight, Shield, Eye, Edit3, Trash2, CreditCard, Truck, Smartphone, 
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy & Security Policy | Shafan",
-  description: "Shafan Privacy & Security Policy - How we collect, use, and protect your data.",
+  title: "Privacy & Security Policy | SHANFA",
+  description: "SHANFA Privacy & Security Policy - How we collect, use, and protect your data.",
 };
 
 const collectData = [

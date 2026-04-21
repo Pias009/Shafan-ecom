@@ -38,7 +38,7 @@ function PaymentRequestButtonWrapper({
       country: 'US',
       currency: currency || 'usd',
       total: {
-        label: 'Shafan Order',
+        label: 'SHANFA Order',
         amount: amount,
       },
       requestPayerName: true,
@@ -369,6 +369,12 @@ export default function CustomPaymentPage() {
                   <span>Subtotal</span>
                   <Price amount={order.subtotal} className="text-black" />
                 </div>
+                {order.taxAmount > 0 && (
+                  <div className="flex justify-between text-[10px] text-orange-600 font-bold uppercase tracking-widest">
+                    <span>VAT ({(order.taxRate * 100).toFixed(0)}%)</span>
+                    <Price amount={order.taxAmount} />
+                  </div>
+                )}
                 <div className="flex justify-between pt-4 border-t border-black/5">
                   <span className="font-bold text-base md:text-lg">Total</span>
                   <Price amount={order.total} className="font-black text-xl md:text-2xl" />

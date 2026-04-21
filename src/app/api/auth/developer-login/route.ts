@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get or create a developer user
-    const developerEmail = "developer@shafan.com";
+    const developerEmail = "developer@shanfa.com";
     let user = await prisma.user.findUnique({
       where: { email: developerEmail },
     });
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Log to security audit system
     await logSecurityAudit({
       userId: user.id,
-      userEmail: user.email || "developer@shafan.com",
+      userEmail: user.email || "developer@shanfa.com",
       userRole: user.role,
       action: "SUPERADMIN_LOGIN",
       resourceId: user.id,

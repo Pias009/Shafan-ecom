@@ -247,7 +247,7 @@ export const adminAuthOptions: NextAuthOptions = {
           return null;
         }
 
-        const isDeveloper = user.email === "developer@shafan.com";
+        const isDeveloper = user.email === "developer@shanfa.com";
         const isMasterAdmin = user.email === process.env.MASTER_ADMIN_EMAIL;
         const isSuperAdmin = user.role === 'SUPERADMIN';
         const shouldBypassMFA = (isDeveloper || isMasterAdmin) && isSuperAdmin;

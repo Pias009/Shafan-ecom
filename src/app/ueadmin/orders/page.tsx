@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { OrderStatus } from '@prisma/client';
 import { OrderFilter } from './_components/OrderFilter';
 import { getAdminStoreAccess } from '@/lib/admin-session';
+import { Plus } from 'lucide-react';
 
 interface OrderItem {
   productName: string;
@@ -213,7 +214,15 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     <div className="space-y-6 px-2 md:px-0">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Orders</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Orders</h1>
+            <Link 
+              href="/ueadmin/orders/create"
+              className="bg-black text-white px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/10 flex items-center gap-2"
+            >
+              <Plus size={14} /> Create Order
+            </Link>
+          </div>
           {storeAccess.userCountry && (
             <p className="text-sm text-black/70 mt-1">
               Viewing orders for {storeAccess.userCountry} store{storeAccess.allowedStores.length > 1 ? 's' : ''}: {storeAccess.allowedStores.join(', ')}

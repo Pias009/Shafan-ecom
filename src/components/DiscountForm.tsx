@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { X, Plus, Search, Check, Loader2 } from "lucide-react";
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -28,6 +33,10 @@ interface DiscountFormData {
   endDate: string;
   maxUses?: number;
   active: boolean;
+  usageType: "SINGLE_USE" | "MULTI_USE";
+  maxUsesPerUser?: number;
+  maxUsesPerOrder?: number;
+  autoApply: boolean;
 }
 
 interface DiscountFormProps {
@@ -48,7 +57,9 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [searchProduct, setSearchProduct] = useState("");
   const [showProductSearch, setShowProductSearch] = useState(false);
 
@@ -69,6 +80,10 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
     endDate: initialData?.endDate || "",
     maxUses: initialData?.maxUses || undefined,
     active: initialData?.active !== undefined ? initialData.active : true,
+    usageType: initialData?.usageType || "MULTI_USE",
+    maxUsesPerUser: initialData?.maxUsesPerUser || 1,
+    maxUsesPerOrder: initialData?.maxUsesPerOrder || 1,
+    autoApply: initialData?.autoApply || false,
   });
 
   // Fetch products - lightweight select endpoint
@@ -85,7 +100,22 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
         setLoadingProducts(false);
       }
     };
+
+    const fetchCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const res = await fetch("/api/admin/categories");
+        const data = await res.json();
+        setCategories(data || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
     fetchProducts();
+    fetchCategories();
   }, []);
 
   const handleInputChange = (field: keyof DiscountFormData, value: any) => {
@@ -107,6 +137,15 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
     setForm((prev) => ({
       ...prev,
       productIds: prev.productIds.filter((id) => id !== productId),
+    }));
+  };
+
+  const handleCategoryToggle = (categoryId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      categoryIds: prev.categoryIds.includes(categoryId)
+        ? prev.categoryIds.filter((id) => id !== categoryId)
+        : [...prev.categoryIds, categoryId],
     }));
   };
 
@@ -351,7 +390,7 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Max Uses (Optional, leave empty for unlimited)
+              Max Total Uses (Global)
             </label>
             <input
               type="number"
@@ -360,6 +399,46 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
               onChange={(e) => handleInputChange("maxUses", e.target.value ? parseInt(e.target.value) : undefined)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Unlimited"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Usage Type
+            </label>
+            <select
+              value={form.usageType}
+              onChange={(e) => handleInputChange("usageType", e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="MULTI_USE">Multi Use (Per User)</option>
+              <option value="SINGLE_USE">Single Use (Once Per User)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Max Uses Per User
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={form.maxUsesPerUser ?? ""}
+              onChange={(e) => handleInputChange("maxUsesPerUser", e.target.value ? parseInt(e.target.value) : 1)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Max Uses Per Order
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={form.maxUsesPerOrder ?? ""}
+              onChange={(e) => handleInputChange("maxUsesPerOrder", e.target.value ? parseInt(e.target.value) : 1)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -541,6 +620,44 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
         )}
       </div>
 
+      {/* Category Selection */}
+      <div className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900">Categories</h2>
+        <p className="text-sm text-gray-500">Select categories this discount applies to</p>
+
+        {loadingCategories ? (
+          <div className="flex items-center gap-2 text-gray-500 py-4">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Loading categories...</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {categories.map((category) => {
+              const isSelected = form.categoryIds.includes(category.id);
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => handleCategoryToggle(category.id)}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-left transition-all ${
+                    isSelected
+                      ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200"
+                      : "bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:bg-blue-50"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${
+                    isSelected ? "bg-white/20" : "bg-gray-100"
+                  }`}>
+                    {isSelected && <Check size={14} />}
+                  </div>
+                  <span className="text-sm font-bold truncate">{category.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Status */}
       <div className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Status</h2>
@@ -554,6 +671,18 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
           />
           <span className="text-sm text-gray-700">
             Publish now (set as ACTIVE)
+          </span>
+        </label>
+
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.autoApply}
+            onChange={(e) => handleInputChange("autoApply", e.target.checked)}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-700">
+            Auto-apply (apply automatically to eligible carts)
           </span>
         </label>
       </div>

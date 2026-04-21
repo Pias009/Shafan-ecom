@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { User, Mail, Calendar, ChevronRight, Search, Filter } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function UsersPage() {
   const users = await (prisma as any).user.findMany({
     select: {

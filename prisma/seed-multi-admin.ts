@@ -58,10 +58,10 @@ async function main() {
 
   // UAE Admin
   const uaeAdmin = await prisma.user.upsert({
-    where: { email: 'uae-admin@shafanglobal.com' },
+    where: { email: 'uae-admin@shanfaglobal.com' },
     update: {},
     create: {
-      email: 'uae-admin@shafanglobal.com',
+      email: 'uae-admin@shanfaglobal.com',
       name: 'UAE Admin',
       role: 'ADMIN',
       country: 'UAE',
@@ -73,10 +73,10 @@ async function main() {
 
   // Kuwait Admin
   const kuwaitAdmin = await prisma.user.upsert({
-    where: { email: 'kuwait-admin@shafanglobal.com' },
+    where: { email: 'kuwait-admin@shanfaglobal.com' },
     update: {},
     create: {
-      email: 'kuwait-admin@shafanglobal.com',
+      email: 'kuwait-admin@shanfaglobal.com',
       name: 'Kuwait Admin',
       role: 'ADMIN',
       country: 'KW',
@@ -88,10 +88,10 @@ async function main() {
 
   // SUPERADMIN
   const superAdmin = await prisma.user.upsert({
-    where: { email: 'superadmin@shafanglobal.com' },
+    where: { email: 'superadmin@shanfaglobal.com' },
     update: {},
     create: {
-      email: 'superadmin@shafanglobal.com',
+      email: 'superadmin@shanfaglobal.com',
       name: 'Super Admin',
       role: 'SUPERADMIN',
       passwordHash,
@@ -444,9 +444,9 @@ async function main() {
   console.log('\n' + '='.repeat(60));
   console.log('✅ Multi-Admin Database Seeding Complete!\n');
   console.log('📋 Admin Credentials:');
-  console.log('  UAE Admin:      uae-admin@shafanglobal.com / Admin123!');
-  console.log('  Kuwait Admin:   kuwait-admin@shafanglobal.com / Admin123!');
-  console.log('  SUPERADMIN:     superadmin@shafanglobal.com / Admin123!');
+  console.log('  UAE Admin:      uae-admin@shanfaglobal.com / Admin123!');
+  console.log('  Kuwait Admin:   kuwait-admin@shanfaglobal.com / Admin123!');
+  console.log('  SUPERADMIN:     superadmin@shanfaglobal.com / Admin123!');
   console.log('\n' + '='.repeat(60) + '\n');
 }
 

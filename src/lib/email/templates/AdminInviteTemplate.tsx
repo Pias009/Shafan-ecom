@@ -24,7 +24,7 @@ export const AdminInviteTemplate = ({
 }: AdminInviteTemplateProps) => {
   return (
     <BaseTemplate
-      previewText={`You've been invited to join Shafan Store as ${role}`}
+      previewText={`You've been invited to join SHANFA STORE as ${role}`}
       title="Admin Invitation"
     >
       <Text style={paragraph}>
@@ -32,7 +32,7 @@ export const AdminInviteTemplate = ({
       </Text>
       
       <Text style={paragraph}>
-        You've been invited to join <strong>Shafan Store</strong> as an <strong>{role}</strong>. 
+        You've been invited to join <strong>SHANFA STORE</strong> as an <strong>{role}</strong>. 
         This is a privileged role with access to the store's administrative dashboard.
       </Text>
 

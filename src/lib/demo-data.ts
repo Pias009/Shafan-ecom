@@ -2,7 +2,7 @@ export type DemoProduct = {
   id: string;
   name: string;
   brand: string;
-  category: "Skincare" | "Haircare" | "Fragrance";
+  category: "Skin Care" | "Hair Care" | "Fragrance";
   price: number;
   discountPrice?: number;
   imageUrl: string;
@@ -47,12 +47,12 @@ export const demoBrands = [
 export const demoCategories = [
   {
     id: "c1",
-    label: "Skincare",
+    label: "Skin Care",
     description: "Clean, icy hydration.",
   },
   {
     id: "c2",
-    label: "Haircare",
+    label: "Hair Care",
     description: "Smooth, glass shine.",
   },
   {
@@ -72,7 +72,7 @@ export const demoProducts: DemoProduct[] = [
     id: "p1",
     name: "Icy Gel Cleanser",
     brand: "Frost & Co",
-    category: "Skincare",
+    category: "Skin Care",
     price: 24,
     discountPrice: 19,
     imageUrl: "https://images.unsplash.com/photo-1580870069867-74c57ee1bb07?auto=format&fit=crop&w=1200&q=80",
@@ -84,7 +84,7 @@ export const demoProducts: DemoProduct[] = [
     id: "p2",
     name: "Glass Skin Serum",
     brand: "AquaGlass",
-    category: "Skincare",
+    category: "Skin Care",
     price: 32,
     imageUrl: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?auto=format&fit=crop&w=1200&q=80",
     hot: true,
@@ -95,7 +95,7 @@ export const demoProducts: DemoProduct[] = [
     id: "p3",
     name: "Mint Cloud Mist",
     brand: "NoirMint",
-    category: "Skincare",
+    category: "Skin Care",
     price: 18,
     imageUrl: "https://images.unsplash.com/photo-1612810436541-336f8fd55eb5?auto=format&fit=crop&w=1200&q=80",
     features: ["Fine atomizer", "Cooling feel", "Makeup friendly"],
@@ -105,7 +105,7 @@ export const demoProducts: DemoProduct[] = [
     id: "p4",
     name: "Silk Glass Shampoo",
     brand: "Glow Forge",
-    category: "Haircare",
+    category: "Hair Care",
     price: 28,
     discountPrice: 22,
     imageUrl: "https://images.unsplash.com/photo-1611930021866-9f6bf2d2d4a1?auto=format&fit=crop&w=1200&q=80",
@@ -117,7 +117,7 @@ export const demoProducts: DemoProduct[] = [
     id: "p5",
     name: "Mirror Gloss Conditioner",
     brand: "SkyPearl",
-    category: "Haircare",
+    category: "Hair Care",
     price: 30,
     imageUrl: "https://images.unsplash.com/photo-1620916566393-7a19f78146ee?auto=format&fit=crop&w=1200&q=80",
     features: ["Slip + detangle", "Silicone-smart", "Fresh finish"],

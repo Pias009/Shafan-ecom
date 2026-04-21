@@ -72,9 +72,9 @@ export async function POST(
     const shippingCost = order.shipping || 0;
     const discount = order.discount || 0;
     const total = order.total || 0;
-    const taxRate = 0.05;
-    const amountBeforeTax = subtotal - discount;
-    const taxValue = amountBeforeTax > 0 ? amountBeforeTax * taxRate : 0;
+    const taxRate = order.taxRate || 0;
+    const taxValue = order.taxAmount || 0;
+    const amountBeforeTax = subtotal + shippingCost - discount;
 
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       try {
@@ -248,7 +248,7 @@ export async function POST(
         }
         
         // Tax
-        doc.fontSize(10).font('Helvetica').fillColor('#444').text('Total Tax (5%)', totalsX, y, { width: 150, align: 'right' });
+        doc.fontSize(10).font('Helvetica').fillColor('#444').text(`Total Tax (${(taxRate * 100).toFixed(0)}%)`, totalsX, y, { width: 150, align: 'right' });
         doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(taxValue, order.currency || 'USD'), totalsX + 155, y, { width: 80, align: 'right' });
         y += 18;
         

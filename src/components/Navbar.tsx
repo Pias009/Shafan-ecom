@@ -294,9 +294,12 @@ export function Navbar() {
               <Search size={22} />
             </button>
 
-            {/* Dynamic Flag - Clickable to open Currency Selector */}
+            {/* Currency & Language - side by side */}
             {mounted && (
-              <CurrencySelector direction="down" />
+              <div className="flex items-center gap-2">
+                <CurrencySelector direction="down" />
+                <LanguageSelector direction="down" />
+              </div>
             )}
             
             {/* User Button - SEPARATE */}

@@ -18,7 +18,7 @@ export const PasswordResetTemplate = ({
 }: PasswordResetTemplateProps) => {
   return (
     <BaseTemplate
-      previewText={`Reset your Shafan Store password`}
+      previewText={`Reset your SHANFA STORE password`}
       title="Reset Your Password"
     >
       <Text style={paragraph}>
@@ -26,7 +26,7 @@ export const PasswordResetTemplate = ({
       </Text>
       
       <Text style={paragraph}>
-        We received a request to reset the password for your Shafan Store account 
+        We received a request to reset the password for your SHANFA STORE account 
         associated with <strong>{email}</strong>. Click the button below to create a new password:
       </Text>
 
@@ -57,7 +57,7 @@ export const PasswordResetTemplate = ({
         • Never share your password reset link with anyone
       </Text>
       <Text style={tip}>
-        • Shafan Store will never ask for your password via email
+        • SHANFA STORE will never ask for your password via email
       </Text>
 
       <Text style={smallText}>
@@ -73,8 +73,8 @@ export const PasswordResetTemplate = ({
       <Text style={footerText}>
         If you continue to have issues or didn't request this password reset, 
         please contact our support team at{' '}
-        <a href="mailto:support@shafan-store.com" style={link}>
-          support@shafan-store.com
+        <a href="mailto:support@shanfa-store.com" style={link}>
+          support@shanfa-store.com
         </a>
       </Text>
     </BaseTemplate>

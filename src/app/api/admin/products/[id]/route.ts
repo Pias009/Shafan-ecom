@@ -6,12 +6,12 @@ import { revalidatePath } from 'next/cache';
 
 const UpdateSchema = z.object({
   name: z.string().optional(),
-  sku: z.string().optional(),
-  description: z.string().optional(),
-  shortDescription: z.string().optional(),
-  benefits: z.string().optional(),
-  ingredients: z.string().optional(),
-  howToUse: z.string().optional(),
+  sku: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  shortDescription: z.string().nullable().optional(),
+  benefits: z.string().nullable().optional(),
+  ingredients: z.string().nullable().optional(),
+  howToUse: z.string().nullable().optional(),
   price: z.number().optional(),
   discountPrice: z.number().optional(),
   active: z.boolean().optional(),
@@ -20,11 +20,13 @@ const UpdateSchema = z.object({
   categoryIds: z.array(z.string()).optional(),
   skinToneIds: z.array(z.string()).optional(),
   skinConcernIds: z.array(z.string()).optional(),
-  subCategoryId: z.string().optional(),
+  subCategoryId: z.string().nullable().optional(),
   images: z.union([z.string(), z.array(z.string())]).optional(),
-  mainImage: z.string().optional(),
+  mainImage: z.string().nullable().optional(),
   variants: z.any().optional(),
   tags: z.array(z.string()).optional(),
+  weight: z.number().optional(),
+  weightUnit: z.string().optional(),
   countryPrices: z.array(z.object({
     country: z.string(),
     price: z.number(),
@@ -82,6 +84,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (data.price) data.price = Number(data.price);
     if (data.discountPrice) data.discountPrice = Number(data.discountPrice);
     if (data.stockQuantity) data.stockQuantity = Number(data.stockQuantity);
+    if (data.weight) data.weight = Number(data.weight);
     if (data.countryPrices && Array.isArray(data.countryPrices)) {
       data.countryPrices = data.countryPrices.map((cp: any) => ({
         ...cp,
@@ -112,6 +115,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (typeof parsed.data.active !== 'undefined') updates.active = parsed.data.active;
     if (typeof (parsed.data as any).trending !== 'undefined') updates.trending = (parsed.data as any).trending;
     if (typeof parsed.data.stockQuantity !== 'undefined') updates.stockQuantity = parsed.data.stockQuantity;
+    if (typeof parsed.data.weight !== 'undefined') updates.weight = parsed.data.weight;
+    if (typeof parsed.data.weightUnit !== 'undefined') updates.weightUnit = parsed.data.weightUnit;
     // Cloudinary: mainImage handling
     if (parsed.data.mainImage) {
       const url = await uploadFromUrl(parsed.data.mainImage).catch(() => parsed.data.mainImage);

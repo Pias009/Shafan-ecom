@@ -67,8 +67,8 @@ export async function GET(req: Request) {
       discountPrice: p.discountPrice,
       mainImage: p.mainImage,
       imageUrl: p.mainImage,
-      brand: p.brand?.name || "Shafan",
-      brandName: p.brand?.name || "Shafan",
+      brand: p.brand?.name || "SHANFA",
+      brandName: p.brand?.name || "SHANFA",
       category: p.subCategory?.category?.name,
       subCategory: p.subCategory?.name,
     }));

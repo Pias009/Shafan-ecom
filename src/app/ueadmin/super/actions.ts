@@ -33,7 +33,7 @@ export async function inviteAdmin(formData: FormData) {
     const emailService = new EmailService();
     await emailService.sendEmail({
       to: { email },
-      subject: "You've been invited to Shafan Store Admin",
+      subject: "You've been invited to SHANFA STORE Admin",
       template: 'admin-invite',
       data: {
         email,
@@ -57,7 +57,7 @@ export async function inviteAdmin(formData: FormData) {
     const emailService = new EmailService();
     await emailService.sendEmail({
       to: { email },
-      subject: "You've been invited to Shafan Store Admin",
+      subject: "You've been invited to SHANFA STORE Admin",
       template: 'admin-invite',
       data: {
         email,

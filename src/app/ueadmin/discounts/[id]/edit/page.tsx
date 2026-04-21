@@ -46,11 +46,18 @@ export default function EditDiscountPage() {
         if (!res.ok) throw new Error('Failed to fetch discount');
 
         const data = await res.json();
-        setDiscount({
+        
+        // Transform the data for the form
+        const transformedDiscount = {
           ...data,
-          productIds: data.productIds || [],
-          categoryIds: data.categoryIds || [],
-        });
+          productIds: data.productDiscounts?.map((pd: any) => pd.productId) || [],
+          categoryIds: data.categoryDiscounts?.map((cd: any) => cd.categoryId) || [],
+          // Format dates for datetime-local input (YYYY-MM-DDTHH:mm)
+          startDate: data.startDate ? new Date(data.startDate).toISOString().slice(0, 16) : '',
+          endDate: data.endDate ? new Date(data.endDate).toISOString().slice(0, 16) : '',
+        };
+        
+        setDiscount(transformedDiscount);
       } catch (err) {
         console.error('Error fetching discount:', err);
         setError('Failed to load discount details');
@@ -105,6 +112,12 @@ export default function EditDiscountPage() {
             endDate: discount.endDate || '',
             maxUses: discount.maxUses || undefined,
             active: discount.active,
+            maxLimitAmount: (discount as any).maxLimitAmount,
+            countryMaxLimits: (discount as any).countryMaxLimits || {},
+            usageType: (discount as any).usageType as any,
+            maxUsesPerUser: (discount as any).maxUsesPerUser,
+            maxUsesPerOrder: (discount as any).maxUsesPerOrder,
+            autoApply: (discount as any).autoApply,
           }} 
           isEditing={true} 
         />

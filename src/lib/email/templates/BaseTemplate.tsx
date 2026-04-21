@@ -21,7 +21,7 @@ interface BaseTemplateProps {
 }
 
 export const BaseTemplate = ({ 
-  previewText = 'Email from Shafan Store',
+  previewText = 'Email from SHANFA STORE',
   children,
   title 
 }: BaseTemplateProps) => {
@@ -37,10 +37,10 @@ export const BaseTemplate = ({
             <Row>
               <Column align="center">
                 <Img
-                  src="https://shafan-store.com/logo.png"
+                  src="https://shanfa-store.com/logo.png"
                   width="120"
                   height="40"
-                  alt="Shafan Store"
+                  alt="SHANFA STORE"
                   style={logo}
                 />
               </Column>
@@ -59,26 +59,26 @@ export const BaseTemplate = ({
 
           <Section style={footer}>
             <Text style={footerText}>
-              © {currentYear} Shafan Store. All rights reserved.
+              © {currentYear} SHANFA STORE. All rights reserved.
             </Text>
             <Text style={footerText}>
-              This email was sent to you as part of your Shafan Store account.
+              This email was sent to you as part of your SHANFA STORE account.
             </Text>
             <Text style={footerLinks}>
-              <Link href="https://shafan-store.com/privacy" style={link}>
+              <Link href="https://shanfa-store.com/privacy" style={link}>
                 Privacy Policy
               </Link>
               {' • '}
-              <Link href="https://shafan-store.com/terms" style={link}>
+              <Link href="https://shanfa-store.com/terms" style={link}>
                 Terms of Service
               </Link>
               {' • '}
-              <Link href="https://shafan-store.com/unsubscribe" style={link}>
+              <Link href="https://shanfa-store.com/unsubscribe" style={link}>
                 Unsubscribe
               </Link>
             </Text>
             <Text style={footerAddress}>
-              Shafan Store • 123 Business Street • City, State 12345
+              SHANFA STORE • 123 Business Street • City, State 12345
             </Text>
           </Section>
         </Container>

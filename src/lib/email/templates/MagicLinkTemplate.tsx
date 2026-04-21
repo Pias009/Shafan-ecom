@@ -18,7 +18,7 @@ export const MagicLinkTemplate = ({
 }: MagicLinkTemplateProps) => {
   return (
     <BaseTemplate
-      previewText={`Your magic link to sign in to Shafan Store`}
+      previewText={`Your magic link to sign in to SHANFA STORE`}
       title="Sign In to Your Account"
     >
       <Text style={paragraph}>
@@ -26,13 +26,13 @@ export const MagicLinkTemplate = ({
       </Text>
       
       <Text style={paragraph}>
-        You requested a magic link to sign in to your Shafan Store account. 
+        You requested a magic link to sign in to your SHANFA STORE account. 
         Click the button below to securely sign in:
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href={magicLink}>
-          Sign In to Shafan Store
+          Sign In to SHANFA STORE
         </Button>
       </Section>
 
@@ -45,7 +45,7 @@ export const MagicLinkTemplate = ({
 
       <Text style={smallText}>
         <strong>Security Tip:</strong> For your security, never share this link with anyone. 
-        Shafan Store will never ask for your password via email.
+        SHANFA STORE will never ask for your password via email.
       </Text>
 
       <Text style={smallText}>

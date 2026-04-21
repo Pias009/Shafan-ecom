@@ -1,9 +1,11 @@
 import { AdminSidebar } from './_components/AdminSidebar'
 import AdminGuard from './_components/AdminGuard'
+import { OrderAlertListener } from './_components/OrderAlertListener'
 
 export default function UeAdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <AdminGuard>
+      <OrderAlertListener />
       <div className="min-h-screen flex bg-[#FAF9F6] selection:bg-black selection:text-white">
         <div className="fixed inset-y-0 left-0 hidden lg:block">
            <AdminSidebar />

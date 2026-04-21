@@ -130,6 +130,9 @@ export async function PUT(
       active,
       autoApply,
       uses,
+      usageType,
+      maxUsesPerUser,
+      maxUsesPerOrder,
       productIds,
       categoryIds,
       countries,
@@ -221,6 +224,9 @@ export async function PUT(
     }
     if (autoApply !== undefined) updateData.autoApply = autoApply;
     if (uses !== undefined) updateData.uses = uses;
+    if (usageType !== undefined) updateData.usageType = usageType;
+    if (maxUsesPerUser !== undefined) updateData.maxUsesPerUser = maxUsesPerUser;
+    if (maxUsesPerOrder !== undefined) updateData.maxUsesPerOrder = maxUsesPerOrder;
     if (countries !== undefined) updateData.countries = countries.length > 0 ? countries : validCountries;
 
     // Handle product connections if provided

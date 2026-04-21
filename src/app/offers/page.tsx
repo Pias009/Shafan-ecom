@@ -24,6 +24,18 @@ interface ProductWithDiscount {
 
 export default async function OffersPage() {
   try {
+    // Fetch products that have a manually set discountPrice
+    const manualOfferProducts = await prisma.product.findMany({
+      where: {
+        active: true,
+        discountPrice: { gt: 0 }
+      },
+      include: {
+        brand: true,
+        countryPrices: true,
+      }
+    });
+
     // Fetch all active discounts with their linked products
     const activeDiscounts = await (prisma as any).discount.findMany({
       where: {
@@ -61,12 +73,35 @@ export default async function OffersPage() {
     // Build product map with discounts
     const productsMap = new Map<string, ProductWithDiscount>();
 
+    // Process manual offer products first
+    manualOfferProducts.forEach((product: any) => {
+      const basePrice = product.price || 0;
+      const discountedPrice = product.discountPrice;
+      const discountPercentage = Math.round(((basePrice - discountedPrice) / basePrice) * 100);
+
+      productsMap.set(product.id, {
+        id: product.id,
+        name: product.name,
+        brand: product.brand,
+        price: basePrice,
+        imageUrl: product.images?.[0] || product.mainImage || "/placeholder-product.png",
+        hot: product.hot,
+        averageRating: product.averageRating,
+        ratingCount: product.ratingCount,
+        stockQuantity: product.stockQuantity,
+        countryPrices: product.countryPrices,
+        discountPrice: discountedPrice,
+        discountPercentage: discountPercentage,
+        discountCode: "SALE",
+        freeDelivery: false,
+      });
+    });
+
     // Process product-specific discounts
     activeDiscounts.forEach((discount: any) => {
       discount.productDiscounts.forEach((pd: any) => {
         const product = pd.product;
-        if (!productsMap.has(product.id)) {
-          const basePrice = product.price || product.priceCents || 0;
+        const basePrice = product.price || product.priceCents || 0;
           let discountedPrice = basePrice;
 
           if (discount.discountType === "PERCENTAGE") {
@@ -93,16 +128,27 @@ export default async function OffersPage() {
                 : Math.round(((basePrice - discountedPrice) / basePrice) * 100),
             discountCode: discount.code,
             freeDelivery: discount.discountType === "FREE_SHIPPING",
-          });
-        }
       });
     });
+  });
 
     const products = Array.from(productsMap.values());
+    
+    // Extract coupons (discounts with codes)
+    const coupons = activeDiscounts
+      .filter((d: any) => d.code && d.code !== "SALE")
+      .map((d: any) => ({
+        id: d.id,
+        code: d.code,
+        description: d.description || `${d.value}${d.discountType === "PERCENTAGE" ? "%" : " USD"} OFF`,
+        discountType: d.discountType,
+        value: d.value,
+        endDate: d.endDate,
+      }));
 
-    return <OffersClient products={products} />;
+    return <OffersClient products={products} coupons={coupons} />;
   } catch (error) {
     console.error("Error loading offers:", error);
-    return <OffersClient products={[]} />;
+    return <OffersClient products={[]} coupons={[]} />;
   }
 }

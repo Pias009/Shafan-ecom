@@ -16,6 +16,36 @@ import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice } from "@/lib/product-utils";
 import { useSearchStore } from "@/lib/search-store";
 
+const DUMMY_PRODUCT_NAMES = [
+  "Icy Gel Cleanser",
+  "Glass Skin Serum",
+  "Mint Cloud Mist",
+  "Silk Glass Shampoo",
+  "Mirror Gloss Conditioner",
+  "Violet Night Eau",
+  "Vitamin C Brightening Serum",
+  "Velvet Matte Lipstick",
+  "Glow Foundation SPF 15",
+  "Crystal Musk",
+  "Amber Glow",
+  "Silver Cedar Intense"
+];
+
+const DUMMY_BRANDS = [
+  "HEALTH",
+  "MAKEUP",
+  "VIOLET LAB",
+  "SKYPEARL"
+];
+
+const isDummyProduct = (p: any) => {
+  const name = (p.name || "").trim().toLowerCase();
+  const brand = (typeof (p.brandName || p.brand) === 'string' ? (p.brandName || p.brand) : p.brand?.name || "").trim().toLowerCase();
+  
+  return DUMMY_PRODUCT_NAMES.some(dn => name.includes(dn.toLowerCase())) || 
+         DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
+};
+
 export default function ProductsClient({ 
   initialProducts, 
   category, 
@@ -176,6 +206,7 @@ export default function ProductsClient({
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
+      if (isDummyProduct(p)) return false;
       if (!hasValidPrice(p, selectedCountry)) return false;
       
       const price = p.discountPrice ?? p.price ?? 0;
@@ -195,7 +226,7 @@ export default function ProductsClient({
       
       return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone && matchesSkinConcern;
     });
-  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, selectedCountry]);
+  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, selectedCountry, isDummyProduct]);
 
 
   function addToCart(product: any) {

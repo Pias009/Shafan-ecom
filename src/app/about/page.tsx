@@ -3,8 +3,8 @@ import { ArrowRight, Shield, Heart, Sparkles, Globe, Award, CheckCircle, Users }
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About Us | Shafan",
-  description: "Shafan Global - Your trusted skincare partner bringing authentic beauty products from around the world.",
+  title: "About Us | SHANFA",
+  description: "SHANFA GLOBAL - Your trusted skincare partner bringing authentic beauty products from around the world.",
 };
 
 const skinConcerns = [

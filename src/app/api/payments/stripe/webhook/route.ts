@@ -73,7 +73,7 @@ export async function POST(req: Request) {
               recipientCountry: countryCode,
               productCode: "PDS",
               weight: 0.5,
-              description: `Shafan Order ${orderId}`,
+              description: `SHANFA Order ${orderId}`,
               pieces: updatedOrder.items?.length || 1,
             });
           } catch (aramexError) {

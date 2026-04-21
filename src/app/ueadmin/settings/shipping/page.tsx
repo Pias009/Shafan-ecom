@@ -22,7 +22,7 @@ interface ShippoSettings {
 }
 
 const DEFAULT_SETTINGS: ShippoSettings = {
-  shipperName: "Shafan Store",
+  shipperName: "SHANFA STORE",
   shipperAddress: "",
   shipperCity: "Dubai",
   shipperState: "Dubai",
@@ -232,7 +232,7 @@ export default function ShippoSettingsPage() {
               value={settings.shipperName}
               onChange={(e) => setSettings({ ...settings, shipperName: e.target.value })}
               className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm font-bold mt-1"
-              placeholder="Shafan Store"
+              placeholder="SHANFA STORE"
             />
           </div>
           
@@ -303,7 +303,7 @@ export default function ShippoSettingsPage() {
               value={settings.shipperEmail}
               onChange={(e) => setSettings({ ...settings, shipperEmail: e.target.value })}
               className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm font-bold mt-1"
-              placeholder="warehouse@shafan.com"
+              placeholder="warehouse@shanfa.com"
             />
           </div>
         </div>

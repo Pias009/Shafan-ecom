@@ -343,7 +343,7 @@ export const sendMagicLinkEmail = async (
 ) => {
   return emailService.sendEmail({
     to: { email, name },
-    subject: 'Your Magic Link to Sign In - Shafan Store',
+    subject: 'Your Magic Link to Sign In - SHANFA STORE',
     template: 'magic-link',
     data: { email, name, magicLink, expiresIn },
   });
@@ -356,7 +356,7 @@ export const sendWelcomeEmail = async (
 ) => {
   return emailService.sendEmail({
     to: { email, name },
-    subject: 'Welcome to Shafan Store! 🎉',
+    subject: 'Welcome to SHANFA STORE! 🎉',
     template: 'welcome',
     data: { email, name, loginUrl },
   });
@@ -420,7 +420,7 @@ export const sendPasswordResetEmail = async (
 ) => {
   return emailService.sendEmail({
     to: { email, name },
-    subject: 'Reset Your Shafan Store Password',
+    subject: 'Reset Your SHANFA STORE Password',
     template: 'password-reset',
     data: { email, name, resetLink, expiresIn },
   });
@@ -433,11 +433,11 @@ export const sendUserSignupAlertEmail = async (
   source: string = 'website'
 ) => {
   return emailService.sendEmail({
-    to: { email: process.env.ADMIN_EMAIL || 'admin@shafan-store.com', name: 'Admin' },
+    to: { email: process.env.ADMIN_EMAIL || 'admin@shanfa-store.com', name: 'Admin' },
     subject: `New User Signup: ${userEmail}`,
     template: 'admin-login-alert',
     data: {
-      adminEmail: process.env.ADMIN_EMAIL || 'admin@shafan-store.com',
+      adminEmail: process.env.ADMIN_EMAIL || 'admin@shanfa-store.com',
       adminName: 'Admin',
       loginTime: signupTime,
       ipAddress: 'N/A',
@@ -507,7 +507,7 @@ export const sendOrderStatusEmail = async (
       total,
       currency,
       shippingAddress,
-      trackingUrl: `https://shafan-store.com/account/orders/${orderId}`,
+      trackingUrl: `https://shanfa-store.com/account/orders/${orderId}`,
     },
   });
 };

@@ -102,7 +102,7 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
   // Finally use base product price
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    select: { price: true, discountPrice: true }
+    select: { price: true, discountPrice: true, weight: true, weightUnit: true }
   });
   
   if (product) {
@@ -251,7 +251,21 @@ export async function POST(req: Request) {
     
     console.log(JSON.stringify(body, null, 2));
     
-    const { items, billing, shipping, payment_method, payment_method_title, couponCode, storeCode, country, total: clientTotal, subtotal: clientSubtotal, shippingFee: clientShippingFee, discountAmount: clientDiscount } = body;
+    const { 
+      items, 
+      billing, 
+      shipping, 
+      payment_method, 
+      payment_method_title, 
+      payment_status,
+      couponCode, 
+      storeCode, 
+      country, 
+      total: clientTotal, 
+      subtotal: clientSubtotal, 
+      shippingFee: clientShippingFee, 
+      discountAmount: clientDiscount 
+    } = body;
 
     // Allow guest orders
 
@@ -314,6 +328,7 @@ export async function POST(req: Request) {
 
     // Calculate totals with improved price lookup
     let subtotal = 0;
+    let totalWeight = 0;
     const orderItemsData = [];
     let orderStoreId: string | null = null;
     let orderStoreCode: string | null | undefined = null;
@@ -405,12 +420,25 @@ export async function POST(req: Request) {
       const itemTotal = unitPrice * itemQuantity;
       subtotal += itemTotal;
 
+      // Calculate weight contributions
+      if (product.weight) {
+        const itemWeight = Number(product.weight) * itemQuantity;
+        // Convert all weights to KG for totalWeight calculation
+        if (product.weightUnit === 'g') {
+          totalWeight += itemWeight / 1000;
+        } else {
+          totalWeight += itemWeight;
+        }
+      }
+
       orderItemsData.push({
         productId: product.id || "unknown",
         quantity: itemQuantity,
         unitPrice: unitPrice,
         nameSnapshot: product?.name || "Unknown Product",
         imageSnapshot: product?.mainImage || null,
+        weightSnapshot: product.weight || 0,
+        weightUnitSnapshot: product.weightUnit || 'kg',
       });
 
       // Track the store for this product (for order assignment)
@@ -434,11 +462,13 @@ export async function POST(req: Request) {
     }
 
     // Calculate delivery fee based on country
-    const { fee: shippingFee, freeDelivery } = calculateDeliveryFee(countryCode, subtotal);
+    let { fee: shippingFee, freeDelivery } = calculateDeliveryFee(countryCode, subtotal);
     
-    // Check if minimum order requirement is met
+    // Check if minimum order requirement is met (Skip for Admins to allow manual order flexibility)
+    const isUserAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
     const deliveryConfig = (DELIVERY_CONFIG as any)[countryCode.toUpperCase()];
-    if (deliveryConfig && subtotal < deliveryConfig.minOrder) {
+    
+    if (!isUserAdmin && deliveryConfig && subtotal < deliveryConfig.minOrder) {
       const currencySymbol = getCurrencyForCountry(countryCode);
       const minOrder = deliveryConfig.minOrder;
       return NextResponse.json({
@@ -472,19 +502,30 @@ export async function POST(req: Request) {
     }
 
     // Final total = (Subtotal + Shipping) - Discount
-    let total = subtotal + shippingFee - discount;
+    // For admin orders, use client-provided values if they are valid numbers
+    const effectiveSubtotal = (isUserAdmin && typeof clientSubtotal === 'number') ? clientSubtotal : subtotal;
+    const effectiveShipping = (isUserAdmin && typeof clientShippingFee === 'number') ? clientShippingFee : shippingFee;
+    const effectiveDiscount = (isUserAdmin && typeof clientDiscount === 'number') ? clientDiscount : discount;
+
+    // Tax calculation (excluding — applied on top of subtotal+shipping-discount)
+    const countryTaxRate = (COUNTRY_CONFIG[countryCode]?.taxRate) || 0;
+    const preTaxTotal = effectiveSubtotal + effectiveShipping - effectiveDiscount;
+    const taxAmount = Math.round(preTaxTotal * countryTaxRate * 100) / 100;
+
+    const effectiveTotal = (isUserAdmin && typeof clientTotal === 'number') 
+      ? clientTotal 
+      : preTaxTotal + taxAmount;
     
     // Round total based on currency (KWD, BHD, OMR = 3 decimals, others = 2 decimals)
     const highDecimalsCurrencies = ['KWD', 'BHD', 'OMR'];
     const decimals = highDecimalsCurrencies.includes(currency.toUpperCase()) ? 3 : 2;
-    total = Math.round(total * Math.pow(10, decimals)) / Math.pow(10, decimals);
-    subtotal = Math.round(subtotal * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    const finalTotal = Math.round(effectiveTotal * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    const finalSubtotal = Math.round(effectiveSubtotal * Math.pow(10, decimals)) / Math.pow(10, decimals);
     
-    console.log(`Order totals after rounding | Subtotal: ${subtotal} | Shipping: ${shippingFee} | Discount: ${discount} | Total: ${total}`);
+    console.log(`Order totals after rounding | Subtotal: ${finalSubtotal} | Shipping: ${effectiveShipping} | Discount: ${effectiveDiscount} | Total: ${finalTotal}`);
 
     // Server-side price validation (prevent tampering)
-    // Skip this check if fields are missing (backward compatibility)
-    console.log(`Price validation: clientTotal=${clientTotal}, serverTotal=${subtotal + shippingFee - discount}`);
+    console.log(`Price validation: clientTotal=${clientTotal}, serverTotal=${finalSubtotal + effectiveShipping - effectiveDiscount}`);
 
     // Determine courier based on shipping address
     const courier = determineCourier(shipping);
@@ -501,36 +542,40 @@ export async function POST(req: Request) {
         userId: session?.user?.id || null,
         email: session?.user?.email || billing?.email || null,
         status: orderStatus,
-        paymentStatus: PaymentStatus.PENDING,
+        paymentStatus: (payment_status?.toUpperCase() as PaymentStatus) || PaymentStatus.PENDING,
         currency: currency.toLowerCase(),
-        subtotal,
-        shipping: shippingFee,
-        discount,
-        total,
+        subtotal: finalSubtotal,
+        shipping: effectiveShipping,
+        discount: effectiveDiscount,
+        taxRate: countryTaxRate,
+        taxAmount: taxAmount,
+        total: finalTotal,
         billingAddress: billing || {},
         shippingAddress: shipping || {},
         paymentMethod: payment_method || "stripe",
         paymentMethodTitle: payment_method_title || "Credit Card (Stripe)",
+        totalWeight,
         // Store coupon info if applied
-        ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: discount } : {}),
+        ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: effectiveDiscount } : {}),
         // Assign store to order if determined from products
         ...(orderStoreId ? { storeId: orderStoreId } : {}),
         items: {
           create: orderItemsData
         },
-        // Create shipment record with selected courier
-        shipment: {
-          create: {
-            courier,
-            trackingCode,
-            trackingUrl: `https://global-courier.com/track/${trackingCode}`,
-            status: "Created"
-          }
-        }
       },
       include: {
         items: true,
-        shipment: true
+      }
+    });
+
+    // Create shipment record separately
+    const shipment = await (prisma as any).shipment.create({
+      data: {
+        orderId: order.id,
+        courier,
+        trackingCode,
+        trackingUrl: `https://global-courier.com/track/${trackingCode}`,
+        status: "Created"
       }
     });
 
@@ -553,14 +598,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       orderId: order.id,
-      subtotal: subtotal,
-      shipping: shippingFee,
+      subtotal: finalSubtotal,
+      shipping: effectiveShipping,
       total: order.total,
       currency: order.currency,
       status: order.status,
       freeDelivery,
-      courier: order.shipment?.courier,
-      trackingCode: order.shipment?.trackingCode
+      courier: shipment?.courier,
+      trackingCode: shipment?.trackingCode
     });
   } catch (error: any) {
     console.error("=== CREATE ORDER ERROR ===");

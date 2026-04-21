@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box, Scale } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -113,6 +113,8 @@ export function AddProductForm({
     countryPrices: initialCountryPrices,
     subCategoryIds: [] as string[],
     tags: [] as string[],
+    weight: 0,
+    weightUnit: 'kg',
   });
 
   const [showAddBrand, setShowAddBrand] = useState(false);
@@ -310,6 +312,8 @@ export function AddProductForm({
         images: formData.images,
         features: formData.features,
         tags: formData.tags,
+        weight: formData.weight,
+        weightUnit: formData.weightUnit,
       };
 
       console.log("Submitting payload:", JSON.stringify(payload, null, 2));
@@ -779,6 +783,60 @@ export function AddProductForm({
               <p className="text-xs text-blue-700">
                 <strong>SKU Tip:</strong> Use a consistent format like <code>BRAND-COLOR-SIZE</code> for easy inventory tracking.
               </p>
+            </div>
+          </section>
+
+          {/* Weight Information */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/50 flex items-center gap-2">
+              <Scale size={14} /> Shipping & Weight
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Weight</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="weight"
+                    step="0.01"
+                    value={formData.weight}
+                    onChange={handleChange}
+                    min="0"
+                    placeholder="0.00"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                  />
+                  <Scale className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Unit</label>
+                <div className="flex gap-4 p-4 bg-black/5 rounded-2xl h-[52px] items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weightUnit"
+                      value="g"
+                      checked={formData.weightUnit === 'g'}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-black border-black/20 focus:ring-black"
+                    />
+                    <span className="text-sm font-bold">Gram (g)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weightUnit"
+                      value="kg"
+                      checked={formData.weightUnit === 'kg'}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-black border-black/20 focus:ring-black"
+                    />
+                    <span className="text-sm font-bold">Kilogram (kg)</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </section>
 

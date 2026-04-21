@@ -3,8 +3,8 @@ import { ArrowRight, Clock, Shield, Truck, CheckCircle, XCircle, CreditCard, Mai
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Return & Refund Policy | Shafan",
-  description: "Shafan Return & Refund Policy - Learn about return eligibility, refund process, and cancellation terms.",
+  title: "Return & Refund Policy | SHANFA",
+  description: "SHANFA Return & Refund Policy - Learn about return eligibility, refund process, and cancellation terms.",
 };
 
 export default function ReturnsPolicyPage() {

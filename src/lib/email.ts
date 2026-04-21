@@ -78,7 +78,7 @@ export async function sendEmail({
     }
     
     await mailer.sendMail({
-      from: process.env.SMTP_FROM || `"Shafan Store" <${process.env.SMTP_USER}>`,
+      from: process.env.SMTP_FROM || `"SHANFA STORE" <${process.env.SMTP_USER}>`,
       to,
       subject,
       text,
@@ -122,7 +122,7 @@ export async function sendPasswordResetEmail(
     
     return sendEmail({
       to: email,
-      subject: 'Password Reset Request - Shafan Store',
+      subject: 'Password Reset Request - SHANFA STORE',
       html,
     });
   }
@@ -175,7 +175,7 @@ export async function sendOrderConfirmationEmail(
   
   return sendEmail({
     to,
-    subject: `Order Confirmation #${orderId} - Shafan Store`,
+    subject: `Order Confirmation #${orderId} - SHANFA STORE`,
     html,
   });
 }

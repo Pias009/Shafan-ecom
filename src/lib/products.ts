@@ -22,11 +22,39 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
     const dbProducts = await prismaWithRetry(async () => {
       return await prisma.product.findMany({
         where: { active: true },
-        include: {
-          brand: true,
-          productCategories: { include: { category: { select: { id: true, name: true } } } },
-          productSkinTones: { include: { skinTone: true } },
-          subCategory: true,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          shortDescription: true,
+          benefits: true,
+          ingredients: true,
+          howToUse: true,
+          features: true,
+          mainImage: true,
+          images: true,
+          stockQuantity: true,
+          averageRating: true,
+          ratingCount: true,
+          totalSales: true,
+          price: true,
+          discountPrice: true,
+          currency: true,
+          active: true,
+          hot: true,
+          trending: true,
+          brand: { select: { name: true } },
+          productCategories: { 
+            include: { 
+              category: { select: { id: true, name: true } } 
+            } 
+          },
+          productSkinTones: { 
+            include: { 
+              skinTone: { select: { name: true, hexColor: true } } 
+            } 
+          },
+          subCategory: { select: { name: true } },
           countryPrices: {
             where: { active: true },
             select: { country: true, price: true, currency: true, active: true }
@@ -36,7 +64,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         take: limit,
         skip: skip,
       });
-    });
+    }, 2, 500); // 2 retries, 500ms delay
 
     const products = dbProducts.map((p: any) => {
       const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;

@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { Truck, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Delivery Information | Shafan',
+  title: 'Delivery Information | SHANFA',
   description: 'Fast and reliable delivery across GCC countries. Free delivery on orders above minimum value.',
 };
 

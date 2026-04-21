@@ -38,6 +38,8 @@ interface InvoiceData {
   shipping: string;
   discount: string;
   total: string;
+  taxRate?: string;
+  taxAmount?: string;
   currency: string;
   paymentMethod: string;
   paymentStatus?: string;
@@ -252,6 +254,16 @@ export const InvoiceTemplate = React.forwardRef<HTMLDivElement, InvoiceTemplateP
                   <span className="text-gray-700">Discount:</span>
                   <span className="text-green-600 font-semibold">
                     -{data.currency} {data.discount}
+                  </span>
+                </div>
+              )}
+
+              {/* Tax */}
+              {data.taxAmount && parseFloat(data.taxAmount) > 0 && (
+                <div className="flex justify-between mb-3">
+                  <span className="text-gray-700">VAT {data.taxRate ? `(${data.taxRate}%)` : ''}:</span>
+                  <span className="text-gray-900 font-semibold">
+                    {data.currency} {data.taxAmount}
                   </span>
                 </div>
               )}

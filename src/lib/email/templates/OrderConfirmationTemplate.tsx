@@ -135,14 +135,14 @@ export const OrderConfirmationTemplate = ({
       <Text style={smallText}>
         <strong>Questions about your order?</strong>{' '}
         Reply to this email or contact us at{' '}
-        <a href="mailto:orders@shafan-store.com" style={link}>
-          orders@shafan-store.com
+        <a href="mailto:orders@shanfa-store.com" style={link}>
+          orders@shanfa-store.com
         </a>
       </Text>
 
       <Text style={footerNote}>
         We'll send you shipping updates as your order progresses. 
-        Thank you for shopping with Shafan Store!
+        Thank you for shopping with SHANFA STORE!
       </Text>
     </BaseTemplate>
   );

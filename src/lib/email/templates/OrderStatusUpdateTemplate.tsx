@@ -169,7 +169,7 @@ export const OrderStatusUpdateTemplate = ({
       </Text>
 
       <Text style={footerNote}>
-        Thank you for shopping with Shafan Store!
+        Thank you for shopping with SHANFA STORE!
       </Text>
     </BaseTemplate>
   );

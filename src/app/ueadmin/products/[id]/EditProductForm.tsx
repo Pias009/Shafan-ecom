@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store, Plus } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store, Plus, Scale } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -35,6 +35,8 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     skinToneIds: initialProduct.skinTones?.map((s: any) => s.id) || [],
     skinConcernIds: initialProduct.skinConcerns?.map((sc: any) => sc.id) || [],
     brandName: initialProduct.brand?.name || '',
+    weight: initialProduct.weight || 0,
+    weightUnit: initialProduct.weightUnit || 'kg',
   };
   
   const [product, setProduct] = useState(normalizedProduct);
@@ -320,6 +322,8 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
         subCategoryId: product.subCategoryIds?.[0] || null,
         tags: product.tags || [],
         countryPrices: safeCountryPrices,
+        weight: product.weight,
+        weightUnit: product.weightUnit,
       };
       console.log("Edit form payload:", JSON.stringify(payload, null, 2));
       
@@ -692,6 +696,60 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
             </div>
           </section>
 
+          {/* Weight Information */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
+              <Scale size={14} /> Shipping & Weight
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Weight</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="weight"
+                    step="0.01"
+                    value={product.weight}
+                    onChange={handleChange}
+                    min="0"
+                    placeholder="0.00"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                  />
+                  <Scale className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/20" size={16} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Unit</label>
+                <div className="flex gap-4 p-4 bg-black/5 rounded-2xl h-[52px] items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weightUnit"
+                      value="g"
+                      checked={product.weightUnit === 'g'}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-black border-black/10 text-black focus:ring-black"
+                    />
+                    <span className="text-sm font-bold">Gram (g)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weightUnit"
+                      value="kg"
+                      checked={product.weightUnit === 'kg'}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-black border-black/10 text-black focus:ring-black"
+                    />
+                    <span className="text-sm font-bold">Kilogram (kg)</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* SEO Tags */}
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-black/20 flex items-center gap-2">
@@ -776,6 +834,18 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                     onChange={handleChange}
                     className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"
                   />
+                <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                   <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Sale Price (USD)</span>
+                   <input 
+                     name="discountPrice"
+                     type="text"
+                     value={product._discountDisplay || (product.discountPrice ? formatPriceForAdmin(product.discountPrice, "USD") : "")}
+                     onChange={(e) => handleDiscountChange(e.target.value)}
+                     onBlur={handleDiscountBlur}
+                     placeholder="0.00"
+                     className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black text-red-500"
+                   />
+                </div>
                </div>
             </div>
           </section>
