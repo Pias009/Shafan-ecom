@@ -278,9 +278,14 @@ export default function AddressForm() {
       toast.success("Address saved successfully!");
       setHasAddress(true);
       
-      const red = searchParams?.get("redirect");
-      if (red === "order") {
-        router.push("/");
+      const redirectPath = searchParams?.get("redirect");
+      if (redirectPath) {
+        // Support both old 'order' keyword and generic paths
+        if (redirectPath === "order") {
+          router.push("/");
+        } else {
+          router.push(redirectPath);
+        }
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");

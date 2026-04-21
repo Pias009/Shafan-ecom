@@ -254,7 +254,7 @@ export default function ProductsClient({
   async function orderNow(product: any) {
     if (!hasAddress) {
       toast.error(t.cart.addressRequired, { duration: 3000 });
-      router.push("/account/address");
+      router.push("/account/address?redirect=/products");
       return;
     }
 
@@ -294,7 +294,7 @@ export default function ProductsClient({
 
       if (!billing) {
         toast.error("Please provide your shipping address", { id: tid });
-        router.push("/account/address");
+        router.push("/account/address?redirect=/products");
         return;
       }
 

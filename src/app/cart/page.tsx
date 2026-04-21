@@ -58,7 +58,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         duration: 4000,
         icon: "📍",
       });
-      router.push("/account/address");
+      router.push("/account/address?redirect=/cart");
       return;
     }
 
@@ -92,7 +92,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
 
       if (!billing) {
         toast.error("Please provide your shipping address", { id: "checkout" });
-        router.push("/account/address");
+        router.push("/account/address?redirect=/cart");
         return;
       }
 
