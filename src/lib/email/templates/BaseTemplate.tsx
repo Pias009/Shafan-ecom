@@ -26,6 +26,7 @@ export const BaseTemplate = ({
   title 
 }: BaseTemplateProps) => {
   const currentYear = new Date().getFullYear();
+  const DOMAIN = 'https://shanafaglobal.com';
   
   return (
     <Html>
@@ -37,10 +38,10 @@ export const BaseTemplate = ({
             <Row>
               <Column align="center">
                 <Img
-                  src="https://shanfa-store.com/logo.png"
+                  src={`${DOMAIN}/logo.png`}
                   width="120"
                   height="40"
-                  alt="SHANFA STORE"
+                  alt="SHANFA GLOBAL"
                   style={logo}
                 />
               </Column>
@@ -59,21 +60,21 @@ export const BaseTemplate = ({
 
           <Section style={footer}>
             <Text style={footerText}>
-              © {currentYear} SHANFA STORE. All rights reserved.
+              © {currentYear} SHANFA GLOBAL. All rights reserved.
             </Text>
             <Text style={footerText}>
-              This email was sent to you as part of your SHANFA STORE account.
+              This email was sent to you as part of your SHANFA GLOBAL account.
             </Text>
             <Text style={footerLinks}>
-              <Link href="https://shanfa-store.com/privacy" style={link}>
+              <Link href={`${DOMAIN}/privacy`} style={link}>
                 Privacy Policy
               </Link>
               {' • '}
-              <Link href="https://shanfa-store.com/terms" style={link}>
+              <Link href={`${DOMAIN}/terms`} style={link}>
                 Terms of Service
               </Link>
               {' • '}
-              <Link href="https://shanfa-store.com/unsubscribe" style={link}>
+              <Link href={`${DOMAIN}/unsubscribe`} style={link}>
                 Unsubscribe
               </Link>
             </Text>

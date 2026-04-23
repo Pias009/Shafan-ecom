@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
@@ -7,6 +8,12 @@ import { MobileBottomNav } from "./MobileBottomNav";
 
 export function MainStoreLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const isAdmin = pathname?.startsWith("/ueadmin");
 
   if (isAdmin) {

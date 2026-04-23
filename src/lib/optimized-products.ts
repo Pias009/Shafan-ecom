@@ -270,8 +270,8 @@ export async function getOptimizedProducts(
   }
 }
 
-export async function getOptimizedProduct(id: string, storeCode?: string) {
-  const cacheKey = `product:${id}:${storeCode || 'all'}`;
+export async function getOptimizedProduct(idOrSlug: string, storeCode?: string) {
+  const cacheKey = `product:${idOrSlug}:${storeCode || 'all'}`;
   
   // Try cache first
   const cached = await productCache.get(cacheKey);
@@ -286,7 +286,12 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
       // Get product with store inventory first
       const inventory = await (prisma as any).storeInventory.findFirst({
         where: {
-          productId: id,
+          product: {
+            OR: [
+              { id: idOrSlug },
+              { slug: idOrSlug }
+            ]
+          },
           store: { code: storeCode },
         },
         include: {
@@ -312,15 +317,25 @@ export async function getOptimizedProduct(id: string, storeCode?: string) {
         };
       } else {
         // Fallback: Try to get product directly if no store inventory
-        product = await prisma.product.findUnique({
-          where: { id },
+        product = await prisma.product.findFirst({
+          where: {
+            OR: [
+              { id: idOrSlug },
+              { slug: idOrSlug }
+            ]
+          },
           select: PRODUCT_DETAIL_SELECT,
         });
       }
     } else {
       // Get product directly
-      product = await prisma.product.findUnique({
-        where: { id },
+      product = await prisma.product.findFirst({
+        where: {
+          OR: [
+            { id: idOrSlug },
+            { slug: idOrSlug }
+          ]
+        },
         select: PRODUCT_DETAIL_SELECT,
       });
     }

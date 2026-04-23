@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface Brand {
   id: string;
@@ -49,6 +50,10 @@ export function BrandMarquee() {
     return null;
   }
 
+  // Filter brands with images
+  const brandsWithImages = sortedBrands.filter(b => b.image);
+  const brandsWithoutImages = sortedBrands.filter(b => !b.image);
+
   // If few brands, show centered layout
   const isFewBrands = sortedBrands.length <= 4;
 
@@ -73,9 +78,22 @@ export function BrandMarquee() {
               <Link
                 key={brand.id}
                 href={`/products?brand=${encodeURIComponent(brand.name)}`}
-                className="text-xl md:text-2xl font-bold text-gray-800 hover:text-black transition-colors"
+                className="flex items-center justify-center"
               >
-                {brand.name}
+                {brand.image ? (
+                  <div className="relative w-24 h-12 md:w-28 md:h-14">
+                    <Image
+                      src={brand.image}
+                      alt={brand.name}
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                ) : (
+                  <span className="text-xl md:text-2xl font-bold text-gray-800 hover:text-black transition-colors">
+                    {brand.name}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -84,8 +102,9 @@ export function BrandMarquee() {
     );
   }
 
-  // Duplicate brands for seamless infinite scroll
-  const duplicatedBrands = [...sortedBrands, ...sortedBrands, ...sortedBrands, ...sortedBrands];
+  // Brands with images for the marquee
+  const marqueeBrands = brandsWithImages.length > 0 ? brandsWithImages : sortedBrands;
+  const duplicatedBrands = [...marqueeBrands, ...marqueeBrands, ...marqueeBrands, ...marqueeBrands];
 
   return (
     <section id="brands" className="w-full bg-gradient-to-b from-gray-50 to-white py-12 md:py-16 overflow-hidden">
@@ -113,7 +132,7 @@ export function BrandMarquee() {
               repeat: Infinity,
               ease: "linear",
             }}
-            className="flex gap-12 md:gap-16"
+            className="flex gap-8 md:gap-12 items-center"
           >
             {duplicatedBrands.map((brand, index) => (
               <motion.div
@@ -125,9 +144,20 @@ export function BrandMarquee() {
                   href={`/products?brand=${encodeURIComponent(brand.name)}`}
                   className="block"
                 >
-                  <span className="text-lg md:text-xl font-bold text-gray-800 whitespace-nowrap hover:text-black transition-colors">
-                    {brand.name}
-                  </span>
+                  {brand.image ? (
+                    <div className="relative w-24 h-12 md:w-28 md:h-14">
+                      <Image
+                        src={brand.image}
+                        alt={brand.name}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-lg md:text-xl font-bold text-gray-800 whitespace-nowrap hover:text-black transition-colors">
+                      {brand.name}
+                    </span>
+                  )}
                 </Link>
               </motion.div>
             ))}

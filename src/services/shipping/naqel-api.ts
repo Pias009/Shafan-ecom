@@ -15,9 +15,9 @@
 const NAQEL_API_URL =
   process.env.NAQEL_API_URL || "https://dev.gnteq.app";
 const NAQEL_CUSTOMER_CODE =
-  process.env.NAQEL_CUSTOMER_CODE || "NL123456";
+  process.env.NAQEL_CUSTOMER_CODE || "CC189297";
 const NAQEL_BRANCH_CODE =
-  process.env.NAQEL_BRANCH_CODE || "NL567899";
+  process.env.NAQEL_BRANCH_CODE || "BR167004";
 /** supplierCode is always "NQL" for Naqel (not the customer code) */
 const NAQEL_SUPPLIER_CODE = "NQL";
 
@@ -31,15 +31,19 @@ let _tokenExpiry = 0;
 async function getAuthToken(): Promise<string> {
   if (_authToken && Date.now() < _tokenExpiry) return _authToken;
 
+  const username = process.env.NAQEL_USERNAME || "NQLShanfa_API";
+  const password = process.env.NAQEL_PASSWORD || "Solid@%aA8";
+
+  console.log(`[Naqel] Requesting token for user: ${username}`);
+
   const res = await fetch(
     `${NAQEL_API_URL}/api/identity/Authentication/GetToken`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // ⚠️  The API field is "userName" (capital N), not "username"
       body: JSON.stringify({
-        userName: process.env.NAQEL_USERNAME || "NaqelCustomer",
-        password: process.env.NAQEL_PASSWORD || "n%A5E1Cust6mer",
+        userName: username,
+        password: password,
       }),
     }
   );
@@ -62,9 +66,10 @@ async function getAuthToken(): Promise<string> {
   }
 
   const expiresIn: number =
-    typeof tokenObj.expires_in === "number" ? tokenObj.expires_in : 3300;
+    typeof tokenObj.expires_in === "number" ? tokenObj.expires_in : 3600;
   _authToken = token;
-  _tokenExpiry = Date.now() + expiresIn * 1000 - 5 * 60 * 1000; // 5-min buffer
+  // Use a shorter expiry buffer for safety
+  _tokenExpiry = Date.now() + expiresIn * 1000 - 10 * 60 * 1000;
 
   return _authToken;
 }
@@ -158,8 +163,13 @@ export interface NaqelShipmentRequest {
   customsDeclaredValueCurrency?: string;
   /** ⚠️  Note the API typo: "codCurrnecy" (not "codCurrency") */
   codCurrnecy?: string;
-  /** "DLV" for delivery, "RTN" for return */
-  productType?: "DLV" | "RTN";
+  /** 
+   * "DOMN" (Domestic), 
+   * "DLVI" (Intl Non-Doc), 
+   * "INTR" (Intl Road), 
+   * "RTD" (Return)
+   */
+  productType?: "DOMN" | "DLVI" | "INTR" | "RTD" | string;
   /** e.g. "DDP" */
   dutyHandling?: string;
   labelFormat?: "PDF" | "ZPL";
@@ -188,6 +198,32 @@ export interface NaqelShipmentRequest {
 // Create Shipment
 // ---------------------------------------------------------------------------
 
+// ─── Product Type Helper ────────────────────────────────────────────────────
+const ISO2_TO_ISO3: Record<string, string> = {
+  "AE": "ARE",
+  "SA": "SAU",
+  "OM": "OMN",
+  "BH": "BHR",
+  "QA": "QAT",
+  "KW": "KWT",
+};
+
+function determineProductType(origin: string, destination: string): string {
+  let o = origin.toUpperCase();
+  let d = destination.toUpperCase();
+
+  // Convert 2-letter to 3-letter if needed
+  if (o.length === 2) o = ISO2_TO_ISO3[o] || o;
+  if (d.length === 2) d = ISO2_TO_ISO3[d] || d;
+
+  if (o === d) return "DOMN";
+  if (d === "OMN") return "INTR";
+  if (d === "SAU") return "DLVI"; // Defaulting to DLVI (International)
+  if (["BHR", "QAT", "KWT"].includes(d)) return "DLVI";
+
+  return "DLVI"; // Default for other international
+}
+
 export async function createNaqelShipment(
   request: NaqelShipmentRequest
 ): Promise<any> {
@@ -195,6 +231,9 @@ export async function createNaqelShipment(
 
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  const originCountry = request.shipper.shipperAddress.countryCode || "ARE";
+  const destCountry = request.consignee.consigneeAddress.countryCode || "SAU";
 
   // Build payload as a SINGLE OBJECT (not wrapped in model:[])
   const payload = {
@@ -214,11 +253,11 @@ export async function createNaqelShipment(
       request.customsDeclaredValueCurrency ?? "USD",
     // ⚠️  API typo: "codCurrnecy"
     codCurrnecy: request.codCurrnecy ?? request.customsDeclaredValueCurrency ?? "USD",
-    productType: request.productType ?? "DLV",
+    productType: request.productType ?? determineProductType(originCountry, destCountry),
     dutyHandling: request.dutyHandling ?? "DDP",
     labelFormat: request.labelFormat ?? "PDF",
-    // ⚠️  Postman uses "4X6" (uppercase X)
-    labelSize: request.labelSize ?? "4X6",
+    // ⚠️  Postman uses "labelSize" (capital S) and value "6x4"
+    labelSize: request.labelSize ?? "6x4",
     consignee: request.consignee,
     shipper: request.shipper,
     items: request.items,
@@ -337,7 +376,7 @@ export async function getNaqelLabel(
       body: JSON.stringify({
         airwaybills,
         labelFormat: "PDF",
-        // ⚠️  Postman uses "labelsize" (all lowercase) and value "4X6"
+        // ⚠️  Postman uses "labelsize" (all lowercase) and value "4X6" (uppercase X)
         labelsize: "4X6",
         customerCode: NAQEL_CUSTOMER_CODE,
         branchCode: NAQEL_BRANCH_CODE,

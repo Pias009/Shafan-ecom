@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
+import { FaceLogin } from "@/components/face/FaceLogin";
+import { User } from "lucide-react";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [loginMethod, setLoginMethod] = useState<'password' | 'face'>('password');
 
   async function handleLogin(formEmail: string, formPassword: string) {
     setLoading(true);
@@ -38,6 +41,10 @@ export default function AdminLogin() {
     await handleLogin(email, password);
   }
 
+  function handleFaceLoginSuccess() {
+    window.location.href = "/ueadmin/dashboard";
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
@@ -46,41 +53,71 @@ export default function AdminLogin() {
           <p className="text-gray-500 text-sm mt-1">Admin Panel</p>
         </div>
         
-        <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
-          {error && (
-            <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm font-medium text-red-400">
-              {error}
-            </div>
-          )}
-          
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div>
-              <input 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                type="email" 
-                placeholder="Email"
-                className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white placeholder:text-gray-500 text-sm font-medium outline-none focus:border-white/30 transition-colors"
-              />
-            </div>
-            <div>
-              <input 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                type="password" 
-                placeholder="Password"
-                className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white placeholder:text-gray-500 text-sm font-medium outline-none focus:border-white/30 transition-colors"
-              />
-            </div>
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full h-12 rounded-xl bg-white text-black font-bold text-sm tracking-wider hover:bg-gray-100 disabled:opacity-50 transition-all"
-            >
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
+        {/* Login method toggle */}
+        <div className="flex mb-6 bg-white/5 rounded-xl p-1">
+          <button
+            onClick={() => setLoginMethod('password')}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+              loginMethod === 'password' 
+                ? 'bg-white text-black' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Password
+          </button>
+          <button
+            onClick={() => setLoginMethod('face')}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
+              loginMethod === 'face' 
+                ? 'bg-white text-black' 
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <User size={16} /> Face
+          </button>
         </div>
+
+        {loginMethod === 'password' ? (
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/10">
+            {error && (
+              <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm font-medium text-red-400">
+                {error}
+              </div>
+            )}
+            
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div>
+                <input 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  type="email" 
+                  placeholder="Email"
+                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white placeholder:text-gray-500 text-sm font-medium outline-none focus:border-white/30 transition-colors"
+                />
+              </div>
+              <div>
+                <input 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  type="password" 
+                  placeholder="Password"
+                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white placeholder:text-gray-500 text-sm font-medium outline-none focus:border-white/30 transition-colors"
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full h-12 rounded-xl bg-white text-black font-bold text-sm tracking-wider hover:bg-gray-100 disabled:opacity-50 transition-all"
+              >
+                {loading ? "Signing in..." : "Sign In"}
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
+            <FaceLogin onSuccess={handleFaceLoginSuccess} />
+          </div>
+        )}
         
         <p className="text-center text-gray-600 text-xs mt-6">
           Restricted access only

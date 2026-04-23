@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Loader2, DollarSign } from 'lucide-react';
-import { PaymentStatus } from '@prisma/client';
 
 interface PaymentActionsProps {
   orderId: string;
@@ -25,7 +24,7 @@ export default function PaymentActions({ orderId, currentPaymentStatus, paymentM
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          paymentStatus: PaymentStatus.PAID
+          paymentStatus: 'PAID'
         }),
       });
       
@@ -37,7 +36,8 @@ export default function PaymentActions({ orderId, currentPaymentStatus, paymentM
     } catch (err: any) {
       toast.error(err.message || "Failed to update payment status");
     } finally {
-      setLoading(false);
+      setLoading(true); // Keeping it loading as we usually redirect or refresh
+      window.location.reload();
     }
   }
 

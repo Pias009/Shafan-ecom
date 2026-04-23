@@ -200,6 +200,7 @@ model Product {
   active        Boolean  @default(true)
   hot           Boolean  @default(false)
   trending      Boolean  @default(false)
+  freshFromShelf Boolean  @default(false)
   sku           String?
   currency      String   @default("USD")
   averageRating Float    @default(0)
@@ -371,6 +372,16 @@ model Order {
   returnReason          String?
   returnRequestedAt     DateTime?
   returnStatus          ReturnStatus    @default(NONE)
+  
+  // Email tracking
+  emailConfirmationSent Boolean         @default(false)
+  emailShipmentSent     Boolean         @default(false)
+  
+  // Admin reminder tracking
+  reminderSent          Boolean         @default(false)
+  reminderSentAt        DateTime?
+  adminChecked        Boolean         @default(false)
+  adminCheckedAt       DateTime?
 
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
@@ -744,13 +755,32 @@ model LockAuditLog {
   masterId    String?  // Reference to MasterAuth
   ipAddress   String
   userAgent   String?
-  metadata    Json?    // Additional context (userId, path, etc.)
+  metadata   Json?    // Additional context (userId, path, etc.)
   
   createdAt   DateTime @default(now())
+}
+
+// Face recognition data for admin login
+model FaceData {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @unique // References to admin user
+  faceHash    String?  // Simple hash of face data for verification
+  faceData    String?  // Base64 encoded face image (for enrollment)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// One-time enrollment tokens for face login
+model FaceEnrollmentToken {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  tokenHash    String   @unique // Hash of the one-time token
+  adminId      String   // Admin user ID to enroll
+  adminName    String   // Admin user name
+  expiresAt    DateTime // Token expiration
+  used        Boolean  @default(false)
+  usedAt      DateTime?
   
-  @@index([action])
-  @@index([masterId])
-  @@index([createdAt])
+  createdAt   DateTime @default(now())
 }
 
 // Secret URL access tracking

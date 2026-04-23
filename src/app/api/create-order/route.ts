@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { revalidatePath } from "next/cache";
+import { sendEmail } from "@/lib/email";
+import { notifyNewOrder } from "@/lib/pusher";
 
 // Delivery fee configuration by country (Using global config)
 const DELIVERY_CONFIG = COUNTRY_CONFIG;
@@ -579,6 +581,15 @@ export async function POST(req: Request) {
       }
     });
 
+    // Trigger real-time notification for admin
+    await notifyNewOrder({
+      id: order.id,
+      total: order.total ?? 0,
+      currency: order.currency,
+      userName: shipping?.first_name ? `${shipping.first_name} ${shipping.last_name || ''}` : undefined,
+      email: order.email || undefined,
+    }).catch(err => console.error("Pusher notification failed:", err));
+
     // Decrement stock for each ordered item
     for (const orderItem of orderItemsData) {
       const product = await prisma.product.findUnique({
@@ -595,6 +606,194 @@ export async function POST(req: Request) {
     }
 
     revalidatePath('/ueadmin/orders');
+
+    // Send order confirmation email to customer
+    const customerEmail = session?.user?.email || billing?.email || shipping?.email || order.email;
+    const customerName = shipping?.first_name 
+      ? `${shipping.first_name} ${shipping.last_name || ''}` 
+      : 'Customer';
+    
+    if (customerEmail && !order.emailConfirmationSent) {
+      // Mark email as sent FIRST to prevent duplicate sends on retries
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { emailConfirmationSent: true }
+      }).catch(() => {}); // Ignore if already updated
+
+      console.log(`[Order Email] Sending confirmation for order ${order.id} to ${customerEmail}`);
+
+      const DOMAIN = 'https://shanafaglobal.com';
+      const DASHBOARD_URL = `${DOMAIN}/account`;
+      const TRACKING_URL = shipment?.trackingUrl || `${DOMAIN}/account/orders/${order.id}`;
+      
+      // Prepare order items with full details
+      const orderItems = order.items.map((item: any) => ({
+        id: item.productId,
+        name: item.name || item.product?.name || 'Product',
+        quantity: item.quantity,
+        price: item.unitPrice || item.price,
+        brand: item.product?.brand?.name,
+        imageUrl: item.product?.mainImage || item.imageUrl,
+      }));
+
+      // Enhanced email HTML with tracking and links
+      const orderUrl = `${DOMAIN}/account/orders/${order.id}`;
+      const paymentMethodText = isCOD ? 'Cash on Delivery' : (order.paymentMethodTitle || 'Credit Card');
+      const paymentStatusText = isCOD ? 'Cash on Delivery' : 'Paid';
+      const deliveryEstimate = '2-3 business days';
+
+      const itemsHtml = orderItems.map((item: any) => {
+        const itemTotal = (item.price * item.quantity).toFixed(2);
+        const productUrl = `${DOMAIN}/product/${item.id}`;
+        return `
+          <tr>
+            <td style="padding: 12px 8px; border-bottom: 1px solid #eee;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" />` : ''}
+                <div>
+                  <a href="${productUrl}" style="font-weight: 500; color: #333; text-decoration: none;">${item.name}</a>
+                  ${item.brand ? `<div style="font-size: 11px; color: #888; text-transform: uppercase;">${item.brand}</div>` : ''}
+                </div>
+              </div>
+            </td>
+            <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; color: #666;">x${item.quantity}</td>
+            <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: right; color: #333;">${order.currency.toUpperCase()} ${itemTotal}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; border-radius: 16px 16px 0 0;">
+            <h1 style="color: white; margin: 0 0 10px; font-size: 28px;">Order Confirmed! 🎉</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 16px;">Thank you for shopping with SHANFA</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e9ecef;">
+            <p style="color: #495057; font-size: 16px; margin: 0 0 20px;">Hello <strong>${customerName}</strong>,</p>
+            
+            <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                  <h2 style="color: #333; margin: 0 0 5px; font-size: 20px;">Order #${order.id}</h2>
+                  <p style="color: #6c757d; margin: 0; font-size: 13px;">${new Date(order.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+                <div style="text-align: right;">
+                  <span style="background: ${isCOD ? '#ffc107' : '#28a745'}; color: ${isCOD ? '#000' : '#fff'}; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block;">${paymentStatusText}</span>
+                  <p style="color: #6c757d; margin: 8px 0 0; font-size: 12px;">📦 Est. delivery: ${deliveryEstimate}</p>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                  <span style="color: #6c757d;">Payment Method</span>
+                  <div style="color: #333; font-weight: 600;">${paymentMethodText}</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                  <span style="color: #6c757d;">Estimated Delivery</span>
+                  <div style="color: #333; font-weight: 600;">${deliveryEstimate}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+              <h3 style="color: #333; margin: 0 0 16px; font-size: 16px;">Order Items</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #dee2e6;">
+                    <th style="padding: 8px; text-align: left; color: #6c757d; font-size: 11px; text-transform: uppercase;">Product</th>
+                    <th style="padding: 8px; text-align: center; color: #6c757d; font-size: 11px; text-transform: uppercase;">Qty</th>
+                    <th style="padding: 8px; text-align: right; color: #6c757d; font-size: 11px; text-transform: uppercase;">Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                </tbody>
+              </table>
+              
+              <div style="border-top: 2px solid #dee2e6; margin-top: 16px; padding-top: 16px;">
+                <table style="width: 100%;">
+                  <tr><td style="padding: 4px 0; color: #6c757d;">Subtotal</td><td style="padding: 4px 0; text-align: right; color: #333;">${order.currency.toUpperCase()} ${order.subtotal?.toFixed(2)}</td></tr>
+                  <tr><td style="padding: 4px 0; color: #6c757d;">Shipping</td><td style="padding: 4px 0; text-align: right; color: #333;">${order.currency.toUpperCase()} ${order.shipping?.toFixed(2)}</td></tr>
+                  ${order.discountAmount ? `<tr><td style="padding: 4px 0; color: #28a745;">Discount</td><td style="padding: 4px 0; text-align: right; color: #28a745;">-${order.currency.toUpperCase()} ${order.discountAmount.toFixed(2)}</td></tr>` : ''}
+                  <tr style="font-weight: bold; font-size: 18px; border-top: 2px solid #333; margin-top: 8px;">
+                    <td style="padding: 12px 0 0;">Total</td>
+                    <td style="padding: 12px 0 0; text-align: right; color: #667eea;">${order.currency.toUpperCase()} ${order.total?.toFixed(2)}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            
+            ${shipping ? `
+            <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+              <h3 style="color: #333; margin: 0 0 12px; font-size: 16px;">Shipping Address</h3>
+              <p style="color: #495057; margin: 0; line-height: 1.6;">
+                ${shipping.first_name} ${shipping.last_name || ''}<br>
+                ${shipping.address_1 || ''}<br>
+                ${shipping.city || ''}, ${shipping.country || ''}<br>
+                ${shipping.phone ? `📞 ${shipping.phone}` : ''}
+              </p>
+            </div>` : ''}
+            
+            <div style="display: flex; gap: 12px; margin: 24px 0;">
+              <a href="${orderUrl}" style="flex: 1; background: #667eea; color: white; padding: 16px 24px; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 600; font-size: 14px;">📋 My Orders</a>
+              <a href="${TRACKING_URL}" style="flex: 1; background: #28a745; color: white; padding: 16px 24px; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 600; font-size: 14px;">🚚 Track Order</a>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
+              <p style="color: #6c757d; margin: 0 0 8px; font-size: 13px;"><strong>Need Help?</strong></p>
+              <p style="margin: 0; font-size: 13px;">
+                <a href="${DOMAIN}/contact" style="color: #667eea;">Contact Support</a> · 
+                <a href="${DASHBOARD_URL}" style="color: #667eea;">My Dashboard</a> · 
+                <a href="${DOMAIN}/returns" style="color: #667eea;">Returns</a>
+              </p>
+            </div>
+            
+            <p style="color: #6c757d; font-size: 12px; text-align: center; margin: 24px 0 0;">
+              Thank you for shopping with SHANFA GLOBAL!<br>
+              <a href="${DOMAIN}" style="color: #667eea;">shanafaglobal.com</a>
+            </p>
+          </div>
+        </div>
+      `;
+
+      sendEmail({
+        to: customerEmail,
+        subject: `Order Confirmed #${order.id} - SHANFA`,
+        html: emailHtml,
+      }).catch((err) => {
+        console.error("Failed to send order email:", err);
+        // If email failed, reset the flag so it can be retried
+        prisma.order.update({
+          where: { id: order.id },
+          data: { emailConfirmationSent: false }
+        }).catch(() => {});
+      });
+    } else {
+      console.log(`[Order Email] Skipping email - already sent or no email address for order ${order.id}`);
+    }
+
+    // Always notify admin of new orders (both COD and prepaid)
+    if (process.env.ADMIN_EMAIL) {
+      const adminItemsList = order.items.map((item: any) => `${item.name || 'Product'} x${item.quantity}`).join(', ');
+      sendEmail({
+        to: process.env.ADMIN_EMAIL,
+        subject: isCOD ? `New COD Order #${order.id} - ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}` : `New Order #${order.id} - PAID ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #333;">New Order Received! ${isCOD ? '💵 Cash on Delivery' : '✅ Paid'}</h2>
+            <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
+              <tr><td style="padding: 8px 0; color: #666;">Order ID</td><td style="padding: 8px 0;"><strong>#${order.id}</strong></td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Customer</td><td style="padding: 8px 0;">${customerEmail || 'Guest'}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${order.currency.toUpperCase()} ${order.total?.toFixed(2)}</strong></td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">${isCOD ? 'Cash on Delivery' : 'Credit Card'}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
+            </table>
+            <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/ueadmin/orders/${order.id}" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order</a></p>
+          </div>
+        `
+      }).catch(console.error);
+    }
 
     return NextResponse.json({
       orderId: order.id,

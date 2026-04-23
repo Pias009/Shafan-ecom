@@ -180,7 +180,8 @@ async function dispatchNaqel(order: any, dimensions: any) {
     cod: codValue,
     customsDeclaredValue: numTotal,
     customsDeclaredValueCurrency: order.currency?.toUpperCase() || "USD",
-    productType: "DLV",
+    // productType will be auto-determined if omitted, or we can pass it
+    // productType: "DLVI", 
     reference: {
       shipperReference1: order.id.slice(-8).toUpperCase(),
       shipperNote1: `Order #${order.id.slice(-8).toUpperCase()}`,
@@ -214,8 +215,8 @@ async function dispatchNaqel(order: any, dimensions: any) {
     },
     shipper: {
       shipperAddress: {
-        countryCode: process.env.NAQEL_SHIPPER_COUNTRY || "SAU", // Must be SAU for test account
-        city: process.env.NAQEL_SHIPPER_CITY || "Riyadh",
+        countryCode: process.env.NAQEL_SHIPPER_COUNTRY || "ARE", 
+        city: process.env.NAQEL_SHIPPER_CITY || "Dubai",
         line1: process.env.ARAMEX_SHIPPER_ADDRESS || "Office 405, Al Diyafa Center",
         line2: "",
         line3: "",

@@ -159,7 +159,6 @@ export async function POST(request: NextRequest) {
           const addr = shipmentData;
           const naqelRequest = {
             descriptionOfGoods: "Skincare Products",
-            productType: "DLV" as const,
             cod: 0,
             customsDeclaredValue: 10,
             customsDeclaredValueCurrency: "USD",

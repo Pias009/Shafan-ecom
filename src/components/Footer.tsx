@@ -4,14 +4,25 @@ import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { ArrowRight, ChevronDown, Facebook, Instagram, Mail, Phone, Clock, MessageCircle, Music, Linkedin } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Logo } from "./Logo";
+import Image from "next/image";
+
+const VIDEO_URL = "https://assets.mixkit.co/videos/51185/51185-720.mp4";
 
 export function Footer() {
   const { currentLanguage } = useLanguageStore();
-  const t = translations[currentLanguage.code as keyof typeof translations];
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const t = translations[(mounted ? currentLanguage.code : "en") as keyof typeof translations];
   const [openSection, setOpenSection] = useState<string | null>(null);
+
+  if (!mounted) return null;
 
   const sections = [
     {
@@ -19,8 +30,8 @@ export function Footer() {
       title: t.footer.shop,
       links: [
         { label: "Shopping Cart", href: "/cart" },
-        { label: t.footer.skinCare, href: "/category/skin-care" },
-        { label: t.footer.hairCare, href: "/category/hair-care" },
+        { label: t.footer.skinCare, href: "/products?category=Skin+Care" },
+        { label: t.footer.hairCare, href: "/products?category=Hair+Care" },
         { label: t.footer.routines, href: "/routines" },
         { label: t.footer.newArrivals, href: "/products?sort=new" },
         { label: t.footer.brands, href: "/brands" },
@@ -64,53 +75,148 @@ export function Footer() {
   return (
     <footer className="w-full bg-black text-white font-body selection:bg-white selection:text-black mt-auto">
 
-      {/* Newsletter Section */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-12 lg:py-16">
-        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-8 lg:gap-16 xl:gap-20">
-          
-          {/* Logo Section */}
-          <div className="flex flex-col items-center lg:items-start">
-            <Logo className="mb-4" />
-            <p className="text-xs font-medium text-white/50 text-center lg:text-left max-w-[200px]">
-              Discover the essence of natural beauty with our premium Skin Care collection.
-            </p>
-          </div>
+      {/* Newsletter Section - WITH VIDEO BACKGROUND */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
+        {/* Video Background */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover opacity-70"
+            poster="https://assets.mixkit.co/videos/51185/51185-thumb-720-0.jpg"
+          >
+            <source src={VIDEO_URL} type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-br from-neutral-900/60 via-neutral-800/60 to-neutral-900/60" />
+        </div>
 
-          {/* Left text */}
-          <div className="text-center lg:text-left max-w-lg w-full">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-white/40 mb-3">
-              {t.footer.joinNewsletter}
-            </p>
-            <h2 className="font-display text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-none italic tracking-tighter">
-              {t.footer.wantOff}
-            </h2>
-            <p className="text-sm font-medium text-white/50 leading-relaxed">
-              {t.footer.receiveCode}
-            </p>
-          </div>
+        {/* Animated Background Elements */}
+        <div className="relative z-10 absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/3 rounded-full blur-3xl animate-pulse delay-700" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        </div>
 
-          {/* Newsletter Form */}
-          <div className="w-full max-w-md lg:max-w-lg">
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="relative flex items-center"
-            >
-              <Mail size={16} className="absolute left-4 text-white/30 pointer-events-none" />
-              <input
-                type="email"
-                placeholder={t.footer.enterEmail}
-                className="w-full h-14 bg-white/5 border border-white/20 pl-10 pr-16 text-sm font-bold text-white placeholder:text-white/30 outline-none focus:border-white/60 transition-colors rounded-xl"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-2 bottom-2 px-4 bg-white text-black text-xs font-black uppercase tracking-widest hover:bg-white/90 transition-colors rounded-lg flex items-center gap-1.5"
+        <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-16 md:py-20">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-16">
+            
+            {/* Left Content - Animated */}
+            <div className="text-center lg:text-left max-w-xl w-full">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="space-y-4"
               >
-                <ArrowRight size={14} />
-              </button>
-            </form>
-            <p className="mt-3 text-[10px] text-white/30 font-bold uppercase tracking-widest leading-relaxed">
-              {t.footer.disclosure}
-            </p>
+                <motion.p 
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="inline-block text-xs font-black uppercase tracking-[0.3em] text-white/40 mb-2"
+                >
+                  {t.footer.joinNewsletter}
+                </motion.p>
+                
+                <motion.h2 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="font-display text-4xl md:text-5xl lg:text-6xl font-black text-white leading-none"
+                >
+                  <span className="bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+                    {t.footer.wantOff}
+                  </span>
+                </motion.h2>
+                
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="text-sm font-medium text-white/50 leading-relaxed max-w-md"
+                >
+                  {t.footer.receiveCode}
+                </motion.p>
+              </motion.div>
+            </div>
+
+            {/* Right Content - Animated Form */}
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="w-full max-w-md lg:max-w-lg"
+            >
+              <form
+                onSubmit={(e) => e.preventDefault()}
+                className="relative"
+              >
+                {/* Floating badge */}
+                <motion.div
+                  animate={{ 
+                    boxShadow: ['0 0 0 rgba(255,255,255,0)', '0 0 20px rgba(255,255,255,0.1)', '0 0 0 rgba(255,255,255,0)']
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute -inset-2 rounded-2xl border border-white/10 pointer-events-none"
+                />
+                
+                <div className="relative flex items-center bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden group hover:border-white/20 transition-colors">
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  
+                  <Mail size={18} className="absolute left-5 text-white/40 pointer-events-none group-hover:text-white/60 transition-colors" />
+                  
+                  <input
+                    type="email"
+                    placeholder={t.footer.enterEmail}
+                    className="w-full h-14 bg-transparent pl-12 pr-24 text-sm font-medium text-white placeholder:text-white/30 outline-none focus:placeholder:text-white/50 transition-colors rounded-2xl"
+                  />
+                  
+                  <motion.button
+                    type="submit"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="absolute right-2 top-2 bottom-2 px-6 bg-white text-black text-xs font-black uppercase tracking-widest hover:bg-neutral-100 transition-colors rounded-xl flex items-center gap-2"
+                  >
+                    <span>Get</span>
+                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </div>
+              </form>
+              
+              {/* Trust badge with animation */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="mt-4 flex items-center justify-center lg:justify-start gap-4"
+              >
+                <div className="flex items-center gap-1.5">
+                  <motion.span 
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: 0 }}
+                    className="w-2 h-2 bg-green-400 rounded-full"
+                  />
+                  <span className="text-[10px] font-medium text-white/40">No spam</span>
+                </div>
+                <div className="w-px h-3 bg-white/10" />
+                <div className="flex items-center gap-1.5">
+                  <motion.span 
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
+                    className="w-2 h-2 bg-green-400 rounded-full"
+                  />
+                  <span className="text-[10px] font-medium text-white/40">Unsubscribe anytime</span>
+                </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -218,8 +324,8 @@ export function Footer() {
         </div>
 
         {/* Copyright on RIGHT side */}
-        <div className="order-1 md:order-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 text-center md:text-right">
-          copyright© AL SHANFA GENERAL TRADING CO. L.L.C. All rights reserved
+        <div className="order-1 md:order-2 text-[8px] font-bold uppercase tracking-[0.15em] text-white/50 text-center md:text-right leading-tight">
+          © copyright AL SHANFA GENERAL TRADING CO. L.L.C. All rights reserved
         </div>
       </div>
 

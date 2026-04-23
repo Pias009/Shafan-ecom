@@ -5,6 +5,7 @@ import {
   Hr,
   Row,
   Column,
+  Button,
 } from '@react-email/components';
 import { BaseTemplate } from './BaseTemplate';
 import { OrderConfirmationData } from '../types';
@@ -20,11 +21,21 @@ export const OrderConfirmationTemplate = ({
   totalAmount,
   shippingAddress,
   trackingUrl,
+  paymentStatus = 'Paid',
+  paymentMethod,
+  estimatedDelivery = '2-3 business days',
 }: OrderConfirmationTemplateProps) => {
   const formattedTotal = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   }).format(totalAmount);
+
+  const DOMAIN = 'https://shanafaglobal.com';
+  const dashboardUrl = `${DOMAIN}/account`;
+  const contactUrl = `${DOMAIN}/contact`;
+  const returnsUrl = `${DOMAIN}/returns`;
+  const cancelUrl = `${DOMAIN}/account/orders/${orderId}`;
+  const isCOD = paymentStatus === 'Cash on Delivery';
 
   return (
     <BaseTemplate
@@ -36,7 +47,7 @@ export const OrderConfirmationTemplate = ({
       </Text>
       
       <Text style={paragraph}>
-        Thank you for your order! We've received your order and are preparing it for shipment.
+        Thank you for your order! We've received it and are preparing it for shipment.
         You'll receive another email when your order ships.
       </Text>
 
@@ -48,7 +59,7 @@ export const OrderConfirmationTemplate = ({
             <Text style={labelText}>Order Number:</Text>
           </Column>
           <Column style={summaryValue}>
-            <Text style={valueText}>{orderId}</Text>
+            <Text style={valueText}>#{orderId}</Text>
           </Column>
         </Row>
         
@@ -63,10 +74,19 @@ export const OrderConfirmationTemplate = ({
         
         <Row style={summaryRow}>
           <Column style={summaryLabel}>
-            <Text style={labelText}>Email:</Text>
+            <Text style={labelText}>Payment:</Text>
           </Column>
           <Column style={summaryValue}>
-            <Text style={valueText}>{customerEmail}</Text>
+            <Text style={{...valueText, color: isCOD ? '#f59e0b' : '#10b981', fontWeight: 600}}>{paymentStatus}</Text>
+          </Column>
+        </Row>
+        
+        <Row style={summaryRow}>
+          <Column style={summaryLabel}>
+            <Text style={labelText}>Est. Delivery:</Text>
+          </Column>
+          <Column style={summaryValue}>
+            <Text style={valueText}>{estimatedDelivery}</Text>
           </Column>
         </Row>
       </Section>
@@ -80,16 +100,29 @@ export const OrderConfirmationTemplate = ({
             style: 'currency',
             currency: 'USD',
           }).format(itemTotal);
+          const productUrl = `${DOMAIN}/product/${item.id}`;
           
           return (
             <Row key={index} style={itemRow}>
-              <Column style={itemColumn}>
-                <Text style={itemName}>{item.name}</Text>
+              <Column style={itemImageColumn}>
+                {item.imageUrl && (
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name} 
+                    style={productImage}
+                    width={60}
+                    height={60}
+                  />
+                )}
               </Column>
-              <Column style={itemColumn}>
+              <Column style={itemDetailsColumn}>
+                <Text style={itemName}>
+                  <a href={productUrl} style={productLink}>{item.name}</a>
+                </Text>
+                {item.brand && <Text style={itemBrand}>{item.brand}</Text>}
                 <Text style={itemDetail}>Qty: {item.quantity}</Text>
               </Column>
-              <Column style={itemColumn}>
+              <Column style={itemPriceColumn}>
                 <Text style={itemDetail}>{formattedPrice}</Text>
               </Column>
             </Row>
@@ -113,36 +146,83 @@ export const OrderConfirmationTemplate = ({
         <Text style={addressText}>{shippingAddress}</Text>
       </Section>
 
-      {trackingUrl && (
-        <Section style={trackingSection}>
-          <Text style={sectionTitle}>Tracking Information</Text>
-          <Text style={paragraph}>
-            You can track your order using this link:{' '}
-            <a href={trackingUrl} style={link}>
-              Track Your Order
-            </a>
-          </Text>
-        </Section>
-      )}
-
       <Hr style={divider} />
 
-      <Text style={smallText}>
-        <strong>Need to make changes to your order?</strong>{' '}
-        Please contact our customer support team within 1 hour of placing your order.
-      </Text>
+      <Section style={actionSection}>
+        <Text style={actionTitle}>Quick Actions</Text>
+        
+        <Row style={actionRow}>
+          <Column style={actionBtnColumn}>
+            <Button href={trackingUrl} style={primaryButton}>
+              Track Order 🚚
+            </Button>
+          </Column>
+          <Column style={actionSpacer} />
+          <Column style={actionBtnColumn}>
+            <Button href={dashboardUrl} style={secondaryButton}>
+              View Order 📋
+            </Button>
+          </Column>
+        </Row>
+      </Section>
 
-      <Text style={smallText}>
-        <strong>Questions about your order?</strong>{' '}
-        Reply to this email or contact us at{' '}
-        <a href="mailto:orders@shanfa-store.com" style={link}>
-          orders@shanfa-store.com
-        </a>
-      </Text>
+      <Section style={helpSection}>
+        <Text style={helpTitle}>Need Help?</Text>
+        
+        <Row style={helpRow}>
+          <Column style={helpLabel}>
+            <Text style={helpLabelText}>📋 Order Dashboard</Text>
+          </Column>
+          <Column style={helpValue}>
+            <Text style={linkText}>
+              <a href={dashboardUrl} style={link}>View all orders, track & manage</a>
+            </Text>
+          </Column>
+        </Row>
+        
+        <Row style={helpRow}>
+          <Column style={helpLabel}>
+            <Text style={helpLabelText}>💬 Contact Us</Text>
+          </Column>
+          <Column style={helpValue}>
+            <Text style={linkText}>
+              <a href={contactUrl} style={link}>Chat or email support</a>
+            </Text>
+          </Column>
+        </Row>
+        
+        <Row style={helpRow}>
+          <Column style={helpLabel}>
+            <Text style={helpLabelText}>❌ Cancel Order</Text>
+          </Column>
+          <Column style={helpValue}>
+            <Text style={linkText}>
+              <a href={cancelUrl} style={link}>Cancel within 30 min</a>
+            </Text>
+          </Column>
+        </Row>
+        
+        <Row style={helpRow}>
+          <Column style={helpLabel}>
+            <Text style={helpLabelText}>🔄 Request Refund</Text>
+          </Column>
+          <Column style={helpValue}>
+            <Text style={linkText}>
+              <a href={returnsUrl} style={link}>Easy return process</a>
+            </Text>
+          </Column>
+        </Row>
+      </Section>
+
+      <Section style={cancelInfo}>
+        <Text style={cancelInfoText}>
+          ⏱️ <strong>Cancellation:</strong> You can cancel your order within 30 minutes of placing it. 
+          Go to <a href={dashboardUrl} style={link}>your order dashboard</a> and click "Cancel Order".
+        </Text>
+      </Section>
 
       <Text style={footerNote}>
-        We'll send you shipping updates as your order progresses. 
-        Thank you for shopping with SHANFA STORE!
+        Thank you for shopping with SHANFA STORE! 💚
       </Text>
     </BaseTemplate>
   );
@@ -213,8 +293,28 @@ const itemRow = {
   borderBottom: '1px solid #eaeaea',
 };
 
-const itemColumn = {
+const itemImageColumn = {
+  width: '70px',
   verticalAlign: 'top' as const,
+};
+
+const itemDetailsColumn = {
+  verticalAlign: 'top' as const,
+  paddingLeft: '12px',
+};
+
+const itemPriceColumn = {
+  width: '80px',
+  verticalAlign: 'top' as const,
+  textAlign: 'right' as const,
+};
+
+const productImage = {
+  width: '60px',
+  height: '60px',
+  objectFit: 'cover' as const,
+  borderRadius: '8px',
+  border: '1px solid #eaeaea',
 };
 
 const itemName = {
@@ -222,6 +322,19 @@ const itemName = {
   fontWeight: '500',
   color: '#333',
   margin: '0 0 4px',
+};
+
+const productLink = {
+  color: '#333',
+  textDecoration: 'none',
+};
+
+const itemBrand = {
+  fontSize: '12px',
+  color: '#666',
+  margin: '0 0 4px',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.05em',
 };
 
 const itemDetail = {
@@ -258,7 +371,7 @@ const totalText = {
 const totalAmountStyle = {
   fontSize: '20px',
   fontWeight: '700',
-  color: '#2563eb',
+  color: '#10b981',
   margin: '0',
 };
 
@@ -277,25 +390,117 @@ const addressText = {
   margin: '0',
 };
 
-const trackingSection = {
+const actionSection = {
   margin: '24px 0',
 };
 
+const actionTitle = {
+  fontSize: '16px',
+  fontWeight: '600',
+  color: '#333',
+  margin: '0 0 16px',
+};
+
+const actionRow = {
+  margin: '12px 0',
+};
+
+const actionBtnColumn = {
+  width: '180px',
+  verticalAlign: 'top' as const,
+};
+
+const actionSpacer = {
+  width: '16px',
+};
+
+const primaryButton = {
+  backgroundColor: '#000',
+  color: '#fff',
+  padding: '12px 24px',
+  borderRadius: '8px',
+  fontSize: '14px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  display: 'inline-block',
+};
+
+const secondaryButton = {
+  backgroundColor: '#fff',
+  color: '#000',
+  padding: '12px 24px',
+  borderRadius: '8px',
+  fontSize: '14px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  border: '1px solid #000',
+  display: 'inline-block',
+};
+
+const helpSection = {
+  margin: '24px 0',
+  backgroundColor: '#f0fdf4',
+  borderRadius: '8px',
+  padding: '20px',
+  border: '1px solid #bbf7d0',
+};
+
+const helpTitle = {
+  fontSize: '16px',
+  fontWeight: '600',
+  color: '#166534',
+  margin: '0 0 16px',
+};
+
+const helpRow = {
+  margin: '12px 0',
+};
+
+const helpLabel = {
+  width: '140px',
+  verticalAlign: 'top' as const,
+};
+
+const helpValue = {
+  verticalAlign: 'top' as const,
+};
+
+const helpLabelText = {
+  fontSize: '14px',
+  fontWeight: '600',
+  color: '#166534',
+  margin: '0',
+};
+
+const linkText = {
+  fontSize: '14px',
+  color: '#166534',
+  margin: '0',
+};
+
 const link = {
-  color: '#2563eb',
+  color: '#166534',
   textDecoration: 'underline',
+};
+
+const cancelInfo = {
+  margin: '24px 0',
+  backgroundColor: '#fffbeb',
+  borderRadius: '8px',
+  padding: '16px',
+  border: '1px solid #fde68a',
+};
+
+const cancelInfoText = {
+  fontSize: '14px',
+  lineHeight: '22px',
+  color: '#92400e',
+  margin: '0',
 };
 
 const divider = {
   borderColor: '#eaeaea',
   margin: '32px 0',
-};
-
-const smallText = {
-  fontSize: '14px',
-  lineHeight: '20px',
-  color: '#666',
-  margin: '0 0 16px',
 };
 
 const footerNote = {

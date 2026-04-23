@@ -25,39 +25,49 @@ export function GlobalInitializer() {
     const storage = localStorage.getItem("currency-storage");
     const langStorage = localStorage.getItem("language-storage");
     
-    if (!storage || !langStorage) {
-        const timeoutId = setTimeout(() => {
-            setInitialized(true);
-        }, 3000);
-
-        fetch("https://ipapi.co/json/", {
-            signal: AbortSignal.timeout(5000),
-        })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-            clearTimeout(timeoutId);
-            if (data?.country_code) {
-                const config = IP_MAP[data.country_code];
-                if (config) {
-                    if (!storage && SUPPORTED_CURRENCIES.find(c => c.code === config.currency)) {
-                        setCurrency(config.currency);
-                    }
-                    if (!langStorage) {
-                        setLanguage(config.lang);
-                    }
-                }
-            }
-            setInitialized(true);
-        })
-        .catch(() => {
-            clearTimeout(timeoutId);
-            if (!storage) setCurrency(DEFAULT_CONFIG.currency);
-            if (!langStorage) setLanguage(DEFAULT_CONFIG.lang);
-            setInitialized(true);
-        });
-    } else {
-        setInitialized(true);
+    const initDefaults = () => {
+      if (!storage) setCurrency(DEFAULT_CONFIG.currency);
+      if (!langStorage) setLanguage(DEFAULT_CONFIG.lang);
+      setInitialized(true);
+    };
+    
+    if (storage && langStorage) {
+      setInitialized(true);
+      return;
     }
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    fetch("https://ipapi.co/json/", { signal: controller.signal })
+      .then(res => {
+        if (!res.ok) throw new Error('API error');
+        return res.json();
+      })
+      .then(data => {
+        clearTimeout(timeoutId);
+        if (data?.country_code) {
+          const config = IP_MAP[data.country_code];
+          if (config) {
+            if (!storage && SUPPORTED_CURRENCIES.find(c => c.code === config.currency)) {
+              setCurrency(config.currency);
+            }
+            if (!langStorage) {
+              setLanguage(config.lang);
+            }
+          }
+        }
+        setInitialized(true);
+      })
+      .catch((err) => {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          console.log('IP detection timeout, using defaults');
+        }
+        initDefaults();
+      });
+      
+    return () => clearTimeout(timeoutId);
   }, [setCurrency, setLanguage]);
 
   return null;

@@ -5,6 +5,7 @@ import {
   Hr,
   Row,
   Column,
+  Button,
 } from '@react-email/components';
 import { BaseTemplate } from './BaseTemplate';
 
@@ -13,7 +14,14 @@ interface OrderStatusUpdateData {
   customerName: string;
   status: string;
   message: string;
-  items: Array<{ nameSnapshot: string; quantity: number; unitPrice: number }>;
+  items: Array<{ 
+    id?: string;
+    nameSnapshot: string; 
+    quantity: number; 
+    unitPrice: number;
+    brand?: string;
+    imageUrl?: string;
+  }>;
   total: number;
   currency: string;
   shippingAddress?: any;
@@ -69,6 +77,12 @@ export const OrderStatusUpdateTemplate = ({
   shippingAddress,
   trackingUrl,
 }: OrderStatusUpdateTemplateProps) => {
+  const DOMAIN = 'https://shanafaglobal.com';
+  const dashboardUrl = `${DOMAIN}/account`;
+  const contactUrl = `${DOMAIN}/contact`;
+  const returnsUrl = `${DOMAIN}/returns`;
+  const orderUrl = `${DOMAIN}/account/orders/${orderId}`;
+
   return (
     <BaseTemplate
       previewText={`Order #${orderId} - ${status}`}
@@ -92,7 +106,7 @@ export const OrderStatusUpdateTemplate = ({
             <Text style={labelText}>Order Number:</Text>
           </Column>
           <Column style={summaryValue}>
-            <Text style={valueText}>{orderId}</Text>
+            <Text style={valueText}>#{orderId}</Text>
           </Column>
         </Row>
         
@@ -112,19 +126,37 @@ export const OrderStatusUpdateTemplate = ({
         <Section style={itemsSection}>
           <Text style={sectionTitle}>Order Items</Text>
           
-          {items.map((item, index) => (
-            <Row key={index} style={itemRow}>
-              <Column style={itemColumn}>
-                <Text style={itemName}>{item.nameSnapshot}</Text>
-              </Column>
-              <Column style={itemColumn}>
-                <Text style={itemDetail}>Qty: {item.quantity}</Text>
-              </Column>
-              <Column style={itemColumn}>
-                <Text style={itemDetail}>{formatCurrency(item.unitPrice * item.quantity, currency)}</Text>
-              </Column>
-            </Row>
-          ))}
+          {items.map((item, index) => {
+            const productUrl = item.id ? `${DOMAIN}/product/${item.id}` : undefined;
+            
+            return (
+              <Row key={index} style={itemRow}>
+                <Column style={itemImageColumn}>
+                  {item.imageUrl && (
+                    <img 
+                      src={item.imageUrl} 
+                      alt={item.nameSnapshot} 
+                      style={productImage}
+                      width={60}
+                      height={60}
+                    />
+                  )}
+                </Column>
+                <Column style={itemDetailsColumn}>
+                  <Text style={itemName}>
+                    {productUrl ? (
+                      <a href={productUrl} style={productLink}>{item.nameSnapshot}</a>
+                    ) : item.nameSnapshot}
+                  </Text>
+                  {item.brand && <Text style={itemBrand}>{item.brand}</Text>}
+                  <Text style={itemDetail}>Qty: {item.quantity}</Text>
+                </Column>
+                <Column style={itemPriceColumn}>
+                  <Text style={itemDetail}>{formatCurrency(item.unitPrice * item.quantity, currency)}</Text>
+                </Column>
+              </Row>
+            );
+          })}
           
           <Hr style={itemsDivider} />
           
@@ -151,25 +183,65 @@ export const OrderStatusUpdateTemplate = ({
       )}
 
       {trackingUrl && (
-        <Section style={trackingSection}>
-          <Text style={sectionTitle}>Track Your Order</Text>
-          <Text style={paragraph}>
-            You can track your order using this link:{' '}
-            <a href={trackingUrl} style={link}>
-              Track Order
-            </a>
-          </Text>
+        <Section style={actionSection}>
+          <Text style={actionTitle}>Track Your Order</Text>
+          <Row style={actionRow}>
+            <Column style={actionBtnColumn}>
+              <Button href={trackingUrl} style={primaryButton}>
+                🚚 Track Package
+              </Button>
+            </Column>
+            <Column style={actionSpacer} />
+            <Column style={actionBtnColumn}>
+              <Button href={orderUrl} style={secondaryButton}>
+                📋 View Order
+              </Button>
+            </Column>
+          </Row>
         </Section>
       )}
 
       <Hr style={divider} />
 
-      <Text style={smallText}>
-        <strong>Need help?</strong> Reply to this email or contact our customer support.
-      </Text>
+      <Section style={helpSection}>
+        <Text style={helpTitle}>Need Help?</Text>
+        
+        <Row style={helpRow}>
+          <Column style={helpLabel}>
+            <Text style={helpLabelText}>📋 Dashboard</Text>
+          </Column>
+          <Column style={helpValue}>
+            <Text style={linkText}>
+              <a href={dashboardUrl} style={link}>View all orders</a>
+            </Text>
+          </Column>
+        </Row>
+        
+        <Row style={helpRow}>
+          <Column style={helpLabel}>
+            <Text style={helpLabelText}>💬 Contact Us</Text>
+          </Column>
+          <Column style={helpValue}>
+            <Text style={linkText}>
+              <a href={contactUrl} style={link}>Chat or email support</a>
+            </Text>
+          </Column>
+        </Row>
+        
+        <Row style={helpRow}>
+          <Column style={helpLabel}>
+            <Text style={helpLabelText}>🔄 Returns</Text>
+          </Column>
+          <Column style={helpValue}>
+            <Text style={linkText}>
+              <a href={returnsUrl} style={link}>Easy return process</a>
+            </Text>
+          </Column>
+        </Row>
+      </Section>
 
       <Text style={footerNote}>
-        Thank you for shopping with SHANFA STORE!
+        Thank you for shopping with SHANFA STORE! 💚
       </Text>
     </BaseTemplate>
   );
@@ -268,8 +340,28 @@ const itemRow = {
   borderBottom: '1px solid #eaeaea',
 };
 
-const itemColumn = {
+const itemImageColumn = {
+  width: '70px',
   verticalAlign: 'top' as const,
+};
+
+const itemDetailsColumn = {
+  verticalAlign: 'top' as const,
+  paddingLeft: '12px',
+};
+
+const itemPriceColumn = {
+  width: '80px',
+  verticalAlign: 'top' as const,
+  textAlign: 'right' as const,
+};
+
+const productImage = {
+  width: '60px',
+  height: '60px',
+  objectFit: 'cover' as const,
+  borderRadius: '8px',
+  border: '1px solid #eaeaea',
 };
 
 const itemName = {
@@ -277,6 +369,19 @@ const itemName = {
   fontWeight: '500',
   color: '#333',
   margin: '0 0 4px',
+};
+
+const productLink = {
+  color: '#333',
+  textDecoration: 'none',
+};
+
+const itemBrand = {
+  fontSize: '12px',
+  color: '#666',
+  margin: '0 0 4px',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.05em',
 };
 
 const itemDetail = {
@@ -332,10 +437,6 @@ const addressText = {
   margin: '0',
 };
 
-const trackingSection = {
-  margin: '24px 0',
-};
-
 const link = {
   color: '#2563eb',
   textDecoration: 'underline',
@@ -360,6 +461,94 @@ const footerNote = {
   fontStyle: 'italic' as const,
   margin: '24px 0 0',
   textAlign: 'center' as const,
+};
+
+const actionSection = {
+  margin: '24px 0',
+};
+
+const actionTitle = {
+  fontSize: '16px',
+  fontWeight: '600',
+  color: '#333',
+  margin: '0 0 16px',
+};
+
+const actionRow = {
+  margin: '12px 0',
+};
+
+const actionBtnColumn = {
+  width: '180px',
+  verticalAlign: 'top' as const,
+};
+
+const actionSpacer = {
+  width: '16px',
+};
+
+const primaryButton = {
+  backgroundColor: '#000',
+  color: '#fff',
+  padding: '12px 24px',
+  borderRadius: '8px',
+  fontSize: '14px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  display: 'inline-block',
+};
+
+const secondaryButton = {
+  backgroundColor: '#fff',
+  color: '#000',
+  padding: '12px 24px',
+  borderRadius: '8px',
+  fontSize: '14px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  border: '1px solid #000',
+  display: 'inline-block',
+};
+
+const helpSection = {
+  margin: '24px 0',
+  backgroundColor: '#f0fdf4',
+  borderRadius: '8px',
+  padding: '20px',
+  border: '1px solid #bbf7d0',
+};
+
+const helpTitle = {
+  fontSize: '16px',
+  fontWeight: '600',
+  color: '#166534',
+  margin: '0 0 16px',
+};
+
+const helpRow = {
+  margin: '12px 0',
+};
+
+const helpLabel = {
+  width: '140px',
+  verticalAlign: 'top' as const,
+};
+
+const helpValue = {
+  verticalAlign: 'top' as const,
+};
+
+const helpLabelText = {
+  fontSize: '14px',
+  fontWeight: '600',
+  color: '#166534',
+  margin: '0',
+};
+
+const linkText = {
+  fontSize: '14px',
+  color: '#166534',
+  margin: '0',
 };
 
 export default OrderStatusUpdateTemplate;

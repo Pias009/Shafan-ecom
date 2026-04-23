@@ -1,41 +1,30 @@
-import React from 'react';
+import React from 'react'
 
-export default function Loading() {
+export default function ProductsLoading() {
   return (
-    <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black">
-      <div className="max-w-7xl mx-auto px-6 pt-32 pb-20">
-        {/* Banner Skeleton */}
-        <div className="h-[200px] w-full bg-black/5 animate-pulse rounded-2xl mb-12"></div>
+    <div className="max-w-7xl mx-auto px-6 pt-32 pb-20 animate-pulse">
+      {/* Title Skeleton */}
+      <div className="h-12 w-96 bg-black/5 rounded-2xl mb-4"></div>
+      <div className="h-6 w-64 bg-black/5 rounded-xl mb-12"></div>
 
-        {/* Filter Button Skeleton */}
-        <div className="flex justify-center mb-8">
-          <div className="h-12 w-40 bg-black/5 animate-pulse rounded-full"></div>
-        </div>
+      {/* Slider Skeleton */}
+      <div className="h-[400px] w-full bg-black/5 rounded-[2.5rem] mb-12"></div>
 
-        {/* Products Grid Skeleton */}
-        <div className="space-y-24 mt-20">
-          {[1, 2].map((section) => (
-            <div key={section} className="space-y-10">
-              <div className="flex items-center gap-6 border-b border-black/5 pb-6">
-                <div className="h-10 w-48 bg-black/5 animate-pulse rounded-lg"></div>
-                <div className="h-[1px] flex-1 bg-black/10"></div>
-                <div className="h-4 w-20 bg-black/5 animate-pulse rounded-full"></div>
-              </div>
+      {/* Filter Button Skeleton */}
+      <div className="flex justify-center mb-8">
+        <div className="h-12 w-48 bg-black/5 rounded-full"></div>
+      </div>
 
-              <div className="grid gap-x-8 gap-y-12 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="space-y-4">
-                    <div className="aspect-[4/5] w-full bg-black/5 animate-pulse rounded-2xl"></div>
-                    <div className="h-4 w-3/4 bg-black/5 animate-pulse rounded-lg"></div>
-                    <div className="h-4 w-1/2 bg-black/5 animate-pulse rounded-lg opacity-60"></div>
-                    <div className="h-6 w-1/3 bg-black/5 animate-pulse rounded-lg mt-2"></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Grid Skeleton */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+          <div key={i} className="space-y-4">
+            <div className="aspect-[4/5] bg-black/5 rounded-3xl w-full"></div>
+            <div className="h-4 w-3/4 bg-black/5 rounded-lg"></div>
+            <div className="h-4 w-1/2 bg-black/5 rounded-lg"></div>
+          </div>
+        ))}
       </div>
     </div>
-  );
+  )
 }

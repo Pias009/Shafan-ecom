@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Maximize2, ArrowLeft, Star, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
+import { X, ChevronLeft, ChevronRight, Maximize2, Star, ShieldCheck, Truck, RefreshCw, Check } from "lucide-react";
 import { Price } from "@/components/Price";
 import { ProductCard } from "@/components/ProductCard";
-import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -17,8 +13,10 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice, getDisplayPrice, formatPriceUnits } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { formatDescription } from "@/utils/formatText";
+
+const ProductQuickViewModal = lazy(() => import("@/components/ProductQuickViewModal").then(m => ({ default: m.ProductQuickViewModal })));
 
 interface ProductPageClientProps {
   product: any;
@@ -266,14 +264,13 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                 )}
               </div>
               <div className="flex items-center gap-2 text-black/30">
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} className={i < Math.round(product.averageRating || 5) ? "fill-black text-black" : "text-black/10"} />
-                  ))}
-                </div>
-                <span className="text-[10px] font-black uppercase tracking-widest">({product.ratingCount || 0} reviews)</span>
               </div>
             </div>
+
+            {/* Product Name */}
+            <h1 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-black font-black tracking-tight leading-tight">
+              {product.name}
+            </h1>
 
             <div className="flex items-baseline gap-2 sm:gap-4">
               {isAvailable ? (
@@ -486,13 +483,15 @@ export default function ProductPageClient({ product, recommendations }: ProductP
         )}
       </AnimatePresence>
 
-      <ProductQuickViewModal
-        product={quickView}
-        onClose={() => setQuickView(null)}
-        onAddToCart={(p) => addToCart(p)}
-        onOrderNow={(p) => orderNow(p)}
-        onMoreDetails={(productId) => { setQuickView(null); window.location.href = `/products/${productId}`; }}
-      />
+      <Suspense fallback={null}>
+        <ProductQuickViewModal
+          product={quickView}
+          onClose={() => setQuickView(null)}
+          onAddToCart={(p) => addToCart(p)}
+          onOrderNow={(p) => orderNow(p)}
+          onMoreDetails={(productId) => { setQuickView(null); window.location.href = `/products/${productId}`; }}
+        />
+      </Suspense>
     </div>
   );
 }

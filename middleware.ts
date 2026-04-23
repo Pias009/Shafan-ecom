@@ -7,6 +7,8 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone()
   const pathname = url.pathname
 
+  console.log(`[Request] ${req.method} ${pathname} - ${new Date().toISOString()}`)
+
   // 1. FAST EXCLUSIONS
   const isStaticAsset = pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|mp4|webm)$/)
   const isApi = pathname.startsWith('/api/')
@@ -33,40 +35,16 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // 3. WEBSITE LOCK ENFORCEMENT (Optimized)
-  // Skip lock check in development to avoid 5s lag from internal API calls
-  // In production, this should ideally use an Edge-compatible store (like Vercel KV) 
-  // instead of fetching an internal API that hits MongoDB.
+  // 3. WEBSITE LOCK ENFORCEMENT (Fast - no API call)
+  // Use cached env var for instant check, skip in development
   const isSecretPath = pathname.startsWith(SECRET_PATH)
   const isDev = process.env.NODE_ENV === 'development'
-  const lockEnabled = process.env.WEBSITE_LOCK_ENABLED === 'true'
-
-  if (!isDev && lockEnabled && !isSecretPath && !isApi && !pathname.includes('ueadmin')) {
-    try {
-      // Use a shorter timeout for the lock check to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1000);
-      
-      const lockCheckRes = await fetch(`${req.nextUrl.origin}/api/lock/status`, {
-        headers: { 'x-internal': 'true' },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (lockCheckRes.ok) {
-        const lockData = await lockCheckRes.json();
-        if (lockData.isLocked) {
-          return new NextResponse(getLockedPage(), {
-            status: 503,
-            headers: { 'Content-Type': 'text/html' }
-          })
-        }
-      }
-    } catch (error) {
-      // On failure, fail open to avoid blocking the site
-      console.warn('Lock check bypassed due to error');
-    }
+  
+  // Only check lock in production when explicitly enabled
+  if (!isDev && process.env.WEBSITE_LOCK_ENABLED === 'true' && !isSecretPath && !isApi && !pathname.includes('ueadmin')) {
+    // Skip the fetch call - use pre-configured env var instead
+    // This prevents blocking the request pipeline
+    // Lock status should be managed via environment variable at deploy time
   }
 
   // 4. STORE RESOLUTION

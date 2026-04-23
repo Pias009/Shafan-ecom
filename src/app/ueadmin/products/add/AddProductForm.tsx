@@ -447,50 +447,62 @@ export function AddProductForm({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Description</label>
+              <div className="flex items-center justify-between px-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70">Description</label>
+                <span className="text-[8px] text-black/30">Drag corner to resize</span>
+              </div>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                rows={3}
+                rows={5}
                 placeholder="Tell customers about this product..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Benefits</label>
+              <div className="flex items-center justify-between px-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70">Benefits</label>
+                <span className="text-[8px] text-black/30">Drag corner to resize</span>
+              </div>
               <textarea
                 name="benefits"
                 value={formData.benefits}
                 onChange={handleChange}
-                rows={3}
+                rows={5}
                 placeholder="Key benefits of the product..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Ingredients</label>
+              <div className="flex items-center justify-between px-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70">Ingredients</label>
+                <span className="text-[8px] text-black/30">Drag corner to resize</span>
+              </div>
               <textarea
                 name="ingredients"
                 value={formData.ingredients}
                 onChange={handleChange}
-                rows={3}
+                rows={5}
                 placeholder="List of ingredients..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">How to Use</label>
+              <div className="flex items-center justify-between px-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70">How to Use</label>
+                <span className="text-[8px] text-black/30">Drag corner to resize</span>
+              </div>
               <textarea
                 name="howToUse"
                 value={formData.howToUse}
                 onChange={handleChange}
-                rows={3}
+                rows={5}
                 placeholder="Instructions on how to use the product..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
               />
             </div>
 
@@ -783,6 +795,60 @@ export function AddProductForm({
               <p className="text-xs text-blue-700">
                 <strong>SKU Tip:</strong> Use a consistent format like <code>BRAND-COLOR-SIZE</code> for easy inventory tracking.
               </p>
+            </div>
+          </section>
+
+          {/* Weight Information */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-black/50 flex items-center gap-2">
+              <Scale size={14} /> Shipping & Weight
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Weight</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="weight"
+                    step="0.01"
+                    value={formData.weight}
+                    onChange={handleChange}
+                    min="0"
+                    placeholder="0.00"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                  />
+                  <Scale className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Unit</label>
+                <div className="flex gap-4 p-4 bg-black/5 rounded-2xl h-[52px] items-center">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weightUnit"
+                      value="g"
+                      checked={formData.weightUnit === 'g'}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-black border-black/10 text-black focus:ring-black"
+                    />
+                    <span className="text-sm font-bold">Gram (g)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="weightUnit"
+                      value="kg"
+                      checked={formData.weightUnit === 'kg'}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-black border-black/10 text-black focus:ring-black"
+                    />
+                    <span className="text-sm font-bold">Kilogram (kg)</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </section>
 

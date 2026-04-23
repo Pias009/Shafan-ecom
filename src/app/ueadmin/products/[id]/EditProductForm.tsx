@@ -450,46 +450,58 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Description</label>
+                <div className="flex items-center justify-between px-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Description</label>
+                  <span className="text-[8px] text-black/30">Drag corner to resize</span>
+                </div>
                 <textarea 
                   name="description"
                   value={product.description || ''} 
                   onChange={handleChange}
-                  rows={3}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                  rows={5}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Benefits</label>
+                <div className="flex items-center justify-between px-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Benefits</label>
+                  <span className="text-[8px] text-black/30">Drag corner to resize</span>
+                </div>
                 <textarea 
                   name="benefits"
                   value={product.benefits || ''} 
                   onChange={handleChange}
-                  rows={3}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                  rows={5}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Ingredients</label>
+                <div className="flex items-center justify-between px-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Ingredients</label>
+                  <span className="text-[8px] text-black/30">Drag corner to resize</span>
+                </div>
                 <textarea 
                   name="ingredients"
                   value={product.ingredients || ''} 
                   onChange={handleChange}
-                  rows={3}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                  rows={5}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">How to Use</label>
+                <div className="flex items-center justify-between px-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40">How to Use</label>
+                  <span className="text-[8px] text-black/30">Drag corner to resize</span>
+                </div>
                 <textarea 
                   name="howToUse"
                   value={product.howToUse || ''} 
                   onChange={handleChange}
-                  rows={3}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-none"
+                  rows={5}
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
                 />
               </div>
 

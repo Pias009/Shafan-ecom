@@ -5,6 +5,7 @@ import {
   sendPasswordResetEmail,
   sendOrderConfirmationEmail,
   sendAdminLoginAlertEmail,
+  sendOrderStatusEmail,
   emailService 
 } from '@/lib/email/service';
 import { getServerSession } from 'next-auth';
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
         result = await sendMagicLinkEmail(
           testEmail,
           testName,
-          'https://shanfa-store.com/auth/magic-link?token=test-token',
+          'https://shanafaglobal.com/auth/magic-link?token=test-token',
           '15 minutes'
         );
         break;
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
         result = await sendWelcomeEmail(
           testEmail,
           testName,
-          'https://shanfa-store.com/dashboard'
+          'https://shanafaglobal.com/account'
         );
         break;
 
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
         result = await sendPasswordResetEmail(
           testEmail,
           testName,
-          'https://shanfa-store.com/auth/reset-password?token=test-token',
+          'https://shanafaglobal.com/auth/reset-password?token=test-token',
           '1 hour'
         );
         break;
@@ -70,12 +71,15 @@ export async function POST(request: NextRequest) {
           testEmail,
           new Date().toLocaleDateString(),
           [
-            { name: 'Premium Product 1', quantity: 2, price: 29.99 },
-            { name: 'Standard Product 2', quantity: 1, price: 49.99 },
+            { name: 'Premium Wireless Headphones', quantity: 2, price: 29.99, imageUrl: 'https://res.cloudinary.com/dvdyut9xh/image/upload/v1776883172/ecommerce/products/p9t3hwu6uw2namqshrej_rxy07r_dqt0om.jpg' },
+            { name: 'ACNE CONTROL BUNDLE', quantity: 1, price: 49.99, imageUrl: 'https://res.cloudinary.com/dvdyut9xh/image/upload/v1776883172/ecommerce/products/prod2.jpg' },
           ],
           109.97,
           '123 Main St, City, State 12345',
-          'https://shanfa-store.com/track/ORD-12345'
+          'https://shanafaglobal.com/account/orders/ORD-12345',
+          'Paid',
+          'Credit Card',
+          '2-3 business days'
         );
         break;
 
@@ -87,6 +91,19 @@ export async function POST(request: NextRequest) {
           '192.168.1.100',
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           'New York, US'
+        );
+        break;
+
+      case 'order-status-update':
+        result = await sendOrderStatusEmail(
+          'ORD-12345',
+          testEmail,
+          testName,
+          'Shipped',
+          [{ nameSnapshot: 'Test Product', quantity: 1, unitPrice: 49.99 }],
+          49.99,
+          'AED',
+          '123 Main St, New York, US'
         );
         break;
 

@@ -63,6 +63,11 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         image: image || null
+      },
+      include: {
+        _count: {
+          select: { products: true }
+        }
       }
     });
 

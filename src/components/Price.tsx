@@ -82,16 +82,23 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
 
   const formatted = formatPriceWithIntl(displayAmount, displayCurrency);
   
+  // Split the formatted string to color the currency part green
+  const currencySymbol = CURRENCY_SYMBOLS_ASCII[displayCurrency] || displayCurrency;
+  const amountPart = formatted.replace(currencySymbol, '').trim();
+  
   if (showSymbolSmall) {
     return (
       <span className={className}>
-        <span className="text-[0.6em] mr-0.5 opacity-90 font-bold">{displayCurrency}</span>
-        {formatted.replace(displayCurrency, '').trim()}
+        <span className="text-[0.6em] font-bold text-emerald-600">{displayCurrency}</span><span className="text-black">{amountPart}</span>
       </span>
     );
   }
   
-  return <span className={className} style={{ unicodeBidi: 'plaintext' }}>{formatted}</span>;
+  return (
+    <span className={className} style={{ unicodeBidi: 'plaintext' }}>
+      <span className="text-emerald-600">{currencySymbol}</span><span className="text-black">{amountPart}</span>
+    </span>
+  );
 }
 
 export function Price(props: PriceProps) {

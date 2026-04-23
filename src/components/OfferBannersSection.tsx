@@ -112,7 +112,7 @@ export function OfferBannersSection() {
   if (banners.length === 0) return null;
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-8 pt-8 md:pt-12 pb-16 md:pb-24">
+    <section className="mx-auto w-full max-w-7xl px-4 md:px-6 lg:px-8 pt-4 md:pt-6 pb-8 md:pb-12">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -185,10 +185,10 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   return (
-    <div className="glass-panel rounded-xl md:rounded-3xl w-full max-w-4xl xl:max-w-6xl mx-auto flex flex-col md:flex-row items-stretch overflow-hidden relative shadow-xl border border-black/5 min-h-[200px] md:min-h-[320px] lg:min-h-[380px] xl:min-h-[420px] group">
+    <div className="glass-panel rounded-xl md:rounded-3xl w-full max-w-4xl xl:max-w-6xl mx-auto flex flex-col md:flex-row items-stretch overflow-hidden relative shadow-xl border border-black/5 min-h-[160px] md:min-h-[320px] lg:min-h-[380px] xl:min-h-[420px] group">
       {/* Left side - Promotional content with responsive sizing */}
       <div
-        className="flex-shrink-0 flex flex-col justify-center items-center p-4 md:p-6 lg:p-8 xl:p-10 w-full md:w-[200px] lg:w-[250px] xl:w-[300px] z-10"
+        className="flex-shrink-0 flex flex-col justify-center items-center p-3 md:p-6 lg:p-8 xl:p-10 w-full md:w-[200px] lg:w-[250px] xl:w-[300px] z-10 order-1 md:order-none"
         style={{
           background: banner.backgroundColor || 'linear-gradient(to bottom, rgba(239, 246, 255, 0.5), rgba(233, 213, 255, 0.5))',
           color: banner.textColor || 'inherit'
@@ -201,9 +201,9 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
           className="text-center w-full"
         >
           {/* Priority indicator */}
-          <div className="inline-flex items-center gap-1 mb-2 md:mb-4 lg:mb-5">
-            <Tag size={12} className={`md:size-5 lg:size-6 ${banner.priority === 3 ? "text-red-600" : banner.priority === 2 ? "text-orange-600" : "text-blue-600"}`} />
-            <span className={`text-[9px] md:text-sm lg:text-base font-bold uppercase tracking-wide ${
+          <div className="inline-flex items-center gap-1 mb-1 md:mb-4 lg:mb-5">
+            <Tag size={10} className={`md:size-5 lg:size-6 ${banner.priority === 3 ? "text-red-600" : banner.priority === 2 ? "text-orange-600" : "text-blue-600"}`} />
+            <span className={`text-[7px] md:text-sm lg:text-base font-bold uppercase tracking-wide ${
               banner.priority === 3 ? "text-red-700" :
               banner.priority === 2 ? "text-orange-700" :
               "text-blue-700"
@@ -214,50 +214,50 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
           
           {/* Offer text (main highlight) */}
           {banner.offerText ? (
-            <h3 className="font-display text-[clamp(1rem,4vw,2.5rem)] font-black leading-tight tracking-tight mb-1 md:mb-2 text-balance">
+            <h3 className="font-display text-sm md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-0.5 md:mb-2">
               {banner.offerText}
             </h3>
           ) : banner.title ? (
-            <h3 className="font-display text-[clamp(1rem,4vw,2.5rem)] font-black leading-tight tracking-tight mb-1 md:mb-2 text-balance">
+            <h3 className="font-display text-sm md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-0.5 md:mb-2">
               {banner.title}
             </h3>
           ) : (
-            <h3 className="font-display text-[clamp(1rem,4vw,2.5rem)] font-black leading-tight tracking-tight mb-1 md:mb-2">
+            <h3 className="font-display text-sm md:text-2xl lg:text-3xl xl:text-4xl font-black leading-tight tracking-tight mb-0.5 md:mb-2">
               SPECIAL OFFER
             </h3>
           )}
           
           {/* Subtitle or description */}
           {banner.subtitle ? (
-            <p className="font-body text-[clamp(0.625rem,2vw,1.125rem)] mt-1 md:mt-2 italic line-clamp-2 opacity-90 text-pretty">
+            <p className="font-body text-[10px] md:text-sm lg:text-base mt-0.5 md:mt-2 italic line-clamp-1 md:line-clamp-2 opacity-90">
               {banner.subtitle}
             </p>
           ) : (
-            <p className="font-body text-[clamp(0.625rem,2vw,1.125rem)] mt-1 md:mt-2 italic opacity-90">
+            <p className="font-body text-[10px] md:text-sm lg:text-base mt-0.5 md:mt-2 italic opacity-90">
               Limited time offer
             </p>
           )}
           
           {/* CTA Button or discount indicator */}
-          <div className="mt-3 md:mt-4 lg:mt-5">
-            <div className={`inline-flex items-center justify-center w-10 h-10 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 rounded-full font-black text-sm md:text-3xl lg:text-4xl xl:text-5xl shadow-lg ${
+          <div className="mt-2 md:mt-4 lg:mt-5">
+            <div className={`inline-flex items-center justify-center w-8 h-8 md:w-16 md:h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24 rounded-full font-black text-xs md:text-2xl lg:text-3xl xl:text-4xl shadow-lg ${
               banner.priority === 3 ? "bg-gradient-to-br from-red-500 to-pink-600" :
               banner.priority === 2 ? "bg-gradient-to-br from-orange-500 to-red-600" :
               "bg-gradient-to-br from-blue-500 to-purple-600"
             } text-white`}>
-              {banner.ctaText ? banner.ctaText.slice(0, 4) : "SALE"}
+              {banner.ctaText ? banner.ctaText.slice(0, 3) : "SALE"}
             </div>
           </div>
           
           {/* Click tracking indicator */}
-          <p className="mt-2 md:mt-3 text-[10px] md:text-sm opacity-75 max-w-[100px] md:max-w-[180px] lg:max-w-[200px] mx-auto">
+          <p className="mt-1 md:mt-3 text-[8px] md:text-sm opacity-75 max-w-[80px] md:max-w-[180px] lg:max-w-[200px] mx-auto">
             {banner.clicks > 0 ? `${banner.clicks} clicks` : "Act fast!"}
           </p>
         </motion.div>
       </div>
 
       {/* Image side - Banner image occupying remaining space */}
-      <div className="flex-1 min-h-[160px] md:min-h-0 relative overflow-hidden bg-[#f3f3f3]">
+      <div className="flex-1 min-h-[100px] md:min-h-0 relative overflow-hidden bg-[#f3f3f3] order-0 md:order-none">
         <motion.div
           initial={{ scale: 1.05, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -281,14 +281,14 @@ function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 200, delay: 0.3 }}
-          className="absolute bottom-2 right-2 md:bottom-4 md:right-4 lg:bottom-6 lg:right-6 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 md:px-3 md:py-1.5 lg:px-4 lg:py-2 rounded-full font-bold text-[10px] md:text-sm lg:text-base uppercase tracking-wide shadow-lg z-20"
+          className="absolute bottom-1 right-1 md:bottom-4 md:right-4 lg:bottom-6 lg:right-6 bg-gradient-to-r from-red-500 to-orange-500 text-white px-1.5 py-0.5 md:px-3 md:py-1.5 lg:px-4 lg:py-2 rounded-full font-bold text-[8px] md:text-sm lg:text-base uppercase tracking-wide shadow-lg z-20"
         >
           ⚡ SALE
         </motion.div>
       </div>
 
       {/* CTA Button inside image area - larger on desktop */}
-      <div className="absolute bottom-3 left-3 md:bottom-6 md:left-6 lg:bottom-8 lg:left-8 z-20">
+      <div className="absolute bottom-2 left-2 md:bottom-6 md:left-6 lg:bottom-8 lg:left-8 z-20">
         {banner.link ? (
           <Link
             href={banner.link}

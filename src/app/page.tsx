@@ -1,18 +1,19 @@
 import HomeClient from "./HomeClient";
-import { getProducts, getNewArrivals } from "@/lib/products";
+import { getProducts, getNewArrivals, getFlashSales, getTrendingProducts } from "@/lib/products";
 import { getStoreCode } from "@/lib/server/store-utils";
 import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
 
-export const revalidate = 60; // Cache for 60 seconds
+export const revalidate = 60;
 
 export default async function HomePage() {
   const storeCode = await getStoreCode();
   
-  // Get all products - filtering happens on client side to avoid hydration mismatches
-  const [products, newArrivals] = await Promise.all([
+  const [products, newArrivals, flashSales, trending] = await Promise.all([
     getProducts(storeCode),
-    getNewArrivals(storeCode)
+    getNewArrivals(storeCode),
+    getFlashSales(storeCode),
+    getTrendingProducts(storeCode)
   ]);
   
   return (
@@ -21,7 +22,7 @@ export default async function HomePage() {
         <Loader size="lg" />
       </div>
     }>
-      <HomeClient initialProducts={products} newArrivals={newArrivals} />
+      <HomeClient initialProducts={products} newArrivals={newArrivals} flashSales={flashSales} hot={trending} />
     </Suspense>
   );
 }

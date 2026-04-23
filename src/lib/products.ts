@@ -1,6 +1,6 @@
 import { prisma, prismaWithRetry } from "./prisma";
 
-export const revalidate = 0;
+export const revalidate = 300; // Cache for 5 minutes
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -15,22 +15,34 @@ export function hasValidPrice(product: any, userCountry?: string): boolean {
   return product.price > 0;
 }
 
-export async function getProducts(storeCode?: string, page: number = 1, limit: number = 50) {
+export async function getProducts(storeCode?: string, page: number = 1, limit: number = 50, category?: string, brand?: string, trendingOnly?: boolean) {
   const skip = (page - 1) * limit;
   
   try {
     const dbProducts = await prismaWithRetry(async () => {
       return await prisma.product.findMany({
-        where: { active: true },
+        where: { 
+          active: true,
+          ...(trendingOnly === true && { trending: true }),
+          ...(brand && { 
+            brand: {
+              name: brand
+            }
+          }),
+          ...(category && {
+            productCategories: {
+              some: {
+                category: {
+                  name: category
+                }
+              }
+            }
+          })
+        },
         select: {
           id: true,
           name: true,
-          description: true,
           shortDescription: true,
-          benefits: true,
-          ingredients: true,
-          howToUse: true,
-          features: true,
           mainImage: true,
           images: true,
           stockQuantity: true,
@@ -64,7 +76,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         take: limit,
         skip: skip,
       });
-    }, 2, 500); // 2 retries, 500ms delay
+    }, 2, 500);
 
     const products = dbProducts.map((p: any) => {
       const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
@@ -85,12 +97,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
       return {
         id: p.id,
         name: p.name,
-        description: p.description || "",
         shortDescription: p.shortDescription || "",
-        benefits: p.benefits || "",
-        ingredients: p.ingredients || "",
-        howToUse: p.howToUse || "",
-        features: p.features || [],
         images: galleryImages,
         mainImage: mainImage,
         stockQuantity: p.stockQuantity || 0,
@@ -101,8 +108,8 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         priceCents: Number(p.price) || 0,
         regularPrice: Number(p.price) || 0,
         regularPriceCents: Number(p.price) || 0,
-        salePrice: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
-        salePriceCents: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
+        salePrice: p.discountPrice ? Number(p.discountPrice) : null,
+        salePriceCents: p.discountPrice ? Number(p.discountPrice) : null,
         discountPrice: p.discountPrice ? Number(p.discountPrice) : null,
         discountCents: p.discountPrice ? Number(p.discountPrice) : null,
         currency: currency,
@@ -234,51 +241,41 @@ export async function invalidateProductCache(productId: string): Promise<void> {
   // Redis removed
 }
 
-// Function to fetch new arrival products (latest 4 products)
-export async function getNewArrivals(storeCode?: string, limit: number = 4) {
+export async function getNewArrivals(storeCode?: string, limit: number = 20) {
   try {
-    let dbProducts: any[] = [];
-    
-    if (storeCode) {
-      const inventories = await prismaWithRetry(async () => {
-        return await (prisma as any).storeInventory.findMany({
-          where: { store: { code: storeCode } },
-          include: {
-            product: {
-              include: {
-                brand: true,
-                productCategories: { include: { category: true } },
-              },
-            }
-          },
-          orderBy: { product: { createdAt: 'desc' } },
-          take: limit,
-        });
+    const dbProducts = await prismaWithRetry(async () => {
+      return await prisma.product.findMany({
+        where: { 
+          active: true,
+          freshFromShelf: true
+        },
+        select: {
+          id: true,
+          name: true,
+          shortDescription: true,
+          mainImage: true,
+          images: true,
+          stockQuantity: true,
+          averageRating: true,
+          ratingCount: true,
+          totalSales: true,
+          price: true,
+          discountPrice: true,
+          currency: true,
+          active: true,
+          hot: true,
+          trending: true,
+          createdAt: true,
+          brand: { select: { name: true } },
+          productCategories: { include: { category: true } },
+          productSkinTones: { include: { skinTone: true } },
+          subCategory: { select: { name: true } },
+          countryPrices: { where: { active: true }, select: { country: true, price: true, currency: true, active: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
       });
-      dbProducts = inventories.map((inv: any) => ({
-        ...inv.product,
-        price: Number(inv.price) || 0,
-        priceCents: Number(inv.price) || 0,
-        discountPrice: null,
-        discountCents: null,
-        stockQuantity: inv.quantity
-      })).filter((p: any) => p.active);
-    } else {
-      dbProducts = await prismaWithRetry(async () => {
-        return await prisma.product.findMany({
-          where: { active: true },
-          include: {
-            brand: true,
-            productCategories: { include: { category: true } },
-            productSkinTones: { include: { skinTone: true } },
-            productSkinConcerns: { include: { skinConcern: true } },
-            subCategory: { include: { category: true } },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: limit,
-        });
-      });
-    }
+    });
 
     const products = dbProducts.map((p: any) => {
       const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
@@ -290,18 +287,12 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
         name: pst.skinTone?.name,
         hexColor: pst.skinTone?.hexColor
       })).filter((t: any) => t.name) || [];
-      const skinConcerns = p.productSkinConcerns?.map((psc: any) => psc.skinConcern?.name).filter(Boolean) || [];
       const subCategoryName = p.subCategory?.name;
 
       return {
         id: p.id,
         name: p.name,
-        description: p.description || "",
         shortDescription: p.shortDescription || "",
-        benefits: p.benefits || "",
-        ingredients: p.ingredients || "",
-        howToUse: p.howToUse || "",
-        features: p.features || [],
         images: galleryImages,
         mainImage: mainImage,
         stockQuantity: p.stockQuantity || 0,
@@ -312,14 +303,15 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
         priceCents: Number(p.price) || 0,
         regularPrice: Number(p.price) || 0,
         regularPriceCents: Number(p.price) || 0,
-        salePrice: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
-        salePriceCents: p.discountPrice ? Number(p.price) - Number(p.discountPrice) : null,
+        salePrice: p.discountPrice ? Number(p.discountPrice) : null,
+        salePriceCents: p.discountPrice ? Number(p.discountPrice) : null,
         discountPrice: p.discountPrice ? Number(p.discountPrice) : null,
         discountCents: p.discountPrice ? Number(p.discountPrice) : null,
         currency: p.currency?.toUpperCase() || 'USD',
         active: p.active,
         hot: p.hot,
         trending: p.trending,
+        createdAt: p.createdAt,
         brand: p.brand ? { name: p.brand.name } : null,
         brandName: p.brand?.name,
         category: { name: primaryCategory },
@@ -327,14 +319,200 @@ export async function getNewArrivals(storeCode?: string, limit: number = 4) {
         categories: categoryNames,
         categoriesArray: categoryNames,
         skinTones,
-        skinConcerns,
         subCategory: subCategoryName ? { name: subCategoryName } : null,
+        countryPrices: p.countryPrices || [],
       };
     });
 
     return products;
   } catch (error) {
     console.error("Prisma New Arrivals Fetch Error:", error);
+    return [];
+  }
+}
+
+export async function getFlashSales(storeCode?: string, limit: number = 20) {
+  try {
+    const dbProducts = await prismaWithRetry(async () => {
+      return await prisma.product.findMany({
+        where: { 
+          active: true,
+          hot: true
+        },
+        select: {
+          id: true,
+          name: true,
+          shortDescription: true,
+          mainImage: true,
+          images: true,
+          stockQuantity: true,
+          averageRating: true,
+          ratingCount: true,
+          totalSales: true,
+          price: true,
+          discountPrice: true,
+          currency: true,
+          active: true,
+          hot: true,
+          trending: true,
+          createdAt: true,
+          brand: { select: { name: true } },
+          productCategories: { include: { category: true } },
+          productSkinTones: { include: { skinTone: true } },
+          subCategory: { select: { name: true } },
+          countryPrices: { where: { active: true }, select: { country: true, price: true, currency: true, active: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+    });
+
+    console.log("getFlashSales found:", dbProducts.length, "products");
+
+    const products = dbProducts.map((p: any) => {
+      const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
+      const galleryImages = (p.images || []).filter(isValidImageUrl);
+
+      const categoryNames = p.productCategories?.map((pc: any) => pc.category?.name).filter(Boolean) || [];
+      const primaryCategory = categoryNames[0] || "General";
+      const skinTones = p.productSkinTones?.map((pst: any) => ({
+        name: pst.skinTone?.name,
+        hexColor: pst.skinTone?.hexColor
+      })).filter((t: any) => t.name) || [];
+      const subCategoryName = p.subCategory?.name;
+
+      const regularPrice = Number(p.price) || 0;
+      const salePrice = Number(p.discountPrice) || 0;
+
+      return {
+        id: p.id,
+        name: p.name,
+        shortDescription: p.shortDescription || "",
+        images: galleryImages,
+        mainImage: mainImage,
+        stockQuantity: p.stockQuantity || 0,
+        averageRating: p.averageRating || 0,
+        ratingCount: p.ratingCount || 0,
+        totalSales: p.totalSales || 0,
+        price: regularPrice,
+        priceCents: regularPrice,
+        regularPrice: regularPrice,
+        regularPriceCents: regularPrice,
+        discountPrice: salePrice || 0,
+        discountCents: salePrice || 0,
+        currency: p.currency?.toUpperCase() || 'USD',
+        active: p.active,
+        hot: p.hot,
+        trending: p.trending,
+        createdAt: p.createdAt,
+        brand: p.brand ? { name: p.brand.name } : null,
+        brandName: p.brand?.name,
+        category: { name: primaryCategory },
+        categoryName: primaryCategory,
+        categories: categoryNames,
+        categoriesArray: categoryNames,
+        skinTones,
+        subCategory: subCategoryName ? { name: subCategoryName } : null,
+        countryPrices: p.countryPrices || [],
+      };
+    });
+
+    return products;
+  } catch (error) {
+    console.error("Prisma Flash Sales Fetch Error:", error);
+    return [];
+  }
+}
+
+export async function getTrendingProducts(storeCode?: string, limit: number = 20) {
+  try {
+    const dbProducts = await prismaWithRetry(async () => {
+      return await prisma.product.findMany({
+        where: { 
+          active: true,
+          trending: true
+        },
+        select: {
+          id: true,
+          name: true,
+          shortDescription: true,
+          mainImage: true,
+          images: true,
+          stockQuantity: true,
+          averageRating: true,
+          ratingCount: true,
+          totalSales: true,
+          price: true,
+          discountPrice: true,
+          currency: true,
+          active: true,
+          hot: true,
+          trending: true,
+          createdAt: true,
+          brand: { select: { name: true } },
+          productCategories: { include: { category: true } },
+          productSkinTones: { include: { skinTone: true } },
+          subCategory: { select: { name: true } },
+          countryPrices: { where: { active: true }, select: { country: true, price: true, currency: true, active: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+    });
+
+    console.log("getTrendingProducts found:", dbProducts.length, "products");
+
+    const products = dbProducts.map((p: any) => {
+      const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
+      const galleryImages = (p.images || []).filter(isValidImageUrl);
+
+      const categoryNames = p.productCategories?.map((pc: any) => pc.category?.name).filter(Boolean) || [];
+      const primaryCategory = categoryNames[0] || "General";
+      const skinTones = p.productSkinTones?.map((pst: any) => ({
+        name: pst.skinTone?.name,
+        hexColor: pst.skinTone?.hexColor
+      })).filter((t: any) => t.name) || [];
+      const subCategoryName = p.subCategory?.name;
+
+      const regularPrice = Number(p.price) || 0;
+      const salePrice = Number(p.discountPrice) || 0;
+
+      return {
+        id: p.id,
+        name: p.name,
+        shortDescription: p.shortDescription || "",
+        images: galleryImages,
+        mainImage: mainImage,
+        stockQuantity: p.stockQuantity || 0,
+        averageRating: p.averageRating || 0,
+        ratingCount: p.ratingCount || 0,
+        totalSales: p.totalSales || 0,
+        price: regularPrice,
+        priceCents: regularPrice,
+        regularPrice: regularPrice,
+        regularPriceCents: regularPrice,
+        discountPrice: salePrice || 0,
+        discountCents: salePrice || 0,
+        currency: p.currency?.toUpperCase() || 'USD',
+        active: p.active,
+        hot: p.hot,
+        trending: p.trending,
+        createdAt: p.createdAt,
+        brand: p.brand ? { name: p.brand.name } : null,
+        brandName: p.brand?.name,
+        category: { name: primaryCategory },
+        categoryName: primaryCategory,
+        categories: categoryNames,
+        categoriesArray: categoryNames,
+        skinTones,
+        subCategory: subCategoryName ? { name: subCategoryName } : null,
+        countryPrices: p.countryPrices || [],
+      };
+    });
+
+    return products;
+  } catch (error) {
+    console.error("Prisma Trending Products Fetch Error:", error);
     return [];
   }
 }

@@ -32,8 +32,10 @@ export interface EmailAttachment {
 export interface EmailOptions {
   to: EmailRecipient | EmailRecipient[];
   subject: string;
-  template: EmailTemplate;
-  data: Record<string, any>;
+  template?: EmailTemplate;
+  data?: Record<string, any>;
+  html?: string;
+  text?: string;
   cc?: EmailRecipient | EmailRecipient[];
   bcc?: EmailRecipient | EmailRecipient[];
   replyTo?: string;
@@ -71,13 +73,19 @@ export interface OrderConfirmationData {
   customerEmail: string;
   orderDate: string;
   items: Array<{
+    id?: string;
     name: string;
     quantity: number;
     price: number;
+    brand?: string;
+    imageUrl?: string;
   }>;
   totalAmount: number;
   shippingAddress: string;
   trackingUrl?: string;
+  paymentStatus?: 'Paid' | 'Cash on Delivery';
+  paymentMethod?: string;
+  estimatedDelivery?: string;
 }
 
 export interface PasswordResetData {

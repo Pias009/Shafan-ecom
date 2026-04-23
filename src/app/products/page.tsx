@@ -4,7 +4,7 @@ import { getStoreCode } from "@/lib/server/store-utils";
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 
 async function getBanners() {
   try {
@@ -50,7 +50,7 @@ function getPriceFromCountryPrices(countryPrices: any[], countryCode: string) {
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; brand?: string; q?: string; page?: string }>;
+  searchParams: Promise<{ category?: string; brand?: string; q?: string; page?: string; sort?: string; trending?: string }>;
 }) {
   const [storeCode, params] = await Promise.all([
     getStoreCode(),
@@ -58,12 +58,18 @@ export default async function ProductsPage({
   ]);
   
   const page = parseInt(params.page || '1', 10);
-  const limit = 20;
+  // Load more products by default to show all categories
+  const limit = 100;
+  const isTrending = params.trending === 'true';
+
+  const category = params.category;
+  const brand = params.brand;
+  const sort = params.sort;
 
   // Parallelize products, total count, banners and all filter options
   const [products, totalCount, banners, allCategories, allSubCategories, allBrands, allSkinTones, allSkinConcerns] = await Promise.all([
-    getProducts(storeCode, page, limit),
-    getProductCount(storeCode),
+    getProducts(storeCode, page, limit, category, brand, isTrending),
+    isTrending ? 0 : getProductCount(storeCode),
     getBanners(),
     prisma.category.findMany({ select: { name: true } }),
     prisma.subCategory.findMany({ select: { name: true } }),
@@ -72,8 +78,8 @@ export default async function ProductsPage({
     prisma.skinConcern.findMany({ select: { name: true } }),
   ]);
 
-  const category = params.category;
-  const brand = params.brand;
+  // Get total count for trending if needed
+  const trendingCount = isTrending ? products.length : 0;
 
   const filterOptions = {
     categories: allCategories.map(c => c.name),
@@ -102,7 +108,8 @@ export default async function ProductsPage({
       discountPrice: currentPrice < originalPrice ? originalPrice : undefined,
       brandName: p.brandName || p.brand?.name || "Generic",
       categoryName: p.categoryName || p.category?.name || "General",
-      imageUrl: p.mainImage,
+      categories: p.categories || [],
+      imageUrl: p.imageUrl || p.mainImage,
       images: p.images || []
     };
   });
@@ -111,10 +118,12 @@ export default async function ProductsPage({
     initialProducts={transformed} 
     category={category} 
     brand={brand} 
+    sort={sort}
     banners={banners}
-    totalCount={totalCount}
+    totalCount={isTrending ? trendingCount : totalCount}
     currentPage={page}
     limit={limit}
     filterOptions={filterOptions}
+    isTrending={isTrending}
   />;
 }

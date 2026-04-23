@@ -57,8 +57,8 @@ export async function sendEmail({
         const result = await emailService.sendEmail({
           to: { email: to },
           subject,
-          template: 'password-reset', // Default template, but we're overriding with custom HTML
-          data: { email: to, name: '', resetLink: '' },
+          html,
+          text,
         });
         
         if (result.success) {

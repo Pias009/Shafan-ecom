@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { ShoppingBag, Star, Package, ShoppingCart, Truck, Flame } from "lucide-react";
+import { ShoppingBag, ShoppingCart, Truck, Flame, Star } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -41,6 +41,7 @@ interface ProductCardProps {
   onAddToCart: (product: any) => void;
   onOrderNow?: (product: any) => void;
   compact?: boolean;
+  priority?: boolean;
 }
 
 function ProductCard({
@@ -49,6 +50,7 @@ function ProductCard({
   onAddToCart,
   onOrderNow,
   compact = false,
+  priority = false,
 }: ProductCardProps) {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -81,16 +83,19 @@ function ProductCard({
   }
 
   // Safely get the display price using country-specific pricing
-  const { price: countryPrice } = getDisplayPrice(product, selectedCountry);
+  const { price: countryPrice, hasDiscount: countryHasDiscount, discountPrice: countryDiscountPrice } = getDisplayPrice(product, selectedCountry);
   const basePrice = product.discountPrice ?? product.price;
   const displayPrice = countryPrice > 0 ? countryPrice : basePrice;
   const isNotAvailable = displayPrice <= 0;
-  const price = displayPrice;
-  const hasDiscount = countryPrice > 0 && product.discountPrice && product.discountPrice < countryPrice;
+  const hasDiscount = countryHasDiscount;
+  const actualDiscountPrice = countryHasDiscount && countryDiscountPrice > 0 ? countryDiscountPrice : (product.discountPrice || 0);
+  const showOriginalPrice = hasDiscount && actualDiscountPrice > 0 && actualDiscountPrice < displayPrice;
+  const salePrice = showOriginalPrice ? actualDiscountPrice : displayPrice;
+  const originalPrice = showOriginalPrice ? displayPrice : 0;
   
   // Calculate discount percentage
-  const discountPercentage = hasDiscount 
-    ? Math.round(((countryPrice - product.discountPrice!) / countryPrice) * 100)
+  const discountPercentage = showOriginalPrice && originalPrice > 0
+    ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
     : 0;
 
   // Safely get the brand name as a string
@@ -133,7 +138,7 @@ function ProductCard({
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
             className="object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
-            priority={false}
+            priority={priority}
           />
 
           {/* Badges */}
@@ -146,26 +151,7 @@ function ProductCard({
             )}
           </div>
 
-          {/* Right Side Badges - Discount & Free Delivery */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1.5 z-20">
-            {/* Discount Badge - Red */}
-            {hasDiscount && (
-              <div className="bg-red-600 text-white rounded-lg px-2.5 py-1.5 shadow-lg flex flex-col items-center justify-center">
-                <span className="text-[10px] sm:text-[11px] font-black leading-none">
-                  -{discountPercentage}%
-                </span>
-                <span className="text-[7px] sm:text-[8px] font-semibold leading-tight">OFF</span>
-              </div>
-            )}
-            
-            {/* Free Delivery Badge */}
-            {product.freeDelivery && (
-              <div className="bg-emerald-600 text-white rounded-lg px-2.5 py-1.5 shadow-lg flex items-center justify-center gap-1 whitespace-nowrap">
-                <Truck size={12} />
-                <span className="text-[7px] sm:text-[8px] font-bold uppercase tracking-tight">FREE</span>
-              </div>
-            )}
-          </div>
+          
         </div>
 
         {/* Hover Background */}
@@ -175,7 +161,7 @@ function ProductCard({
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col items-center justify-center">
           {/* Price - Shows on Hover */}
           <div className="mb-4 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 text-center">
-            <Price amount={price} showSymbolSmall countryPrices={product.countryPrices} />
+            <Price amount={displayPrice} showSymbolSmall countryPrices={product.countryPrices} />
           </div>
           
           {/* Action Buttons - Vertical View */}
@@ -210,21 +196,11 @@ function ProductCard({
         {/* Price and Stock Info Row */}
         <div className="flex items-center justify-between mb-2 flex-shrink-0">
           <div className="flex items-baseline gap-2">
-            <Price amount={price} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} />
-            {hasDiscount && (
-              <Price amount={product.discountPrice || countryPrice} className="text-[10px] text-red-500 line-through font-bold" countryPrices={product.countryPrices} />
+            <Price amount={showOriginalPrice ? salePrice : displayPrice} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} />
+            {showOriginalPrice && (
+              <Price amount={originalPrice} className="text-[10px] text-red-500 line-through font-bold" countryPrices={product.countryPrices} />
             )}
           </div>
-          
-          {/* Stock Status - Moved to top right */}
-          {product.stockQuantity !== undefined && (
-            <div className="flex items-center gap-1 bg-gray-50/50 px-1.5 py-0.5 rounded-lg">
-              <Package size={10} className={product.stockQuantity > 0 ? "text-emerald-500" : "text-red-500"} />
-              <span className={`text-[8px] sm:text-[10px] font-semibold ${product.stockQuantity > 0 ? "text-emerald-700" : "text-red-600"}`}>
-                {product.stockQuantity > 0 ? `${product.stockQuantity}` : t.product.outOfStock}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Product Name */}
@@ -239,16 +215,8 @@ function ProductCard({
           {brandName}
         </p>
 
-        {/* Stars */}
-        <div className="flex items-center gap-0.5 mb-2 flex-shrink-0">
-          {renderStars(product.averageRating || 0)}
-          <span className="text-[8px] sm:text-[9px] text-gray-400 font-bold ml-1">({product.ratingCount || 0})</span>
-        </div>
-
-        
-
-        {/* Action Buttons - Always Visible (Horizontal Row) */}
-        <div className="flex justify-center flex-shrink-0">
+        {/* Add to Cart Button */}
+        <div className="mt-auto flex justify-center">
           <button
             type="button"
             disabled={isNotAvailable}

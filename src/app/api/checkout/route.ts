@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
+import { notifyNewOrder } from "@/lib/pusher";
 
 // Helper function to determine courier based on shipping address
 function determineCourier(shippingAddress: any): string {
@@ -160,6 +161,15 @@ export async function POST(req: Request) {
         items: true,
       }
     });
+
+    // Trigger real-time notification to admin panel
+    notifyNewOrder({
+      id: order.id,
+      total: Number(order.total) || 0,
+      currency: order.currency || "aed",
+      userName: session.user.name || undefined,
+      email: session.user.email || undefined,
+    }).catch(console.error);
 
     return NextResponse.json({
       orderId: order.id,

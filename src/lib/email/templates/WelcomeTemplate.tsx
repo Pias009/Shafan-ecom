@@ -17,17 +17,19 @@ export const WelcomeTemplate = ({
   name,
   loginUrl,
 }: WelcomeTemplateProps) => {
+  const DOMAIN = 'https://shanafaglobal.com';
+  
   return (
     <BaseTemplate
-      previewText={`Welcome to SHANFA STORE, ${name || 'Valued Customer'}!`}
-      title="Welcome to SHANFA STORE! 🎉"
+      previewText={`Welcome to SHANFA GLOBAL, ${name || 'Valued Customer'}!`}
+      title="Welcome to SHANFA GLOBAL!"
     >
       <Text style={paragraph}>
         Hello {name || 'there'},
       </Text>
       
       <Text style={paragraph}>
-        Welcome to SHANFA STORE! We're thrilled to have you join our community of 
+        Welcome to SHANFA GLOBAL! We're thrilled to have you join our community of 
         shoppers who value quality, convenience, and exceptional service.
       </Text>
 
@@ -80,19 +82,19 @@ export const WelcomeTemplate = ({
 
       <Text style={smallText}>
         <strong>Need help?</strong> Visit our{' '}
-        <a href="https://shanfa-store.com/help" style={link}>
+        <a href={`${DOMAIN}/help`} style={link}>
           Help Center
         </a>{' '}
         or contact our support team at{' '}
-        <a href="mailto:support@shanfa-store.com" style={link}>
-          support@shanfa-store.com
+        <a href={`mailto:support@shanafaglobal.com`} style={link}>
+          support@shanafaglobal.com
         </a>
       </Text>
 
       <Text style={smallText}>
-        You're receiving this email because you recently created an account on SHANFA STORE.
+        You're receiving this email because you recently created an account on SHANFA GLOBAL.
         If this wasn't you, please{' '}
-        <a href="https://shanfa-store.com/contact" style={link}>
+        <a href={`${DOMAIN}/contact`} style={link}>
           contact us immediately
         </a>.
       </Text>

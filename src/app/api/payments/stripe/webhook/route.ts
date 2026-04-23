@@ -104,27 +104,62 @@ export async function POST(req: Request) {
           });
         }
 
-        // Send confirmation email to client
+        // Send confirmation email to client (only if not already sent)
         const customerEmail = updatedOrder.email || updatedOrder.user?.email;
-        if (customerEmail) {
+        if (customerEmail && !updatedOrder.emailConfirmationSent) {
+          // Mark as sent first
+          await prisma.order.update({
+            where: { id: orderId },
+            data: { emailConfirmationSent: true }
+          }).catch(() => {});
+          
+          const orderUrl = `https://shanfa-store.com/account/orders/${updatedOrder.id}`;
+          const trackingUrl = `https://global-courier.com/track/${trackingCode}`;
+          
           sendEmail({
             to: customerEmail,
-            subject: `Order Confirmation #${updatedOrder.id}`,
+            subject: `Payment Confirmed! Order #${updatedOrder.id} - SHANFA`,
             html: `
-              <h1>Thank you for your order!</h1>
-              <p>We've received your payment for order #${updatedOrder.id}.</p>
-              <p>Total Paid: ${(updatedOrder.total || 0).toFixed(2)} ${updatedOrder.currency.toUpperCase()}</p>
-              <p>We are now processing your order and will ship it soon!</p>
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                  <h1 style="color: white; margin: 0 0 10px; font-size: 28px;">Payment Confirmed! ✅</h1>
+                  <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 16px;">Your payment has been received</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e9ecef;">
+                  <h2 style="color: #333; margin: 0 0 20px;">Order #${updatedOrder.id}</h2>
+                  <div style="background: white; padding: 20px; border-radius: 12px; margin: 0 0 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <p style="color: #495057; margin: 0;"><strong>Total Paid:</strong> <span style="font-size: 24px; color: #28a745;">${updatedOrder.currency.toUpperCase()} ${(updatedOrder.total || 0).toFixed(2)}</span></p>
+                    <p style="color: #6c757d; margin: 10px 0 0; font-size: 13px;">Payment confirmed. We're now processing your order!</p>
+                  </div>
+                  <div style="display: flex; gap: 12px;">
+                    <a href="${orderUrl}" style="flex: 1; background: #28a745; color: white; padding: 16px 24px; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 600;">📋 View Order</a>
+                    <a href="${trackingUrl}" style="flex: 1; background: #667eea; color: white; padding: 16px 24px; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 600;">🚚 Track Order</a>
+                  </div>
+                  <p style="color: #6c757d; font-size: 12px; text-align: center; margin: 24px 0 0;">Thank you for shopping with SHANFA! 💚</p>
+                </div>
+              </div>
             `
           }).catch(console.error);
+        } else if (updatedOrder.emailConfirmationSent) {
+          console.log(`[Stripe Webhook] Email already sent for order ${orderId}, skipping...`);
         }
 
-        // Send notification to admin (Optional)
+        // Send notification to admin (Optional) - always notify admin of payment
         if (process.env.ADMIN_EMAIL) {
           sendEmail({
             to: process.env.ADMIN_EMAIL,
-            subject: `New PAID Order - #${updatedOrder.id}`,
-            html: `<p>New order paid. Customer: ${customerEmail || 'Guest'}. Amount: ${(updatedOrder.total || 0).toFixed(2)} ${updatedOrder.currency.toUpperCase()}</p>`
+            subject: `Payment Received - Order #${updatedOrder.id} - ${(updatedOrder.total || 0).toFixed(2)} ${updatedOrder.currency.toUpperCase()}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2 style="color: #28a745;">Payment Received! ✅</h2>
+                <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
+                  <tr><td style="padding: 8px 0; color: #666;">Order ID</td><td style="padding: 8px 0;"><strong>#${updatedOrder.id}</strong></td></tr>
+                  <tr><td style="padding: 8px 0; color: #666;">Customer</td><td style="padding: 8px 0;">${customerEmail || 'Guest'}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px; color: #28a745;">${updatedOrder.currency.toUpperCase()} ${(updatedOrder.total || 0).toFixed(2)}</strong></td></tr>
+                </table>
+                <p style="margin-top: 20px;"><a href="https://shanfa-store.com/ueadmin/orders/${updatedOrder.id}" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order →</a></p>
+              </div>
+            `
           }).catch(console.error);
         }
       }

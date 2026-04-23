@@ -11,8 +11,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <GlobalInitializer />
       <NextThemesProvider
         attribute="class"
-        defaultTheme="dark"
-        enableSystem
+        defaultTheme="light"
+        enableSystem={false}
         disableTransitionOnChange
       >
         <CustomToaster position="top-center" />
@@ -21,4 +21,3 @@ export function Providers({ children }: { children: React.ReactNode }) {
     </SessionProvider>
   );
 }
-

@@ -7,9 +7,10 @@ import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Filter, X, Loader2 } from "lucide-react";
+import { Filter, X, Loader2, Flame } from "lucide-react";
 import { Price } from "@/components/Price";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
@@ -51,17 +52,20 @@ export default function ProductsClient({
   category, 
   subcategory,
   brand: initialBrand, 
+  sort,
   banners = [],
   totalCount = 0,
   currentPage = 1,
   limit = 20,
   isRoutinesPage = false,
-  filterOptions
+  filterOptions,
+  isTrending = false,
 }: { 
   initialProducts: any[], 
   category?: string, 
   subcategory?: string,
   brand?: string, 
+  sort?: string,
   banners?: any[],
   totalCount?: number,
   currentPage?: number,
@@ -73,7 +77,8 @@ export default function ProductsClient({
     brands: string[];
     skinTones: string[];
     skinConcerns: string[];
-  }
+  },
+  isTrending?: boolean,
 }) {
   const [products, setProducts] = useState<any[]>(initialProducts);
   const [loading, setLoading] = useState(false);
@@ -85,12 +90,17 @@ export default function ProductsClient({
   const [selectedSkinTone, setSelectedSkinTone] = useState("All");
   const [selectedSkinConcern, setSelectedSkinConcern] = useState("All");
   const [maxPrice, setMaxPrice] = useState(100000);
-  const [searchInputuickView, setSearchInputuickView] = useState<any>(null);
+  const [sortOrder, setSortOrder] = useState(sort || "newest");
+  const [quickView, setQuickView] = useState<any>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { query: q, clearQuery } = useSearchStore();
   const isRoutines = isRoutinesPage;
+  const [mounted, setMounted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   const { addItem, hasAddress } = useCartStore();
   const { currentLanguage } = useLanguageStore();
@@ -103,8 +113,24 @@ export default function ProductsClient({
     }
   }, [q]);
 
+  // Sync products when initialProducts change (from server-side navigation)
+  useEffect(() => {
+    if (initialProducts) {
+      setProducts(initialProducts);
+      setPage(currentPage);
+      setHasMore(initialProducts.length === limit);
+      
+      // Update local filter states to match URL params from server
+      setSelectedCategory(category || "All");
+      setBrand(initialBrand || "All");
+      setSortOrder(sort || "newest");
+    }
+  }, [initialProducts, currentPage, limit, category, initialBrand, sort]);
+
   // Initialize filters from URL params on mount
   useEffect(() => {
+    setMounted(true);
+    setHydrated(true);
     const params = new URLSearchParams(window.location.search);
     const urlBrand = params.get("brand");
     const urlCategory = params.get("category");
@@ -112,6 +138,7 @@ export default function ProductsClient({
     const urlSkinTone = params.get("skinTone");
     const urlConcern = params.get("concern");
     const urlMaxPrice = params.get("maxPrice");
+    const urlSort = params.get("sort");
     
     if (urlBrand) setBrand(urlBrand);
     if (urlCategory) setSelectedCategory(urlCategory);
@@ -119,32 +146,101 @@ export default function ProductsClient({
     if (urlSkinTone) setSelectedSkinTone(urlSkinTone);
     if (urlConcern) setSelectedSkinConcern(urlConcern);
     if (urlMaxPrice) setMaxPrice(Number(urlMaxPrice));
+    if (urlSort) setSortOrder(urlSort);
   }, []);
 
+  // React to URL changes (when clicking navbar links)
   useEffect(() => {
-    return () => {
-      clearQuery();
-    };
-  }, [clearQuery]);
+    if (!searchParams) return;
+    
+    const urlBrand = searchParams.get("brand");
+    const urlCategory = searchParams.get("category");
+    const urlSubcategory = searchParams.get("subcategory");
+    const urlSkinTone = searchParams.get("skinTone");
+    const urlConcern = searchParams.get("concern");
+    const urlMaxPrice = searchParams.get("maxPrice");
+    const urlSort = searchParams.get("sort");
+    const urlQ = searchParams.get("q");
 
-  // Sync filters to URL for sharing
+    if (urlBrand) setBrand(urlBrand);
+    if (urlCategory) setSelectedCategory(urlCategory);
+    if (urlSubcategory) setSelectedSubCategory(urlSubcategory);
+    if (urlSkinTone) setSelectedSkinTone(urlSkinTone);
+    if (urlConcern) setSelectedSkinConcern(urlConcern);
+    if (urlMaxPrice) setMaxPrice(Number(urlMaxPrice));
+    if (urlSort) setSortOrder(urlSort);
+    if (urlQ) setSearchInput(urlQ);
+  }, [searchParams]);
+
+  // REMOVED clearQuery on unmount as it causes loops during router.replace remounts
+
+  // Sync immediate filters to URL
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (searchInput) params.set("q", searchInput);
-    if (brand && brand !== "All" && brand !== t.product.all) params.set("brand", brand);
-    if (selectedCategory && selectedCategory !== "All" && selectedCategory !== t.product.all) params.set("category", selectedCategory);
-    if (selectedSubCategory && selectedSubCategory !== "All") params.set("subcategory", selectedSubCategory);
-    if (selectedSkinTone && selectedSkinTone !== "All") params.set("skinTone", selectedSkinTone);
-    if (selectedSkinConcern && selectedSkinConcern !== "All") params.set("concern", selectedSkinConcern);
-    if (maxPrice < 100000) params.set("maxPrice", maxPrice.toString());
+    if (!hydrated) return;
     
-    const newQuery = params.toString();
-    const currentQuery = window.location.search.replace(/^\?/, '');
-    
-    if (newQuery !== currentQuery) {
-        router.replace(`?${newQuery}`, { scroll: false });
+    const params = new URLSearchParams(window.location.search);
+    let changed = false;
+
+    // Immediate filters
+    const syncImmediate = (key: string, value: string, defaultValue: string) => {
+      if (value && value !== defaultValue) {
+        if (params.get(key) !== value) {
+          params.set(key, value);
+          changed = true;
+        }
+      } else if (params.has(key)) {
+        params.delete(key);
+        changed = true;
+      }
+    };
+
+    syncImmediate("brand", brand, "All");
+    syncImmediate("category", selectedCategory, "All");
+    syncImmediate("subcategory", selectedSubCategory, "All");
+    syncImmediate("skinTone", selectedSkinTone, "All");
+    syncImmediate("concern", selectedSkinConcern, "All");
+    syncImmediate("sort", sortOrder, "newest");
+
+    if (changed) {
+      router.replace(`?${params.toString()}`, { scroll: false });
     }
-  }, [searchInput, brand, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, maxPrice, router, t.product.all]);
+  }, [brand, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, sortOrder, router, hydrated]);
+
+  // Sync debounced filters (search, price) to URL
+  useEffect(() => {
+    if (!hydrated) return;
+    
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      let changed = false;
+
+      if (searchInput) {
+        if (params.get("q") !== searchInput) {
+          params.set("q", searchInput);
+          changed = true;
+        }
+      } else if (params.has("q")) {
+        params.delete("q");
+        changed = true;
+      }
+
+      if (maxPrice < 100000) {
+        if (params.get("maxPrice") !== maxPrice.toString()) {
+          params.set("maxPrice", maxPrice.toString());
+          changed = true;
+        }
+      } else if (params.has("maxPrice")) {
+        params.delete("maxPrice");
+        changed = true;
+      }
+
+      if (changed) {
+        router.replace(`?${params.toString()}`, { scroll: false });
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchInput, maxPrice, router, hydrated]);
 
 
 
@@ -212,7 +308,7 @@ export default function ProductsClient({
   }, [products, selectedCategory, t.product.all, filterOptions]);
 
   const filtered = useMemo(() => {
-    return products.filter((p) => {
+    const filtered = products.filter((p) => {
       if (isDummyProduct(p)) return false;
       if (!hasValidPrice(p, selectedCountry)) return false;
       
@@ -222,9 +318,11 @@ export default function ProductsClient({
         (p.brandName || '').toLowerCase().includes(searchInput.toLowerCase()) ||
         (p.categoryName || '').toLowerCase().includes(searchInput.toLowerCase()) ||
         (p.subCategoryName || '').toLowerCase().includes(searchInput.toLowerCase());
-      const matchesBrand = brand === t.product.all || p.brandName === brand;
+      const matchesBrand = brand === t.product.all || (p.brandName || '').toLowerCase() === brand.toLowerCase();
       const matchesPrice = price <= maxPrice;
-      const matchesCategory = selectedCategory === t.product.all || p.categoryName === selectedCategory;
+      const matchesCategory = selectedCategory === t.product.all || 
+        (p.categories && p.categories.includes(selectedCategory)) ||
+        p.categoryName === selectedCategory;
       const matchesSubCategory = selectedSubCategory === 'All' || p.subCategoryName === selectedSubCategory;
       const matchesSkinTone = selectedSkinTone === 'All' || 
         (p.skinTones && p.skinTones.some((st: any) => st.name === selectedSkinTone));
@@ -233,7 +331,30 @@ export default function ProductsClient({
       
       return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone && matchesSkinConcern;
     });
-  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, selectedCountry, isDummyProduct]);
+
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortOrder === 'newest') {
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      }
+      if (sortOrder === 'sale') {
+        const aHasSale = a.discountPrice ? 1 : 0;
+        const bHasSale = b.discountPrice ? 1 : 0;
+        return bHasSale - aHasSale;
+      }
+      if (sortOrder === 'price-low') {
+        return (a.price || 0) - (b.price || 0);
+      }
+      if (sortOrder === 'price-high') {
+        return (b.price || 0) - (a.price || 0);
+      }
+      if (sortOrder === 'rating') {
+        return (b.averageRating || 0) - (a.averageRating || 0);
+      }
+      return 0;
+    });
+
+return sorted;
+  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, selectedCountry, isDummyProduct, sortOrder]);
 
 
   function addToCart(product: any) {
@@ -339,7 +460,7 @@ export default function ProductsClient({
           ...p,
           brandName: p.brandName || p.brand?.name || "Generic",
           categoryName: p.categoryName || p.category?.name || "General",
-          imageUrl: p.mainImage || p.imageUrl,
+          imageUrl: p.imageUrl || p.mainImage,
           images: p.images || []
         }));
         setProducts(prev => [...prev, ...transformedNew]);
@@ -356,18 +477,37 @@ export default function ProductsClient({
   }, [loading, hasMore, page, limit]);
 
   // Auto-load more if current filters result in 0 products but more exist on server
+  // Only auto-load if NO filters are applied (otherwise it causes infinite loop)
+  const hasActiveFilters = searchInput || brand !== t.product.all || selectedCategory !== t.product.all || 
+    selectedSubCategory !== 'All' || selectedSkinTone !== 'All' || selectedSkinConcern !== 'All' || maxPrice < 100000;
+  
   useEffect(() => {
-    if (filtered.length === 0 && hasMore && !loading) {
+    if (!hydrated) return;
+    // Safety check: only auto-load if filtered is 0 and we haven't already tried too many times
+    // or if the page is still reasonably low to avoid infinite scrolls in empty DBs
+    if (filtered.length === 0 && hasMore && !loading && !hasActiveFilters && page < 5) {
       const timer = setTimeout(() => {
         loadMore();
-      }, 800);
+      }, 1500); // Increased delay for safety
       return () => clearTimeout(timer);
     }
-  }, [filtered.length, hasMore, loading, loadMore]);
+  }, [filtered.length, hasMore, loading, loadMore, hasActiveFilters, hydrated, page]);
 
   return (
     <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black">
       <div className="max-w-7xl mx-auto px-6 pt-32 pb-20">
+        {isTrending && (
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-3 w-fit">
+              <Flame className="text-orange-500 fill-orange-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-black/60">Trending Now</span>
+              <Flame className="text-red-500 fill-red-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            </div>
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Most Loved Products</h1>
+            <p className="text-black/60 mt-2 text-sm sm:text-lg max-w-xl">Discover our customers' absolute favorites that everyone's raving about.</p>
+          </div>
+        )}
+        
         <ProductsSlider />
 
         {/* Product Page Banners */}
@@ -427,7 +567,7 @@ export default function ProductsClient({
               exit={{ opacity: 0, y: -20, height: 0 }}
               className="overflow-hidden mb-12"
             >
-              <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 items-stretch shadow-lg border border-black/5">
+              <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 md:gap-4 items-stretch shadow-lg border border-black/5">
                 <div className="col-span-2 md:col-span-3 lg:col-span-1">
                   <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
                     {t.product.search}
@@ -511,6 +651,23 @@ export default function ProductsClient({
 
                 <div>
                   <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                    Sort By
+                  </label>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="sale">On Sale</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="rating">Top Rated</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
                     Max Price
                   </label>
                   <div className="h-10 md:h-12 flex items-center px-2 bg-white/50 rounded-2xl">
@@ -533,21 +690,48 @@ export default function ProductsClient({
 
           <div className="mt-12 md:mt-20 space-y-12 md:space-y-24">
             {categoriesList.filter(cat => cat !== t.product.all && cat !== 'All').map((cat) => {
-              const productsInCat = filtered.filter(p => p.categoryName === cat);
+              const productsInCat = filtered.filter(p => 
+                p.categoryName === cat || (p.categories && p.categories.includes(cat))
+              );
               if (productsInCat.length === 0) return null;
+              
+              const isExpanded = expandedCategories.has(cat);
+              const displayProducts = isExpanded ? productsInCat : productsInCat.slice(0, 10);
+              const hasMore = productsInCat.length > 10;
 
               return (
                 <section key={cat}>
-                  <div className="flex items-center gap-3 md:gap-6 mb-6 md:mb-10 border-b border-black/5 pb-4 md:pb-6">
-                    <h2 className="font-display text-2xl md:text-5xl font-bold text-black">{cat}</h2>
-                    <div className="h-[1px] flex-1 bg-black/10" />
-                    <span suppressHydrationWarning className="font-body text-[9px] md:text-sm font-bold text-black/40 tracking-widest uppercase">
-                      {productsInCat.length} {t.product.items}
-                    </span>
+                  <div className="flex items-center justify-between gap-3 md:gap-6 mb-6 md:mb-10 border-b border-black/5 pb-4 md:pb-6">
+                    <div className="flex items-center gap-3 md:gap-6">
+                      <h2 className="font-display text-2xl md:text-5xl font-bold text-black">{cat}</h2>
+                      <div className="h-[1px] flex-1 bg-black/10 hidden md:block" />
+                      <span suppressHydrationWarning className="font-body text-[9px] md:text-sm font-bold text-black/40 tracking-widest uppercase hidden md:inline">
+                        {productsInCat.length} {t.product.items}
+                      </span>
+                    </div>
+                    
+                    {hasMore && (
+                      <button
+                        onClick={() => {
+                          setExpandedCategories(prev => {
+                            const next = new Set(prev);
+                            if (next.has(cat)) {
+                              next.delete(cat);
+                            } else {
+                              next.add(cat);
+                            }
+                            return next;
+                          });
+                        }}
+                        className="text-xs md:text-sm font-bold text-black/60 hover:text-black underline underline-offset-2 transition-colors"
+                      >
+                        {isExpanded ? 'Show Less' : 'See All'}
+                      </button>
+                    )}
                   </div>
 
                   <div className="grid gap-x-3 md:gap-x-8 gap-y-6 md:gap-y-12 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                    {productsInCat.map((product, idx) => (
+                    {displayProducts.map((product, idx) => (
                       <motion.div
                         key={product.id}
                         initial={{ opacity: 0, y: 30 }}
@@ -557,9 +741,9 @@ export default function ProductsClient({
                       >
                         <ProductCard
                           product={product}
+                          priority={idx < 8}
                           onQuickView={(p) => {
-                            console.log('QuickView product:', p.id, 'imageUrl:', p.imageUrl);
-                            setSearchInputuickView(p);
+                            setQuickView(p);
                           }}
                           onAddToCart={(p) => addToCart(p)}
                           onOrderNow={(p) => orderNow(p)}
@@ -645,11 +829,11 @@ export default function ProductsClient({
       </div>
 
       <ProductQuickViewModal
-        product={searchInputuickView}
-        onClose={() => setSearchInputuickView(null)}
+        product={quickView}
+        onClose={() => setQuickView(null)}
         onAddToCart={(p) => addToCart(p)}
         onOrderNow={(p) => orderNow(p)}
-        onMoreDetails={(productId) => { setSearchInputuickView(null); window.location.href = `/products/${productId}`; }}
+        onMoreDetails={(productId) => { setQuickView(null); window.location.href = `/products/${productId}`; }}
       />
     </div>
   );

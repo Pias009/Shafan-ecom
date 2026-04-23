@@ -794,7 +794,6 @@ body::before {
 .add-to-cart-btn {
   --height: 35px;
   width: 100%;
-  max-width: 140px;
   height: var(--height);
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(20px);

@@ -1,6 +1,8 @@
 "use client";
 
-import { Flame } from "lucide-react";
+import { Flame, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import { ProductCard } from "./ProductCard";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -18,36 +20,87 @@ export function TrendingNowSlider({
   onAddToCart,
   onOrderNow
 }: TrendingNowSliderProps) {
+  const router = useRouter();
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      setTimeout(checkScroll, 300);
+    }
+  };
   
   if (products.length === 0) return null;
 
   return (
-    <section id="trending" className="pt-4 md:pt-12 pb-12 md:pb-20 px-1 sm:px-4">
+    <section id="trending" className="pt-2 md:pt-6 pb-6 md:pb-10 px-1 sm:px-4">
       <div className="mb-4 md:mb-8">
         <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
           <Flame className="text-orange-500 fill-orange-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">Trending Now</span>
           <Flame className="text-red-500 fill-red-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
         </div>
-        <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">{t.home.trendingNow}</h2>
-        <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">{t.home.mostLoved}</p>
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">{t.home.trendingNow}</h2>
+            <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">{t.home.mostLoved}</p>
+          </div>
+          <button
+            onClick={() => router.push("/products/trending")}
+            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-black/80 transition-all"
+          >
+            See All <ArrowRight size={14} />
+          </button>
+        </div>
       </div>
 
       <div className="py-4 sm:py-8 relative">
-        {/* Horizontal scroll container */}
         <div className="relative">
+          {/* Left Scroll Button - Desktop Only */}
+          <button
+            onClick={() => scroll('left')}
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+            disabled={!canScrollLeft}
+          >
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+          </button>
+
+          {/* Right Scroll Button - Desktop Only */}
+          <button
+            onClick={() => scroll('right')}
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+            disabled={!canScrollRight}
+          >
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+          </button>
+
           {/* Scrollable container */}
-          <div className="flex overflow-x-auto pb-6 md:pb-8 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4">
-            {products.map((product) => (
+          <div 
+            ref={scrollRef}
+            onScroll={checkScroll}
+            className="flex overflow-x-auto pb-6 md:pb-8 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4"
+          >
+            {products.map((product, idx) => (
               <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
                 <ProductCard
                   product={{
                     ...product,
                     price: product.price || product.priceCents || 0,
-                    imageUrl: product.mainImage,
-                    brand: product.brand?.name,
+                    imageUrl: product.imageUrl || product.mainImage,
+                    brand: product.brandName || product.brand?.name || "Generic",
                     averageRating: product.averageRating,
                     ratingCount: product.ratingCount,
                     stockQuantity: product.stockQuantity,
@@ -57,87 +110,28 @@ export function TrendingNowSlider({
                   onQuickView={onQuickView}
                   onAddToCart={onAddToCart}
                   onOrderNow={onOrderNow}
+                  priority={idx < 4}
                 />
               </div>
             ))}
           </div>
           
-          {/* Enhanced sliding indicator with 2-second animation */}
-          <div className="flex flex-col items-center mt-4 md:mt-6 gap-2 sm:gap-3">
-            {/* Text hint - responsive text size */}
+          {/* Mobile scroll hint */}
+          <div className="flex flex-col items-center mt-4 md:mt-6 gap-2 sm:gap-3 md:hidden">
             <span className="text-[10px] sm:text-xs font-medium text-black/60 text-center px-2">
               Scroll horizontally to explore trending products
             </span>
-            
-            {/* Modern sliding indicator container - responsive width */}
-            <div className="relative w-32 sm:w-40 md:w-48 h-1.5 bg-black/10 rounded-full overflow-hidden">
-              {/* Sliding bar with gradient and 2-second animation */}
-              <div className="absolute top-0 left-0 h-full w-1/3 bg-gradient-to-r from-orange-400 via-red-500 to-orange-400 animate-slideIndicator rounded-full" />
-              
-              {/* Pulsing dots for additional visual interest - responsive size */}
-              <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse"
-                   style={{ animationDelay: '0.3s' }} />
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse"
-                   style={{ animationDelay: '0.6s' }} />
-              <div className="absolute top-1/2 left-3/4 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse"
-                   style={{ animationDelay: '0.9s' }} />
-            </div>
-            
-            {/* Arrow indicators - responsive size */}
             <div className="flex items-center gap-1.5 sm:gap-2 text-black/40">
-              <svg className="w-3 h-3 sm:w-4 sm:h-4 animate-bounceLeft" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               <span className="text-[9px] sm:text-[10px] font-semibold">SWIPE</span>
-              <svg className="w-3 h-3 sm:w-4 sm:h-4 animate-bounceRight" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
           </div>
         </div>
-        
-        {/* Add CSS animations for the sliding indicator */}
-        <style jsx>{`
-          @keyframes slideIndicator {
-            0% {
-              transform: translateX(-100%);
-            }
-            100% {
-              transform: translateX(300%);
-            }
-          }
-          
-          @keyframes bounceLeft {
-            0%, 100% {
-              transform: translateX(0);
-            }
-            50% {
-              transform: translateX(-4px);
-            }
-          }
-          
-          @keyframes bounceRight {
-            0%, 100% {
-              transform: translateX(0);
-            }
-            50% {
-              transform: translateX(4px);
-            }
-          }
-          
-          .animate-slideIndicator {
-            animation: slideIndicator 2s ease-in-out infinite;
-          }
-          
-          .animate-bounceLeft {
-            animation: bounceLeft 1.5s ease-in-out infinite;
-          }
-          
-          .animate-bounceRight {
-            animation: bounceRight 1.5s ease-in-out infinite;
-            animation-delay: 0.5s;
-          }
-        `}</style>
       </div>
     </section>
   );

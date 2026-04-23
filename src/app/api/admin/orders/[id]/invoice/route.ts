@@ -177,12 +177,13 @@ export async function POST(
         doc.fillColor('#fff').fontSize(8).font('Helvetica-Bold');
         doc.text('#', 42, y + 9, { width: 20, align: 'center' });
         doc.text('DESCRIPTION', 62, y + 9, { width: 155 });
-        doc.text('HS CODE', 220, y + 9, { width: 55, align: 'center' });
-        doc.text('QTY', 278, y + 9, { width: 35, align: 'center' });
-        doc.text('UNIT PRICE', 318, y + 9, { width: 70, align: 'right' });
-        doc.text('DISCOUNT', 393, y + 9, { width: 55, align: 'right' });
-        doc.text('TAX', 453, y + 9, { width: 45, align: 'right' });
-        doc.text('TOTAL', 500, y + 9, { width: 35, align: 'right' });
+        doc.text('HS CODE', 170, y + 9, { width: 55, align: 'center' });
+        doc.text('WEIGHT', 225, y + 9, { width: 45, align: 'center' });
+        doc.text('QTY', 270, y + 9, { width: 35, align: 'center' });
+        doc.text('UNIT PRICE', 310, y + 9, { width: 70, align: 'right' });
+        doc.text('DISCOUNT', 385, y + 9, { width: 55, align: 'right' });
+        doc.text('TAX', 445, y + 9, { width: 45, align: 'right' });
+        doc.text('TOTAL', 495, y + 9, { width: 40, align: 'right' });
         
         y += 28;
         doc.fillColor('#000');
@@ -201,6 +202,9 @@ export async function POST(
           const itemName = (item.nameSnapshot as string) || ((item.product as Record<string, unknown>)?.name as string) || 'Unknown';
           const qty = (item.quantity as number) || 0;
           const price = (item.unitPrice as number) || 0;
+          const itemWeight = (item.weightSnapshot as number) || 0;
+          const itemWeightUnit = (item.weightUnitSnapshot as string) || 'kg';
+          
           const itemLineValue = price * qty;
           const proportionalDiscount = totalItemsValue > 0 ? (itemLineValue / totalItemsValue) * discount : 0;
           const afterDiscount = itemLineValue - proportionalDiscount;
@@ -217,13 +221,14 @@ export async function POST(
           // Item data
           doc.fillColor('#1a1a1a').fontSize(8).font('Helvetica');
           doc.text(String(index + 1), 42, tableY + 8, { width: 20, align: 'center' });
-          doc.text(itemName, 62, tableY + 8, { width: 155 });
-          doc.text(hsCode, 220, tableY + 8, { width: 55, align: 'center' });
-          doc.text(String(qty), 278, tableY + 8, { width: 35, align: 'center' });
-          doc.text(formatPrice(price, order.currency || 'USD'), 318, tableY + 8, { width: 70, align: 'right' });
-          doc.text(proportionalDiscount > 0 ? formatPrice(proportionalDiscount, order.currency || 'USD') : '-', 393, tableY + 8, { width: 55, align: 'right' });
-          doc.text(itemTax > 0 ? formatPrice(itemTax, order.currency || 'USD') : '-', 453, tableY + 8, { width: 45, align: 'right' });
-          doc.text(formatPrice(lineTotal, order.currency || 'USD'), 500, tableY + 8, { width: 35, align: 'right' });
+          doc.text(itemName, 62, tableY + 8, { width: 105 });
+          doc.text(hsCode, 170, tableY + 8, { width: 55, align: 'center' });
+          doc.text(`${itemWeight} ${itemWeightUnit}`, 225, tableY + 8, { width: 45, align: 'center' });
+          doc.text(String(qty), 270, tableY + 8, { width: 35, align: 'center' });
+          doc.text(formatPrice(price, order.currency || 'USD'), 310, tableY + 8, { width: 70, align: 'right' });
+          doc.text(proportionalDiscount > 0 ? formatPrice(proportionalDiscount, order.currency || 'USD') : '-', 385, tableY + 8, { width: 55, align: 'right' });
+          doc.text(itemTax > 0 ? formatPrice(itemTax, order.currency || 'USD') : '-', 445, tableY + 8, { width: 45, align: 'right' });
+          doc.text(formatPrice(lineTotal, order.currency || 'USD'), 495, tableY + 8, { width: 40, align: 'right' });
           
           tableY += itemHeight;
         });
@@ -235,6 +240,13 @@ export async function POST(
         // ========== TOTALS SECTION ==========
         const totalsX = 300;
         
+        // Total Weight
+        if (order.totalWeight) {
+          doc.fontSize(10).font('Helvetica').fillColor('#444').text('Total Weight', totalsX, y, { width: 150, align: 'right' });
+          doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(`${order.totalWeight.toFixed(2)} kg`, totalsX + 155, y, { width: 80, align: 'right' });
+          y += 18;
+        }
+
         // Amount Before Tax
         doc.fontSize(10).font('Helvetica').fillColor('#444').text('Total Amount Before Tax', totalsX, y, { width: 150, align: 'right' });
         doc.fontSize(10).font('Helvetica-Bold').fillColor('#1a1a1a').text(formatPrice(amountBeforeTax, order.currency || 'USD'), totalsX + 155, y, { width: 80, align: 'right' });

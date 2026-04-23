@@ -11,6 +11,7 @@ interface Product {
   mainImage: string | null;
   stockQuantity: number;
   active: boolean;
+  freshFromShelf: boolean;
   brand: { name: string } | null;
   productCategories: { category: { id: string; name: string } }[];
   countryPrices: { country: string; price: number; currency: string }[];
@@ -31,6 +32,17 @@ export default async function ProductsPage() {
       include: {
         brand: true,
         store: true,
+        productCategories: {
+          include: { category: { select: { id: true, name: true } } }
+        },
+        countryPrices: true,
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  } else {
+    products = await (prisma as any).product.findMany({
+      include: {
+        brand: true,
         productCategories: {
           include: { category: { select: { id: true, name: true } } }
         },

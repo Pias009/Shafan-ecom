@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import ClientLayout from "@/components/ClientLayout";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -24,33 +25,43 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "SHANFA — Radiant Skin Store",
-  description: "Premium Skin Care crafted with nature's finest ingredients.",
+  title: "SHANFA — Your Caring Skin Partner",
+  description: "Premium Skin Care crafted with nature's finest ingredients for your natural beauty.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" suppressHydrationWarning style={{ scrollBehavior: 'smooth' }}>
+    <html lang="en" suppressHydrationWarning className={`${playfairDisplay.variable} ${dmSans.variable}`}>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+        <link rel="dns-prefetch" href="https://stats.pusher.com" />
+        <link rel="dns-prefetch" href="https://js.stripe.com" />
+        <meta httpEquiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=()" />
       </head>
-      <body
-        className={`${playfairDisplay.variable} ${dmSans.variable} antialiased overflow-x-hidden max-w-full`}
-      >
-        <SpeedInsights />
+      <body className="antialiased">
         <Providers>
-          <ClientLayout>
-            <Suspense fallback={null}>
-              <MainStoreLayout>
+          <MainStoreLayout>
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-emerald-600" /></div>}>
+              <ClientLayout>
                 {children}
-              </MainStoreLayout>
+              </ClientLayout>
             </Suspense>
-          </ClientLayout>
+          </MainStoreLayout>
+          <SpeedInsights />
+          <Analytics />
         </Providers>
       </body>
     </html>

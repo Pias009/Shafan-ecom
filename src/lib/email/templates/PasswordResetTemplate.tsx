@@ -16,9 +16,11 @@ export const PasswordResetTemplate = ({
   resetLink,
   expiresIn = '1 hour',
 }: PasswordResetTemplateProps) => {
+  const DOMAIN = 'https://shanafaglobal.com';
+  
   return (
     <BaseTemplate
-      previewText={`Reset your SHANFA STORE password`}
+      previewText={`Reset your SHANFA GLOBAL password`}
       title="Reset Your Password"
     >
       <Text style={paragraph}>
@@ -26,7 +28,7 @@ export const PasswordResetTemplate = ({
       </Text>
       
       <Text style={paragraph}>
-        We received a request to reset the password for your SHANFA STORE account 
+        We received a request to reset the password for your SHANFA GLOBAL account 
         associated with <strong>{email}</strong>. Click the button below to create a new password:
       </Text>
 
@@ -57,7 +59,7 @@ export const PasswordResetTemplate = ({
         • Never share your password reset link with anyone
       </Text>
       <Text style={tip}>
-        • SHANFA STORE will never ask for your password via email
+        • SHANFA GLOBAL will never ask for your password via email
       </Text>
 
       <Text style={smallText}>
@@ -73,8 +75,8 @@ export const PasswordResetTemplate = ({
       <Text style={footerText}>
         If you continue to have issues or didn't request this password reset, 
         please contact our support team at{' '}
-        <a href="mailto:support@shanfa-store.com" style={link}>
-          support@shanfa-store.com
+        <a href="mailto:support@shanafaglobal.com" style={link}>
+          support@shanafaglobal.com
         </a>
       </Text>
     </BaseTemplate>

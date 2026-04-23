@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search, CheckCircle, ArrowRight } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthModal } from "./AuthModal";
@@ -66,7 +66,7 @@ export function Navbar() {
   const { currentLanguage } = useLanguageStore();
   const { selectedCountry, detectedCountry, setDetectedCountry } = useCountryStore();
 
-  const t = translations[currentLanguage.code as keyof typeof translations];
+  const t = translations[(mounted ? currentLanguage.code : "en") as keyof typeof translations];
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !detectedCountry) {
@@ -89,7 +89,6 @@ export function Navbar() {
   ];
 
   const [visible, setVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -109,37 +108,36 @@ export function Navbar() {
     };
   }, [userMenuOpen]);
 
+  const lastScrollYRef = useRef(0);
+
   useEffect(() => {
     setMounted(true);
     const onScroll = () => {
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 20);
       
-      // Smart-Hide: Disable scroll hide when mobile menu is open (Force-Locked-Fixed)
+      // Smart-Hide: Disable scroll hide when mobile menu is open
       if (mobileOpen) {
         setVisible(true);
         return;
       }
       
       // Hide navbar when scrolling down, show when scrolling up
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        // Scrolling down - hide
+      if (currentScrollY > lastScrollYRef.current && currentScrollY > 50) {
         setVisible(false);
-      } else if (currentScrollY < lastScrollY) {
-        // Scrolling up - show
+      } else if (currentScrollY < lastScrollYRef.current) {
         setVisible(true);
       }
-      setLastScrollY(currentScrollY);
+      lastScrollYRef.current = currentScrollY;
     };
     
-    // Add a slight delay to prevent jitter
     const debouncedScroll = () => {
       window.requestAnimationFrame(onScroll);
     };
     
     window.addEventListener("scroll", debouncedScroll, { passive: true });
     return () => window.removeEventListener("scroll", debouncedScroll);
-  }, [lastScrollY, mobileOpen]);
+  }, [mobileOpen]);
 
   // Sync address status
   const setHasAddress = useCartStore((state) => state.setHasAddress);
@@ -263,6 +261,8 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    prefetch={true}
+                    onMouseEnter={() => router.prefetch(link.href)}
                     className={`px-3 py-2 text-sm font-body font-bold tracking-wide transition-all duration-300 rounded-full relative overflow-hidden group whitespace-nowrap hover:scale-105 hover:bg-emerald-50 ${safePathname === link.href ? "text-emerald-700 bg-emerald-100" : "text-black/70 hover:text-emerald-700"} ${isOffers ? "animate-pulse" : ""}`}
                   >
                       {isOffers && (
@@ -488,7 +488,7 @@ export function Navbar() {
                   <div className="space-y-6 mb-12">
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/20 px-1">Shop Collections</p>
                     <div className="flex flex-col gap-1">
-                      {navLinks.slice(0, 7).map((link, idx) => {
+                      {navLinks.map((link, idx) => {
                         const isOffers = link.href === "/offers";
                         return (
                           <Link

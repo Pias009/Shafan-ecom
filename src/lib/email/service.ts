@@ -54,7 +54,7 @@ export class EmailService {
       // Check if email is enabled
       if (!this.config.enabled) {
         this.logEmail({
-          template: options.template,
+          template: options.template || 'magic-link',
           recipient: this.getRecipientString(options.to),
           subject: options.subject,
           status: 'pending',
@@ -72,19 +72,26 @@ export class EmailService {
       // Apply environment-specific redirects
       const processedOptions = this.processRecipientsForEnvironment(options);
       
-      // Generate email content based on template
-      const { html, text } = await this.generateEmailContent(
-        processedOptions.template,
-        processedOptions.data
-      );
+      // Generate email content - use custom HTML if provided, otherwise use template
+      let emailHtml = processedOptions.html;
+      let emailText = processedOptions.text;
+      
+      if (!emailHtml) {
+        const { html, text } = await this.generateEmailContent(
+          processedOptions.template || 'magic-link',
+          processedOptions.data || {}
+        );
+        emailHtml = html;
+        emailText = text;
+      }
 
       // Prepare email payload
       const emailPayload = {
         from: `${this.config.fromName} <${this.config.fromEmail}>`,
         to: this.formatRecipients(processedOptions.to),
         subject: processedOptions.subject,
-        html,
-        text,
+        html: emailHtml,
+        text: emailText,
         cc: processedOptions.cc ? this.formatRecipients(processedOptions.cc) : undefined,
         bcc: processedOptions.bcc ? this.formatRecipients(processedOptions.bcc) : undefined,
         reply_to: processedOptions.replyTo,
@@ -138,7 +145,7 @@ export class EmailService {
       
       // Log successful email
       this.logEmail({
-        template: options.template,
+        template: options.template || 'magic-link',
         recipient: this.getRecipientString(options.to),
         subject: options.subject,
         status: 'sent',
@@ -147,11 +154,11 @@ export class EmailService {
       });
 
       const duration = Date.now() - startTime;
-      console.log(`Email sent successfully in ${duration}ms: ${options.template} to ${this.getRecipientString(options.to)}`);
+      console.log(`Email sent successfully in ${duration}ms: ${options.template || 'custom'} to ${this.getRecipientString(options.to)}`);
 
       // Log successful email
       this.logEmail({
-        template: options.template,
+        template: options.template || 'magic-link',
         recipient: this.getRecipientString(options.to),
         subject: options.subject,
         status: 'sent',
@@ -169,7 +176,7 @@ export class EmailService {
       
       // Log failed email
       this.logEmail({
-        template: options.template,
+        template: options.template || 'magic-link',
         recipient: this.getRecipientString(options.to),
         subject: options.subject,
         status: 'failed',
@@ -367,10 +374,13 @@ export const sendOrderConfirmationEmail = async (
   customerName: string,
   customerEmail: string,
   orderDate: string,
-  items: Array<{ name: string; quantity: number; price: number }>,
+  items: Array<{ name: string; quantity: number; price: number; imageUrl?: string }>,
   totalAmount: number,
   shippingAddress: string,
-  trackingUrl?: string
+  trackingUrl?: string,
+  paymentStatus?: 'Paid' | 'Cash on Delivery',
+  paymentMethod?: string,
+  estimatedDelivery?: string
 ) => {
   return emailService.sendEmail({
     to: { email: customerEmail, name: customerName },
@@ -385,6 +395,9 @@ export const sendOrderConfirmationEmail = async (
       totalAmount,
       shippingAddress,
       trackingUrl,
+      paymentStatus: paymentStatus || 'Paid',
+      paymentMethod,
+      estimatedDelivery: estimatedDelivery || '2-3 business days',
     },
   });
 };
@@ -507,7 +520,7 @@ export const sendOrderStatusEmail = async (
       total,
       currency,
       shippingAddress,
-      trackingUrl: `https://shanfa-store.com/account/orders/${orderId}`,
+      trackingUrl: `https://shanafaglobal.com/account/orders/${orderId}`,
     },
   });
 };

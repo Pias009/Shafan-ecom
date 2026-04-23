@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAdminSession } from "../_components/useAdminSession";
 import { useRouter } from "next/navigation";
 import { 
   Plus, Edit, Trash2, ChevronDown, ChevronUp, 
-  Layers, Package, AlertCircle, Check, X 
+  Layers, Package, AlertCircle, Check, X, BarChart3
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -302,6 +303,15 @@ export default function CategoriesPage() {
           {showForm ? "Cancel" : "New Category"}
         </button>
       </div>
+
+      {/* Stats Link */}
+      <Link
+        href="/ueadmin/categories/stats"
+        className="flex items-center gap-2 px-6 py-3 glass-panel rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-black/5 transition-all w-fit"
+      >
+        <BarChart3 size={18} />
+        View Analytics
+      </Link>
 
       {/* Create/Edit Form */}
       {showForm && (

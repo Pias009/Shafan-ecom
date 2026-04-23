@@ -8,7 +8,11 @@ export async function GET(request: NextRequest) {
       orderBy: { name: "asc" },
       include: {
         _count: {
-          select: { products: true }
+          select: { 
+            products: {
+              where: { active: true }
+            } 
+          }
         }
       }
     });

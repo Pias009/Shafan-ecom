@@ -1,8 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { Plus, Tag, Trash2, Check, Square, Filter, X } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { Tag, Trash2, Check, Square, Filter, X, Folder, Package } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,9 +12,15 @@ interface Product {
   mainImage: string | null;
   stockQuantity: number;
   active: boolean;
+  freshFromShelf: boolean;
   brand: { name: string } | null;
   productCategories: { category: { id: string; name: string } }[];
   countryPrices: { country: string; price: number; currency: string }[];
+}
+
+interface CategoryGroup {
+  name: string;
+  count: number;
 }
 
 export function ProductsTable({ initialProducts }: { initialProducts: Product[] }) {
@@ -41,6 +47,21 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
       });
     });
     return ["All", ...Array.from(set).sort()];
+  }, [initialProducts]);
+
+  // Group products by category for summary view
+  const categoryGroups = useMemo((): CategoryGroup[] => {
+    const groupMap = new Map<string, number>();
+    initialProducts.forEach(p => {
+      p.productCategories?.forEach(pc => {
+        if (pc.category?.name) {
+          groupMap.set(pc.category.name, (groupMap.get(pc.category.name) || 0) + 1);
+        }
+      });
+    });
+    return Array.from(groupMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   }, [initialProducts]);
 
   const filteredProducts = useMemo(() => {
@@ -122,8 +143,57 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
     }
   };
 
+  const toggleFreshFromShelf = async (id: string, currentlyOnShelf: boolean, productName: string) => {
+    try {
+      const res = await fetch(`/api/admin/products/${id}/fresh-from-shelf`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freshFromShelf: !currentlyOnShelf })
+      });
+      
+      if (res.ok) {
+        toast.success(currentlyOnShelf ? 'Removed from Fresh Shelf' : 'Added to Fresh Shelf');
+        window.location.reload();
+      } else {
+        toast.error('Failed to update');
+      }
+    } catch (error) {
+      toast.error('Failed to update');
+    }
+  };
+
   return (
     <>
+      <div className="glass-panel rounded-[2rem] p-4 mb-6 border border-black/5 bg-white/50">
+        <div className="flex items-center gap-2 mb-4">
+          <Folder size={16} className="text-black/50" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-black/50">Category Summary</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {categoryGroups.map((cat) => (
+            <button
+              key={cat.name}
+              onClick={() => {
+                setSelectedCategory(cat.name);
+                setShowFilters(true);
+              }}
+              className={`flex items-center justify-between px-3 py-2 rounded-xl text-left transition-all ${
+                selectedCategory === cat.name 
+                  ? 'bg-black text-white' 
+                  : 'bg-black/5 hover:bg-black/10'
+              }`}
+            >
+              <span className={`text-xs font-black truncate ${selectedCategory === cat.name ? 'text-white' : 'text-black'}`}>
+                {cat.name}
+              </span>
+              <span className={`text-[10px] font-black ${selectedCategory === cat.name ? 'text-white/70' : 'text-black/40'}`}>
+                {cat.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex justify-start mb-6">
         <button
           onClick={() => setShowFilters(!showFilters)}
@@ -239,6 +309,7 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Price</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Stock</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">Category</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Fresh</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">Status</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
               </tr>
@@ -303,6 +374,20 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
                         </span>
                       ))}
                     </div>
+                  </td>
+                  <td className="px-6 py-5 text-center">
+                    <button
+                      onClick={() => toggleFreshFromShelf(p.id, p.freshFromShelf, p.name)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
+                        p.freshFromShelf 
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200' 
+                          : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'
+                      }`}
+                      title={p.freshFromShelf ? 'Click to remove from Fresh Shelf' : 'Click to add to Fresh Shelf'}
+                    >
+                      <Package size={12} />
+                      {p.freshFromShelf ? 'On Shelf' : 'Add'}
+                    </button>
                   </td>
                   <td className="px-6 py-5">
                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${

@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { BrandMarquee } from "@/components/BrandMarquee";
+import { useMemo, useState, useEffect, lazy, Suspense, useRef } from "react";
 import { CategorySection } from "@/components/CategorySection";
 import { Hero } from "@/components/Hero";
 import { ProductCard } from "@/components/ProductCard";
@@ -11,22 +10,188 @@ import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Loader2, Filter, X, ArrowRight, Flame } from "lucide-react";
+import { Loader2, Filter, X, ArrowRight, Flame, Sparkles, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import { useSession } from "next-auth/react";
 import { Price } from "@/components/Price";
 import { AnimatePresence, motion } from "framer-motion";
 import { OfferBannersSection } from "@/components/OfferBannersSection";
-import { BlogShowcase } from "@/components/BlogShowcase";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
 import { useCountryStore } from "@/lib/country-store";
-import { useUserCountry } from "@/lib/country-detection";
 import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 import HomeBannerSlider from "@/components/HomeBannerSlider";
-import { GoogleReviewsSection } from "@/components/GoogleReviewsSection";
 import { hasValidPrice } from "@/lib/product-utils";
+
+import dynamic from "next/dynamic";
+const BlogShowcase = dynamic(() => import("@/components/BlogShowcase").then(m => m.BlogShowcase), { ssr: false });
+const GoogleReviewsSection = dynamic(() => import("@/components/GoogleReviewsSection").then(m => m.GoogleReviewsSection), { ssr: false });
+const BrandMarquee = dynamic(() => import("@/components/BrandMarquee").then(m => m.BrandMarquee), { ssr: false });
+
+function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { products: any[]; onQuickView: (p: any) => void; addToCart: (p: any) => void; orderNow: (p: any) => void }) {
+  const router = useRouter();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      setTimeout(checkScroll, 300);
+    }
+  };
+
+  return (
+    <div className="py-2 sm:py-4 relative">
+      {/* Left Scroll Button - Desktop Only */}
+      <button
+        onClick={() => scroll('left')}
+        className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+      >
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+      </button>
+
+      {/* Right Scroll Button - Desktop Only */}
+      <button
+        onClick={() => scroll('right')}
+        className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+      >
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+      </button>
+
+      <div 
+        ref={scrollRef}
+        onScroll={checkScroll}
+        className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4"
+      >
+        {products.map((product, idx) => (
+          <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
+            <ProductCard
+              product={{
+                ...product,
+                price: product.price || product.priceCents || 0,
+                imageUrl: product.imageUrl || product.mainImage,
+                brand: product.brandName || product.brand?.name || "Generic",
+                averageRating: product.averageRating,
+                ratingCount: product.ratingCount,
+                stockQuantity: product.stockQuantity,
+                totalSales: product.totalSales,
+                countryPrices: product.countryPrices,
+              }}
+              onQuickView={onQuickView}
+              onAddToCart={addToCart}
+              onOrderNow={orderNow}
+              priority={idx < 4}
+            />
+          </div>
+        ))}
+      </div>
+      
+      {/* Mobile See All button */}
+      <div className="flex justify-center mt-4 sm:hidden">
+        <button
+          onClick={() => router.push("/products/flash-sales")}
+          className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest"
+        >
+          See All Flash Sales
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { products: any[]; onQuickView: (p: any) => void; addToCart: (p: any) => void; orderNow: (p: any) => void }) {
+  const router = useRouter();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      setTimeout(checkScroll, 300);
+    }
+  };
+
+  return (
+    <div className="py-2 sm:py-3 relative">
+      {/* Left Scroll Button - Desktop Only */}
+      <button
+        onClick={() => scroll('left')}
+        className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+      >
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+      </button>
+
+      {/* Right Scroll Button - Desktop Only */}
+      <button
+        onClick={() => scroll('right')}
+        className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+      >
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+      </button>
+
+      <div 
+        ref={scrollRef}
+        onScroll={checkScroll}
+        className="flex overflow-x-auto pb-3 md:pb-4 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4"
+      >
+        {products.map((product, idx) => (
+          <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
+            <ProductCard
+              product={{
+                ...product,
+                price: product.regularPrice || product.regularPriceCents || product.price || product.priceCents || 0,
+                imageUrl: product.imageUrl || product.mainImage,
+                brand: product.brandName || product.brand?.name || "Generic",
+                averageRating: product.averageRating,
+                ratingCount: product.ratingCount,
+                stockQuantity: product.stockQuantity,
+                totalSales: product.totalSales,
+                countryPrices: product.countryPrices,
+              }}
+              onQuickView={onQuickView}
+              onAddToCart={addToCart}
+              onOrderNow={orderNow}
+              priority={idx < 4}
+            />
+          </div>
+        ))}
+      </div>
+      
+      {/* Mobile See All button */}
+      <div className="flex justify-center mt-4 sm:hidden">
+        <button
+          onClick={() => router.push("/products/new-arrivals")}
+          className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest"
+        >
+          See All New Arrivals
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const DUMMY_PRODUCT_NAMES = [
   "Icy Gel Cleanser",
@@ -58,14 +223,9 @@ const isDummyProduct = (p: any) => {
          DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
 };
 
-export default function HomeClient({ initialProducts, newArrivals = [] }: { initialProducts: any[], newArrivals?: any[] }) {
+export default function HomeClient({ initialProducts, newArrivals = [], flashSales = [], hot: hotProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
-  const [q, setQ] = useState("");
-  const [category, setCategory] = useState<string>("All");
-  const [brand, setBrand] = useState<string>("All");
-  const [maxPrice, setMaxPrice] = useState<number>(5000);
   const [quickView, setQuickView] = useState<any | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [banners, setBanners] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -160,36 +320,48 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
     return ["All", ...Array.from(set).sort()];
   }, [products]);
 
-  const filtered = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    return products.filter((p) => {
-      if (isDummyProduct(p)) return false;
-      if (!hasValidPrice(p, selectedCountry)) return false;
 
-      const price = p.price || 0;
-      if (price > maxPrice) return false;
-      if (category !== "All" && p.category?.name !== category) return false;
-      if (brand !== "All" && p.brand?.name !== brand) return false;
-      if (!query) return true;
-      return (
-        p.name.toLowerCase().includes(query) ||
-        p.brand?.name?.toLowerCase().includes(query) ||
-        p.category?.name?.toLowerCase().includes(query)
-      );
-    });
-  }, [q, category, brand, maxPrice, products, selectedCountry, selectedCurrency, isDummyProduct]);
-
-  const hot = useMemo(() => products.filter((p) => p.hot), [products]);
+  const hot = useMemo(() => hotProducts.length > 0 ? hotProducts : products.filter((p) => p.hot), [products, hotProducts]);
 
   // Filter newArrivals based on country support and remove dummy products
   const filteredNewArrivals = useMemo(() => {
     return newArrivals.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [newArrivals, selectedCountry, selectedCurrency]);
 
+  // Filter flash sales based on country support and remove dummy products
+  const filteredFlashSales = useMemo(() => {
+    return flashSales.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
+  }, [flashSales, selectedCountry, selectedCurrency]);
+
   // Filter hot products based on country support and remove dummy products
   const filteredHot = useMemo(() => {
     return hot.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [hot, selectedCountry, selectedCurrency]);
+
+  // Category-specific products
+  const skinCareProducts = useMemo(() => {
+    return products.filter((p) => 
+      hasValidPrice(p, selectedCountry) && 
+      !isDummyProduct(p) && 
+      p.categoryName === "Skin Care"
+    ).slice(0, 10);
+  }, [products, selectedCountry, selectedCurrency]);
+
+  const hairCareProducts = useMemo(() => {
+    return products.filter((p) => 
+      hasValidPrice(p, selectedCountry) && 
+      !isDummyProduct(p) && 
+      p.categoryName === "Hair Care"
+    ).slice(0, 10);
+  }, [products, selectedCountry, selectedCurrency]);
+
+  const bodyCareProducts = useMemo(() => {
+    return products.filter((p) => 
+      hasValidPrice(p, selectedCountry) && 
+      !isDummyProduct(p) && 
+      p.categoryName === "Body Care"
+    ).slice(0, 10);
+  }, [products, selectedCountry, selectedCurrency]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -292,57 +464,44 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
       {/* NoticeBoard and Navbar handled globally */}
       <Hero />
 
-      <CategorySection
-        onPick={(c) => {
-          setCategory(c);
-          document.getElementById("products")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
-      />
-
-      {/* Offer Banners Section */}
-      <OfferBannersSection />
-
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 pb-20 flex-1 overflow-x-hidden">
+        
 
-        {/* New Arrivals Section */}
-        {filteredNewArrivals.length > 0 && (
-          <section className="py-12 md:py-20 w-full overflow-hidden">
-            <div className="text-center mb-8 md:mb-12 px-4 sm:px-6 md:px-0">
-              <div className="relative z-10 w-full">
-                <div className="inline-flex items-center gap-2 glass-panel rounded-full px-3 sm:px-5 py-2 mb-4">
-                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW ARRIVALS</span>
-                </div>
-                <h2 className="font-display text-lg sm:text-xl md:text-4xl lg:text-5xl text-black mt-2 font-black leading-tight break-words">Fresh From The Shelf</h2>
-                <p className="font-body text-black/70 mt-3 text-sm sm:text-base md:text-lg max-w-2xl mx-auto px-4 sm:px-0">Discover our latest additions, just arrived</p>
+        {/* Flash Sales Section - Priority #2 */}
+        <section className="pt-2 md:pt-6 pb-6 md:pb-10 px-1 sm:px-4">
+          <div className="mb-4 md:mb-8 flex items-center justify-between">
+            <div>
+              <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
+                <Zap className="text-yellow-500 fill-yellow-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">Flash</span>
+                <Zap className="text-yellow-500 fill-yellow-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </div>
+              <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Flash Sales</h2>
             </div>
+            <button
+              onClick={() => router.push("/products/flash-sales")}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
+            >
+              See All
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
 
-            {/* Unified Product Grid - Handles both mobile and desktop responsive views */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
-              {filteredNewArrivals.slice(0, 4).map((product) => (
-                <div key={product.id} className="w-full">
-                  <ProductCard
-                    product={{
-                      ...product,
-                      price: product.regularPrice || product.regularPriceCents || product.price || product.priceCents || 0,
-                      discountPrice: product.salePrice || product.salePriceCents || undefined,
-                      imageUrl: product.mainImage,
-                      brand: product.brand?.name,
-                      averageRating: product.averageRating,
-                      ratingCount: product.ratingCount,
-                      stockQuantity: product.stockQuantity,
-                      totalSales: product.totalSales,
-                      countryPrices: product.countryPrices,
-                    }}
-                    onQuickView={(pp) => setQuickView(pp)}
-                    onAddToCart={(pp) => addToCart(pp)}
-                    onOrderNow={(pp) => orderNow(pp)}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+          <FlashSalesSlider products={filteredFlashSales} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
+        </section>
+
+        {/* Categories - Priority #3 */}
+        <CategorySection
+          onPick={(c) => {
+            router.push(`/products?category=${encodeURIComponent(c)}`);
+          }}
+        />
+
+
+        {/* Offer Banners - After Flash Sales */}
+        <div className="hidden sm:block">
+          <OfferBannersSection />
+        </div>
 
         {filteredHot.length > 0 && (
           <TrendingNowSlider
@@ -353,181 +512,53 @@ export default function HomeClient({ initialProducts, newArrivals = [] }: { init
           />
         )}
 
-
-
-        {/* All Products + Filters */}
-        <section id="products" className="pt-12 md:pt-24">
-          <div className="text-center mb-8 md:mb-12">
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 glass-panel rounded-full px-5 py-2 mb-4">
-                <span className="text-[10px] font-black uppercase tracking-widest text-black/60">🆕 NEW</span>
-              </div>
-              <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black mt-2 font-black">New Arrivals</h2>
-              <p className="font-body text-black/70 mt-3 text-base sm:text-lg max-w-2xl mx-auto px-4">Fresh additions to our collection</p>
-            </div>
-          </div>
-
-          {/* Filter Row */}
-          <div className="flex justify-center mb-8 md:mb-10">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${showFilters ? "bg-black text-white" : "glass-panel text-black hover:bg-black hover:text-white"
-                }`}
-            >
-              {showFilters ? <X size={14} /> : <Filter size={14} />}
-              {showFilters ? "Hide Filters" : "Show Filters"}
-            </button>
-          </div>
-
-          {/* Filter bar */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, y: -20, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: "auto" }}
-                exit={{ opacity: 0, y: -20, height: 0 }}
-                className="overflow-hidden mb-12"
-                style={{ willChange: "transform, opacity, height" }}
-              >
-                <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 items-stretch md:items-end shadow-lg border border-black/5">
-                  <div className="col-span-2 md:col-span-1">
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
-                      Search
-                    </label>
-                    <input
-                      type="text"
-                      value={q}
-                      onChange={(e) => setQ(e.target.value)}
-                      placeholder="Search products…"
-                      className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none placeholder:text-black/20"
-                    />
-                  </div>
-
-                  <div className="w-full md:w-[150px]">
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
-                      Category
-                    </label>
-                    <select
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
-                    >
-                      <option value="All">All Categories</option>
-                      {categories.filter(c => c !== "All").map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="w-full md:w-[150px]">
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
-                      Brand
-                    </label>
-                    <select
-                      value={brand}
-                      onChange={(e) => setBrand(e.target.value)}
-                      className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
-                    >
-                      <option value="All">All Brands</option>
-                      {brands.filter(b => b !== "All").map((b) => (
-                        <option key={b} value={b}>{b}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="w-full md:w-[220px]">
-                    <div className="flex justify-between items-center mb-1.5 px-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-black/30">
-                        Max Price
-                      </label>
-                      <Price amount={maxPrice} className="text-[10px] font-black" />
-                    </div>
-                    <div className="px-2 h-10 md:h-12 flex items-center">
-                      <input
-                        type="range"
-                        min="0"
-                        max="5000"
-                        step="10"
-                        value={maxPrice}
-                        onChange={(e) => setMaxPrice(Number(e.target.value))}
-                        className="w-full h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
-                      />
-                    </div>
-                  </div>
+        {/* New Arrivals Section - Now after Trending Now */}
+        {filteredNewArrivals.length > 0 && (
+          <section className="pt-6 md:pt-10 pb-4 md:pb-6 px-1 sm:px-4">
+            <div className="mb-3 md:mb-5 flex items-center justify-between">
+              <div>
+                <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
+                  <Sparkles className="text-emerald-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">New</span>
+                  <Sparkles className="text-green-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="w-full flex justify-center overflow-x-hidden">
-            <div className="grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 w-full max-w-7xl px-3 sm:px-4">
-              {filtered.slice(0, 10).map((p, idx) => (
-                <ProductCard
-                  key={p.id}
-                  product={{
-                    ...p,
-                    price: p.regularPrice || p.regularPriceCents || p.price || p.priceCents || 0,
-                    discountPrice: p.salePrice || p.salePriceCents || undefined,
-                    imageUrl: p.mainImage,
-                    brand: p.brand?.name,
-                    averageRating: p.averageRating,
-                    ratingCount: p.ratingCount,
-                    stockQuantity: p.stockQuantity,
-                    totalSales: p.totalSales,
-                    countryPrices: p.countryPrices,
-                  }}
-                  onQuickView={(pp) => setQuickView(pp)}
-                  onAddToCart={(pp) => addToCart(pp)}
-                  onOrderNow={(pp) => orderNow(pp)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {filtered.length > 10 && (
-            <div className="mt-12 flex justify-center">
+                <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Fresh From The Shelf</h2>
+                <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">Latest additions to our collection</p>
+              </div>
               <button
-                onClick={() => router.push("/products")}
-                className="group flex flex-col items-center gap-3 transition-all duration-300 hover:scale-[1.02]"
+                onClick={() => router.push("/products/new-arrivals")}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
               >
-                <motion.div
-                  className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/80 text-black shadow-md border border-black/10"
-                  whileHover={{ scale: 1.1, x: 4 }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{ willChange: "transform" }}
-                >
-                  <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-                </motion.div>
-                <span className="font-semibold text-xs uppercase tracking-widest text-black/50 group-hover:text-black transition-colors">
-                  See All Products
-                </span>
+                See All
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
-          )}
+            
+            <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
+          </section>
+        )}
 
-          {filtered.length === 0 && (
-            <p className="text-center font-bold text-black/50 mt-12 italic">
-              No products found. Try adjusting your filters.
-            </p>
-          )}
-        </section>
       </main>
 
       {/* Blog Showcase Section */}
-      <BlogShowcase />
+      <Suspense fallback={<div className="h-32" />}>
+        <BlogShowcase />
+      </Suspense>
 
       {/* Brand Slider Section - Moved above footer */}
       <BrandMarquee />
 
       {/* Google Reviews Section */}
-      <GoogleReviewsSection />
+      <Suspense fallback={<div className="h-32" />}>
+        <GoogleReviewsSection />
+      </Suspense>
 
       <ProductQuickViewModal
         product={quickView ? {
           ...quickView,
           price: quickView.price || quickView.priceCents || 0,
-          imageUrl: quickView.mainImage,
-          brand: quickView.brand?.name,
+          imageUrl: quickView.imageUrl || quickView.mainImage,
+          brand: quickView.brandName || quickView.brand?.name || "Generic",
           countryPrices: quickView.countryPrices || [],
           hot: quickView.hot,
           trending: quickView.trending

@@ -84,6 +84,9 @@ export const translations = {
       subtitle: "Curated partners in premium skincare",
       products: "products",
       taglineDefault: "Premium quality and care",
+      searchPlaceholder: "Search brands...",
+      all: "All",
+      noResults: "No brands found matching your criteria",
     },
     account: {
       dashboard: "Dashboard",
@@ -239,6 +242,9 @@ export const translations = {
       subtitle: "شركاء متميزون في العناية بالبشرة والشعر",
       products: "منتج",
       taglineDefault: "جودة واهتمام فائق",
+      searchPlaceholder: "ابحث عن علامة تجارية...",
+      all: "الكل",
+      noResults: "لا توجد علامات تجارية تطابق بحثك",
     },
     account: {
       dashboard: "لوحة التحكم",

@@ -19,13 +19,15 @@ export const AdminLoginAlertTemplate = ({
   userAgent,
   location = 'Unknown',
 }: AdminLoginAlertTemplateProps) => {
+  const DOMAIN = 'https://shanafaglobal.com';
+  
   return (
     <BaseTemplate
       previewText={`Security Alert: Admin login detected for ${adminEmail}`}
       title="Admin Login Alert 🔒"
     >
       <Text style={paragraph}>
-        A new admin login was detected for your SHANFA STORE account.
+        A new admin login was detected for your SHANFA GLOBAL account.
       </Text>
 
       <Section style={alertBox}>
@@ -152,11 +154,11 @@ export const AdminLoginAlertTemplate = ({
       <Hr style={divider} />
 
       <Text style={footerText}>
-        This is an automated security alert from SHANFA STORE. 
+        This is an automated security alert from SHANFA GLOBAL. 
         If you have any concerns about your account security, please contact our 
         security team immediately at{' '}
-        <a href="mailto:security@shanfa-store.com" style={link}>
-          security@shanfa-store.com
+        <a href="mailto:security@shanafaglobal.com" style={link}>
+          security@shanafaglobal.com
         </a>
       </Text>
     </BaseTemplate>

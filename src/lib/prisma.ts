@@ -15,9 +15,8 @@ export const prisma =
     },
   });
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-}
+// Cache Prisma client in both dev and production for serverless environments
+globalForPrisma.prisma = prisma;
 
 export async function prismaWithRetry<T>(
   fn: () => Promise<T>,

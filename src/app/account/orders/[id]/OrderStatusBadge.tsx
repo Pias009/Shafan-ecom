@@ -13,6 +13,10 @@ export default function OrderStatusBadge({ orderId, initialStatus }: OrderStatus
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Only poll for pending orders, every 60 seconds
+    const pendingStatuses = ['ORDER_RECEIVED', 'ORDER_CONFIRMED', 'PROCESSING', 'READY_FOR_PICKUP'];
+    if (!pendingStatuses.includes(initialStatus)) return;
+
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/orders/${orderId}`);
@@ -25,10 +29,10 @@ export default function OrderStatusBadge({ orderId, initialStatus }: OrderStatus
       } catch (error) {
         // Ignore polling errors
       }
-    }, 10000); // Poll every 10 seconds
+    }, 60000); // Poll every 60 seconds for pending orders
 
     return () => clearInterval(interval);
-  }, [orderId, status]);
+  }, [orderId, status, initialStatus]);
 
   const statusColors: Record<string, string> = {
     ORDER_RECEIVED: 'bg-blue-100 text-blue-800',

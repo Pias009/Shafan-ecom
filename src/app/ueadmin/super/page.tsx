@@ -1,7 +1,7 @@
 
 import { prisma } from "@/lib/prisma";
 import SuperGuard from "../_components/SuperGuard";
-import { Users, Truck, Package, ShieldCheck, Mail, ArrowRight, UserPlus, Info, AlertCircle, Clock } from "lucide-react";
+import { Users, Truck, Package, ShieldCheck, Mail, ArrowRight, UserPlus, Info, AlertCircle, Clock, UserCog, ScanFace } from "lucide-react";
 import Link from "next/link";
 import { OrderStatus } from "@prisma/client";
 import { inviteAdmin } from "./actions";
@@ -45,11 +45,14 @@ export default async function SuperAdminConsole() {
              <p className="text-sm font-medium text-black/30 mt-2 max-w-md">Complete global control: Manage all store instances, administrative roles, and system logs from one unified panel.</p>
           </div>
           
-          <div className="flex gap-4">
-             <Link href="/ueadmin" className="px-6 py-4 rounded-full bg-black/5 text-black hover:bg-black hover:text-white transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-black/5">
-                Switch to Standard Admin
-             </Link>
-          </div>
+<div className="flex gap-4">
+              <Link href="/ueadmin/admin-face" className="px-6 py-4 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                 <ScanFace size={16} /> Face Login
+              </Link>
+              <Link href="/ueadmin" className="px-6 py-4 rounded-full bg-black/5 text-black hover:bg-black hover:text-white transition-all text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-black/5">
+                 Switch to Standard Admin
+              </Link>
+           </div>
         </div>
 
         {/* Global Stats Overview */}
@@ -112,15 +115,16 @@ export default async function SuperAdminConsole() {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-12 gap-10">
-           {/* Section 1: Admin Controls */}
-           <section className="lg:col-span-12 space-y-6">
-              <div className="flex items-center justify-between px-4">
-                 <h3 className="text-xl font-bold flex items-center gap-3">
-                    <Users size={20} className="text-black/30" /> Admin Controls
-                 </h3>
-                 <div className="flex gap-4">
-                   <Link href="/ueadmin/super/admins" className="text-[10px] font-black uppercase tracking-widest text-black/30 hover:text-black transition">Manage Permissions</Link>
+<div className="grid lg:grid-cols-12 gap-10">
+            {/* Section 1: Admin Controls */}
+            <section className="lg:col-span-12 space-y-6">
+               <div className="flex items-center justify-between px-4">
+                  <h3 className="text-xl font-bold flex items-center gap-3">
+                     <Users size={20} className="text-black/30" /> Admin Controls
+                  </h3>
+                  <div className="flex gap-4">
+                    <Link href="/ueadmin/super/face" className="text-[10px] font-black uppercase tracking-widest text-black/30 hover:text-black transition">Face Enrollment</Link>
+                    <Link href="/ueadmin/super/admins" className="text-[10px] font-black uppercase tracking-widest text-black/30 hover:text-black transition">Manage Permissions</Link>
                    {pendingApprovals > 0 && (
                      <Link href="/ueadmin/super/approvals" className="text-[10px] font-black uppercase tracking-widest text-orange-500 hover:text-orange-600 transition flex items-center gap-1">
                        <AlertCircle size={12} />

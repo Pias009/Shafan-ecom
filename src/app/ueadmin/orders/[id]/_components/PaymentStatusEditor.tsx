@@ -3,17 +3,15 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
-import { PaymentStatus } from '@prisma/client';
-
 interface PaymentStatusEditorProps {
   orderId: string;
   currentPaymentStatus: string;
 }
 
 const PAYMENT_STATUSES = [
-  { value: PaymentStatus.PAID, label: 'Paid', color: 'bg-green-100 text-green-800 border-green-200' },
-  { value: PaymentStatus.PENDING, label: 'Pending', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  { value: PaymentStatus.CANCELLED, label: 'Cancelled', color: 'bg-gray-100 text-gray-800 border-gray-200' },
+  { value: 'PAID', label: 'Paid', color: 'bg-green-100 text-green-800 border-green-200' },
+  { value: 'PENDING', label: 'Pending', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  { value: 'CANCELLED', label: 'Cancelled', color: 'bg-gray-100 text-gray-800 border-gray-200' },
 ];
 
 export default function PaymentStatusEditor({ orderId, currentPaymentStatus }: PaymentStatusEditorProps) {

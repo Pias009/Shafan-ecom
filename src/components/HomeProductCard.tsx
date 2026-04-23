@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Star, Package, ShoppingCart, Truck } from "lucide-react";
+import { Package, ShoppingCart, Truck, Star } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -134,7 +134,7 @@ export function HomeProductCard({
           className="w-full h-full relative block"
         >
           <Image
-            src={isValidImageUrl(product.imageUrl) ? product.imageUrl : "/placeholder-product.png"}
+            src={isValidImageUrl(product.imageUrl || (product as any).mainImage) ? (product.imageUrl || (product as any).mainImage) : "/placeholder-product.png"}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
@@ -216,15 +216,6 @@ export function HomeProductCard({
               <Price amount={product.discountPrice || countryPrice} className={`${fontSize.oldPrice} text-red-500 line-through font-bold`} countryPrices={product.countryPrices} />
             )}
           </div>
-          
-          {!compact && product.stockQuantity !== undefined && (
-            <div className="flex items-center gap-1 bg-gray-50/50 px-1.5 py-0.5 rounded">
-              <Package size={10} className={product.stockQuantity > 0 ? "text-emerald-500" : "text-red-500"} />
-              <span className={`${compact ? 'text-[8px]' : 'text-[9px] sm:text-[10px]'} font-semibold ${product.stockQuantity > 0 ? "text-emerald-700" : "text-red-600"}`}>
-                {product.stockQuantity > 0 ? `${product.stockQuantity}` : t.product.outOfStock}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Product Name */}
@@ -240,7 +231,7 @@ export function HomeProductCard({
         
 
         {/* Add to Cart Button */}
-        <div className="flex justify-center flex-shrink-0">
+        <div className="mt-auto flex justify-center">
           <button
             type="button"
             disabled={isNotAvailable}
