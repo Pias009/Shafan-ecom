@@ -10,7 +10,8 @@ import { Elements, PaymentRequestButtonElement, useStripe, useElements } from "@
 import StripePaymentForm from "@/components/StripePaymentForm";
 import { Price } from "@/components/Price";
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 type PaymentMethod = "card" | "digital" | "cod";
 
@@ -261,7 +262,7 @@ export default function CustomPaymentPage() {
             </div>
 
             <div className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-black/5 bg-white shadow-xl">
-              {method === "card" && clientSecret && (
+              {method === "card" && clientSecret && stripePromise && (
                 <Elements 
                   key={clientSecret} 
                   stripe={stripePromise} 
@@ -279,7 +280,13 @@ export default function CustomPaymentPage() {
                 </Elements>
               )}
 
-              {method === "card" && !clientSecret && (
+              {method === "card" && !stripePromise && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs md:text-sm font-bold border border-red-200 text-center">
+                  Stripe configuration is missing. Please add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to your environment variables.
+                </div>
+              )}
+
+              {method === "card" && !clientSecret && stripePromise && (
                 <div className="py-12 text-center flex flex-col items-center">
                   <Loader2 className="w-8 h-8 animate-spin text-black/20 mb-3" />
                   <p className="text-[10px] font-bold uppercase tracking-widest text-black/30 text-center">Initializing Stripe Elements...</p>

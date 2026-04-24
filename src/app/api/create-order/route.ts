@@ -607,20 +607,18 @@ export async function POST(req: Request) {
 
     revalidatePath('/ueadmin/orders');
 
-    // Send order confirmation email to customer
+    // NOTE: Customer confirmation email is NOT sent here.
+    // It is sent AFTER payment is confirmed:
+    //   - COD: sent in /api/payments/cod after "Confirm Cash on Delivery" is clicked
+    //   - Stripe: sent in /api/payments/stripe/webhook after payment_intent.succeeded
     const customerEmail = session?.user?.email || billing?.email || shipping?.email || order.email;
     const customerName = shipping?.first_name 
       ? `${shipping.first_name} ${shipping.last_name || ''}` 
       : 'Customer';
-    
-    if (customerEmail && !order.emailConfirmationSent) {
-      // Mark email as sent FIRST to prevent duplicate sends on retries
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { emailConfirmationSent: true }
-      }).catch(() => {}); // Ignore if already updated
 
-      console.log(`[Order Email] Sending confirmation for order ${order.id} to ${customerEmail}`);
+    if (false) {
+      // Placeholder block — email logic moved to payment confirmation routes
+      console.log(`[Order Email] Deferred for order ${order.id} to ${customerEmail}`);
 
       const DOMAIN = 'https://shanafaglobal.com';
       const DASHBOARD_URL = `${DOMAIN}/account`;
@@ -715,7 +713,7 @@ export async function POST(req: Request) {
                 <table style="width: 100%;">
                   <tr><td style="padding: 4px 0; color: #6c757d;">Subtotal</td><td style="padding: 4px 0; text-align: right; color: #333;">${order.currency.toUpperCase()} ${order.subtotal?.toFixed(2)}</td></tr>
                   <tr><td style="padding: 4px 0; color: #6c757d;">Shipping</td><td style="padding: 4px 0; text-align: right; color: #333;">${order.currency.toUpperCase()} ${order.shipping?.toFixed(2)}</td></tr>
-                  ${order.discountAmount ? `<tr><td style="padding: 4px 0; color: #28a745;">Discount</td><td style="padding: 4px 0; text-align: right; color: #28a745;">-${order.currency.toUpperCase()} ${order.discountAmount.toFixed(2)}</td></tr>` : ''}
+                  ${order.discountAmount ? `<tr><td style="padding: 4px 0; color: #28a745;">Discount</td><td style="padding: 4px 0; text-align: right; color: #28a745;">-${order.currency.toUpperCase()} ${(order.discountAmount ?? 0).toFixed(2)}</td></tr>` : ''}
                   <tr style="font-weight: bold; font-size: 18px; border-top: 2px solid #333; margin-top: 8px;">
                     <td style="padding: 12px 0 0;">Total</td>
                     <td style="padding: 12px 0 0; text-align: right; color: #667eea;">${order.currency.toUpperCase()} ${order.total?.toFixed(2)}</td>

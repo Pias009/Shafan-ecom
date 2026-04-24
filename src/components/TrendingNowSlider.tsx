@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { ProductCard } from "./ProductCard";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import Link from "next/link";
 
 interface TrendingNowSliderProps {
   products: any[];
@@ -58,12 +59,13 @@ export function TrendingNowSlider({
             <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">{t.home.trendingNow}</h2>
             <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">{t.home.mostLoved}</p>
           </div>
-          <button
-            onClick={() => router.push("/products/trending")}
-            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-black/80 transition-all"
+          <Link
+            href="/products/trending"
+            className="hidden sm:flex items-center gap-2 px-6 py-2.5 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors shadow-md hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm"
           >
-            See All <ArrowRight size={14} />
-          </button>
+            See All Trending
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
 

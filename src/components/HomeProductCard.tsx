@@ -126,6 +126,7 @@ export function HomeProductCard({
 
   return (
     <div 
+      onMouseEnter={() => router.prefetch(`/products/${product.id}`)}
       onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.id}`); }}
       className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden ${cardWidth} mx-auto flex flex-col cursor-pointer`}>
       {/* Image Section */}

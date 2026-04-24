@@ -30,7 +30,7 @@ function FloatingProduct({ src, size, delay, x, y, rotate, label }: { src: strin
         y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay },
         rotate: { duration: 5, repeat: Infinity, ease: "easeInOut", delay }
       }}
-      className="absolute cursor-grab group"
+      className="absolute cursor-grab group will-change-transform"
       style={{ left: x, top: y }}
     >
       <div className="relative">
@@ -105,14 +105,14 @@ export function Hero() {
       className="relative min-h-[350px] sm:min-h-[600px] md:min-h-[700px] lg:min-h-[850px] flex flex-col items-center justify-center px-2 sm:px-6 md:px-8 py-6 lg:py-20 overflow-hidden"
     >
       {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div 
           style={{ x: springX, y: springY }}
-          className="absolute top-1/4 -left-20 w-96 h-96 bg-emerald-200/20 rounded-full blur-[120px]" 
+          className="absolute top-1/4 -left-20 w-96 h-96 bg-[radial-gradient(circle,rgba(167,243,208,0.4)_0%,transparent_60%)] rounded-full will-change-transform" 
         />
         <motion.div 
           style={{ x: springY, y: springX }}
-          className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-purple-200/20 rounded-full blur-[150px]" 
+          className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(233,213,255,0.4)_0%,transparent_60%)] rounded-full will-change-transform" 
         />
       </div>
 
@@ -202,7 +202,7 @@ export function Hero() {
                 opacity: [0.3, 0.5, 0.3]
               }}
               transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-              className="w-80 h-80 md:w-[450px] md:h-[450px] rounded-full bg-gradient-to-br from-emerald-100 to-purple-100 blur-[80px]"
+              className="w-80 h-80 md:w-[450px] md:h-[450px] rounded-full bg-[radial-gradient(circle,rgba(209,250,229,1)_0%,rgba(243,232,255,0.8)_40%,transparent_70%)] will-change-transform"
             />
           </div>
 
@@ -230,7 +230,7 @@ export function Hero() {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-              className="absolute -inset-8 border-[0.5px] border-dashed border-black/10 rounded-full pointer-events-none"
+              className="absolute -inset-8 border-[0.5px] border-dashed border-black/10 rounded-full pointer-events-none will-change-transform"
             />
           </motion.div>
 
@@ -326,7 +326,7 @@ function MarqueeSection() {
     <div className="w-full mt-10 md:mt-32 py-2 md:py-10 border-y border-black/5 bg-white/30 backdrop-blur-sm overflow-hidden">
       {/* Mobile: Scroll-reactive - Single Slim Line */}
       <div className="md:hidden flex overflow-hidden">
-        <motion.div style={{ x: xMove }} className="flex whitespace-nowrap gap-8">
+        <motion.div style={{ x: xMove }} className="flex whitespace-nowrap gap-8 will-change-transform">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="flex items-center gap-4">
               <span className="text-[12px] font-display font-black uppercase tracking-tighter text-black/10">SHANFA GLOBAL • PREMIUM CARE • AI DRIVEN</span>

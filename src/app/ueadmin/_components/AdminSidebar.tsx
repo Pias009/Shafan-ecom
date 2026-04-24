@@ -2,18 +2,28 @@
 
 import Link from "next/link";
 import { useAdminSession } from "./useAdminSession";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3, Users, Package,
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
-  Terminal, Bell as BellIcon, Settings as SettingsIcon,
+  Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
   Zap, Flame, ScanFace
 } from "lucide-react";
 
 export function AdminSidebar() {
   const { data: session } = useAdminSession();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+      router.push("/ueadmin/login");
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
 
   const links = [
     { 
@@ -184,10 +194,17 @@ export function AdminSidebar() {
        <div className="p-6 bg-black/[0.02] rounded-[2rem] border border-black/5">
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center font-black text-[10px]">P</div>
-             <div className="min-w-0">
+             <div className="min-w-0 flex-1">
                  <div className="font-black text-[10px] uppercase tracking-tighter truncate">{session?.email}</div>
                  <div className="text-[8px] font-bold text-slate-600 uppercase">{session?.role}</div>
              </div>
+             <button
+               onClick={handleLogout}
+               className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors shrink-0"
+               title="Log Out"
+             >
+               <LogOut size={16} />
+             </button>
           </div>
        </div>
     </aside>

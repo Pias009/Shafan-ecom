@@ -11,6 +11,8 @@ import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice } from "@/lib/product-utils";
 import { Zap } from "lucide-react";
+import { useLoadingStore } from "@/lib/loading-store";
+import Link from "next/link";
 
 interface Product {
   id: string;
@@ -76,6 +78,7 @@ export default function FlashSalesClient({ products }: FlashSalesClientProps) {
       const data = await res.json();
       if (data.orderId) {
         toast.success("Redirecting...", { id: tid });
+        useLoadingStore.getState().setRedirecting(true, "Creating your order...");
         router.push(`/checkout/payment/${data.orderId}`);
       } else {
         throw new Error(data.error);
@@ -94,12 +97,12 @@ export default function FlashSalesClient({ products }: FlashSalesClientProps) {
           <div className="text-6xl mb-4 opacity-30">⚡</div>
           <h1 className="text-4xl font-black text-black mb-4">Flash Sales</h1>
           <p className="text-black/50">No flash sale products available right now. Check back soon!</p>
-          <button
-            onClick={() => router.push("/")}
-            className="mt-6 px-6 py-3 bg-black text-white rounded-full font-black text-sm"
+          <Link
+            href="/"
+            className="mt-6 inline-block px-6 py-3 bg-black text-white rounded-full font-black text-sm"
           >
             Back to Home
-          </button>
+          </Link>
         </div>
       </div>
     );

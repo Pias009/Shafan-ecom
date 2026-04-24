@@ -15,6 +15,7 @@ import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { formatDescription } from "@/utils/formatText";
+import { useLoadingStore } from "@/lib/loading-store";
 
 const ProductQuickViewModal = lazy(() => import("@/components/ProductQuickViewModal").then(m => ({ default: m.ProductQuickViewModal })));
 
@@ -164,6 +165,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       const data = await res.json();
       if (data.orderId) {
         toast.success("Redirecting...", { id: tid });
+        useLoadingStore.getState().setRedirecting(true, "Creating your order...");
         router.push(`/checkout/payment/${data.orderId}`);
       } else {
         throw new Error(data.error || "Failed");

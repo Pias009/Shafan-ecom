@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { Loader2, Filter, X, ArrowRight, Flame, Sparkles, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Price } from "@/components/Price";
 import { AnimatePresence, motion } from "framer-motion";
@@ -23,6 +24,7 @@ import { useCountryStore } from "@/lib/country-store";
 import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 import HomeBannerSlider from "@/components/HomeBannerSlider";
 import { hasValidPrice } from "@/lib/product-utils";
+import { useLoadingStore } from "@/lib/loading-store";
 
 import dynamic from "next/dynamic";
 const BlogShowcase = dynamic(() => import("@/components/BlogShowcase").then(m => m.BlogShowcase), { ssr: false });
@@ -99,13 +101,13 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
       
       {/* Mobile See All button */}
       <div className="flex justify-center mt-4 sm:hidden">
-        <button
-          onClick={() => router.push("/products/flash-sales")}
+        <Link
+          href="/products/flash-sales"
           className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest"
         >
           See All Flash Sales
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </Link>
       </div>
     </div>
   );
@@ -181,13 +183,13 @@ function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { pro
       
       {/* Mobile See All button */}
       <div className="flex justify-center mt-4 sm:hidden">
-        <button
-          onClick={() => router.push("/products/new-arrivals")}
+        <Link
+          href="/products/new-arrivals"
           className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest"
         >
           See All New Arrivals
           <ArrowRight className="w-4 h-4" />
-        </button>
+        </Link>
       </div>
     </div>
   );
@@ -444,6 +446,7 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
       const data = await res.json();
       if (data.orderId) {
         toast.success("Redirecting to payment...", { id: tid });
+        useLoadingStore.getState().setRedirecting(true, "Creating your order...");
         router.push(`/checkout/payment/${data.orderId}`);
       } else {
         throw new Error(data.error || "Failed to create order");
@@ -478,13 +481,13 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
               </div>
               <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Flash Sales</h2>
             </div>
-            <button
-              onClick={() => router.push("/products/flash-sales")}
+            <Link
+              href="/products/flash-sales"
               className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
             >
               See All
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
 
           <FlashSalesSlider products={filteredFlashSales} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
@@ -525,13 +528,13 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
                 <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Fresh From The Shelf</h2>
                 <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">Latest additions to our collection</p>
               </div>
-              <button
-                onClick={() => router.push("/products/new-arrivals")}
+              <Link
+                href="/products/new-arrivals"
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
               >
                 See All
                 <ArrowRight className="w-4 h-4" />
-              </button>
+              </Link>
             </div>
             
             <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />

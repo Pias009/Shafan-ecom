@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import ClientLayout from "@/components/ClientLayout";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -55,6 +56,7 @@ export default function RootLayout({
         <Providers>
           <MainStoreLayout>
             <Suspense fallback={<div className="flex-1 flex items-center justify-center min-h-[60vh]"><Loader2 className="w-8 h-8 animate-spin text-emerald-600" /></div>}>
+              <GlobalLoadingOverlay />
               <ClientLayout>
                 {children}
               </ClientLayout>

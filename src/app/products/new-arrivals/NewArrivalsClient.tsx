@@ -8,7 +8,9 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice } from "@/lib/product-utils";
+import { useLoadingStore } from "@/lib/loading-store";
 import { Sparkles } from "lucide-react";
+import Link from "next/link";
 
 interface Product {
   id: string;
@@ -72,6 +74,7 @@ export default function NewArrivalsClient({ products }: NewArrivalsClientProps) 
       const data = await res.json();
       if (data.orderId) {
         toast.success("Redirecting...", { id: tid });
+        useLoadingStore.getState().setRedirecting(true, "Creating your order...");
         router.push(`/checkout/payment/${data.orderId}`);
       } else {
         throw new Error(data.error);
@@ -90,12 +93,12 @@ export default function NewArrivalsClient({ products }: NewArrivalsClientProps) 
           <div className="text-6xl mb-4 opacity-30">✨</div>
           <h1 className="text-4xl font-black text-black mb-4">Fresh From The Shelf</h1>
           <p className="text-black/50">No new products available right now. Check back soon!</p>
-          <button
-            onClick={() => router.push("/")}
-            className="mt-6 px-6 py-3 bg-black text-white rounded-full font-black text-sm"
+          <Link
+            href="/"
+            className="mt-6 inline-block px-6 py-3 bg-black text-white rounded-full font-black text-sm"
           >
             Back to Home
-          </button>
+          </Link>
         </div>
       </div>
     );

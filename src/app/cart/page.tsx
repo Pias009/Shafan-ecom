@@ -17,6 +17,7 @@ import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
+import { useLoadingStore } from "@/lib/loading-store";
 
 function getCurrencyForCountry(countryCode: string): string {
   const currencies: Record<string, string> = {
@@ -165,9 +166,11 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         }
         toast.success("Order created! Redirecting...", { id: "checkout" });
         if (paymentMethod === "cod") {
+          useLoadingStore.getState().setRedirecting(true, "Finalizing your order...");
           router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
         } else {
           console.log("Redirecting to payment page for order:", data.orderId);
+          useLoadingStore.getState().setRedirecting(true, "Creating your order...");
           router.push(`/checkout/payment/${data.orderId}`);
         }
       } else if (!orderRes.ok) {
