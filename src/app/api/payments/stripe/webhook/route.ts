@@ -116,7 +116,7 @@ export async function POST(req: Request) {
           const orderUrl = `https://shanfa-store.com/account/orders/${updatedOrder.id}`;
           const trackingUrl = `https://global-courier.com/track/${trackingCode}`;
           
-          sendEmail({
+          await sendEmail({
             to: customerEmail,
             subject: `Payment Confirmed! Order #${updatedOrder.id} - SHANFA`,
             html: `
@@ -146,7 +146,7 @@ export async function POST(req: Request) {
 
         // Send notification to admin (Optional) - always notify admin of payment
         if (process.env.ADMIN_EMAIL) {
-          sendEmail({
+          await sendEmail({
             to: process.env.ADMIN_EMAIL,
             subject: `Payment Received - Order #${updatedOrder.id} - ${(updatedOrder.total || 0).toFixed(2)} ${updatedOrder.currency.toUpperCase()}`,
             html: `

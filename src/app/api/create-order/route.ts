@@ -757,7 +757,7 @@ export async function POST(req: Request) {
         </div>
       `;
 
-      sendEmail({
+      await sendEmail({
         to: customerEmail,
         subject: `Order Confirmed #${order.id} - SHANFA`,
         html: emailHtml,
@@ -776,7 +776,7 @@ export async function POST(req: Request) {
     // Always notify admin of new orders (both COD and prepaid)
     if (process.env.ADMIN_EMAIL) {
       const adminItemsList = order.items.map((item: any) => `${item.name || 'Product'} x${item.quantity}`).join(', ');
-      sendEmail({
+      await sendEmail({
         to: process.env.ADMIN_EMAIL,
         subject: isCOD ? `New COD Order #${order.id} - ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}` : `New Order #${order.id} - PAID ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}`,
         html: `
