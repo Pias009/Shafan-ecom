@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { autoCompleteCountryPrices } from '@/lib/country-pricing';
 import { parseCommaSeparatedPriceInput, formatPriceForAdmin } from '@/lib/money';
+import { RichTextEditor } from '@/components/RichTextEditor';
 
 const SUPPORTED_COUNTRIES = ['AE', 'SA', 'KW', 'QA', 'BH', 'OM'];
 const COUNTRY_CODES = SUPPORTED_COUNTRIES;
@@ -447,62 +448,46 @@ export function AddProductForm({
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between px-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/70">Description</label>
-                <span className="text-[8px] text-black/30">Drag corner to resize</span>
-              </div>
-              <textarea
+              <RichTextEditor
                 name="description"
                 value={formData.description}
-                onChange={handleChange}
-                rows={5}
-                placeholder="Tell customers about this product..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
+                onChange={(value) => setFormData({ ...formData, description: value })}
+                placeholder="Tell customers about this product... (Use toolbar for formatting)"
+                label="Description"
+                rows={6}
               />
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between px-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/70">Benefits</label>
-                <span className="text-[8px] text-black/30">Drag corner to resize</span>
-              </div>
-              <textarea
+              <RichTextEditor
                 name="benefits"
                 value={formData.benefits}
-                onChange={handleChange}
+                onChange={(value) => setFormData({ ...formData, benefits: value })}
+                placeholder="Key benefits of the product... (Use toolbar for formatting)"
+                label="Benefits"
                 rows={5}
-                placeholder="Key benefits of the product..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
               />
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between px-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/70">Ingredients</label>
-                <span className="text-[8px] text-black/30">Drag corner to resize</span>
-              </div>
-              <textarea
+              <RichTextEditor
                 name="ingredients"
                 value={formData.ingredients}
-                onChange={handleChange}
+                onChange={(value) => setFormData({ ...formData, ingredients: value })}
+                placeholder="List of ingredients... (Use toolbar for formatting)"
+                label="Ingredients"
                 rows={5}
-                placeholder="List of ingredients..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
               />
             </div>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between px-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/70">How to Use</label>
-                <span className="text-[8px] text-black/30">Drag corner to resize</span>
-              </div>
-              <textarea
+              <RichTextEditor
                 name="howToUse"
                 value={formData.howToUse}
-                onChange={handleChange}
+                onChange={(value) => setFormData({ ...formData, howToUse: value })}
+                placeholder="Instructions on how to use the product... (Use toolbar for formatting)"
+                label="How to Use"
                 rows={5}
-                placeholder="Instructions on how to use the product..."
-                className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
               />
             </div>
 

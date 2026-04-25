@@ -9,6 +9,8 @@ import ClientLayout from "@/components/ClientLayout";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { MetaPixel } from "@/components/MetaPixel";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -51,6 +53,8 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://stats.pusher.com" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <meta httpEquiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=()" />
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
+        <MetaPixel debugMode={process.env.NODE_ENV === 'development'} />
       </head>
       <body className="antialiased">
         <Providers>

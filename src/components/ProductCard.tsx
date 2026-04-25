@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { ShoppingBag, ShoppingCart, Truck, Flame, Star } from "lucide-react";
@@ -11,7 +12,7 @@ import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 import { useRouter } from "next/navigation";
 
-function isValidImageUrl(url: any): boolean {
+function isValidImageUrl(url: unknown): boolean {
   if (!url || typeof url !== 'string') return false;
   return url.startsWith('/') || url.startsWith('http');
 }
@@ -31,20 +32,20 @@ interface ProductCardProps {
     stockQuantity?: number;
     totalSales?: number;
     freeDelivery?: boolean;
-    countryPrices?: Array<{
-      country: string;
-      price: number;
-      currency: string;
-    }>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    countryPrices?: any[];
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onQuickView: (product: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onAddToCart: (product: any) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onOrderNow?: (product: any) => void;
   compact?: boolean;
   priority?: boolean;
 }
 
-function ProductCard({
+const ProductCardComponent = function ProductCard({
   product,
   onQuickView,
   onAddToCart,
@@ -86,7 +87,13 @@ function ProductCard({
   const { price: countryPrice, hasDiscount: countryHasDiscount, discountPrice: countryDiscountPrice } = getDisplayPrice(product, selectedCountry);
   const basePrice = product.discountPrice ?? product.price;
   const displayPrice = countryPrice > 0 ? countryPrice : basePrice;
-  const isNotAvailable = displayPrice <= 0;
+  
+  // Hide products with zero or invalid price
+  if (!displayPrice || displayPrice <= 0) {
+    return null;
+  }
+  
+  const isNotAvailable = false;
   const hasDiscount = countryHasDiscount;
   const actualDiscountPrice = countryHasDiscount && countryDiscountPrice > 0 ? countryDiscountPrice : (product.discountPrice || 0);
   const showOriginalPrice = hasDiscount && actualDiscountPrice > 0 && actualDiscountPrice < displayPrice;
@@ -161,8 +168,9 @@ function ProductCard({
         {/* Cart Overlay - Shows on Hover */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col items-center justify-center">
           {/* Price - Shows on Hover */}
-          <div className="mb-4 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 text-center">
-            <Price amount={displayPrice} showSymbolSmall countryPrices={product.countryPrices} />
+          <div className="mb-3 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 text-center">
+            <span className="text-[0.65em] font-bold uppercase tracking-wider text-white block mb-1">{brandName}</span>
+            <span className="text-[0.55em] font-medium text-white/80 block line-clamp-2 px-2">{product.name}</span>
           </div>
           
           {/* Action Buttons - Vertical View */}
@@ -205,19 +213,21 @@ function ProductCard({
         </div>
 
         {/* Product Name */}
-        <div className="h-10 sm:h-12 mb-2 flex items-start overflow-hidden">
+        <div className="h-10 sm:h-12 mb-1 flex items-start overflow-hidden">
           <h3 className="text-xs sm:text-sm font-bold text-black leading-tight line-clamp-2 break-words">
             {product.name}
           </h3>
         </div>
         
-        {/* Brand Name */}
-        <p className="text-[8px] sm:text-[9px] uppercase text-gray-400 tracking-wider mb-1">
-          {brandName}
-        </p>
+        {/* Brand Name - Colorful Badge */}
+        <div className="mb-1 -mt-1">
+          <span className="inline-block text-[8px] sm:text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+            {brandName}
+          </span>
+        </div>
 
         {/* Add to Cart Button */}
-        <div className="mt-auto flex justify-center">
+        <div className="mt-1 flex justify-center">
           <button
             type="button"
             disabled={isNotAvailable}
@@ -238,5 +248,13 @@ function ProductCard({
     </div>
   );
 }
+
+const ProductCard = memo(ProductCardComponent, (prevProps, nextProps) => {
+  return prevProps.product.id === nextProps.product.id &&
+    prevProps.priority === nextProps.priority &&
+    prevProps.compact === nextProps.compact;
+});
+
+ProductCard.displayName = 'ProductCard';
 
 export { ProductCard };

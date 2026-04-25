@@ -1,19 +1,63 @@
 "use client";
 
+import { memo } from "react";
 import { Flame, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { ProductCard } from "./ProductCard";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import Link from "next/link";
 
 interface TrendingNowSliderProps {
-  products: any[];
-  onQuickView: (product: any) => void;
-  onAddToCart: (product: any) => void;
-  onOrderNow: (product: any) => void;
+  products: { id: string; name: string; price?: number; priceCents?: number; discountPrice?: number; salePrice?: number; salePriceCents?: number; imageUrl?: string; mainImage?: string; brandName?: string; brand?: { name: string }; averageRating?: number; ratingCount?: number; stockQuantity?: number; totalSales?: number; countryPrices?: unknown[]; hot?: boolean; trending?: boolean }[];
+  onQuickView: (product: unknown) => void;
+  onAddToCart: (product: unknown) => void;
+  onOrderNow: (product: unknown) => void;
 }
+
+function transformProduct(product: { id: string; name: string; price?: number; priceCents?: number; discountPrice?: number; salePrice?: number; salePriceCents?: number; imageUrl?: string; mainImage?: string; brandName?: string; brand?: { name: string }; averageRating?: number; ratingCount?: number; stockQuantity?: number; totalSales?: number; countryPrices?: unknown[]; hot?: boolean; trending?: boolean }) {
+  return {
+    id: product.id,
+    name: product.name,
+    price: product.price || product.priceCents || 0,
+    discountPrice: product.discountPrice || product.salePrice || product.salePriceCents,
+    imageUrl: product.imageUrl || product.mainImage || "/placeholder-product.png",
+    brand: product.brandName || product.brand?.name || "Generic",
+    averageRating: product.averageRating,
+    ratingCount: product.ratingCount,
+    stockQuantity: product.stockQuantity,
+    totalSales: product.totalSales,
+    countryPrices: product.countryPrices,
+    hot: product.hot,
+    trending: product.trending,
+  };
+}
+
+const ProductCardItem = memo(function ProductCardItem({
+  product,
+  onQuickView,
+  onAddToCart,
+  onOrderNow,
+  priority,
+}: {
+  product: { id: string; name: string; price?: number; priceCents?: number; discountPrice?: number; salePrice?: number; salePriceCents?: number; imageUrl?: string; mainImage?: string; brandName?: string; brand?: { name: string }; averageRating?: number; ratingCount?: number; stockQuantity?: number; totalSales?: number; countryPrices?: unknown[]; hot?: boolean; trending?: boolean };
+  onQuickView: (product: unknown) => void;
+  onAddToCart: (product: unknown) => void;
+  onOrderNow: (product: unknown) => void;
+  priority: boolean;
+}) {
+  const transformed = useMemo(() => transformProduct(product), [product.id, product.name, product.price, product.priceCents, product.discountPrice, product.salePrice, product.salePriceCents, product.imageUrl, product.mainImage, product.brandName, product.brand, product.averageRating, product.ratingCount, product.stockQuantity, product.totalSales, product.countryPrices, product.hot, product.trending]);
+  return (
+    <ProductCard
+      product={transformed}
+      onQuickView={onQuickView}
+      onAddToCart={onAddToCart}
+      onOrderNow={onOrderNow}
+      priority={priority}
+    />
+  );
+});
 
 export function TrendingNowSlider({
   products,
@@ -97,18 +141,8 @@ export function TrendingNowSlider({
           >
             {products.map((product, idx) => (
               <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
-                <ProductCard
-                  product={{
-                    ...product,
-                    price: product.price || product.priceCents || 0,
-                    imageUrl: product.imageUrl || product.mainImage,
-                    brand: product.brandName || product.brand?.name || "Generic",
-                    averageRating: product.averageRating,
-                    ratingCount: product.ratingCount,
-                    stockQuantity: product.stockQuantity,
-                    totalSales: product.totalSales,
-                    countryPrices: product.countryPrices,
-                  }}
+                <ProductCardItem
+                  product={product}
                   onQuickView={onQuickView}
                   onAddToCart={onAddToCart}
                   onOrderNow={onOrderNow}

@@ -89,14 +89,14 @@ function PriceContent({ amount, className, showSymbolSmall, countryPrices, curre
   if (showSymbolSmall) {
     return (
       <span className={className}>
-        <span className="text-[0.6em] font-bold text-emerald-600">{displayCurrency}</span><span className="text-black">{amountPart}</span>
+        <span className="text-[0.6em] font-bold text-emerald-600">{displayCurrency}</span><span className="text-black"> {amountPart}</span>
       </span>
     );
   }
   
   return (
     <span className={className} style={{ unicodeBidi: 'plaintext' }}>
-      <span className="text-emerald-600">{currencySymbol}</span><span className="text-black">{amountPart}</span>
+      <span className="text-emerald-600">{currencySymbol}</span><span className="text-black"> {amountPart}</span>
     </span>
   );
 }

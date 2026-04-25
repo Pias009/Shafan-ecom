@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, lazy, Suspense, useRef } from "react";
+import { useMemo, useState, useEffect, lazy, Suspense, useRef, memo } from "react";
 import { CategorySection } from "@/components/CategorySection";
 import { Hero } from "@/components/Hero";
 import { ProductCard } from "@/components/ProductCard";
@@ -30,6 +30,46 @@ import dynamic from "next/dynamic";
 const BlogShowcase = dynamic(() => import("@/components/BlogShowcase").then(m => m.BlogShowcase), { ssr: false });
 const GoogleReviewsSection = dynamic(() => import("@/components/GoogleReviewsSection").then(m => m.GoogleReviewsSection), { ssr: false });
 const BrandMarquee = dynamic(() => import("@/components/BrandMarquee").then(m => m.BrandMarquee), { ssr: false });
+
+const ProductCardItem = memo(function ProductCardItem({ 
+  product, 
+  onQuickView, 
+  addToCart, 
+  orderNow, 
+  priority 
+}: { 
+  product: { id: string; name: string; price?: number; priceCents?: number; imageUrl?: string; mainImage?: string; brandName?: string; brand?: { name: string }; averageRating?: number; ratingCount?: number; stockQuantity?: number; totalSales?: number; countryPrices?: unknown[] }; 
+  onQuickView: (p: unknown) => void; 
+  addToCart: (p: unknown) => void; 
+  orderNow: (p: unknown) => void; 
+  priority: boolean;
+}) {
+  const transformed = useMemo(() => {
+    const basePrice = product.price || product.priceCents || 0;
+    // Skip if no valid price - let ProductCard filter it out
+    return {
+      id: product.id,
+      name: product.name,
+      price: basePrice,
+      imageUrl: product.imageUrl || product.mainImage || "/placeholder-product.png",
+      brand: product.brandName || product.brand?.name || "Generic",
+      averageRating: product.averageRating,
+      ratingCount: product.ratingCount,
+      stockQuantity: product.stockQuantity,
+      totalSales: product.totalSales,
+      countryPrices: product.countryPrices,
+    };
+  }, [product.id, product.name, product.price, product.priceCents, product.imageUrl, product.mainImage, product.brandName, product.brand, product.averageRating, product.ratingCount, product.stockQuantity, product.totalSales, product.countryPrices]);
+  return (
+    <ProductCard
+      product={transformed}
+      onQuickView={onQuickView}
+      onAddToCart={addToCart}
+      onOrderNow={orderNow}
+      priority={priority}
+    />
+  );
+});
 
 function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { products: any[]; onQuickView: (p: any) => void; addToCart: (p: any) => void; orderNow: (p: any) => void }) {
   const router = useRouter();
@@ -78,21 +118,11 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
       >
         {products.map((product, idx) => (
           <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
-            <ProductCard
-              product={{
-                ...product,
-                price: product.price || product.priceCents || 0,
-                imageUrl: product.imageUrl || product.mainImage,
-                brand: product.brandName || product.brand?.name || "Generic",
-                averageRating: product.averageRating,
-                ratingCount: product.ratingCount,
-                stockQuantity: product.stockQuantity,
-                totalSales: product.totalSales,
-                countryPrices: product.countryPrices,
-              }}
+            <ProductCardItem
+              product={product}
               onQuickView={onQuickView}
-              onAddToCart={addToCart}
-              onOrderNow={orderNow}
+              addToCart={addToCart}
+              orderNow={orderNow}
               priority={idx < 4}
             />
           </div>
@@ -160,21 +190,11 @@ function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { pro
       >
         {products.map((product, idx) => (
           <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
-            <ProductCard
-              product={{
-                ...product,
-                price: product.regularPrice || product.regularPriceCents || product.price || product.priceCents || 0,
-                imageUrl: product.imageUrl || product.mainImage,
-                brand: product.brandName || product.brand?.name || "Generic",
-                averageRating: product.averageRating,
-                ratingCount: product.ratingCount,
-                stockQuantity: product.stockQuantity,
-                totalSales: product.totalSales,
-                countryPrices: product.countryPrices,
-              }}
+            <ProductCardItem
+              product={product}
               onQuickView={onQuickView}
-              onAddToCart={addToCart}
-              onOrderNow={orderNow}
+              addToCart={addToCart}
+              orderNow={orderNow}
               priority={idx < 4}
             />
           </div>
@@ -237,10 +257,22 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
   const { selectedCountry, selectedCurrency, setCountry, setDetectedCountry } = useCountryStore();
   const hasHydrated = useCountryStore((state) => state._hasHydrated);
 
-  const { status } = useSession();
+const { status } = useSession();
 
+function useDevRenderTracker() {
+  const renderCount = useRef(0);
   useEffect(() => {
-    setMounted(true);
+    renderCount.current += 1;
+    if (renderCount.current > 3 && process.env.NODE_ENV === 'development') {
+      console.warn('[DevOnly] Excessive re-renders:', renderCount.current);
+    }
+  }, []);
+}
+
+useDevRenderTracker();
+
+useEffect(() => {
+  setMounted(true);
 
     async function detectCountry() {
       try {

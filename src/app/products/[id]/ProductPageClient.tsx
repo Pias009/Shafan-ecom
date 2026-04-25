@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
-import { formatDescription } from "@/utils/formatText";
+import { formatDescription, VisualDescription } from "@/utils/formatText";
 import { useLoadingStore } from "@/lib/loading-store";
 
 const ProductQuickViewModal = lazy(() => import("@/components/ProductQuickViewModal").then(m => ({ default: m.ProductQuickViewModal })));
@@ -333,9 +333,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                       transition={{ duration: 0.2 }}
                       className="py-2 sm:py-4"
                     >
-                      <div className="text-sm sm:text-base md:text-lg leading-relaxed text-black/60 font-medium prose prose-stone max-w-none">
-                        {formatDescription((product as any)[showDescription] as string)}
-                      </div>
+                      <VisualDescription description={(product as any)[showDescription] as string} />
                     </motion.div>
                   )}
                 </AnimatePresence>
