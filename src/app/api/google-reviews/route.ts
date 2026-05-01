@@ -1,70 +1,67 @@
 import { NextResponse } from "next/server";
-
-const PLACE_ID = process.env.GOOGLE_PLACE_ID || "ChIJK5UNamc5XzYR7eZ特殊性8jD-k";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  const placeId = process.env.GOOGLE_PLACE_ID || PLACE_ID;
-
-  if (!apiKey) {
-    return NextResponse.json({
-      success: false,
-      error: "GOOGLE_PLACES_API_KEY not configured",
-      message: "Please add GOOGLE_PLACES_API_KEY to your .env file to enable real Google reviews.",
-      reviews: [],
-      source: "none"
-    });
-  }
-
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews,rating,user_ratings_total&key=${apiKey}`;
-    
-    const response = await fetch(url);
-    const data = await response.json();
+    const dbReviews = await prisma.review.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: "asc" },
+    });
 
-    if (data.error_message || !data.result) {
-      return NextResponse.json({
-        success: false,
-        error: data.error_message || "Invalid Place ID",
-        message: "Google Places API returned an error. Please check your GOOGLE_PLACE_ID.",
-        reviews: [],
-        source: "error"
-      });
-    }
-
-    const reviews = data.result?.reviews?.slice(0, 10) || [];
-    const rating = data.result?.rating || 0;
-    const totalReviews = data.result?.user_ratings_total || 0;
-
-    if (reviews.length === 0) {
+    if (dbReviews.length === 0) {
       return NextResponse.json({
         success: false,
         error: "No reviews found",
-        message: "This business has no Google reviews yet.",
+        message: "No reviews in database. Run: npx tsx prisma/sync-google-reviews.ts",
         reviews: [],
-        source: "google_api"
+        source: "none",
+        rating: { average: 0, total: 0 }
       });
     }
+
+    const activeReviews = dbReviews;
+    const avgRating = activeReviews.reduce((sum, r) => sum + r.rating, 0) / activeReviews.length;
+
+    const reviews = activeReviews.map((r) => ({
+      id: r.id,
+      author_name: r.authorName,
+      rating: r.rating,
+      text: r.text,
+      relative_time_description: r.date ? timeAgo(r.date) : "",
+    }));
 
     return NextResponse.json({
       success: true,
       reviews,
-      source: "google_api",
+      source: "database",
       rating: {
-        average: rating,
-        total: totalReviews
-      },
-      place_id: placeId
+        average: Math.round(avgRating * 10) / 10,
+        total: activeReviews.length
+      }
     });
 
   } catch (error: any) {
-    console.error("Google Reviews API Error:", error);
+    console.error("Reviews API Error:", error);
     return NextResponse.json({
       success: false,
       error: error.message,
-      message: "Failed to fetch Google reviews",
+      message: "Failed to fetch reviews",
       reviews: [],
-      source: "error"
+      source: "error",
+      rating: { average: 0, total: 0 }
     });
   }
+}
+
+function timeAgo(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+  if (days < 1) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.floor(days / 30)} months ago`;
+  return `${Math.floor(days / 365)} years ago`;
 }

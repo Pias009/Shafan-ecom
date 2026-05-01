@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { useLanguageStore } from "@/lib/language-store";
 import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
 import { translations } from "@/lib/translations";
+import { fbEvent } from "@/lib/fpixel";
 
 type Mode = "sign-in" | "sign-up";
 
@@ -102,6 +103,12 @@ export function AuthModal({
         redirect: false,
       });
       if (res?.error) throw new Error("Invalid email or password.");
+
+      if (mode === "sign-up") {
+        fbEvent('CompleteRegistration', {
+          method: "email"
+        });
+      }
 
       onClose();
     } catch (err) {

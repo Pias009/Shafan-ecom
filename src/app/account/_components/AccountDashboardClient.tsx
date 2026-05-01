@@ -1,6 +1,7 @@
 "use client";
 
 import { useCartStore } from "@/lib/cart-store";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { ShoppingBag, Package, Truck, CheckCircle2, XCircle, RotateCcw, ArrowRight, Loader2, Info } from "lucide-react";
 import Image from "next/image";
@@ -20,6 +21,7 @@ interface DashboardData {
 }
 
 export default function AccountDashboardClient() {
+  const { data: session } = useSession();
   const userCountry = useUserCountry();
   const { items: cartItems } = useCartStore();
   const [data, setData] = useState<DashboardData | null>(null);
@@ -31,6 +33,15 @@ export default function AccountDashboardClient() {
     setMounted(true);
     const guestEmail = localStorage.getItem('guest_email');
     setGuestEmailState(guestEmail);
+
+    // ✅ Identify user for Meta Retargeting
+    if (typeof window !== 'undefined' && window['fbq']) {
+      const emailToIdentify = session?.user?.email || guestEmail;
+      if (emailToIdentify) {
+        window['fbq']('identify', emailToIdentify);
+      }
+    }
+
     async function fetchDashboard() {
       try {
         let apiUrl = "/api/account/dashboard";

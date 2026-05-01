@@ -1,6 +1,9 @@
 'use server';
 
 import { z } from 'zod';
+import crypto from 'crypto';
+import { prisma } from '@/lib/prisma';
+import { headers } from 'next/headers';
 
 const MetaCAPIError = z.object({
   error: z.object({
@@ -150,6 +153,60 @@ export function generateEventId(orderId: string, timestamp: number): string {
 }
 
 export function hashData(data: string): string {
-  const crypto = require('crypto');
   return crypto.createHash('sha256').update(data.toLowerCase().trim()).digest('hex');
+}
+
+export async function firePurchaseCAPI(orderId: string, clientEventId?: string): Promise<{ success: boolean; fbtrace_id?: string; error?: string }> {
+  const pixelId = process.env.NEXT_PUBLIC_FB_PIXEL_ID;
+  const accessToken = process.env.FB_ACCESS_TOKEN;
+
+  if (!pixelId || !accessToken) {
+    return { success: false, error: 'CAPI not configured' };
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true, user: true },
+  });
+
+  if (!order || !order.total) {
+    return { success: false, error: 'Order not found or has no total' };
+  }
+
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ?? headersList.get('x-real-ip') ?? undefined;
+  const ua = headersList.get('user-agent') ?? undefined;
+
+  const names = order.user?.name?.split(' ') ?? [];
+  const timestamp = Math.floor(order.createdAt.getTime() / 1000);
+  const eventId = clientEventId || generateEventId(orderId, timestamp);
+
+  return sendPurchaseToMetaCAPI({
+    eventName: 'Purchase',
+    eventTime: timestamp,
+    eventId,
+    userData: {
+      em: order.email ? hashData(order.email) : undefined,
+      ph: order.user?.phone ? hashData(order.user.phone) : undefined,
+      fn: names[0] ? hashData(names[0]) : undefined,
+      ln: names[1] ? hashData(names[1]) : undefined,
+      ct: order.shippingAddress ? hashData(String((order.shippingAddress as Record<string, unknown>)?.city ?? '')) : undefined,
+      st: order.shippingAddress ? hashData(String((order.shippingAddress as Record<string, unknown>)?.state ?? '')) : undefined,
+      country: order.user?.country ?? undefined,
+      external_id: order.userId ? hashData(order.userId) : undefined,
+      client_ip_address: ip,
+      client_user_agent: ua,
+    },
+    customData: {
+      currency: order.currency.toLowerCase(),
+      value: order.total,
+      content_ids: order.items.map((item) => item.productId),
+      contents: order.items.map((item) => ({
+        id: item.productId,
+        quantity: item.quantity,
+        item_price: item.unitPrice ?? 0,
+      })),
+      num_items: order.items.reduce((sum, item) => sum + item.quantity, 0),
+    },
+  });
 }

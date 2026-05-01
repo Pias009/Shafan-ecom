@@ -8,6 +8,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import { useUserCountry } from "@/lib/country-detection";
+import { hasValidPrice } from "@/lib/product-utils";
+import { fbEvent } from "@/lib/fpixel";
 import toast from "react-hot-toast";
 
 interface Coupon {
@@ -38,6 +40,15 @@ export function OffersClient({ products, coupons }: { products: any[], coupons: 
       countryPrices: product.countryPrices,
     };
     addItem(cartItem, 1);
+    
+    fbEvent('AddToCart', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: product.price,
+      currency: 'SAR',
+    });
+    
     toast.success(`${product.name} added to cart`);
   }
 

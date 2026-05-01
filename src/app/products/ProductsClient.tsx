@@ -14,8 +14,9 @@ import { useSearchParams } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useSearchStore } from "@/lib/search-store";
+import { fbEvent } from "@/lib/fpixel";
 
 const DUMMY_PRODUCT_NAMES = [
   "Icy Gel Cleanser",
@@ -369,6 +370,15 @@ return sorted;
       countryPrices: product.countryPrices,
     };
     addItem(cartItem, 1);
+    
+    fbEvent('AddToCart', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: product.price,
+      currency: 'SAR',
+    });
+    
     toast.success(`${product.name} added`);
   }
 

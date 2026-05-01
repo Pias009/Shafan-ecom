@@ -16,6 +16,7 @@ import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { formatDescription, VisualDescription } from "@/utils/formatText";
 import { useLoadingStore } from "@/lib/loading-store";
+import { fbEvent } from "@/lib/fpixel";
 
 const ProductQuickViewModal = lazy(() => import("@/components/ProductQuickViewModal").then(m => ({ default: m.ProductQuickViewModal })));
 
@@ -75,6 +76,19 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     return () => clearInterval(timer);
   }, [allImages.length, isEnlarged]);
 
+  // ViewContent event
+  useEffect(() => {
+    if (product?.id) {
+      fbEvent('ViewContent', {
+        content_ids: [product.id],
+        content_type: 'product',
+        content_name: product.name,
+        value: displayPrice,
+        currency: 'SAR',
+      });
+    }
+  }, [product?.id]);
+
   function addToCart(productToAdd?: any) {
     const p = productToAdd || product;
     if (!p) return;
@@ -92,6 +106,14 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       imageUrl: p.mainImage || p.imageUrl,
       countryPrices: p.countryPrices,
     }, 1);
+
+    fbEvent('AddToCart', {
+      content_ids: [p.id],
+      content_type: 'product',
+      content_name: p.name,
+      value: itemPrice,
+      currency: 'SAR',
+    });
 
     toast.success(`${p.name || 'Product'} added to cart`);
 

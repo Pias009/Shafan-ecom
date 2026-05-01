@@ -126,9 +126,9 @@ export class EmailService {
         
         result = await this.resend.emails.send(resendPayload);
         
-        if (result.error) {
-          throw new Error(result.error.message);
-        }
+         if (result.error) {
+           throw new Error(typeof result.error === 'string' ? result.error : result.error.message || 'Unknown email error');
+         }
       } else if (this.config.provider === 'mock') {
         // Mock sending for testing/development
         result = { id: `mock-${Date.now()}` };

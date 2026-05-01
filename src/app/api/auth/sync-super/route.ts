@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-const SYNC_SUPER_SECRET = process.env.SYNC_SUPER_SECRET || "shanfa-sync-secret-2024";
+const SYNC_SUPER_SECRET = process.env.SYNC_SUPER_SECRET;
+if (!SYNC_SUPER_SECRET) {
+  console.warn('[sync-super] SYNC_SUPER_SECRET not set');
+}
 
 function verifySyncSecret(req: Request): boolean {
+  if (!SYNC_SUPER_SECRET) return false;
   const secret = req.headers.get("x-sync-secret");
   return secret === SYNC_SUPER_SECRET;
 }
@@ -16,13 +20,13 @@ export async function GET(req: Request) {
   }
   
   try {
-    // Use environment variables for super admin credentials
-    const email = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
-    const password = process.env.DEMO_SUPERADMIN_PASSWORD || "superadmin123";
+    // Use environment variables for super admin credentials (no fallbacks for security)
+    const email = process.env.DEMO_SUPERADMIN_EMAIL;
+    const password = process.env.DEMO_SUPERADMIN_PASSWORD;
     
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Super admin credentials not configured" },
+        { error: "Super admin credentials not configured in environment variables" },
         { status: 500 }
       );
     }

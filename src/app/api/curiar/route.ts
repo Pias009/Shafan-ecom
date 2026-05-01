@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 
-const COURIER_API_KEY = process.env.COURIER_API_KEY || "shanfa-courier-secret-2024";
+const COURIER_API_KEY = process.env.COURIER_API_KEY;
+if (!COURIER_API_KEY) {
+  console.warn('[curiar] COURIER_API_KEY not set');
+}
 
 function verifyCourierAuth(req: Request): boolean {
+  if (!COURIER_API_KEY) return false;
   const apiKey = req.headers.get("x-api-key");
   return apiKey === COURIER_API_KEY;
 }

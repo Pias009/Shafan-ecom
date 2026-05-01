@@ -15,9 +15,9 @@
 const NAQEL_API_URL =
   process.env.NAQEL_API_URL || "https://dev.gnteq.app";
 const NAQEL_CUSTOMER_CODE =
-  process.env.NAQEL_CUSTOMER_CODE || "CC189297";
+  process.env.NAQEL_CUSTOMER_CODE;
 const NAQEL_BRANCH_CODE =
-  process.env.NAQEL_BRANCH_CODE || "BR167004";
+  process.env.NAQEL_BRANCH_CODE;
 /** supplierCode is always "NQL" for Naqel (not the customer code) */
 const NAQEL_SUPPLIER_CODE = "NQL";
 
@@ -31,8 +31,12 @@ let _tokenExpiry = 0;
 async function getAuthToken(): Promise<string> {
   if (_authToken && Date.now() < _tokenExpiry) return _authToken;
 
-  const username = process.env.NAQEL_USERNAME || "NQLShanfa_API";
-  const password = process.env.NAQEL_PASSWORD || "Solid@%aA8";
+  const username = process.env.NAQEL_USERNAME;
+  const password = process.env.NAQEL_PASSWORD;
+
+  if (!username || !password) {
+    throw new Error('NAQEL_USERNAME or NAQEL_PASSWORD not set in environment variables');
+  }
 
   console.log(`[Naqel] Requesting token for user: ${username}`);
 

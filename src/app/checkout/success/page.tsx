@@ -1,12 +1,15 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
 import { CheckCircle2, Package, Home, Heart, Sparkles, Gift, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/Loader";
 import { motion } from "framer-motion";
+import { fbEvent } from "@/lib/fpixel";
+import { pushToDataLayer } from "@/lib/datalayer";
+import { firePurchaseCAPI } from "@/app/actions/meta-capi";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -14,14 +17,14 @@ function SuccessContent() {
   const [valid, setValid] = useState(false);
   const [checking, setChecking] = useState(true);
   const [countdown, setCountdown] = useState(5);
+  const [orderData, setOrderData] = useState<{ total: number; currency: string; items: Array<{ productId: string; quantity: number; unitPrice: number | null }> } | null>(null);
+  const purchaseFiredRef = useRef(false);
 
-  // Support both ?order_id= (Stripe) and ?orderId= (COD/manual)
   const orderId = searchParams?.get("orderId") || searchParams?.get("order_id");
   const sessionId = searchParams?.get("session_id");
   const isCOD = searchParams?.get("cod") === "true";
   const clearCart = useCartStore((state) => state.clearCart);
 
-  // The final redirect destination — always to the orders page
   const redirectUrl = `/account/orders`;
 
   useEffect(() => {
@@ -39,6 +42,15 @@ function SuccessContent() {
             router.push("/account/orders");
             return;
           }
+          setOrderData({
+            total: data.total,
+            currency: data.currency ?? "AED",
+            items: data.items?.map((item: { productId: string; quantity: number; unitPrice: number | null }) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            })) ?? [],
+          });
         } catch {
           router.push("/account/orders");
           return;
@@ -58,7 +70,40 @@ function SuccessContent() {
     }
   }, [valid, clearCart]);
 
-  // Auto-redirect countdown
+  useEffect(() => {
+    if (!valid || !orderId || !orderData || purchaseFiredRef.current) return;
+    purchaseFiredRef.current = true;
+
+    const eventId = `order_${orderId}_${Date.now()}`;
+
+    const numItems = orderData.items.reduce((sum, item) => sum + item.quantity, 0);
+
+    // GA4 purchase event via dataLayer
+    pushToDataLayer({
+      event: 'purchase',
+      ecommerce: {
+        transaction_id: orderId,
+        value: orderData.total,
+        currency: orderData.currency.toUpperCase(),
+        items: orderData.items.map((item) => ({
+          item_id: item.productId,
+          price: item.unitPrice ?? 0,
+          quantity: item.quantity,
+        })),
+      },
+    });
+
+    fbEvent("Purchase", {
+      value: orderData.total,
+      currency: orderData.currency.toUpperCase(),
+      content_ids: orderData.items.map((item) => item.productId),
+      content_type: "product",
+      num_items: numItems,
+    }, { eventId });
+
+    void firePurchaseCAPI(orderId, eventId);
+  }, [valid, orderId, orderData]);
+
   useEffect(() => {
     if (!valid) return;
     if (countdown <= 0) {

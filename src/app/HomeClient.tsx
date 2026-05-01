@@ -23,8 +23,9 @@ import { useCurrencyStore } from "@/lib/currency-store";
 import { useCountryStore } from "@/lib/country-store";
 import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 import HomeBannerSlider from "@/components/HomeBannerSlider";
-import { hasValidPrice } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
+import { fbEvent } from "@/lib/fpixel";
 
 import dynamic from "next/dynamic";
 const BlogShowcase = dynamic(() => import("@/components/BlogShowcase").then(m => m.BlogShowcase), { ssr: false });
@@ -409,6 +410,15 @@ useEffect(() => {
       countryPrices: product.countryPrices,
     };
     addItem(cartItem, 1);
+    
+    fbEvent('AddToCart', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: product.price || product.priceCents || 0,
+      currency: 'SAR',
+    });
+    
     toast.success(`Added ${product.name} to cart`);
   }
 

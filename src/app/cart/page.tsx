@@ -18,6 +18,7 @@ import { useCountryStore } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { useLoadingStore } from "@/lib/loading-store";
+import { fbEvent } from "@/lib/fpixel";
 
 function getCurrencyForCountry(countryCode: string): string {
   const currencies: Record<string, string> = {
@@ -426,6 +427,24 @@ export default function CartPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fire InitiateCheckout when cart loads
+  useEffect(() => {
+    if (items.length > 0) {
+      const total = items.reduce((acc, item) => {
+        const { price: itemPrice } = getDisplayPrice(item, selectedCountry);
+        return acc + (Number(itemPrice) * item.quantity);
+      }, 0);
+      
+      fbEvent('InitiateCheckout', {
+        content_ids: items.map(i => i.id),
+        content_type: 'product',
+        num_items: items.length,
+        value: total,
+        currency: 'SAR',
+      });
+    }
+  }, [items.length, selectedCountry]);
 
   if (!mounted) return null;
 

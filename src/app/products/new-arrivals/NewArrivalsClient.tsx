@@ -7,7 +7,8 @@ import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
+import { fbEvent } from "@/lib/fpixel";
 import { useLoadingStore } from "@/lib/loading-store";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -51,6 +52,15 @@ export default function NewArrivalsClient({ products }: NewArrivalsClientProps) 
       countryPrices: product.countryPrices,
     };
     addItem(cartItem, 1);
+    
+    fbEvent('AddToCart', {
+      content_ids: [product.id],
+      content_type: 'product',
+      content_name: product.name,
+      value: product.price || 0,
+      currency: 'SAR',
+    });
+    
     toast.success(`${product.name} added to cart`);
   }
 

@@ -798,3 +798,37 @@ model SecretAccessLog {
   @@index([success])
   @@index([createdAt])
 }
+
+model Review {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  source      String   @default("google") // google, facebook, manual
+  authorName  String
+  rating      Int      // 1-5
+  text        String
+  avatarUrl   String?
+  authorUrl   String?
+  date        DateTime?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([source])
+  @@index([active])
+  @@index([rating])
+  @@index([sortOrder])
+}
+
+model TrackingLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventType String   // e.g., 'Purchase', 'AddToCart', 'ViewItem', etc.
+  eventData Json?    // Full event payload from dataLayer
+  sessionId String?  // Browser session ID
+  userId    String?  // Optional: link to user if logged in
+  createdAt DateTime @default(now())
+
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([sessionId])
+  @@index([userId])
+}

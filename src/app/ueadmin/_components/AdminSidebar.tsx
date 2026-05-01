@@ -8,7 +8,7 @@ import {
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
   Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace
+  Zap, Flame, ScanFace, Activity
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -164,15 +164,22 @@ export function AdminSidebar() {
                   <BellIcon size={18} /> Notice Board
                </Link>
 
-               <div className="pt-8 space-y-4">
-                  <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">System Configuration</div>
-                  <Link
-                     href="/ueadmin/settings/shipping"
-                     prefetch={true}
-                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                  >
-                     <SettingsIcon size={18} /> Shipping Settings
-                  </Link>
+                <div className="pt-8 space-y-4">
+                   <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">System Configuration</div>
+                   <Link
+                      href="/ueadmin/tracking"
+                      prefetch={true}
+                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
+                   >
+                      <Activity size={18} /> Tracking & Analytics
+                   </Link>
+                   <Link
+                      href="/ueadmin/settings/shipping"
+                      prefetch={true}
+                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
+                   >
+                      <SettingsIcon size={18} /> Shipping Settings
+                   </Link>
 <Link
                      href="/ueadmin/blog"
                      prefetch={true}

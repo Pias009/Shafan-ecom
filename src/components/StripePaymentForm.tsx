@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { fbEvent } from "@/lib/fpixel";
 import {
   PaymentElement,
   useStripe,
@@ -15,6 +16,13 @@ export default function StripePaymentForm({ orderId }: { orderId: string }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    fbEvent('AddPaymentInfo', {
+      content_type: 'product',
+      currency: 'SAR',
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
