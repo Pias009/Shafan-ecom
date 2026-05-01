@@ -88,9 +88,6 @@ export default async function RoutinesPage() {
       category="Skin Care"
       subcategory="Routine"
       banners={[]}
-      totalCount={products.length}
-      currentPage={1}
-      limit={20}
       isRoutinesPage={true}
     />
   );
