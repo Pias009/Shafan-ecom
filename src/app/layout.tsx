@@ -29,8 +29,12 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.shanfaglobal.com"),
   title: "SHANFA — Your Caring Skin Partner",
   description: "Premium Skin Care crafted with nature's finest ingredients for your natural beauty.",
+  verification: {
+    google: process.env.NEXT_PUBLIC_GSC_VERIFICATION || "YOUR_CODE_FROM_GSC",
+  },
 };
 
 export const viewport: Viewport = {

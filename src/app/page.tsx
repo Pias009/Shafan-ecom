@@ -4,7 +4,7 @@ import { getStoreCode } from "@/lib/server/store-utils";
 import { Suspense } from "react";
 import { Loader } from "@/components/Loader";
 
-export const revalidate = 60;
+export const revalidate = 3600; // Cache for 1 hour to improve performance
 
 export default async function HomePage() {
   const storeCode = await getStoreCode();

@@ -9,6 +9,7 @@ import { getDisplayPrice } from "@/lib/product-utils";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -135,7 +136,7 @@ export function HomeProductCard({
           className="w-full h-full relative block"
         >
           <Image
-            src={isValidImageUrl(product.imageUrl || (product as any).mainImage) ? (product.imageUrl || (product as any).mainImage) : "/placeholder-product.png"}
+            src={isValidImageUrl(product.imageUrl || (product as any).mainImage) ? getOptimizedUrl(product.imageUrl || (product as any).mainImage, 400) : "/placeholder-product.png"}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"

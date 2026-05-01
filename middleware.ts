@@ -7,7 +7,7 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone()
   const pathname = url.pathname
 
-  console.log(`[Request] ${req.method} ${pathname} - ${new Date().toISOString()}`)
+  // console.log(`[Request] ${req.method} ${pathname} - ${new Date().toISOString()}`)
 
   // 1. FAST EXCLUSIONS
   const isStaticAsset = pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|mp4|webm)$/)

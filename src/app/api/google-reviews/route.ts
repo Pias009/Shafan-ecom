@@ -34,6 +34,7 @@ export async function GET() {
       success: true,
       reviews,
       source: "database",
+      mapsLink: "https://maps.google.com/?cid=14264924938566658650",
       rating: {
         average: Math.round(avgRating * 10) / 10,
         total: activeReviews.length

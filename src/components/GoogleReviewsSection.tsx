@@ -23,6 +23,7 @@ interface ApiResponse {
     average: number;
     total: number;
   };
+  mapsLink?: string;
 }
 
 export function GoogleReviewsSection() {
@@ -30,6 +31,7 @@ export function GoogleReviewsSection() {
   const [rating, setRating] = useState({ average: 0, total: 0 });
   const [loading, setLoading] = useState(true);
   const [source, setSource] = useState<string>("");
+  const [mapsLink, setMapsLink] = useState<string>("https://maps.google.com/?cid=14264924938566658650");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const startX = useRef(0);
@@ -48,6 +50,7 @@ export function GoogleReviewsSection() {
           }));
           setReviews(reviewsWithId);
           setRating(data.rating);
+          if (data.mapsLink) setMapsLink(data.mapsLink);
         }
       } catch (err) {
         console.error("Failed to fetch reviews:", err);
@@ -145,7 +148,7 @@ export function GoogleReviewsSection() {
           </h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
             <a
-              href="https://www.google.com/maps/place/SHANFA+GLOBAL/@25.2638,55.3039,15z/data=!4m6!3m5!1s0x3e5f43676a0d952b:0xed64f06126eee0ed!8m2!3d25.2638!4d55.3039!16s%2Fg%2F11vsw0_6wz"
+              href={mapsLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
