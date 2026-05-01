@@ -78,7 +78,7 @@ function SuccessContent() {
 
     const numItems = orderData.items.reduce((sum, item) => sum + item.quantity, 0);
 
-    // GA4 purchase event via dataLayer
+    // GA4 purchase event via dataLayer (also used by GTM for Meta Pixel tracking)
     pushToDataLayer({
       event: 'purchase',
       ecommerce: {
@@ -92,14 +92,6 @@ function SuccessContent() {
         })),
       },
     });
-
-    fbEvent("Purchase", {
-      value: orderData.total,
-      currency: orderData.currency.toUpperCase(),
-      content_ids: orderData.items.map((item) => item.productId),
-      content_type: "product",
-      num_items: numItems,
-    }, { eventId });
 
     void firePurchaseCAPI(orderId, eventId);
   }, [valid, orderId, orderData]);

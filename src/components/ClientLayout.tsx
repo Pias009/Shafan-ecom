@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import LoadingScreen from "./LoadingScreen";
 import { FloatingCartButton } from "./FloatingCartButton";
-import SesiWidget from "./SesiWidget";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -40,7 +39,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       {mounted && (
         <>
           <FloatingCartButton />
-          <SesiWidget />
         </>
       )}
     </>

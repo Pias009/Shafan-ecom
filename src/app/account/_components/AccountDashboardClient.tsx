@@ -1,6 +1,7 @@
 "use client";
 
 import { useCartStore } from "@/lib/cart-store";
+import { pushToDataLayer } from "@/lib/datalayer";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { ShoppingBag, Package, Truck, CheckCircle2, XCircle, RotateCcw, ArrowRight, Loader2, Info } from "lucide-react";
@@ -34,11 +35,16 @@ export default function AccountDashboardClient() {
     const guestEmail = localStorage.getItem('guest_email');
     setGuestEmailState(guestEmail);
 
-    // ✅ Identify user for Meta Retargeting
-    if (typeof window !== 'undefined' && window['fbq']) {
+    // Identification should be handled via GTM DataLayer for consistency
+    if (typeof window !== 'undefined') {
       const emailToIdentify = session?.user?.email || guestEmail;
       if (emailToIdentify) {
-        window['fbq']('identify', emailToIdentify);
+        pushToDataLayer({
+          event: 'user_identification',
+          user_data: {
+            email: emailToIdentify,
+          }
+        });
       }
     }
 

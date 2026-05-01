@@ -7,7 +7,16 @@ import toast from "react-hot-toast";
 
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentRequestButtonElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import StripePaymentForm from "@/components/StripePaymentForm";
+import dynamic from "next/dynamic";
+const StripePaymentForm = dynamic(() => import("@/components/StripePaymentForm"), {
+  ssr: false,
+  loading: () => (
+    <div className="py-12 text-center flex flex-col items-center">
+      <Loader2 className="w-8 h-8 animate-spin text-black/20 mb-3" />
+      <p className="text-[10px] font-bold uppercase tracking-widest text-black/30">Loading Secure Form...</p>
+    </div>
+  ),
+});
 import { Price } from "@/components/Price";
 
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -276,7 +285,7 @@ export default function CustomPaymentPage() {
                     }
                   }}
                 >
-                  <StripePaymentForm orderId={id} />
+                  <StripePaymentForm orderId={id} order={order} />
                 </Elements>
               )}
 

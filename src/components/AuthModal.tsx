@@ -51,7 +51,7 @@ export function AuthModal({
   useEffect(() => {
     if (!open) return;
     if (mode === "sign-up" && !country) {
-        const found = COUNTRIES.find(c => c.currency === currentCurrency.code);
+        const found = COUNTRIES.find((c: any) => c.currency === currentCurrency.code);
         if (found) setCountry(found.name);
     }
   }, [open, mode, currentCurrency.code, country]);

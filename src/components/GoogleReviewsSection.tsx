@@ -10,6 +10,7 @@ interface Review {
   rating: number;
   text: string;
   relative_time_description: string;
+  time?: number;
 }
 
 interface ApiResponse {
@@ -88,12 +89,13 @@ export function GoogleReviewsSection() {
     let animationId: number;
 
     function autoScroll() {
-      if (!isDragging) {
-        if (el.scrollLeft >= el.scrollWidth / 3) {
-          el.scrollLeft = 0;
-        }
-        el.scrollLeft += scrollSpeed;
+      const el = scrollRef.current;
+      if (!el || isDragging) return;
+      
+      if (el.scrollLeft >= el.scrollWidth / 3) {
+        el.scrollLeft = 0;
       }
+      el.scrollLeft += scrollSpeed;
       animationId = requestAnimationFrame(autoScroll);
     }
 

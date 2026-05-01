@@ -59,7 +59,7 @@ export default async function ProductsPage({
   
   const page = parseInt(params.page || '1', 10);
   // Load more products by default to show all categories
-  const limit = 100;
+  const limit = 1000;
   const isTrending = params.trending === 'true';
 
   const category = params.category;
@@ -114,15 +114,12 @@ export default async function ProductsPage({
     };
   });
 
-  return <ProductsClient 
-    initialProducts={transformed} 
-    category={category} 
-    brand={brand} 
+  return <ProductsClient
+    initialProducts={transformed}
+    category={category}
+    brand={brand}
     sort={sort}
     banners={banners}
-    totalCount={isTrending ? trendingCount : totalCount}
-    currentPage={page}
-    limit={limit}
     filterOptions={filterOptions}
     isTrending={isTrending}
   />;

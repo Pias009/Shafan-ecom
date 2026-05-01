@@ -21,47 +21,48 @@ function normalizeWeight(product: { weight: number | null; weightUnit: string })
   return { value: product.weight, unit: 'kg' };
 }
 
-async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 500): Promise<T> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (i === retries - 1) throw err;
-      await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
-    }
-  }
-  throw new Error('Retry exhausted');
-}
-
 export async function GET() {
-   try {
-     const products = await withRetry(() => prisma.product.findMany({
-       where: {
-         active: true,
-         stockQuantity: { gt: 0 },
-       },
-       include: {
-         brand: true,
-         subCategory: {
-           include: {
-             category: true,
-           },
-         },
-       },
-       orderBy: { updatedAt: 'desc' },
-     }));
+  try {
+    let lastError: Error | null = null;
+    let products;
+    
+    for (let i = 0; i < 3; i++) {
+      try {
+        products = await prisma.product.findMany({
+          where: {
+            active: true,
+            stockQuantity: { gt: 0 },
+          },
+          include: {
+            brand: true,
+            subCategory: {
+              include: {
+                category: true,
+              },
+            },
+          },
+          orderBy: { updatedAt: 'desc' },
+        });
+        break;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        if (i < 2) await new Promise(r => setTimeout(r, 500 * (i + 1)));
+      }
+    }
+    
+    if (!products) throw lastError || new Error('Failed to fetch products');
 
     const xmlItems = products
       .map((product) => {
         const effectivePrice = product.discountPrice || product.price;
-        if (!effectivePrice) return null;
+        if (!effectivePrice || !product.price) return null;
 
         const image = product.mainImage || product.images[0];
         const link = `${SITE_URL}/products/${product.slug || product.id}`;
         const weight = normalizeWeight(product);
         const categoryPath = product.subCategory
-          ? `${product.subCategory.category?.name || ''} > ${product.subCategory.name}`
-          : product.subCategory?.name || '';
+          ? `${product.subCategory.category?.name || ''} > ${(product.subCategory as { name: string }).name}`
+          : '';
 
         return `
   <item>
@@ -70,8 +71,8 @@ export async function GET() {
     <g:description>${escapeXml(product.description || product.shortDescription || product.name)}</g:description>
     <g:link>${escapeXml(link)}</g:link>
     <g:image_link>${escapeXml(image)}</g:image_link>
-    <g:availability>in stock</g:availability>
-     <g:price>${product.price.toFixed(2)} ${product.currency || 'USD'}</g:price>
+     <g:availability>in stock</g:availability>
+     <g:price>${(product.price ?? 0).toFixed(2)} ${product.currency || 'USD'}</g:price>
      ${product.discountPrice ? `<g:sale_price>${product.discountPrice.toFixed(2)} ${product.currency || 'USD'}</g:sale_price>` : ''}
     <g:condition>new</g:condition>
     <g:brand>${escapeXml(product.brand?.name || 'SHANFA')}</g:brand>

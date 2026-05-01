@@ -33,7 +33,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
             productCategories: {
               some: {
                 category: {
-                  name: category
+                  name: { equals: category, mode: 'insensitive' }
                 }
               }
             }
@@ -66,6 +66,11 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
               skinTone: { select: { name: true, hexColor: true } } 
             } 
           },
+          productSkinConcerns: {
+            include: {
+              skinConcern: { select: { name: true } }
+            }
+          },
           subCategory: { select: { name: true } },
           countryPrices: {
             where: { active: true },
@@ -91,6 +96,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         name: pst.skinTone?.name,
         hexColor: pst.skinTone?.hexColor
       })).filter((t: any) => t.name) || [];
+      const skinConcerns = p.productSkinConcerns?.map((psc: any) => psc.skinConcern?.name).filter(Boolean) || [];
 
       const subCategoryName = p.subCategory?.name;
 
@@ -123,6 +129,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         categoryName: primaryCategory,
         categories: categoryNames,
         skinTones,
+        skinConcerns,
         subCategory: subCategoryName ? { name: subCategoryName } : null,
         subCategoryName: subCategoryName,
         countryPrices: p.countryPrices || [],
@@ -269,6 +276,7 @@ export async function getNewArrivals(storeCode?: string, limit: number = 20) {
           brand: { select: { name: true } },
           productCategories: { include: { category: true } },
           productSkinTones: { include: { skinTone: true } },
+          productSkinConcerns: { include: { skinConcern: true } },
           subCategory: { select: { name: true } },
           countryPrices: { where: { active: true }, select: { country: true, price: true, currency: true, active: true } },
         },
@@ -287,6 +295,7 @@ export async function getNewArrivals(storeCode?: string, limit: number = 20) {
         name: pst.skinTone?.name,
         hexColor: pst.skinTone?.hexColor
       })).filter((t: any) => t.name) || [];
+      const skinConcerns = p.productSkinConcerns?.map((psc: any) => psc.skinConcern?.name).filter(Boolean) || [];
       const subCategoryName = p.subCategory?.name;
 
       return {
@@ -319,6 +328,7 @@ export async function getNewArrivals(storeCode?: string, limit: number = 20) {
         categories: categoryNames,
         categoriesArray: categoryNames,
         skinTones,
+        skinConcerns,
         subCategory: subCategoryName ? { name: subCategoryName } : null,
         countryPrices: p.countryPrices || [],
       };
@@ -359,6 +369,7 @@ export async function getFlashSales(storeCode?: string, limit: number = 20) {
           brand: { select: { name: true } },
           productCategories: { include: { category: true } },
           productSkinTones: { include: { skinTone: true } },
+          productSkinConcerns: { include: { skinConcern: true } },
           subCategory: { select: { name: true } },
           countryPrices: { where: { active: true }, select: { country: true, price: true, currency: true, active: true } },
         },
@@ -379,6 +390,7 @@ export async function getFlashSales(storeCode?: string, limit: number = 20) {
         name: pst.skinTone?.name,
         hexColor: pst.skinTone?.hexColor
       })).filter((t: any) => t.name) || [];
+      const skinConcerns = p.productSkinConcerns?.map((psc: any) => psc.skinConcern?.name).filter(Boolean) || [];
       const subCategoryName = p.subCategory?.name;
 
       const regularPrice = Number(p.price) || 0;
@@ -412,6 +424,7 @@ export async function getFlashSales(storeCode?: string, limit: number = 20) {
         categories: categoryNames,
         categoriesArray: categoryNames,
         skinTones,
+        skinConcerns,
         subCategory: subCategoryName ? { name: subCategoryName } : null,
         countryPrices: p.countryPrices || [],
       };
@@ -452,6 +465,7 @@ export async function getTrendingProducts(storeCode?: string, limit: number = 20
           brand: { select: { name: true } },
           productCategories: { include: { category: true } },
           productSkinTones: { include: { skinTone: true } },
+          productSkinConcerns: { include: { skinConcern: true } },
           subCategory: { select: { name: true } },
           countryPrices: { where: { active: true }, select: { country: true, price: true, currency: true, active: true } },
         },
@@ -472,6 +486,7 @@ export async function getTrendingProducts(storeCode?: string, limit: number = 20
         name: pst.skinTone?.name,
         hexColor: pst.skinTone?.hexColor
       })).filter((t: any) => t.name) || [];
+      const skinConcerns = p.productSkinConcerns?.map((psc: any) => psc.skinConcern?.name).filter(Boolean) || [];
       const subCategoryName = p.subCategory?.name;
 
       const regularPrice = Number(p.price) || 0;
@@ -505,6 +520,7 @@ export async function getTrendingProducts(storeCode?: string, limit: number = 20
         categories: categoryNames,
         categoriesArray: categoryNames,
         skinTones,
+        skinConcerns,
         subCategory: subCategoryName ? { name: subCategoryName } : null,
         countryPrices: p.countryPrices || [],
       };

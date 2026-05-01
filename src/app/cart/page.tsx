@@ -18,7 +18,7 @@ import { useCountryStore } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { useLoadingStore } from "@/lib/loading-store";
-import { fbEvent } from "@/lib/fpixel";
+import { trackBeginCheckout } from "@/lib/datalayer";
 
 function getCurrencyForCountry(countryCode: string): string {
   const currencies: Record<string, string> = {
@@ -158,7 +158,6 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       });
 
       const data = await orderRes.json();
-      console.log("Order response:", orderRes.status, JSON.stringify(data));
       
       if (orderRes.ok && data.orderId) {
         // Save order ID for post-order notification on homepage
@@ -170,7 +169,6 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
           useLoadingStore.getState().setRedirecting(true, "Finalizing your order...");
           router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
         } else {
-          console.log("Redirecting to payment page for order:", data.orderId);
           useLoadingStore.getState().setRedirecting(true, "Creating your order...");
           router.push(`/checkout/payment/${data.orderId}`);
         }
@@ -428,7 +426,7 @@ export default function CartPage() {
     setMounted(true);
   }, []);
 
-  // Fire InitiateCheckout when cart loads
+  // Fire begin_checkout when cart loads via DataLayer
   useEffect(() => {
     if (items.length > 0) {
       const total = items.reduce((acc, item) => {
@@ -436,12 +434,17 @@ export default function CartPage() {
         return acc + (Number(itemPrice) * item.quantity);
       }, 0);
       
-      fbEvent('InitiateCheckout', {
-        content_ids: items.map(i => i.id),
-        content_type: 'product',
-        num_items: items.length,
+      trackBeginCheckout({
+        items: items.map(i => ({
+          id: i.id,
+          name: i.name,
+          price: Number(getDisplayPrice(i, selectedCountry).price) || 0,
+          quantity: i.quantity,
+          brand: i.brand,
+          category: i.category,
+        })),
         value: total,
-        currency: 'SAR',
+        currency: 'AED',
       });
     }
   }, [items.length, selectedCountry]);

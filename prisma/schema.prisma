@@ -52,7 +52,7 @@ model Store {
   country   String
   region    String
   active    Boolean  @default(true)
-  currency  String   @default("usd")
+  currency  String   @default("AED")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -202,7 +202,7 @@ model Product {
   trending      Boolean  @default(false)
   freshFromShelf Boolean  @default(false)
   sku           String?
-  currency      String   @default("USD")
+  currency      String   @default("AED")
   averageRating Float    @default(0)
   ratingCount   Int      @default(0)
   totalSales    Int      @default(0)
@@ -239,6 +239,8 @@ model Product {
   @@index([createdAt])
   @@index([hot])
   @@index([trending])
+  @@index([price])
+  @@index([discountPrice])
 }
 
 model ProductCategory {
@@ -339,7 +341,7 @@ model Order {
   email                 String?
   status                OrderStatus     @default(ORDER_RECEIVED)
   paymentStatus         PaymentStatus   @default(PENDING)
-  currency              String          @default("usd")
+  currency              String          @default("AED")
   subtotal              Float?
   shipping              Float?          @default(0)
   discount              Float?          @default(0)
@@ -385,6 +387,12 @@ model Order {
 
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([total])
 }
 
 model OrderItem {
@@ -684,7 +692,7 @@ model CountryPrice {
   productId   String   @db.ObjectId
   country     String   // Country code like "US", "BD", "KW", etc.
   price       Float?   // Price for this country
-  currency    String   @default("USD") // Currency code for this country
+  currency    String   @default("AED") // Currency code for this country
   active      Boolean  @default(true)
   
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)

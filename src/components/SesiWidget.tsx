@@ -19,11 +19,11 @@ interface SimpleProductSuggestionProps {
 }
 
 const DEFAULT_PRODUCTS: Product[] = [
-  { id: "1", name: "Hydrating Face Cream", imageUrl: "/placeholder-product.png", category: "skincare", tags: ["dryness", "hydration"], price: 45 },
-  { id: "2", name: "Oil Control Cleanser", imageUrl: "/placeholder-product.png", category: "skincare", tags: ["oily", "acne"], price: 32 },
-  { id: "3", name: "Gentle Calming Serum", imageUrl: "/placeholder-product.png", category: "skincare", tags: ["sensitive", "calming"], price: 55 },
-  { id: "4", name: "Night Repair Cream", imageUrl: "/placeholder-product.png", category: "skincare", tags: ["aging", "night"], price: 65 },
-  { id: "5", name: "Vitamin C Brightening", imageUrl: "/placeholder-product.png", category: "skincare", tags: ["dullness", "brightening"], price: 48 },
+  { id: "1", name: "Hydrating Face Cream", imageUrl: "/placeholder-product.png", category: "Skin Care", tags: ["dryness", "hydration"], price: 45 },
+  { id: "2", name: "Oil Control Cleanser", imageUrl: "/placeholder-product.png", category: "Skin Care", tags: ["oily", "acne"], price: 32 },
+  { id: "3", name: "Gentle Calming Serum", imageUrl: "/placeholder-product.png", category: "Skin Care", tags: ["sensitive", "calming"], price: 55 },
+  { id: "4", name: "Night Repair Cream", imageUrl: "/placeholder-product.png", category: "Skin Care", tags: ["aging", "night"], price: 65 },
+  { id: "5", name: "Vitamin C Brightening", imageUrl: "/placeholder-product.png", category: "Skin Care", tags: ["dullness", "brightening"], price: 48 },
 ];
 
 function useInactivityTimer(onIdle: () => void, timeoutMs: number = 180000) {
@@ -392,11 +392,16 @@ export default function SesiWidget() {
   // Default position: bottom-right corner
   useEffect(() => {
     if (!widgetRef.current) return;
-    const x = window.innerWidth  - 80;
+    const x = window.innerWidth - 80;
     const y = window.innerHeight - 80;
     posRef.current = { x, y };
     applyTransform(x, y);
   }, [hydrated, applyTransform]);
+
+  // Hide widget - only show when explicitly needed
+  const [showWidget, setShowWidget] = useState(false);
+
+  if (!showWidget) return null;
 
   return (
     <div

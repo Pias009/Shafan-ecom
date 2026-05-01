@@ -83,10 +83,11 @@ const ProductCardComponent = function ProductCard({
     return null;
   }
 
-  // Safely get the display price using country-specific pricing
-  const { price: countryPrice, hasDiscount: countryHasDiscount, discountPrice: countryDiscountPrice } = getDisplayPrice(product, selectedCountry);
-  const basePrice = product.discountPrice ?? product.price;
-  const displayPrice = countryPrice > 0 ? countryPrice : basePrice;
+  // Get display price using country-specific pricing
+  const displayPrice = (() => {
+    const { price: countryPrice } = getDisplayPrice(product, selectedCountry);
+    return countryPrice > 0 ? countryPrice : (product.price || 0);
+  })();
   
   // Hide products with zero or invalid price
   if (!displayPrice || displayPrice <= 0) {
@@ -94,16 +95,6 @@ const ProductCardComponent = function ProductCard({
   }
   
   const isNotAvailable = false;
-  const hasDiscount = countryHasDiscount;
-  const actualDiscountPrice = countryHasDiscount && countryDiscountPrice > 0 ? countryDiscountPrice : (product.discountPrice || 0);
-  const showOriginalPrice = hasDiscount && actualDiscountPrice > 0 && actualDiscountPrice < displayPrice;
-  const salePrice = showOriginalPrice ? actualDiscountPrice : displayPrice;
-  const originalPrice = showOriginalPrice ? displayPrice : 0;
-  
-  // Calculate discount percentage
-  const discountPercentage = showOriginalPrice && originalPrice > 0
-    ? Math.round(((originalPrice - salePrice) / originalPrice) * 100)
-    : 0;
 
   // Safely get the brand name as a string
   const brandName = typeof product.brand === "string"
@@ -205,10 +196,7 @@ const ProductCardComponent = function ProductCard({
         {/* Price and Stock Info Row */}
         <div className="flex items-center justify-between mb-2 flex-shrink-0">
           <div className="flex items-baseline gap-2">
-            <Price amount={showOriginalPrice ? salePrice : displayPrice} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} />
-            {showOriginalPrice && (
-              <Price amount={originalPrice} className="text-[10px] text-red-500 line-through font-bold" countryPrices={product.countryPrices} />
-            )}
+            <Price amount={displayPrice} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} />
           </div>
         </div>
 

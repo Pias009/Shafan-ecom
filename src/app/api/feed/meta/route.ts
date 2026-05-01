@@ -25,36 +25,48 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 500): P
   throw new Error('Retry exhausted');
 }
 
+export const revalidate = 3600; // ISR: Revalidate every 1 hour
+export const dynamic = 'force-static'; // Allow static optimization on Vercel
+
 export async function GET() {
-   try {
-     const products = await withRetry(() => prisma.product.findMany({
-       where: {
-         active: true,
-         stockQuantity: { gt: 0 },
-       },
-       include: {
-         brand: true,
-         subCategory: {
-           include: {
-             category: true,
-           },
-         },
-       },
-       orderBy: { updatedAt: 'desc' },
-     }));
+  try {
+    const products = await withRetry(() => prisma.product.findMany({
+      where: {
+        active: true,
+        stockQuantity: { gt: 0 },
+      },
+      include: {
+        brand: true,
+        subCategory: {
+          include: {
+            category: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    }));
+
+    // Pre-calculate currency and common fields for speed
+    const defaultCurrency = 'AED';
 
     const xmlItems = products
       .map((product) => {
-        const effectivePrice = product.discountPrice || product.price;
-        if (!effectivePrice) return null;
+        const price = Number(product.price || 0);
+        if (price <= 0) return null; // Reject products without valid price for feed quality
 
-        const image = product.mainImage || product.images[0];
+        const discPrice = product.discountPrice ? Number(product.discountPrice) : null;
+        const currency = product.currency || defaultCurrency;
+        
+        const image = product.mainImage || (product.images && product.images[0]);
+        if (!image) return null;
+
         const link = `${SITE_URL}/products/${product.slug || product.id}`;
+        const brandName = product.brand?.name || 'SHANFA';
         const categoryPath = product.subCategory
           ? `${product.subCategory.category?.name || ''} > ${product.subCategory.name}`
-          : product.subCategory?.name || '';
+          : 'Health & Beauty > Personal Care > Skin Care';
 
-         return `
+        return `
   <item>
     <g:id>${escapeXml(product.id)}</g:id>
     <g:title>${escapeXml(product.name)}</g:title>
@@ -62,13 +74,13 @@ export async function GET() {
     <g:link>${escapeXml(link)}</g:link>
     <g:image_link>${escapeXml(image)}</g:image_link>
     <g:availability>in stock</g:availability>
-    <g:price>${product.price.toFixed(2)} ${product.currency || 'USD'}</g:price>
-    ${product.discountPrice ? `<g:sale_price>${product.discountPrice.toFixed(2)} ${product.currency || 'USD'}</g:sale_price>` : ''}
+    <g:price>${price.toFixed(2)} ${currency}</g:price>
+    ${discPrice ? `<g:sale_price>${discPrice.toFixed(2)} ${currency}</g:sale_price>` : ''}
     <g:condition>new</g:condition>
-    <g:brand>${escapeXml(product.brand?.name || 'SHANFA')}</g:brand>
+    <g:brand>${escapeXml(brandName)}</g:brand>
     <g:product_type>${escapeXml(categoryPath)}</g:product_type>
-    <g:product_category>Health & Beauty > Personal Care > Skin Care</g:product_category>
-    ${product.tags.length > 0 ? `<g:custom_label_0>${escapeXml(product.tags.slice(0, 3).join(','))}</g:custom_label_0>` : ''}
+    <g:google_product_category>Health & Beauty &gt; Personal Care &gt; Skin Care</g:google_product_category>
+    ${product.tags && product.tags.length > 0 ? `<g:custom_label_0>${escapeXml(product.tags.slice(0, 3).join(','))}</g:custom_label_0>` : ''}
     ${product.hot ? '<g:custom_label_1>hot</g:custom_label_1>' : ''}
     ${product.trending ? '<g:custom_label_2>trending</g:custom_label_2>' : ''}
   </item>`;
@@ -90,7 +102,8 @@ export async function GET() {
     return new NextResponse(xml, {
       headers: {
         'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 's-maxage=3600, stale-while-revalidate=86400',
+        'X-Content-Type-Options': 'nosniff'
       },
     });
   } catch (error) {

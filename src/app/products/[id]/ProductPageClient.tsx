@@ -16,7 +16,7 @@ import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { formatDescription, VisualDescription } from "@/utils/formatText";
 import { useLoadingStore } from "@/lib/loading-store";
-import { fbEvent } from "@/lib/fpixel";
+import { trackViewItem, trackAddToCart as trackAddToCartDataLayer } from "@/lib/datalayer";
 
 const ProductQuickViewModal = lazy(() => import("@/components/ProductQuickViewModal").then(m => ({ default: m.ProductQuickViewModal })));
 
@@ -76,18 +76,19 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     return () => clearInterval(timer);
   }, [allImages.length, isEnlarged]);
 
-  // ViewContent event
+  // ViewItem event via DataLayer
   useEffect(() => {
     if (product?.id) {
-      fbEvent('ViewContent', {
-        content_ids: [product.id],
-        content_type: 'product',
-        content_name: product.name,
-        value: displayPrice,
-        currency: 'SAR',
+      trackViewItem({
+        id: product.id,
+        name: product.name,
+        price: displayPrice,
+        currency: 'AED', // Primary currency as requested
+        category: typeof product.category === 'string' ? product.category : product.category?.name,
+        brand: typeof product.brand === 'string' ? product.brand : product.brand?.name,
       });
     }
-  }, [product?.id]);
+  }, [product?.id, displayPrice]);
 
   function addToCart(productToAdd?: any) {
     const p = productToAdd || product;
@@ -107,12 +108,14 @@ export default function ProductPageClient({ product, recommendations }: ProductP
       countryPrices: p.countryPrices,
     }, 1);
 
-    fbEvent('AddToCart', {
-      content_ids: [p.id],
-      content_type: 'product',
-      content_name: p.name,
-      value: itemPrice,
-      currency: 'SAR',
+    trackAddToCartDataLayer({
+      id: p.id,
+      name: p.name,
+      price: itemPrice,
+      currency: 'AED',
+      category: typeof p.category === 'string' ? p.category : p.category?.name,
+      brand: typeof p.brand === 'string' ? p.brand : p.brand?.name,
+      quantity: 1,
     });
 
     toast.success(`${p.name || 'Product'} added to cart`);

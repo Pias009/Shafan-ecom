@@ -20,7 +20,7 @@ export function CurrencySelector({ direction = "up", align = "right" }: { direct
   const { selectedCurrency, setCurrency } = useCountryStore();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const current = CURRENCY_LIST.find(c => c.code === selectedCurrency) || CURRENCY_LIST[0];
+  const current = CURRENCY_LIST.find((c: any) => c.code === selectedCurrency) || CURRENCY_LIST[0];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

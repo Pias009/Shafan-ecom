@@ -1,31 +1,42 @@
-declare global {
-  interface Window {
-    dataLayer: Record<string, unknown>[];
-  }
-}
-
 const DEFAULT_CURRENCY = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_DEFAULT_CURRENCY
   ? process.env.NEXT_PUBLIC_DEFAULT_CURRENCY
   : 'AED';
 
 type DataLayerEvent = Record<string, unknown>;
 
+let trackingQueue: any[] = [];
+let trackingTimeout: NodeJS.Timeout | null = null;
+
 export function pushToDataLayer(event: DataLayerEvent): void {
   if (typeof window === 'undefined') return;
 
+  // Immediate push to GTM/DataLayer for real-time tracking
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push(event);
 
-  // Log to our tracking API
-  fetch('/api/tracking/log', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      eventType: event.event || 'unknown',
-      eventData: event,
-      sessionId: getSessionId(),
-    }),
-  }).catch((err) => console.error('Failed to log tracking event:', err));
+  // Debounced logging to our internal tracking API to save bandwidth/CPU
+  trackingQueue.push({
+    eventType: event.event || 'unknown',
+    eventData: event,
+    sessionId: getSessionId(),
+    timestamp: new Date().toISOString()
+  });
+
+  if (trackingTimeout) clearTimeout(trackingTimeout);
+  
+  trackingTimeout = setTimeout(() => {
+    const batch = [...trackingQueue];
+    trackingQueue = [];
+    trackingTimeout = null;
+
+    if (batch.length === 0) return;
+
+    fetch('/api/tracking/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ events: batch }),
+    }).catch((err) => console.error('Failed to log tracking batch:', err));
+  }, 2000); // 2 second debounce for internal logs
 }
 
 function getSessionId(): string {
@@ -155,6 +166,34 @@ export function trackBeginCheckout(cart: {
   });
 }
 
+export function trackAddPaymentInfo(order: {
+  id: string;
+  value: number;
+  currency?: string;
+  paymentMethod?: string;
+  items: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
+}): void {
+  pushToDataLayer({
+    event: 'add_payment_info',
+    ecommerce: {
+      currency: order.currency || DEFAULT_CURRENCY,
+      value: order.value,
+      payment_type: order.paymentMethod,
+      items: order.items.map((item) => ({
+        item_id: item.id,
+        item_name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    },
+  });
+}
+
 export function trackPurchase(order: {
   id: string;
   value: number;
@@ -201,10 +240,13 @@ export function trackViewItemList(items: {
   category?: string;
   brand?: string;
   index?: number;
-}[]): void {
+}[], currency: string = DEFAULT_CURRENCY): void {
+  const totalValue = items.reduce((sum, item) => sum + item.price, 0);
   pushToDataLayer({
     event: 'view_item_list',
     ecommerce: {
+      currency: currency,
+      value: totalValue,
       items: items.map((item, idx) => ({
         item_id: item.id,
         item_name: item.name,

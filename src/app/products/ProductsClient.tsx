@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ProductsSlider } from "@/components/ProductsSlider";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Filter, X, Loader2, Flame } from "lucide-react";
+import { Filter, X, Flame } from "lucide-react";
 import { Price } from "@/components/Price";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
@@ -16,7 +16,7 @@ import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useSearchStore } from "@/lib/search-store";
-import { fbEvent } from "@/lib/fpixel";
+import { trackAddToCart } from "@/lib/datalayer";
 
 const DUMMY_PRODUCT_NAMES = [
   "Icy Gel Cleanser",
@@ -48,29 +48,23 @@ const isDummyProduct = (p: any) => {
          DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
 };
 
-export default function ProductsClient({ 
-  initialProducts, 
-  category, 
+export default function ProductsClient({
+  initialProducts,
+  category,
   subcategory,
-  brand: initialBrand, 
+  brand: initialBrand,
   sort,
   banners = [],
-  totalCount = 0,
-  currentPage = 1,
-  limit = 20,
   isRoutinesPage = false,
   filterOptions,
   isTrending = false,
-}: { 
-  initialProducts: any[], 
-  category?: string, 
+}: {
+  initialProducts: any[],
+  category?: string,
   subcategory?: string,
-  brand?: string, 
+  brand?: string,
   sort?: string,
   banners?: any[],
-  totalCount?: number,
-  currentPage?: number,
-  limit?: number,
   isRoutinesPage?: boolean,
   filterOptions?: {
     categories: string[];
@@ -82,9 +76,6 @@ export default function ProductsClient({
   isTrending?: boolean,
 }) {
   const [products, setProducts] = useState<any[]>(initialProducts);
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(initialProducts.length === limit);
-  const [page, setPage] = useState(currentPage);
   const [brand, setBrand] = useState(initialBrand || "All");
   const [selectedCategory, setSelectedCategory] = useState(category || "All");
   const [selectedSubCategory, setSelectedSubCategory] = useState(subcategory || "All");
@@ -118,15 +109,13 @@ export default function ProductsClient({
   useEffect(() => {
     if (initialProducts) {
       setProducts(initialProducts);
-      setPage(currentPage);
-      setHasMore(initialProducts.length === limit);
       
       // Update local filter states to match URL params from server
       setSelectedCategory(category || "All");
       setBrand(initialBrand || "All");
       setSortOrder(sort || "newest");
     }
-  }, [initialProducts, currentPage, limit, category, initialBrand, sort]);
+  }, [initialProducts, category, initialBrand, sort]);
 
   // Initialize filters from URL params on mount
   useEffect(() => {
@@ -267,7 +256,7 @@ export default function ProductsClient({
     }
     const filteredProducts = selectedCategory === t.product.all 
       ? products 
-      : products.filter(p => p.categoryName === selectedCategory);
+      : products.filter(p => p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
     const set = new Set(filteredProducts.map(p => p.subCategoryName).filter(Boolean));
     return ['All', ...Array.from(set).sort()];
   }, [products, selectedCategory, t.product.all, filterOptions]);
@@ -278,12 +267,13 @@ export default function ProductsClient({
     }
     const filteredProducts = selectedCategory === t.product.all 
       ? products 
-      : products.filter(p => p.categoryName === selectedCategory);
+      : products.filter(p => p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
     const skinToneSet = new Set<string>();
     filteredProducts.forEach(p => {
       if (p.skinTones && p.skinTones.length > 0) {
         p.skinTones.forEach((st: any) => {
-          if (st.name) skinToneSet.add(st.name);
+          const name = typeof st === 'string' ? st : st.name;
+          if (name) skinToneSet.add(name);
         });
       }
     });
@@ -296,12 +286,13 @@ export default function ProductsClient({
     }
     const filteredProducts = selectedCategory === t.product.all 
       ? products 
-      : products.filter(p => p.categoryName === selectedCategory);
+      : products.filter(p => p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
     const concernSet = new Set<string>();
     filteredProducts.forEach(p => {
       if (p.skinConcerns && p.skinConcerns.length > 0) {
         p.skinConcerns.forEach((sc: any) => {
-          if (sc.name) concernSet.add(sc.name);
+          const name = typeof sc === 'string' ? sc : sc.name;
+          if (name) concernSet.add(name);
         });
       }
     });
@@ -310,9 +301,6 @@ export default function ProductsClient({
 
   const filtered = useMemo(() => {
     const filtered = products.filter((p) => {
-      if (isDummyProduct(p)) return false;
-      if (!hasValidPrice(p, selectedCountry)) return false;
-      
       const price = p.discountPrice ?? p.price ?? 0;
       const matchesSearch = !searchInput || 
         p.name.toLowerCase().includes(searchInput.toLowerCase()) ||
@@ -322,13 +310,19 @@ export default function ProductsClient({
       const matchesBrand = brand === t.product.all || (p.brandName || '').toLowerCase() === brand.toLowerCase();
       const matchesPrice = price <= maxPrice;
       const matchesCategory = selectedCategory === t.product.all || 
-        (p.categories && p.categories.includes(selectedCategory)) ||
-        p.categoryName === selectedCategory;
-      const matchesSubCategory = selectedSubCategory === 'All' || p.subCategoryName === selectedSubCategory;
+        (p.categories && p.categories.some((c: string) => c.toLowerCase() === selectedCategory.toLowerCase())) ||
+        (p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
+      const matchesSubCategory = selectedSubCategory === 'All' || (p.subCategoryName && p.subCategoryName.toLowerCase() === selectedSubCategory.toLowerCase());
       const matchesSkinTone = selectedSkinTone === 'All' || 
-        (p.skinTones && p.skinTones.some((st: any) => st.name === selectedSkinTone));
+        (p.skinTones && p.skinTones.some((st: any) => {
+          const toneName = typeof st === 'string' ? st : st.name;
+          return toneName && toneName.toLowerCase() === selectedSkinTone.toLowerCase();
+        }));
       const matchesSkinConcern = selectedSkinConcern === 'All' || 
-        (p.skinConcerns && p.skinConcerns.some((sc: any) => sc.name === selectedSkinConcern));
+        (p.skinConcerns && p.skinConcerns.some((sc: any) => {
+          const concernName = typeof sc === 'string' ? sc : sc.name;
+          return concernName && concernName.toLowerCase() === selectedSkinConcern.toLowerCase();
+        }));
       
       return matchesSearch && matchesBrand && matchesPrice && matchesCategory && matchesSubCategory && matchesSkinTone && matchesSkinConcern;
     });
@@ -355,7 +349,7 @@ export default function ProductsClient({
     });
 
 return sorted;
-  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, selectedCountry, isDummyProduct, sortOrder]);
+  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, sortOrder]);
 
 
   function addToCart(product: any) {
@@ -371,12 +365,14 @@ return sorted;
     };
     addItem(cartItem, 1);
     
-    fbEvent('AddToCart', {
-      content_ids: [product.id],
-      content_type: 'product',
-      content_name: product.name,
-      value: product.price,
-      currency: 'SAR',
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      currency: 'AED',
+      category: product.categoryName,
+      brand: product.brandName,
+      quantity: 1,
     });
     
     toast.success(`${product.name} added`);
@@ -457,51 +453,6 @@ return sorted;
       router.push("/cart");
     }
   }
-
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-    try {
-      const nextPage = page + 1;
-      const res = await fetch(`/api/products?page=${nextPage}&limit=${limit}`);
-      const newProducts = await res.json();
-      if (newProducts.length > 0) {
-        const transformedNew = newProducts.map((p: any) => ({
-          ...p,
-          brandName: p.brandName || p.brand?.name || "Generic",
-          categoryName: p.categoryName || p.category?.name || "General",
-          imageUrl: p.imageUrl || p.mainImage,
-          images: p.images || []
-        }));
-        setProducts(prev => [...prev, ...transformedNew]);
-        setPage(nextPage);
-        setHasMore(newProducts.length === limit);
-      } else {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error("Failed to load more products:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [loading, hasMore, page, limit]);
-
-  // Auto-load more if current filters result in 0 products but more exist on server
-  // Only auto-load if NO filters are applied (otherwise it causes infinite loop)
-  const hasActiveFilters = searchInput || brand !== t.product.all || selectedCategory !== t.product.all || 
-    selectedSubCategory !== 'All' || selectedSkinTone !== 'All' || selectedSkinConcern !== 'All' || maxPrice < 100000;
-  
-  useEffect(() => {
-    if (!hydrated) return;
-    // Safety check: only auto-load if filtered is 0 and we haven't already tried too many times
-    // or if the page is still reasonably low to avoid infinite scrolls in empty DBs
-    if (filtered.length === 0 && hasMore && !loading && !hasActiveFilters && page < 5) {
-      const timer = setTimeout(() => {
-        loadMore();
-      }, 1500); // Increased delay for safety
-      return () => clearTimeout(timer);
-    }
-  }, [filtered.length, hasMore, loading, loadMore, hasActiveFilters, hydrated, page]);
 
   return (
     <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black">
@@ -616,7 +567,7 @@ return sorted;
                     }}
                     className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
                   >
-                    {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
+                    {categoriesList.map((c: string) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
 
@@ -700,14 +651,15 @@ return sorted;
 
           <div className="mt-12 md:mt-20 space-y-12 md:space-y-24">
             {categoriesList.filter(cat => cat !== t.product.all && cat !== 'All').map((cat) => {
-              const productsInCat = filtered.filter(p => 
-                p.categoryName === cat || (p.categories && p.categories.includes(cat))
+              const productsInCat = filtered.filter(p =>
+                (p.categoryName && p.categoryName.toLowerCase() === cat.toLowerCase()) ||
+                (p.categories && Array.isArray(p.categories) && p.categories.some((c: string) => c.toLowerCase() === cat.toLowerCase()))
               );
               if (productsInCat.length === 0) return null;
               
               const isExpanded = expandedCategories.has(cat);
-              const displayProducts = isExpanded ? productsInCat : productsInCat.slice(0, 10);
-              const hasMore = productsInCat.length > 10;
+              const displayProducts = isExpanded ? productsInCat : productsInCat.slice(0, 15);
+              const hasMore = productsInCat.length > 15;
 
               return (
                 <section key={cat}>
@@ -803,39 +755,6 @@ return sorted;
           </div>
         )}
 
-        {filtered.length === 0 && hasMore && (
-          <div className="py-20 text-center">
-            <p className="text-black/40 italic">Keep loading to see more products matching your filters...</p>
-            <button
-              onClick={loadMore}
-              className="mt-4 px-6 py-2 bg-black/5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all"
-            >
-              Load Next Page
-            </button>
-          </div>
-        )}
-
-        {hasMore && (
-          <div className="flex justify-center mt-16">
-            <button
-              onClick={loadMore}
-              disabled={loading}
-              className="flex items-center gap-2 px-8 py-4 bg-black text-white rounded-full font-black text-sm uppercase tracking-widest hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  Load More
-                  <span className="text-xs opacity-70">({totalCount - products.length} remaining)</span>
-                </>
-              )}
-            </button>
-          </div>
-        )}
       </div>
 
       <ProductQuickViewModal

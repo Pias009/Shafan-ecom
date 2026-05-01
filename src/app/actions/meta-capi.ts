@@ -1,9 +1,9 @@
 'use server';
 
 import { z } from 'zod';
-import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { headers } from 'next/headers';
+import { generateEventId, hashData } from '@/lib/meta-utils';
 
 const MetaCAPIError = z.object({
   error: z.object({
@@ -146,14 +146,6 @@ export async function sendPurchaseToMetaCAPI(
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
-}
-
-export function generateEventId(orderId: string, timestamp: number): string {
-  return `order_${orderId}_${timestamp}`;
-}
-
-export function hashData(data: string): string {
-  return crypto.createHash('sha256').update(data.toLowerCase().trim()).digest('hex');
 }
 
 export async function firePurchaseCAPI(orderId: string, clientEventId?: string): Promise<{ success: boolean; fbtrace_id?: string; error?: string }> {

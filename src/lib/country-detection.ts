@@ -39,7 +39,7 @@ export function detectUserCountry(): string {
 
   // 1. Check localStorage for user-selected country
   const storedCountry = localStorage.getItem("user-country");
-  if (storedCountry && SUPPORTED_COUNTRIES.some(c => c.code === storedCountry)) {
+  if (storedCountry && SUPPORTED_COUNTRIES.some((c: any) => c.code === storedCountry)) {
     return storedCountry;
   }
 
@@ -48,7 +48,7 @@ export function detectUserCountry(): string {
   const regionMatch = browserLanguage.match(/-([A-Z]{2})$/);
   if (regionMatch) {
     const regionCode = regionMatch[1].toUpperCase();
-    if (SUPPORTED_COUNTRIES.some(c => c.code === regionCode)) {
+    if (SUPPORTED_COUNTRIES.some((c: any) => c.code === regionCode)) {
       return regionCode;
     }
   }
@@ -107,7 +107,7 @@ export function detectUserCountry(): string {
 export function setUserCountry(countryCode: string): void {
   if (typeof window === "undefined") return;
   
-  if (SUPPORTED_COUNTRIES.some(c => c.code === countryCode)) {
+  if (SUPPORTED_COUNTRIES.some((c: any) => c.code === countryCode)) {
     localStorage.setItem("user-country", countryCode);
   }
 }

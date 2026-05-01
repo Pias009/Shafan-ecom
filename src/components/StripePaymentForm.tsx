@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { fbEvent } from "@/lib/fpixel";
+import { useState, useEffect } from "react";
+import { trackAddPaymentInfo } from "@/lib/datalayer";
 import {
   PaymentElement,
   useStripe,
@@ -10,7 +10,7 @@ import {
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function StripePaymentForm({ orderId }: { orderId: string }) {
+export default function StripePaymentForm({ orderId, order }: { orderId: string; order?: any }) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -18,11 +18,21 @@ export default function StripePaymentForm({ orderId }: { orderId: string }) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fbEvent('AddPaymentInfo', {
-      content_type: 'product',
-      currency: 'SAR',
-    });
-  }, []);
+    if (order) {
+      trackAddPaymentInfo({
+        id: orderId,
+        value: order.total,
+        currency: order.currency || "AED",
+        paymentMethod: "card",
+        items: order.items?.map((item: any) => ({
+          id: item.productId,
+          name: item.nameSnapshot,
+          price: Number(item.unitPrice),
+          quantity: item.quantity,
+        })) || [],
+      });
+    }
+  }, [order, orderId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
