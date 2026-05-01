@@ -85,7 +85,7 @@ export function GoogleReviewsSection() {
     const el = scrollRef.current;
     if (!el) return;
 
-    const scrollSpeed = 0.5;
+    const scrollSpeed = 0.8;
     let animationId: number;
 
     function autoScroll() {
@@ -139,19 +139,18 @@ export function GoogleReviewsSection() {
               ))}
             </div>
             <span className="text-lg font-bold text-gray-800">{rating.average.toFixed(1)}</span>
-            <span className="text-sm text-gray-500">({rating.total} reviews)</span>
           </div>
           <h2 className="text-2xl md:text-3xl font-display font-black text-gray-900 mb-2">
             What Our Customers Say
           </h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4">
             <a
-              href="https://search.google.com/local/reviews?place_id=ChIJK5UNamc5XzYR7eZ特殊性8jD-k"
+              href="https://www.google.com/maps/place/SHANFA+GLOBAL/@25.2638,55.3039,15z/data=!4m6!3m5!1s0x3e5f43676a0d952b:0xed64f06126eee0ed!8m2!3d25.2638!4d55.3039!16s%2Fg%2F11vsw0_6wz"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
             >
-              See All Reviews on Google <ExternalLink className="w-4 h-4" />
+              See more live reviews on Google <ExternalLink className="w-4 h-4" />
             </a>
             <span className="hidden sm:inline text-gray-300">|</span>
             <a

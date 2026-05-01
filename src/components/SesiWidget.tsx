@@ -399,7 +399,7 @@ export default function SesiWidget() {
   }, [hydrated, applyTransform]);
 
   // Hide widget - only show when explicitly needed
-  const [showWidget, setShowWidget] = useState(false);
+  const [showWidget, setShowWidget] = useState(true);
 
   if (!showWidget) return null;
 

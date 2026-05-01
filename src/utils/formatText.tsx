@@ -168,17 +168,9 @@ export function VisualDescription({ description }: { description: string | undef
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="relative p-6 md:p-8 rounded-3xl border border-white/10"
-      style={{
-        background: 'linear-gradient(135deg, rgba(5, 5, 5, 0.95) 0%, rgba(20, 20, 30, 0.9) 100%)',
-        backdropFilter: 'blur(12px)',
-      }}
+      className="relative p-6 md:p-8 rounded-3xl border border-black/5 bg-white shadow-sm"
     >
-      <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
-        background: 'radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)',
-      }} />
-      
-      <div className="relative leading-[1.8] tracking-tight">
+      <div className="relative leading-[1.8] tracking-tight text-black/80">
         {lines.map((line, idx) => (
           <AnimatedSection key={idx} index={idx}>
             <HighlightedText text={line} />

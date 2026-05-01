@@ -50,7 +50,7 @@ export function StuckOrdersProvider({ children }: StuckOrdersProviderProps) {
 
     window.addEventListener('focus', onFocus);
     fetchStuckOrders();
-    const interval = setInterval(fetchStuckOrders, 43200000); // 12 hours
+    const interval = setInterval(fetchStuckOrders, 300000); // 5 minutes
     return () => {
       window.removeEventListener('focus', onFocus);
       clearInterval(interval);

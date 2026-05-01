@@ -10,6 +10,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import { GTMProvider } from "@/components/GTMProvider";
+import { GAProvider } from "@/components/GAProvider";
+import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -52,7 +54,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://stats.pusher.com" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <meta httpEquiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=()" />
-        <GTMProvider />
       </head>
       <body className="antialiased">
         <Providers>
@@ -64,6 +65,9 @@ export default function RootLayout({
               </ClientLayout>
             </Suspense>
           </MainStoreLayout>
+          <GTMProvider />
+          <GAProvider />
+          <MetaPixelProvider />
           <SpeedInsights />
           <Analytics />
         </Providers>

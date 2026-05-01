@@ -177,7 +177,7 @@ export function OrderAlertListener() {
 
     window.addEventListener('focus', onFocus);
     checkForNewOrders();
-    pollingRef.current = setInterval(checkForNewOrders, 43200000); // 12 hours
+    pollingRef.current = setInterval(checkForNewOrders, 300000); // 5 minutes
 
     return () => {
       window.removeEventListener('focus', onFocus);
