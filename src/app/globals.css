@@ -47,7 +47,8 @@ body {
   overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
-  background: #fdfaf5; /* Fallback cream */
+  background: #fdfaf5;
+  /* Fallback cream */
 }
 
 body::before {
@@ -67,15 +68,21 @@ body::before {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
-  
+
   /* Improve touch targets */
-  button, a {
+  button,
+  a {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   /* Ensure text doesn't overflow */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
@@ -88,37 +95,66 @@ body::before {
     font-family: var(--font-body);
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: -0.02em;
   }
 
-  p, span, label, input, select, textarea {
+  p,
+  span,
+  label,
+  input,
+  select,
+  textarea {
     font-family: var(--font-body);
   }
 
   /* Price and numbers - clean and readable */
-  .price, [class*="Price"] {
+  .price,
+  [class*="Price"] {
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: -0.01em;
   }
 
   /* Footer and any section with class bg-black should have white text */
-  .bg-black, footer {
+  .bg-black,
+  footer {
     color: #ffffff;
   }
-  .bg-black h1, .bg-black h2, .bg-black h3, .bg-black h4,
-  .bg-black h5, .bg-black h6, .bg-black p, .bg-black span,
-  .bg-black a, .bg-black label,
-  footer h1, footer h2, footer h3, footer h4,
-  footer h5, footer h6, footer p, footer span, footer a, footer label {
+
+  .bg-black h1,
+  .bg-black h2,
+  .bg-black h3,
+  .bg-black h4,
+  .bg-black h5,
+  .bg-black h6,
+  .bg-black p,
+  .bg-black span,
+  .bg-black a,
+  .bg-black label,
+  footer h1,
+  footer h2,
+  footer h3,
+  footer h4,
+  footer h5,
+  footer h6,
+  footer p,
+  footer span,
+  footer a,
+  footer label {
     color: #ffffff;
   }
 }
 
 @layer utilities {
+
   /* Glassmorphism panels — radiant-skin style */
   .glass-panel {
     background: var(--glass-panel-bg);
@@ -173,12 +209,10 @@ body::before {
     inset: 0;
     border-radius: inherit;
     pointer-events: none;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.30),
-      rgba(255, 255, 255, 0.10) 40%,
-      rgba(255, 255, 255, 0) 70%
-    );
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.30),
+        rgba(255, 255, 255, 0.10) 40%,
+        rgba(255, 255, 255, 0) 70%);
     mix-blend-mode: screen;
     opacity: 0.6;
   }
@@ -202,18 +236,46 @@ body::before {
   }
 
   /* Brand color utilities */
-  .text-forest   { color: var(--forest); }
-  .text-blush    { color: var(--blush); }
-  .text-sage     { color: var(--sage); }
-  .bg-forest     { background-color: var(--forest); }
-  .bg-blush      { background-color: var(--blush); }
-  .bg-cream      { background-color: var(--cream); }
-  .bg-sage       { background-color: var(--sage); }
-  .border-forest { border-color: var(--forest); }
+  .text-forest {
+    color: var(--forest);
+  }
+
+  .text-blush {
+    color: var(--blush);
+  }
+
+  .text-sage {
+    color: var(--sage);
+  }
+
+  .bg-forest {
+    background-color: var(--forest);
+  }
+
+  .bg-blush {
+    background-color: var(--blush);
+  }
+
+  .bg-cream {
+    background-color: var(--cream);
+  }
+
+  .bg-sage {
+    background-color: var(--sage);
+  }
+
+  .border-forest {
+    border-color: var(--forest);
+  }
 
   @keyframes marquee {
-    0%   { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
   }
 
   .animate-marquee {
@@ -227,13 +289,23 @@ body::before {
   }
 
   @keyframes rainbowMove {
-    0%   { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
+    0% {
+      background-position: 0% 50%;
+    }
+
+    100% {
+      background-position: 200% 50%;
+    }
   }
 
   @keyframes rainbowBorder {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
   }
 
   .animate-rainbow-border {
@@ -241,7 +313,12 @@ body::before {
   }
 
   @keyframes ping {
-    75%, 100% { transform: scale(1.8); opacity: 0; }
+
+    75%,
+    100% {
+      transform: scale(1.8);
+      opacity: 0;
+    }
   }
 
   .ping {
@@ -249,8 +326,15 @@ body::before {
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-12px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-12px);
+    }
   }
 
   .animate-float {
@@ -259,18 +343,35 @@ body::before {
 
   /* Custom animations for Navbar */
   @keyframes flip {
-    0%, 100% { transform: rotateX(0); }
-    50% { transform: rotateX(180deg); }
+
+    0%,
+    100% {
+      transform: rotateX(0);
+    }
+
+    50% {
+      transform: rotateX(180deg);
+    }
   }
 
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0% {
+      background-position: -200% 0;
+    }
+
+    100% {
+      background-position: 200% 0;
+    }
   }
 
   @keyframes spin-slow {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
   }
 
   .animate-flip {
@@ -287,13 +388,27 @@ body::before {
 
   /* Additional animation styles for logo */
   @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
   @keyframes scale {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.1);
+    }
   }
 
   .animate-bounce {
@@ -301,8 +416,15 @@ body::before {
   }
 
   @keyframes cart-bounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.2);
+    }
   }
 
   .animate-cart-bounce {
@@ -399,15 +521,16 @@ body::before {
       0 1px 0 #ccc,
       0 2px 0 #c9c9c9,
       0 3px 0 #bbb,
-      0 4px 1px rgba(0,0,0,.1),
-      0 0 5px rgba(0,0,0,.1),
-      0 1px 3px rgba(0,0,0,.3),
-      0 3px 5px rgba(0,0,0,.2),
-      0 5px 10px rgba(0,0,0,.25);
+      0 4px 1px rgba(0, 0, 0, .1),
+      0 0 5px rgba(0, 0, 0, .1),
+      0 1px 3px rgba(0, 0, 0, .3),
+      0 3px 5px rgba(0, 0, 0, .2),
+      0 5px 10px rgba(0, 0, 0, .25);
     z-index: 1;
     overflow: hidden;
     opacity: 1;
-    padding: 0.5rem 0; /* Add vertical padding for better centering */
+    padding: 0.5rem 0;
+    /* Add vertical padding for better centering */
   }
 
   .btn-53:hover .original {
@@ -676,10 +799,14 @@ body::before {
 }
 
 .logo-btn .text {
-  font-size: 32px; /* Bigger text */
-  padding: 0; /* Remove padding */
-  background: transparent !important; /* No background */
-  color: black; /* Solid black text */
+  font-size: 32px;
+  /* Bigger text */
+  padding: 0;
+  /* Remove padding */
+  background: transparent !important;
+  /* No background */
+  color: black;
+  /* Solid black text */
   border-radius: 0;
 }
 
@@ -750,8 +877,8 @@ body::before {
   height: 2em;
   filter: blur(45px);
   background-color: #e299ff;
-  background-image: radial-gradient(at 52% 57%, hsla(11,83%,72%,1) 0px, transparent 50%),
-  radial-gradient(at 37% 57%, hsla(175,78%,66%,1) 0px, transparent 50%);
+  background-image: radial-gradient(at 52% 57%, hsla(11, 83%, 72%, 1) 0px, transparent 50%),
+    radial-gradient(at 37% 57%, hsla(175, 78%, 66%, 1) 0px, transparent 50%);
 }
 
 .loader__circle {
@@ -773,7 +900,9 @@ body::before {
 }
 
 @keyframes loader__circle__jumping {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
 
@@ -808,10 +937,8 @@ body::before {
   transition: all 0.3s ease;
   z-index: 50;
   border: 1px solid transparent;
-  background-image: linear-gradient(
-    rgba(255, 255, 255, 0.3),
-    rgba(255, 255, 255, 0.1)
-  );
+  background-image: linear-gradient(rgba(255, 255, 255, 0.3),
+      rgba(255, 255, 255, 0.1));
   box-shadow:
     0 4px 15px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
@@ -826,16 +953,14 @@ body::before {
   inset: -2px;
   border-radius: 14px;
   padding: 2px;
-  background: linear-gradient(
-    90deg,
-    #ff6b6b,
-    #feca57,
-    #48dbfb,
-    #ff9ff3,
-    #54a0ff,
-    #5f27cd,
-    #ff6b6b
-  );
+  background: linear-gradient(90deg,
+      #ff6b6b,
+      #feca57,
+      #48dbfb,
+      #ff9ff3,
+      #54a0ff,
+      #5f27cd,
+      #ff6b6b);
   background-size: 300% 100%;
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -848,8 +973,13 @@ body::before {
 }
 
 @keyframes shimmer-border {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 300% 50%;
+  }
 }
 
 .add-to-cart-btn .text {
@@ -922,11 +1052,11 @@ body::before {
     max-width: 100%;
     font-size: 9px;
   }
-  
+
   .add-to-cart-btn .text {
     font-size: 9px;
   }
-  
+
   .add-to-cart-btn .icon svg {
     width: 16px;
     height: 16px;
@@ -935,11 +1065,15 @@ body::before {
 
 /* Scrollbar hide utility */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;             /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* No scrollbar utility (alternative name) */
@@ -947,6 +1081,7 @@ body::before {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -956,17 +1091,21 @@ body::before {
   scrollbar-width: thin;
   scrollbar-color: #e5e5e5 transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: #d4d4d4;
   border-radius: 3px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #a3a3a3;
 }
@@ -977,6 +1116,7 @@ body::before {
     opacity: 0;
     transform: translateY(50px) scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -988,6 +1128,7 @@ body::before {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+
   100% {
     opacity: 0;
     transform: translateY(50px) scale(0.9);
@@ -995,18 +1136,24 @@ body::before {
 }
 
 @keyframes toastPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
   }
+
   50% {
     box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
   }
 }
 
 @keyframes toastGlow {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
   }
+
   50% {
     filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4));
   }
@@ -1042,12 +1189,10 @@ body::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(74, 222, 128, 0.3),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(74, 222, 128, 0.3),
+      transparent);
   animation: shimmer 2s infinite;
 }
 
@@ -1061,12 +1206,10 @@ body::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(248, 113, 113, 0.3),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(248, 113, 113, 0.3),
+      transparent);
   animation: shimmer 2s infinite;
 }
 

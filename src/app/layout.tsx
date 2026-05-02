@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   title: "SHANFA — Your Caring Skin Partner",
   description: "Premium Skin Care crafted with nature's finest ingredients for your natural beauty.",
   verification: {
-    google: process.env.NEXT_PUBLIC_GSC_VERIFICATION || "YOUR_CODE_FROM_GSC",
+    google: "961737d60c2e9da4",
   },
 };
 

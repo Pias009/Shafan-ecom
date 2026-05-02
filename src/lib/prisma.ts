@@ -10,7 +10,9 @@ export const prisma =
       : ["error"],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL + "?connectTimeoutMS=30000&socketTimeoutMS=45000",
+        url: (process.env.DATABASE_URL || '').includes('?') 
+          ? `${process.env.DATABASE_URL}&connectTimeoutMS=30000&socketTimeoutMS=45000`
+          : `${process.env.DATABASE_URL}?connectTimeoutMS=30000&socketTimeoutMS=45000`,
       },
     },
   });

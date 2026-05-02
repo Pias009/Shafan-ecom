@@ -3,7 +3,7 @@
 import { useCartStore } from "@/lib/cart-store";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Minus, Plus, Trash2, Info, CheckCircle, Circle } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2, Info, CheckCircle, Circle, Loader2, MapPin } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -190,6 +190,36 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
     }
   }
 
+  const [address, setAddress] = useState<any>(null);
+  const [loadingAddress, setLoadingAddress] = useState(true);
+
+  useEffect(() => {
+    async function fetchAddress() {
+      try {
+        if (session) {
+          const res = await fetch("/api/account/address");
+          if (res.ok) {
+            const data = await res.json();
+            setAddress(data);
+            if (data) useCartStore.getState().setHasAddress(true);
+          }
+        } else {
+          const guestStr = localStorage.getItem('guest_address');
+          if (guestStr) {
+            const data = JSON.parse(guestStr);
+            setAddress(data);
+            if (data) useCartStore.getState().setHasAddress(true);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoadingAddress(false);
+      }
+    }
+    fetchAddress();
+  }, [session]);
+
   return (
     <div className="pt-24 md:pt-32 pb-20 px-4 md:px-6 max-w-6xl mx-auto">
       <Link
@@ -353,6 +383,51 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 <Price amount={total} className="text-2xl md:text-3xl font-black text-black" />
               </div>
 
+              {/* Delivery Address Preview Section */}
+              <div className="mt-6 pt-4 border-t border-black/5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[10px] md:text-xs font-black uppercase tracking-widest text-black/40">Delivery Address</div>
+                  <Link 
+                    href="/account/address?redirect=/cart"
+                    className="text-[10px] md:text-xs font-bold text-emerald-600 hover:text-emerald-700 underline underline-offset-4 decoration-emerald-200"
+                  >
+                    {address ? "Edit Address" : "Add Address"}
+                  </Link>
+                </div>
+                
+                {loadingAddress ? (
+                  <div className="h-12 flex items-center justify-center bg-black/[0.02] rounded-xl border border-dashed border-black/10">
+                    <Loader2 className="w-4 h-4 animate-spin text-black/10" />
+                  </div>
+                ) : address ? (
+                  <div className="p-4 rounded-2xl bg-black/[0.02] border border-black/5 group hover:bg-black/[0.04] transition-colors cursor-pointer" onClick={() => router.push("/account/address?redirect=/cart")}>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 p-1.5 bg-white rounded-lg border border-black/5 text-black/40">
+                        <MapPin className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] md:text-xs font-black text-black truncate mb-0.5">{address.fullName}</div>
+                        <div className="text-[10px] md:text-[11px] text-black/60 truncate leading-tight">
+                          {address.address1}{address.address2 ? `, ${address.address2}` : ''}
+                        </div>
+                        <div className="text-[10px] md:text-[11px] text-black/60 font-medium">
+                          {address.city}, {address.country}
+                        </div>
+                        <div className="text-[10px] md:text-[11px] text-black/40 mt-1 font-bold">{address.phone}</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-red-50 border border-red-100 flex flex-col items-center text-center gap-2">
+                    <div className="p-2 bg-white rounded-full text-red-500 shadow-sm">
+                      <Info className="w-4 h-4" />
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-red-600">Address Required</div>
+                    <p className="text-[9px] text-red-500/70 font-medium">Please provide your shipping address to calculate final taxes and enable checkout.</p>
+                  </div>
+                )}
+              </div>
+
               <div className="mt-6 pt-4 border-t border-black/5">
                 <div className="text-[10px] md:text-xs font-black uppercase tracking-widest text-black/40 mb-3">Payment Method</div>
                 <div className="grid grid-cols-2 gap-2">
@@ -362,7 +437,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                     className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${paymentMethod === "stripe"
                         ? "border-black bg-black text-white"
                         : "border-black/20 text-black/60 hover:border-black/40"
-                      }`}
+                       }`}
                   >
                     💳 Card
                   </button>
@@ -372,7 +447,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                     className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${paymentMethod === "cod"
                         ? "border-black bg-black text-white"
                         : "border-black/20 text-black/60 hover:border-black/40"
-                      }`}
+                       }`}
                   >
                     💵 COD
                   </button>
@@ -382,17 +457,11 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
 
             <button
               onClick={handleCheckout}
-              className="mt-8 md:mt-10 w-full rounded-full bg-black text-white py-4 md:py-5 font-body text-[10px] md:text-xs font-black tracking-[0.2em] transition hover:scale-[1.02] shadow-xl shadow-black/20 active:scale-95 flex items-center justify-center gap-2"
+              disabled={!address}
+              className="mt-8 md:mt-10 w-full rounded-full bg-black text-white py-4 md:py-5 font-body text-[10px] md:text-xs font-black tracking-[0.2em] transition hover:scale-[1.02] shadow-xl shadow-black/20 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t.cart.checkout}
             </button>
-
-            {!hasAddress && (
-              <p className="mt-4 text-[9px] md:text-[10px] text-red-500/80 font-bold uppercase text-center flex items-center justify-center gap-1.5 px-4 leading-tight">
-                <Info className="w-3 h-3 shrink-0" />
-                {t.cart.addressRequired}
-              </p>
-            )}
 
             <div className="mt-8 md:mt-10 flex items-center justify-center gap-3 opacity-20 filter grayscale">
               <Image src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" width={40} height={20} className="w-8 h-4 md:w-10 md:h-5" />
@@ -404,6 +473,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
       </div>
     </div>
   );
+
 }
 
 export default function CartPage() {
