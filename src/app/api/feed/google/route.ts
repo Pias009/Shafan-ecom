@@ -8,6 +8,9 @@ export async function GET() {
       where: {
         active: true,
       },
+      include: {
+        countryPrices: true,
+      }
     });
     
     // Set up XML header and structure
@@ -33,7 +36,17 @@ export async function GET() {
           .replace(/'/g, '&apos;');
       }
       
-      const priceValue = product.price ? parseFloat(product.price.toString()).toFixed(2) : '0.00';
+      let finalPrice = product.discountPrice || product.price || 0;
+      
+      // Attempt to get UAE specific price if the base price is 0
+      if (finalPrice === 0 && product.countryPrices && product.countryPrices.length > 0) {
+        const uaePrice = product.countryPrices.find((cp: any) => cp.country === 'AE' || cp.currency === 'AED');
+        if (uaePrice && uaePrice.price != null) {
+          finalPrice = uaePrice.price;
+        }
+      }
+
+      const priceValue = parseFloat(finalPrice.toString()).toFixed(2);
       const price = `${priceValue} AED`;
       
       // Ensure image is a valid URL
