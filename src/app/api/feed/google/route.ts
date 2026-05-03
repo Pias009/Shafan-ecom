@@ -33,7 +33,8 @@ export async function GET() {
           .replace(/'/g, '&apos;');
       }
       
-      const price = product.price != null ? `${product.price} AED` : '0 AED';
+      const priceValue = product.price ? parseFloat(product.price.toString()).toFixed(2) : '0.00';
+      const price = `${priceValue} AED`;
       
       // Ensure image is a valid URL
       let imageLink = '';
