@@ -81,7 +81,6 @@ export async function GET() {
           : 'Health & Beauty > Personal Care > Skin Care';
 
         const descText = product.description || product.shortDescription || '';
-        const currency = product.currency || defaultCurrency;
         return `
   <item>
     <g:id>${escapeXml(product.id)}</g:id>
