@@ -35,11 +35,25 @@ export async function GET() {
         active: true,
         stockQuantity: { gt: 0 },
       },
-      include: {
-        brand: true,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        shortDescription: true,
+        slug: true,
+        price: true,
+        discountPrice: true,
+        images: true,
+        mainImage: true,
+        currency: true,
+        tags: true,
+        hot: true,
+        trending: true,
+        brand: { select: { name: true } },
         subCategory: {
-          include: {
-            category: true,
+          select: {
+            name: true,
+            category: { select: { name: true } },
           },
         },
       },
@@ -66,21 +80,23 @@ export async function GET() {
           ? `${product.subCategory.category?.name || ''} > ${product.subCategory.name}`
           : 'Health & Beauty > Personal Care > Skin Care';
 
+        const descText = product.description || product.shortDescription || '';
+        const currency = product.currency || defaultCurrency;
         return `
   <item>
     <g:id>${escapeXml(product.id)}</g:id>
-    <g:title>${escapeXml(product.name)}</g:title>
-    <g:description>${escapeXml(product.description || product.shortDescription || '')}</g:description>
+    <g:title><![CDATA[${product.name || ''}]]></g:title>
+    <g:description><![CDATA[${descText}]]></g:description>
     <g:link>${escapeXml(link)}</g:link>
     <g:image_link>${escapeXml(image)}</g:image_link>
     <g:availability>in stock</g:availability>
     <g:price>${price.toFixed(2)} ${currency}</g:price>
     ${discPrice ? `<g:sale_price>${discPrice.toFixed(2)} ${currency}</g:sale_price>` : ''}
     <g:condition>new</g:condition>
-    <g:brand>${escapeXml(brandName)}</g:brand>
-    <g:product_type>${escapeXml(categoryPath)}</g:product_type>
-    <g:google_product_category>Health & Beauty &gt; Personal Care &gt; Skin Care</g:google_product_category>
-    ${product.tags && product.tags.length > 0 ? `<g:custom_label_0>${escapeXml(product.tags.slice(0, 3).join(','))}</g:custom_label_0>` : ''}
+    <g:brand><![CDATA[${brandName}]]></g:brand>
+    <g:product_type><![CDATA[${categoryPath}]]></g:product_type>
+    <g:google_product_category>Health &amp; Beauty &gt; Personal Care &gt; Skin Care</g:google_product_category>
+    ${product.tags && product.tags.length > 0 ? `<g:custom_label_0><![CDATA[${product.tags.slice(0, 3).join(',')}]]></g:custom_label_0>` : ''}
     ${product.hot ? '<g:custom_label_1>hot</g:custom_label_1>' : ''}
     ${product.trending ? '<g:custom_label_2>trending</g:custom_label_2>' : ''}
   </item>`;

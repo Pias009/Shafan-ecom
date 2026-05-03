@@ -33,11 +33,27 @@ export async function GET() {
             active: true,
             stockQuantity: { gt: 0 },
           },
-          include: {
-            brand: true,
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            shortDescription: true,
+            slug: true,
+            price: true,
+            discountPrice: true,
+            images: true,
+            mainImage: true,
+            currency: true,
+            sku: true,
+            weight: true,
+            weightUnit: true,
+            averageRating: true,
+            ratingCount: true,
+            brand: { select: { name: true } },
             subCategory: {
-              include: {
-                category: true,
+              select: {
+                name: true,
+                category: { select: { name: true } },
               },
             },
           },
@@ -64,19 +80,21 @@ export async function GET() {
           ? `${product.subCategory.category?.name || ''} > ${(product.subCategory as { name: string }).name}`
           : '';
 
+        const descText = product.description || product.shortDescription || product.name || '';
+        const currency = product.currency || 'AED';
         return `
   <item>
     <g:id>${escapeXml(product.id)}</g:id>
-    <g:title>${escapeXml(product.name)}</g:title>
-    <g:description>${escapeXml(product.description || product.shortDescription || product.name)}</g:description>
+    <g:title><![CDATA[${product.name || ''}]]></g:title>
+    <g:description><![CDATA[${descText}]]></g:description>
     <g:link>${escapeXml(link)}</g:link>
     <g:image_link>${escapeXml(image)}</g:image_link>
-     <g:availability>in stock</g:availability>
-     <g:price>${(product.price ?? 0).toFixed(2)} ${product.currency || 'USD'}</g:price>
-     ${product.discountPrice ? `<g:sale_price>${product.discountPrice.toFixed(2)} ${product.currency || 'USD'}</g:sale_price>` : ''}
+    <g:availability>in stock</g:availability>
+    <g:price>${(product.price ?? 0).toFixed(2)} ${currency}</g:price>
+    ${product.discountPrice ? `<g:sale_price>${product.discountPrice.toFixed(2)} ${currency}</g:sale_price>` : ''}
     <g:condition>new</g:condition>
-    <g:brand>${escapeXml(product.brand?.name || 'SHANFA')}</g:brand>
-    <g:product_type>${escapeXml(categoryPath)}</g:product_type>
+    <g:brand><![CDATA[${product.brand?.name || 'SHANFA'}]]></g:brand>
+    <g:product_type><![CDATA[${categoryPath}]]></g:product_type>
     <g:gtin>${escapeXml(product.sku)}</g:gtin>
     <g:mpn>${escapeXml(product.sku)}</g:mpn>
     <g:shipping_weight>${weight.value} ${weight.unit}</g:shipping_weight>

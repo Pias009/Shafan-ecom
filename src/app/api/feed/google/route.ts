@@ -8,7 +8,15 @@ export async function GET() {
       where: {
         active: true,
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        slug: true,
+        price: true,
+        discountPrice: true,
+        images: true,
+        stockQuantity: true,
         countryPrices: true,
       }
     });
@@ -25,16 +33,12 @@ export async function GET() {
     for (const product of products) {
       const id = product.id;
       
-      // Escape special characters in title
-      let title = '';
-      if (product.name) {
-        title = product.name
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
-      }
+      // Use CDATA for title and description to safely handle special characters
+      const titleText = product.name || '';
+      const title = `<![CDATA[${titleText}]]>`;
+      
+      const descText = product.description || titleText;
+      const description = `<![CDATA[${descText}]]>`;
       
       let finalPrice = product.discountPrice || product.price || 0;
       
@@ -56,13 +60,14 @@ export async function GET() {
       }
       imageLink = imageLink ? imageLink.replace(/&/g, '&amp;') : '';
       
-      const link = `https://shanfaglobal.com/products/${id}`;
+      const link = `https://shanfaglobal.com/products/${product.slug || id}`;
       const availability = (product.stockQuantity && product.stockQuantity > 0) ? 'in_stock' : 'out_of_stock';
       const condition = 'new';
       
       xml += `    <item>\n`;
       xml += `      <g:id>${id}</g:id>\n`;
       xml += `      <g:title>${title}</g:title>\n`;
+      xml += `      <g:description>${description}</g:description>\n`;
       xml += `      <g:link>${link}</g:link>\n`;
       xml += `      <g:image_link>${imageLink}</g:image_link>\n`;
       xml += `      <g:price>${price}</g:price>\n`;
