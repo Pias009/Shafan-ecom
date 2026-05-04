@@ -183,7 +183,9 @@ export async function POST(req: Request) {
                 <table style="width: 100%;">
                   <tr><td style="padding: 4px 0; color: #6c757d;">Subtotal</td><td style="padding: 4px 0; text-align: right;">${(updatedOrder.currency || 'aed').toUpperCase()} ${Number(updatedOrder.subtotal).toFixed(2)}</td></tr>
                   <tr><td style="padding: 4px 0; color: #6c757d;">Shipping</td><td style="padding: 4px 0; text-align: right;">${(updatedOrder.currency || 'aed').toUpperCase()} ${Number(updatedOrder.shipping).toFixed(2)}</td></tr>
-                  <tr style="font-weight: bold; font-size: 18px;">
+                  ${updatedOrder.discount ? `<tr><td style="padding: 4px 0; color: #28a745;">Discount</td><td style="padding: 4px 0; text-align: right; color: #28a745;">-${(updatedOrder.currency || 'aed').toUpperCase()} ${Number(updatedOrder.discount).toFixed(2)}</td></tr>` : ''}
+                  ${updatedOrder.taxAmount ? `<tr><td style="padding: 4px 0; color: #6c757d;">VAT</td><td style="padding: 4px 0; text-align: right;">${(updatedOrder.currency || 'aed').toUpperCase()} ${Number(updatedOrder.taxAmount).toFixed(2)}</td></tr>` : ''}
+                  <tr style="font-weight: bold; font-size: 18px; border-top: 2px solid #333; margin-top: 8px;">
                     <td style="padding: 12px 0 0;">Total</td>
                     <td style="padding: 12px 0 0; text-align: right; color: #d97706;">${(updatedOrder.currency || 'aed').toUpperCase()} ${Number(updatedOrder.total).toFixed(2)}</td>
                   </tr>

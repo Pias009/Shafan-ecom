@@ -3,6 +3,7 @@ import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 import { notifyNewOrder } from "@/lib/pusher";
+import { COUNTRY_CONFIG } from "@/lib/address-config";
 
 // Helper function to determine courier based on shipping address
 function determineCourier(shippingAddress: any): string {
@@ -49,9 +50,13 @@ export async function POST(req: Request) {
     }
 
     // Use country from request or address
-    const countryCode = requestCountry || address.country || 'AE';
+    const countryCode = (requestCountry || address.country || 'AE').toUpperCase();
     const currency = getCurrencyForCountry(countryCode);
+    const countryConfig = COUNTRY_CONFIG[countryCode as keyof typeof COUNTRY_CONFIG];
 
+    if (!countryConfig) {
+      return NextResponse.json({ error: `Unsupported country: ${countryCode}` }, { status: 400 });
+    }
 
     // 2. Calculate subtotals by fetching real products with country pricing (strict DB prices)
     let subtotal = 0;
@@ -67,33 +72,25 @@ export async function POST(req: Request) {
         where: { id: item.productId },
         include: {
           countryPrices: {
-            where: { country: countryCode.toUpperCase(), active: true }
+            where: { country: countryCode, active: true }
           }
         }
       });
       if (!product) throw new Error("Product not found: " + item.productId);
 
-      // STRICT PRICE VALIDATION: Only use DB price for selected country
-      // No multipliers or conversions - database is the ONLY source of truth
+      // STRICT PRICE VALIDATION
       let price = 0;
       if (product.countryPrices && product.countryPrices.length > 0) {
-        price = Number(product.countryPrices[0].price) || 0;
+        const cp = product.countryPrices[0] as any;
+        const discountPriceVal = cp.discountPrice ?? product.discountPrice;
+        const hasDiscount = !!(discountPriceVal && Number(discountPriceVal) > 0 && Number(discountPriceVal) < Number(cp.price));
+        
+        price = hasDiscount ? Number(discountPriceVal) : Number(cp.price) || 0;
       }
       
-      // If no country-specific price exists, reject the order
       if (price <= 0) {
         return NextResponse.json({ 
-          error: `Product "${product.name}" is not available for ${countryCode}. Please select a different shipping country.` 
-        }, { status: 400 });
-      }
-
-      // CRITICAL: Validate that the client-submitted price matches the DB price
-      // If user manipulated the price client-side, reject the transaction
-      const clientSubmittedPrice = item.unitPrice;
-      if (clientSubmittedPrice && Math.abs(clientSubmittedPrice - price) > 0.01) {
-        console.warn(`Price mismatch for product ${product.id}: client=${clientSubmittedPrice}, db=${price}`);
-        return NextResponse.json({ 
-          error: `Price validation failed for "${product.name}". Please refresh and try again.` 
+          error: `Product "${product.name}" is not available for ${countryCode}.` 
         }, { status: 400 });
       }
 
@@ -110,17 +107,20 @@ export async function POST(req: Request) {
 
     // Validate total
     if (subtotal <= 0) {
-      return NextResponse.json({ error: "Order total must be greater than 0. Please check product prices." }, { status: 400 });
+      return NextResponse.json({ error: "Order total must be greater than 0." }, { status: 400 });
     }
 
-    // Determine courier based on shipping address
-    const shippingAddress = {
-      country: address.country || "BD"
-    };
-    const courier = determineCourier(shippingAddress);
-    const trackingCode = generateTrackingCode();
+    // Calculate Shipping
+    const shippingFee = subtotal >= countryConfig.freeDelivery ? 0 : countryConfig.deliveryFee;
+    
+    // Calculate Tax
+    const taxRate = countryConfig.taxRate || 0;
+    const preTaxTotal = subtotal + shippingFee;
+    const taxAmount = Math.round(preTaxTotal * taxRate * 100) / 100;
+    const total = preTaxTotal + taxAmount;
 
-    const total = subtotal;
+    const courier = determineCourier({ country: countryCode });
+    const trackingCode = generateTrackingCode();
 
     // 3. Create Order (payment pending - will be set at payment step)
     const order = await prisma.order.create({
@@ -131,6 +131,9 @@ export async function POST(req: Request) {
         paymentStatus: "PENDING" as any,
         currency: currency.toLowerCase(),
         subtotal,
+        shipping: shippingFee,
+        taxRate,
+        taxAmount,
         total,
         billingAddress: {
           first_name: address.fullName?.split(" ")[0] || "",
@@ -139,7 +142,7 @@ export async function POST(req: Request) {
           address_2: address.address2 || "",
           city: address.city || "",
           postcode: address.postalCode || "",
-          country: address.country || "BD",
+          country: address.country || countryCode,
           email: session.user.email,
           phone: address.phone || "",
         },
@@ -150,9 +153,8 @@ export async function POST(req: Request) {
           address_2: address.address2 || "",
           city: address.city || "",
           postcode: address.postalCode || "",
-          country: address.country || "BD",
+          country: address.country || countryCode,
         },
-        // paymentMethod set by user at payment step
         items: {
           create: orderItems
         },

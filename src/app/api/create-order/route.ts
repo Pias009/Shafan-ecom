@@ -98,6 +98,10 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
   });
   
   if (countryPrice && Number(countryPrice.price) > 0) {
+    // Check for country-specific discount price
+    if (countryPrice.discountPrice && Number(countryPrice.discountPrice) > 0 && Number(countryPrice.discountPrice) < Number(countryPrice.price)) {
+      return { price: Number(countryPrice.discountPrice), source: 'country_discount_price' };
+    }
     return { price: Number(countryPrice.price), source: 'country_price' };
   }
   
@@ -108,8 +112,9 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
   });
   
   if (product) {
-    const basePrice = product.discountPrice
-      ? Number(product.price) - Number(product.discountPrice)
+    // Correct fallback logic: if discountPrice is set and valid, use it as the sale price
+    const basePrice = (product.discountPrice && Number(product.discountPrice) > 0 && Number(product.discountPrice) < Number(product.price))
+      ? Number(product.discountPrice)
       : Number(product.price);
     return { price: basePrice, source: 'base_price' };
   }
@@ -514,9 +519,9 @@ export async function POST(req: Request) {
     const preTaxTotal = effectiveSubtotal + effectiveShipping - effectiveDiscount;
     const taxAmount = Math.round(preTaxTotal * countryTaxRate * 100) / 100;
 
-    const effectiveTotal = (isUserAdmin && typeof clientTotal === 'number') 
+    const effectiveTotal = (isUserAdmin && typeof clientTotal === 'number' && clientTotal > 0) 
       ? clientTotal 
-      : preTaxTotal + taxAmount;
+      : (preTaxTotal + taxAmount);
     
     // Round total based on currency (KWD, BHD, OMR = 3 decimals, others = 2 decimals)
     const highDecimalsCurrencies = ['KWD', 'BHD', 'OMR'];
@@ -524,10 +529,11 @@ export async function POST(req: Request) {
     const finalTotal = Math.round(effectiveTotal * Math.pow(10, decimals)) / Math.pow(10, decimals);
     const finalSubtotal = Math.round(effectiveSubtotal * Math.pow(10, decimals)) / Math.pow(10, decimals);
     
-    console.log(`Order totals after rounding | Subtotal: ${finalSubtotal} | Shipping: ${effectiveShipping} | Discount: ${effectiveDiscount} | Total: ${finalTotal}`);
+    console.log(`Order totals | Subtotal: ${finalSubtotal} | Shipping: ${effectiveShipping} | Discount: ${effectiveDiscount} | Tax: ${taxAmount} | Total: ${finalTotal}`);
 
     // Server-side price validation (prevent tampering)
-    console.log(`Price validation: clientTotal=${clientTotal}, serverTotal=${finalSubtotal + effectiveShipping - effectiveDiscount}`);
+    const expectedServerTotal = Math.round((finalSubtotal + effectiveShipping - effectiveDiscount + taxAmount) * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    console.log(`Price validation: clientTotal=${clientTotal}, serverTotal=${expectedServerTotal}`);
 
     // Determine courier based on shipping address
     const courier = determineCourier(shipping);

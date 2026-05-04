@@ -28,7 +28,7 @@ export function hasValidPrice(product: any, userCountry?: string): boolean {
   return false;
 }
 
-export function getDisplayPrice(product: any, userCountry?: string): { price: number; currency: string; hasDiscount: boolean; discountPrice: number } {
+export function getDisplayPrice(product: any, userCountry?: string): { price: number; currency: string; hasDiscount: boolean; discountPrice: number; originalPrice: number } {
   const countryCode = (userCountry || '').toUpperCase();
   
   if (product?.countryPrices && product.countryPrices.length > 0) {
@@ -37,9 +37,13 @@ export function getDisplayPrice(product: any, userCountry?: string): { price: nu
     );
     if (countryPrice && Number(countryPrice.price) > 0) {
       const discountPriceVal = countryPrice.discountPrice ?? product.discountPrice;
-      const hasDiscount = discountPriceVal && Number(discountPriceVal) > 0 && Number(discountPriceVal) < Number(countryPrice.price);
+      const hasDiscount = !!(discountPriceVal && Number(discountPriceVal) > 0 && Number(discountPriceVal) < Number(countryPrice.price));
+      
+      const effectivePrice = hasDiscount ? Number(discountPriceVal) : Number(countryPrice.price);
+      
       return {
-        price: Number(countryPrice.price) || 0,
+        price: effectivePrice || 0,
+        originalPrice: Number(countryPrice.price) || 0,
         currency: countryPrice.currency || 'USD',
         hasDiscount,
         discountPrice: Number(discountPriceVal) || 0
@@ -50,16 +54,20 @@ export function getDisplayPrice(product: any, userCountry?: string): { price: nu
   // Fallback to base price
   if (product?.price && Number(product.price) > 0) {
     const discountPriceVal = product.discountPrice;
-    const hasDiscount = discountPriceVal && Number(discountPriceVal) > 0 && Number(discountPriceVal) < Number(product.price);
+    const hasDiscount = !!(discountPriceVal && Number(discountPriceVal) > 0 && Number(discountPriceVal) < Number(product.price));
+    
+    const effectivePrice = hasDiscount ? Number(discountPriceVal) : Number(product.price);
+
     return {
-      price: Number(product.price) || 0,
+      price: effectivePrice || 0,
+      originalPrice: Number(product.price) || 0,
       currency: product.currency || 'USD',
       hasDiscount,
       discountPrice: Number(discountPriceVal) || 0
     };
   }
   
-  return { price: 0, currency: 'USD', hasDiscount: false, discountPrice: 0 };
+  return { price: 0, originalPrice: 0, currency: 'USD', hasDiscount: false, discountPrice: 0 };
 }
 
 // Helper to get correct divisor for raw price units (cents vs fils)

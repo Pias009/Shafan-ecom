@@ -692,6 +692,7 @@ model CountryPrice {
   productId   String   @db.ObjectId
   country     String   // Country code like "US", "BD", "KW", etc.
   price       Float?   // Price for this country
+  discountPrice Float? // Discount price for this country
   currency    String   @default("AED") // Currency code for this country
   active      Boolean  @default(true)
   

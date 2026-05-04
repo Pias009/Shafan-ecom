@@ -349,7 +349,7 @@ export async function POST(
           curY += bold ? 22 : 18;
         };
 
-        sumLine('Subtotal:', fmt(subtotal - taxValue));
+        sumLine('Subtotal:', fmt(subtotal));
         if (discount > 0) sumLine('Discount:', `-${fmt(discount)}`, false, '#DC2626', '#DC2626');
         sumLine(`VAT (${(taxRate * 100).toFixed(0)}%):`, fmt(taxValue));
         sumLine('Shipping:', fmt(shippingCost));
