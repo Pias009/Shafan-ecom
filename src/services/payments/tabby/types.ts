@@ -40,12 +40,8 @@ export interface TabbyItem {
 }
 
 export interface TabbySession {
-  session: {
-    id: string;
-    status: TabbySessionStatus;
-    created: string;
-    updated: string;
-  };
+  id: string;
+  status: TabbySessionStatus;
   payment: {
     id: string;
     status: TabbyPaymentStatus;
@@ -56,19 +52,11 @@ export interface TabbySession {
     updated: string;
     expires: string;
   };
-  webUrl: string;
+  web_url: string;
   configuration: {
-    availableProducts: Array<{
-      type: "installments" | "pay_later";
-      minAmount?: number;
-      maxAmount?: number;
-      plans?: Array<{
-        tenure: number;
-        label: string;
-        description: string;
-      }>;
-    }>;
+    available_products: Record<string, any>;
   };
+  rejection_reason_code?: string;
 }
 
 export interface TabbyPayment {
@@ -117,5 +105,8 @@ export interface TabbySessionRequest {
   buyer: TabbyBuyer;
   shippingAddress?: TabbyShippingAddress;
   items: TabbyItem[];
+  taxAmount?: number;
+  shippingAmount?: number;
+  discountAmount?: number;
   metadata?: Record<string, string>;
 }

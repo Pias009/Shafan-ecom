@@ -134,9 +134,14 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         return;
       }
 
-      const paymentMethodData = paymentMethod === "cod"
-        ? { payment_method: "cod", payment_method_title: "Cash on Delivery" }
-        : { payment_method: "stripe", payment_method_title: "Credit Card (Stripe)" };
+      let paymentMethodData = { payment_method: "stripe", payment_method_title: "Credit Card (Stripe)" };
+      if (paymentMethod === "cod") {
+        paymentMethodData = { payment_method: "cod", payment_method_title: "Cash on Delivery" };
+      } else if (paymentMethod === "tabby") {
+        paymentMethodData = { payment_method: "tabby", payment_method_title: "Tabby Pay-in-4" };
+      } else if (paymentMethod === "tamara") {
+        paymentMethodData = { payment_method: "tamara", payment_method_title: "Tamara Installments" };
+      }
 
       const orderRes = await fetch("/api/create-order", {
         method: "POST",
@@ -168,6 +173,9 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         if (paymentMethod === "cod") {
           useLoadingStore.getState().setRedirecting(true, "Finalizing your order...");
           router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
+        } else if (paymentMethod === "tabby" || paymentMethod === "tamara" || paymentMethod === "stripe") {
+          useLoadingStore.getState().setRedirecting(true, "Creating your order...");
+          router.push(`/checkout/payment/${data.orderId}?method=${paymentMethod}`);
         } else {
           useLoadingStore.getState().setRedirecting(true, "Creating your order...");
           router.push(`/checkout/payment/${data.orderId}`);
@@ -440,6 +448,26 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                        }`}
                   >
                     💳 Card
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("tabby")}
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 ${paymentMethod === "tabby"
+                        ? "border-[#3ECF8E] bg-[#3ECF8E] text-black"
+                        : "border-black/20 text-black/60 hover:border-black/40"
+                       }`}
+                  >
+                    <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("tamara")}
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 ${paymentMethod === "tamara"
+                        ? "border-[#FF4D4D] bg-[#FF4D4D] text-white"
+                        : "border-black/20 text-black/60 hover:border-black/40"
+                       }`}
+                  >
+                    <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara" className="h-5" />
                   </button>
                   <button
                     type="button"

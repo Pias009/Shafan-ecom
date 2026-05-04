@@ -55,24 +55,23 @@ export interface TamaraSessionRequest {
   locale?: "en-US" | "ar-SA";
   paymentType?: "pay_later" | "pay_now" | "pay_later_with installments";
   isMobile?: boolean;
-  discount?: { amount: string; currency: TamaraCurrency };
+  discount?: { amount: string; currency: TamaraCurrency; name?: string };
   taxAmount?: { amount: string; currency: TamaraCurrency };
   shippingAmount?: { amount: string; currency: TamaraCurrency };
   totalAmount: { amount: string; currency: TamaraCurrency };
+  merchantUrls?: {
+    success: string;
+    cancel: string;
+    failure: string;
+    notification?: string;
+  };
 }
 
 export interface TamaraSessionResponse {
-  id: string;
-  status: TamaraPaymentStatus;
-  orderReferenceId: string;
-  checkoutUrl: string;
-  createdAt: string;
-  expiresAt: string;
-  amount: { amount: string; currency: TamaraCurrency };
-  consumer: TamaraBuyer;
-  billingAddress: TamaraAddress;
-  shippingAddress: TamaraAddress;
-  items: TamaraItem[];
+  checkout_id: string;
+  checkout_url: string;
+  status: string;
+  order_id?: string;
 }
 
 export interface TamaraWebhookPayload {
@@ -93,13 +92,18 @@ export interface TamaraWebhookPayload {
 
 export interface TamaraCaptureRequest {
   orderId: string;
-  amount: { amount: string; currency: TamaraCurrency };
+  totalAmount: { amount: string; currency: TamaraCurrency };
+  shippingInfo?: {
+    shipping_company: string;
+    tracking_number: string;
+    tracking_url?: string;
+  };
   taxAmount?: { amount: string; currency: TamaraCurrency };
   shippingAmount?: { amount: string; currency: TamaraCurrency };
 }
 
 export interface TamaraRefundRequest {
   orderId: string;
-  amount: { amount: string; currency: TamaraCurrency };
+  totalAmount: { amount: string; currency: TamaraCurrency };
   comment?: string;
 }

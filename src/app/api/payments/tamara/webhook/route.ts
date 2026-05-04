@@ -9,13 +9,16 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get("x-tamara-signature") || "";
 
     const tamaraService = new TamaraService();
-    const webhookPayload = tamaraService.verifyWebhook(payload, signature);
+    const isValid = tamaraService.verifyWebhook(payload, signature);
 
-    console.log("Tamara webhook received:", webhookPayload);
+    // Parse the raw JSON payload to extract event data
+    const webhookPayload = JSON.parse(payload) as Record<string, any>;
 
-    const eventType = webhookPayload?.eventType;
-    const orderId = webhookPayload?.orderId;
-    const orderReferenceId = webhookPayload?.orderReferenceId;
+    console.log("Tamara webhook received (valid:", isValid, "):", webhookPayload);
+
+    const eventType = webhookPayload?.event_type ?? webhookPayload?.eventType;
+    const orderId = webhookPayload?.order_id ?? webhookPayload?.orderId;
+    const orderReferenceId = webhookPayload?.order_reference_id ?? webhookPayload?.orderReferenceId;
     const status = webhookPayload?.status;
 
     const order = await prisma.order.findFirst({

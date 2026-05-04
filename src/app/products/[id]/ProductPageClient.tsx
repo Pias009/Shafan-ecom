@@ -17,6 +17,8 @@ import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { formatDescription, VisualDescription } from "@/utils/formatText";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackViewItem, trackAddToCart as trackAddToCartDataLayer } from "@/lib/datalayer";
+import TabbyPromo from "@/components/TabbyPromo";
+import TamaraPromo from "@/components/TamaraPromo";
 
 const ProductQuickViewModal = lazy(() => import("@/components/ProductQuickViewModal").then(m => ({ default: m.ProductQuickViewModal })));
 
@@ -306,6 +308,22 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                 <span className="text-base sm:text-xl md:text-2xl lg:text-3xl font-black text-red-500">Unavailable in this region</span>
               )}
             </div>
+
+            {isAvailable && (
+              <div className="flex flex-col gap-2">
+                <TabbyPromo 
+                  price={displayPrice} 
+                  currency={product.currency?.toUpperCase() || 'AED'} 
+                  publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
+                  merchantCode="SGAE" 
+                />
+                <TamaraPromo 
+                  price={displayPrice} 
+                  currency={product.currency?.toUpperCase() || 'AED'} 
+                  publicKey={process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || ""} 
+                />
+              </div>
+            )}
 
             {/* Add to Cart & Order Now Buttons */}
             <div className="flex gap-2 sm:gap-3 pt-2">

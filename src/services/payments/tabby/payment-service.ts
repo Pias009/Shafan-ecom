@@ -1,4 +1,4 @@
-import { TabbySession, TabbyPayment, TabbyWebhookPayload, TabbyRegion, TabbyCurrency } from "./types";
+import { TabbySession, TabbyPayment, TabbyWebhookPayload, TabbyRegion, TabbyCurrency, TabbySessionRequest } from "./types";
 
 const TABBY_API_BASE_URLS: Record<TabbyRegion, string> = {
   UAE: "https://api.tabby.ai",
@@ -32,63 +32,62 @@ export class TabbyService {
     };
   }
 
-  async createSession(params: {
-    amount: number;
-    currency: TabbyCurrency;
-    orderId: string;
-    orderReferenceId: string;
-    description?: string;
-    buyer: {
-      email: string;
-      phone?: string;
-      name?: string;
-    };
-    shippingAddress?: {
-      address?: string;
-      city?: string;
-      zip?: string;
-    };
-    items: Array<{
-      title: string;
-      description?: string;
-      quantity: number;
-      unitPrice: string;
-      imageUrl?: string;
-      category?: string;
-    }>;
-    metadata?: Record<string, string>;
-  }): Promise<TabbySession> {
+  async createSession(params: TabbySessionRequest): Promise<TabbySession> {
     const response = await fetch(`${this.baseUrl}/api/v2/checkout`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify({
         payment: {
-          amount: params.amount.toString(),
+          amount: params.amount.toFixed(2),
           currency: params.currency,
           description: params.description || `Order ${params.orderId}`,
           buyer: params.buyer,
           shipping_address: params.shippingAddress,
-          items: params.items,
+          order: {
+            tax_amount: params.taxAmount ? params.taxAmount.toFixed(2) : "0.00",
+            shipping_amount: params.shippingAmount ? params.shippingAmount.toFixed(2) : "0.00",
+            discount_amount: params.discountAmount ? params.discountAmount.toFixed(2) : "0.00",
+            reference_id: params.orderReferenceId,
+            items: params.items.map(item => ({
+              title: item.title,
+              quantity: item.quantity,
+              unit_price: item.unitPrice,
+              image_url: item.imageUrl,
+              category: item.category || "General",
+            })),
+          },
           metadata: {
             order_id: params.orderId,
             ...params.metadata,
           },
         },
+        lang: "en",
         merchant_code: this.merchantCode,
         merchant_urls: {
           success: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?order_id=${params.orderId}&payment=tabby`,
           cancel: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${params.orderId}?canceled=tabby`,
-          rejection: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${params.orderId}?rejected=tabby`,
+          failure: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${params.orderId}?rejected=tabby`,
         },
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `Tabby session creation failed: ${response.status}`);
+      let errorMessage = `Tabby session creation failed: ${response.status}`;
+      try {
+        const error = await response.json();
+        errorMessage = error.message || errorMessage;
+      } catch (e) {
+        // Fallback to status code error if body is not JSON
+      }
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      throw new Error("Tabby API returned an invalid response structure.");
+    }
   }
 
   async getPayment(paymentId: string): Promise<TabbyPayment> {

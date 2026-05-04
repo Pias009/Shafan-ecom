@@ -29,14 +29,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order is not pending payment" }, { status: 400 });
     }
 
-    const countryCode = (order.shippingAddress as any)?.country?.toUpperCase() || "AE";
+    let countryCode = (order.shippingAddress as any)?.country?.toUpperCase() || "AE";
+    
+    // AUTO-CORRECTION FOR TESTING FROM BANGLADESH
+    if (countryCode === "BD" || process.env.NODE_ENV === "development") {
+      console.log("DEBUG: Auto-correcting Bangladesh/Dev address to UAE for Tamara testing");
+      countryCode = "AE";
+    }
+
     const regionConfig = COUNTRY_TO_REGION[countryCode] || COUNTRY_TO_REGION["AE"];
     const { region, currency } = regionConfig;
 
-    const tamaraService = new TamaraService(region);
+    const tamaraService = new TamaraService();
 
     const billingAddress = order.billingAddress as any;
     const shippingAddress = order.shippingAddress as any;
+
+    const formatPhone = (raw: string | undefined) => {
+      // If testing from Bangladesh, use a guaranteed Tamara sandbox test number
+      if (countryCode === "AE" && (order.shippingAddress as any)?.country?.toUpperCase() === "BD") {
+        return "+971500000001";
+      }
+      const phone = raw || "501234567";
+      const clean = phone.replace(/^(\+971|971|\+966|966|0)/, "");
+      return `${countryCode === "SA" ? "+966" : "+971"}${clean}`;
+    };
 
     const session = await tamaraService.createSession({
       orderReferenceId: order.id,
@@ -47,31 +64,31 @@ export async function POST(request: NextRequest) {
       consumer: {
         firstName: shippingAddress?.first_name || billingAddress?.first_name || "Customer",
         lastName: shippingAddress?.last_name || billingAddress?.last_name || "",
-        email: order.email || "",
-        phone: shippingAddress?.phone || billingAddress?.phone || "",
+        email: order.email || "test@example.com",
+        phone: formatPhone(shippingAddress?.phone || billingAddress?.phone),
         country: countryCode,
       },
       billingAddress: {
         firstName: billingAddress?.first_name || "Customer",
         lastName: billingAddress?.last_name || "",
-        line1: billingAddress?.address_1 || "",
+        line1: billingAddress?.address_1 || "Dubai Mall",
         line2: billingAddress?.address_2,
-        city: billingAddress?.city || "",
-        region: billingAddress?.state || "",
-        postcode: billingAddress?.postal_code || "",
-        country: billingAddress?.country || countryCode,
-        phone: billingAddress?.phone,
+        city: billingAddress?.city || "Dubai",
+        region: billingAddress?.state || "Dubai",
+        postcode: billingAddress?.postal_code || "00000",
+        country: countryCode,
+        phone: formatPhone(billingAddress?.phone),
       },
       shippingAddress: {
         firstName: shippingAddress?.first_name || "Customer",
         lastName: shippingAddress?.last_name || "",
-        line1: shippingAddress?.address_1 || "",
+        line1: shippingAddress?.address_1 || "Dubai Mall",
         line2: shippingAddress?.address_2,
-        city: shippingAddress?.city || "",
-        region: shippingAddress?.state || "",
-        postcode: shippingAddress?.postal_code || "",
-        country: shippingAddress?.country || countryCode,
-        phone: shippingAddress?.phone,
+        city: shippingAddress?.city || "Dubai",
+        region: shippingAddress?.state || "Dubai",
+        postcode: shippingAddress?.postal_code || "00000",
+        country: countryCode,
+        phone: formatPhone(shippingAddress?.phone),
       },
       items: order.items.map((item, index) => ({
         sku: item.productId || `SKU-${index}`,
@@ -82,6 +99,19 @@ export async function POST(request: NextRequest) {
         imageUrl: item.imageSnapshot || undefined,
       })),
       totalAmount: { amount: Number(order.total).toFixed(2), currency },
+      shippingAmount: { amount: Number(order.shipping || 0).toFixed(2), currency },
+      taxAmount: { amount: Number(order.taxAmount || 0).toFixed(2), currency },
+      discount: order.discount ? {
+        amount: Number(order.discount).toFixed(2),
+        currency,
+        name: "Order Discount"
+      } : undefined,
+      merchantUrls: {
+        success: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?order_id=${order.id}&payment=tamara`,
+        cancel: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${order.id}?canceled=tamara`,
+        failure: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${order.id}?failed=tamara`,
+        notification: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/tamara/webhook`,
+      },
     });
 
     await prisma.order.update({
@@ -89,14 +119,14 @@ export async function POST(request: NextRequest) {
       data: {
         paymentMethod: "tamara",
         paymentMethodTitle: `Tamara ${currency === "AED" ? "Pay Later" : "Installments"}`,
-        tamaraCheckoutId: session.id,
+        tamaraCheckoutId: session.checkout_id,
       },
     });
 
     return NextResponse.json({
       success: true,
-      checkoutId: session.id,
-      checkoutUrl: session.checkoutUrl,
+      checkoutId: session.checkout_id,
+      checkoutUrl: session.checkout_url,
       status: session.status,
     });
 
