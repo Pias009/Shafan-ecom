@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminApiSession } from "@/lib/admin-session";
-import { createNaqelShipment } from "@/services/shipping/naqel-api";
+import { createNaqelShipment, createNaqelManifest } from "@/services/shipping/naqel-api";
 import { OrderStatus } from "@prisma/client";
 
 // ─── Country code helpers ─────────────────────────────────────────────────────
@@ -46,6 +46,45 @@ function sanitizePhone(phone: string | undefined | null): string {
   // Keep only digits and the '+' sign
   const cleaned = phone.replace(/[^\d+]/g, "");
   return cleaned || "0000000000";
+}
+
+/**
+ * Splits a long address string into multiple lines at the nearest comma or space.
+ * Max length per line is 35 characters for courier labels.
+ */
+function splitAddress(address: string, maxLength: number = 35): string[] {
+  if (!address) return ["N/A"];
+  const trimmed = address.trim();
+  if (trimmed.length <= maxLength) return [trimmed];
+
+  const lines: string[] = [];
+  let remaining = trimmed;
+
+  // We can have up to 3 lines for Naqel
+  while (remaining.length > 0 && lines.length < 3) {
+    if (remaining.length <= maxLength) {
+      lines.push(remaining);
+      break;
+    }
+
+    // Find the best split point (last comma or space within maxLength)
+    let splitIdx = remaining.lastIndexOf(",", maxLength);
+    if (splitIdx === -1) {
+      splitIdx = remaining.lastIndexOf(" ", maxLength);
+    }
+    
+    // Fallback to maxLength if no space/comma
+    if (splitIdx === -1 || splitIdx === 0) {
+      splitIdx = maxLength;
+    }
+
+    lines.push(remaining.substring(0, splitIdx).trim());
+    remaining = remaining.substring(splitIdx).trim();
+    // Clean up leading commas/spaces for the next part
+    if (remaining.startsWith(",")) remaining = remaining.substring(1).trim();
+  }
+
+  return lines;
 }
 
 // ─── Aramex helper ────────────────────────────────────────────────────────────
@@ -174,14 +213,26 @@ async function dispatchNaqel(order: any, dimensions: any) {
   const numTotal = Number(order.total) || 10;
   const codValue = order.paymentMethod?.toLowerCase() === "cod" ? numTotal : 0;
 
+  // Address splitting logic (Max 35 chars per line)
+  const fullStreet = shipping.address_1 || "N/A";
+  const addressParts = splitAddress(fullStreet);
+
+  // Dynamic weight calculation (do not trust order.totalWeight if it's 0)
+  let calculatedWeight = 0;
+  order.items.forEach((item: any) => {
+    // Fallback to 0.5kg per item if weight is missing
+    const itemWeight = Number(item.product?.weight) || 0.5;
+    calculatedWeight += itemWeight * (item.quantity || 1);
+  });
+  
+  const finalWeight = dimensions.weight || calculatedWeight || 1;
+
   const result = await createNaqelShipment({
-    descriptionOfGoods: "Skincare / Beauty Products",
+    descriptionOfGoods: "Cosmetics & Skincare",
     numberOfPieces: "1",
     cod: codValue,
     customsDeclaredValue: numTotal,
-    customsDeclaredValueCurrency: order.currency?.toUpperCase() || "USD",
-    // productType will be auto-determined if omitted, or we can pass it
-    // productType: "DLVI", 
+    customsDeclaredValueCurrency: order.currency?.toUpperCase() || "AED",
     reference: {
       shipperReference1: order.id.slice(-8).toUpperCase(),
       shipperNote1: `Order #${order.id.slice(-8).toUpperCase()}`,
@@ -191,19 +242,20 @@ async function dispatchNaqel(order: any, dimensions: any) {
         personName: name,
         companyName: "",
         phoneNumber1: customerPhone,
-        phoneNumber2: customerPhone, // Fill this just in case
+        phoneNumber2: customerPhone,
         cellPhone: customerPhone,
         emailAddress: shipping.email || order.user?.email || "customer@example.com",
-        type: "Business",
+        type: "Individual",
         civilId: "",
       },
       consigneeAddress: {
         countryCode: countryIso3,
         city: shipping.city || "Dubai",
-        district: shipping.state || "Dubai",
-        line1: shipping.address_1 || "N/A",
-        line2: shipping.address_2 || "",
-        line3: "",
+        // Naqel District field for Area names
+        district: shipping.state || shipping.city || "Dubai",
+        line1: addressParts[0],
+        line2: addressParts[1] || shipping.address_2 || "",
+        line3: addressParts[2] || "",
         postCode: shipping.postcode || "",
         longitude: "",
         latitude: "",
@@ -217,7 +269,7 @@ async function dispatchNaqel(order: any, dimensions: any) {
       shipperAddress: {
         countryCode: process.env.NAQEL_SHIPPER_COUNTRY || "ARE", 
         city: process.env.NAQEL_SHIPPER_CITY || "Dubai",
-        line1: process.env.ARAMEX_SHIPPER_ADDRESS || "Office 405, Al Diyafa Center",
+        line1: process.env.NAQEL_SHIPPER_ADDRESS || "Office 405, Al Diyafa Center",
         line2: "",
         line3: "",
         postCode: "",
@@ -228,31 +280,29 @@ async function dispatchNaqel(order: any, dimensions: any) {
         locationCode3: "",
       },
       shipperContact: {
-        personName: process.env.ARAMEX_SHIPPER_NAME || "SHANFA STORE",
+        personName: process.env.NAQEL_SHIPPER_NAME || "SHANFA STORE",
         companyName: "Al Shanfa General Trading Co.",
-        phoneNumber1: sanitizePhone(process.env.ARAMEX_SHIPPER_PHONE),
-        phoneNumber2: sanitizePhone(process.env.ARAMEX_SHIPPER_PHONE),
-        cellPhone: sanitizePhone(process.env.ARAMEX_SHIPPER_PHONE),
-        emailAddress: process.env.ARAMEX_SHIPPER_EMAIL || "info@shanfaglobal.com",
+        phoneNumber1: sanitizePhone(process.env.NAQEL_SHIPPER_PHONE),
+        phoneNumber2: sanitizePhone(process.env.NAQEL_SHIPPER_PHONE),
+        cellPhone: sanitizePhone(process.env.NAQEL_SHIPPER_PHONE),
+        emailAddress: process.env.NAQEL_SHIPPER_EMAIL || "info@shanfaglobal.com",
         type: "shipment",
       },
     },
-    items: [
-      {
-        quantity: Number(order.items?.length) || 1,
-        weight: { unit: 1, value: Number(dimensions.weight) || 1 },
-        customsValue: { currencyCode: order.currency?.toUpperCase() || "USD", value: numTotal },
-        goodsDescription: "Skincare / Beauty Products",
-        comments: "",
-        reference: "",
-        commodityCode: "62046200",
-        countryOfOrigin: "ARE",
-        packageType: "Box",
-        containsDangerousGoods: false,
-      },
-    ],
+    items: order.items.map((item: any) => ({
+      quantity: item.quantity,
+      weight: { unit: 1, value: Number(item.product?.weight) || 0.5 },
+      customsValue: { currencyCode: order.currency?.toUpperCase() || "AED", value: Number(item.unitPrice) || 10 },
+      goodsDescription: item.product?.name || "Skincare Product",
+      comments: "",
+      reference: "",
+      commodityCode: "33049900", // Cosmetics HS Code
+      countryOfOrigin: "ARE",
+      packageType: "Box",
+      containsDangerousGoods: false,
+    })),
     shipmentWeight: {
-      value: Number(dimensions.weight) || 1,
+      value: finalWeight,
       weightUnit: 1,
       length: Number(dimensions.length) || 20,
       width: Number(dimensions.width) || 15,
@@ -264,14 +314,19 @@ async function dispatchNaqel(order: any, dimensions: any) {
   });
 
   const shipment = Array.isArray(result) ? result[0] : result;
-  const awb =
-    shipment?.airwaybill ||
-    shipment?.airwaybillNumber ||
-    shipment?.AWBNumber ||
-    shipment?.awb;
+  const awb = shipment?.airwaybill || shipment?.airwaybillNumber || shipment?.AWBNumber || shipment?.awb;
 
   if (!awb) {
     throw new Error(`Naqel returned no AWB: ${JSON.stringify(result)}`);
+  }
+
+  // CRITICAL: Call CreateManifest after shipment is generated to ensure tracking works
+  try {
+    console.log(`[Naqel] Generating manifest for AWB: ${awb}`);
+    await createNaqelManifest({ airwaybills: [awb] });
+  } catch (manifestError: any) {
+    console.error("[Naqel] Manifest call failed (non-critical):", manifestError.message);
+    // We don't throw here to avoid failing the whole process if only manifest fails
   }
 
   return {
@@ -304,11 +359,11 @@ export async function POST(
     );
   }
 
-  // Load order
+  // Load order with product weights
   const order = await (prisma as any).order.findUnique({
     where: { id },
     include: {
-      items: { include: { product: { select: { name: true } } } },
+      items: { include: { product: { select: { name: true, weight: true } } } },
       user: { select: { name: true, email: true } },
       shipment: true,
     },
@@ -318,8 +373,13 @@ export async function POST(
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  // Use body weight if provided, otherwise use order's totalWeight, otherwise default to 1
-  const weight = bodyWeight !== undefined ? bodyWeight : (order.totalWeight || 1);
+  // Calculate dynamic weight if not provided
+  let calculatedWeight = 0;
+  order.items.forEach((item: any) => {
+    calculatedWeight += (Number(item.product?.weight) || 0.5) * (item.quantity || 1);
+  });
+
+  const weight = bodyWeight !== undefined ? bodyWeight : (order.totalWeight || calculatedWeight || 1);
   const dimensions = { weight, length, width, height };
 
   try {
@@ -334,19 +394,19 @@ export async function POST(
       const trackingCode = `SHF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
       dispatchResult = {
         trackingCode,
-        trackingUrl: `https://www.shanfaglobal.com/track?id=${trackingCode}`, // Or any dummy internal link
+        trackingUrl: `https://www.shanfaglobal.com/track?id=${trackingCode}`,
         labelUrl: null,
         raw: { local: true }
       };
     }
 
-    // Upsert shipment record
+    // Update shipment record and tracking status in MongoDB
     const courierName = courier === "naqel" ? "Naqel Express" : courier === "aramex" ? "Aramex" : "Shanfa Delivery";
     const shipmentData = {
       courier: courierName,
       trackingCode: dispatchResult.trackingCode,
       trackingUrl: dispatchResult.trackingUrl,
-      status: "Shipped",
+      status: "Shipped", // Initial status
     };
 
     if (order.shipment) {
@@ -364,6 +424,7 @@ export async function POST(
     const canAdvance = [
       "ORDER_RECEIVED", "ORDER_CONFIRMED", "PROCESSING", "READY_FOR_PICKUP",
     ].includes(order.status);
+    
     if (canAdvance) {
       await (prisma as any).order.update({
         where: { id },
