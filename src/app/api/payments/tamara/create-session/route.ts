@@ -123,14 +123,25 @@ export async function POST(request: NextRequest) {
         country: countryCode,
         phone: formatPhone(shippingAddress?.phone),
       },
-      items: order.items.map((item, index) => ({
-        sku: item.productId || `SKU-${index}`,
-        name: item.nameSnapshot || "Product Item",
-        type: "physical" as const,
-        unitPrice: { amount: toFixed(item.unitPrice), currency },
-        quantity: item.quantity || 1,
-        imageUrl: item.imageSnapshot || undefined,
-      })),
+      items: order.items.map((item, index) => {
+        const qty = item.quantity || 1;
+        let up = Number(item.unitPrice || 0);
+        
+        // SMART MATH FIX: If (unitPrice * qty) is way higher than the order total, 
+        // it means unitPrice is likely the subtotal for that line item.
+        if (up * qty > (order.total || 0) && up > 0) {
+          up = up / qty;
+        }
+
+        return {
+          sku: item.productId || `SKU-${index}`,
+          name: item.nameSnapshot || "Product Item",
+          type: "physical" as const,
+          unitPrice: { amount: up.toFixed(2), currency },
+          quantity: qty,
+          imageUrl: item.imageSnapshot || undefined,
+        };
+      }),
       totalAmount: { amount: toFixed(order.total), currency },
       shippingAmount: { amount: toFixed(order.shipping), currency },
       taxAmount: { amount: toFixed(order.taxAmount), currency },
