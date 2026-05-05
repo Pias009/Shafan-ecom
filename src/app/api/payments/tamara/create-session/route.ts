@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
     const shippingAddress = order.shippingAddress as any;
 
     const toFixed = (val: any) => {
-      const num = Number(val);
+      if (val === null || val === undefined) return "0.00";
+      // Convert to string first to handle Prisma Decimal objects
+      const num = Number(val.toString());
       return isNaN(num) ? "0.00" : num.toFixed(2);
     };
 
@@ -160,7 +162,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(
       { 
-        error: error.message || "Failed to create Tamara session",
+        error: error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error)) || "Failed to create Tamara session",
         debug: {
           tamara_api_url: tamaraUrl,
           token_present: tokenPresent,
