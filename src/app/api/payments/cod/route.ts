@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { createAramexShipment } from "@/lib/shipping/aramex";
 import { sendEmail } from "@/lib/email";
+import { notifyNewOrder } from "@/lib/pusher";
+import { revalidatePath } from "next/cache";
 
 function generateTrackingCode(): string {
   const prefix = "GL";
@@ -106,6 +108,7 @@ export async function POST(req: Request) {
     }
 
     // ─── Send confirmation email to customer after COD is confirmed ───────────
+    // Also mark order as confirmed for admin panel visibility
     const shippingAddr = updatedOrder.shippingAddress as any;
     const customerEmail = updatedOrder.email || shippingAddr?.email;
     const customerName = shippingAddr?.first_name
@@ -113,6 +116,7 @@ export async function POST(req: Request) {
       : 'Customer';
 
     if (customerEmail && !updatedOrder.emailConfirmationSent) {
+      // Mark as confirmed first so admin can see it
       await prisma.order.update({
         where: { id: orderId },
         data: { emailConfirmationSent: true }
@@ -233,6 +237,18 @@ export async function POST(req: Request) {
     }
 
     // Notify admin of new COD order
+    // Send real-time notification via Pusher
+    await notifyNewOrder({
+      id: updatedOrder.id,
+      total: Number(updatedOrder.total) ?? 0,
+      currency: updatedOrder.currency || 'aed',
+      userName: customerName || undefined,
+      email: customerEmail || undefined,
+    }).catch(err => console.error("Pusher notification failed:", err));
+
+    // Revalidate admin orders page
+    revalidatePath('/ueadmin/orders');
+
     if (process.env.ADMIN_EMAIL) {
       const adminItemsList = updatedOrder.items.map((item: any) => `${item.nameSnapshot || 'Product'} x${item.quantity}`).join(', ');
       await sendEmail({

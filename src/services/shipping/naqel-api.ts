@@ -1,19 +1,16 @@
 /**
  * Naqel Express API Integration (GnTeq Shipping Engine)
- * Test environment: https://dev.gnteq.app
- * API docs: GnTeq Shipping Engine
+ * Production: https://api.naqelshipment.com
+ * API docs: https://portal.developers.gnteq.app/naqel-shipping-engine/get-started
  *
- * Credentials (test):
- *   userName:      NaqelCustomer
- *   password:      n%A5E1Cust6mer
- *   customerCode:  NL123456
- *   branchCode:    NL567899
- *   supplierCode:  NQL
- *   productType:   DLV (delivery) | RTN (return)
+ * Environment variables required:
+ *   NAQEL_USERNAME, NAQEL_PASSWORD
+ *   NAQEL_CUSTOMER_CODE, NAQEL_BRANCH_CODE
+ *   supplierCode is always "NQL" (not the customer code)
  */
 
 const NAQEL_API_URL =
-  process.env.NAQEL_API_URL || "https://dev.gnteq.app";
+  process.env.NAQEL_API_URL || "https://api.naqelshipment.com";
 const NAQEL_CUSTOMER_CODE =
   process.env.NAQEL_CUSTOMER_CODE;
 const NAQEL_BRANCH_CODE =
@@ -196,24 +193,6 @@ export interface NaqelShipmentRequest {
   };
   includeLabel?: boolean;
   includeOfficeDetails?: boolean;
-}
-
-export interface NaqelManifestRequest {
-  customerCode?: string;
-  branchCode?: string;
-  airwaybills: string[];
-}
-
-export interface NaqelPickupRequest {
-  customerCode?: string;
-  branchCode?: string;
-  pickupDateTime: string;
-  contactPerson: string;
-  phoneNumber: string;
-  address: string;
-  city: string;
-  numberOfShipments: number;
-  totalWeight: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -415,80 +394,6 @@ export async function getNaqelLabel(
 }
 
 // ---------------------------------------------------------------------------
-// Create Manifest
-// ---------------------------------------------------------------------------
-
-export async function createNaqelManifest(
-  request: NaqelManifestRequest
-): Promise<any> {
-  const token = await getAuthToken();
-
-  const payload = {
-    customerCode: request.customerCode ?? NAQEL_CUSTOMER_CODE,
-    branchCode: request.branchCode ?? NAQEL_BRANCH_CODE,
-    supplierCode: NAQEL_SUPPLIER_CODE,
-    airwaybills: request.airwaybills,
-  };
-
-  const res = await fetch(`${NAQEL_API_URL}/api/gnconnect/Manifests`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    console.error("[Naqel] createManifest error:", err);
-    throw new Error(`Naqel manifest error (${res.status}): ${err}`);
-  }
-
-  return res.json();
-}
-
-// ---------------------------------------------------------------------------
-// Book Pickup
-// ---------------------------------------------------------------------------
-
-export async function bookNaqelPickup(
-  request: NaqelPickupRequest
-): Promise<any> {
-  const token = await getAuthToken();
-
-  const payload = {
-    customerCode: request.customerCode ?? NAQEL_CUSTOMER_CODE,
-    branchCode: request.branchCode ?? NAQEL_BRANCH_CODE,
-    supplierCode: NAQEL_SUPPLIER_CODE,
-    pickupDateTime: request.pickupDateTime,
-    contactPerson: request.contactPerson,
-    phoneNumber: request.phoneNumber,
-    address: request.address,
-    city: request.city,
-    numberOfShipments: request.numberOfShipments,
-    totalWeight: request.totalWeight,
-  };
-
-  const res = await fetch(`${NAQEL_API_URL}/api/gnconnect/Pickups`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    console.error("[Naqel] bookPickup error:", err);
-    throw new Error(`Naqel pickup error (${res.status}): ${err}`);
-  }
-
-  return res.json();
-}
-
-// ---------------------------------------------------------------------------
 // Default export (convenience object)
 // ---------------------------------------------------------------------------
 
@@ -497,6 +402,4 @@ export default {
   trackShipment: trackNaqelShipment,
   bulkTrackShipments: bulkTrackNaqelShipments,
   getLabel: getNaqelLabel,
-  createManifest: createNaqelManifest,
-  bookPickup: bookNaqelPickup,
 };

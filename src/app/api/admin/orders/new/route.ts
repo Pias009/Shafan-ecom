@@ -24,7 +24,11 @@ export async function GET(req: Request) {
     const newOrders = await (prisma as any).order.findMany({
       where: {
         storeId: { in: accessibleStoreIds },
-        createdAt: { gte: sinceDate }
+        createdAt: { gte: sinceDate },
+        OR: [
+          { paymentStatus: 'PAID' },
+          { AND: [{ paymentMethod: 'cod' }, { emailConfirmationSent: true }] }
+        ]
       },
       select: {
         id: true,

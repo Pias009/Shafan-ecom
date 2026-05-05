@@ -157,13 +157,20 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     return <div className="p-20 text-center font-black opacity-20 italic text-3xl">Unauthorized Access</div>;
   }
 
-  const where: PrismaWhere = {};
-  
+  // Build where clause - only show orders with confirmed payments
+  // Show orders where: payment is PAID OR (payment method is COD and COD is confirmed)
+  const where: any = {
+    OR: [
+      { paymentStatus: 'PAID' },
+      { AND: [{ paymentMethod: 'cod' }, { emailConfirmationSent: true }] }
+    ]
+  };
+
   // Filter by status if specified
   if (status !== 'ALL') {
     where.status = status as OrderStatus;
   }
-  
+
   // Filter by store access
   if (storeAccess.storeIds.length > 0) {
     where.storeId = { in: storeAccess.storeIds };

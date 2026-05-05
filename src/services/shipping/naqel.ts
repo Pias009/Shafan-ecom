@@ -21,6 +21,11 @@ export class NaqelService {
 
   async createShipment(request: ShipmentRequest): Promise<ShipmentResponse> {
     try {
+      // GNTEQ address rules: line1 max 100 chars, line2 overflow, line3 ignored
+      const fullStreet = request.recipient.address.street || "";
+      const line1 = fullStreet.length > 100 ? fullStreet.substring(0, 100) : fullStreet;
+      const line2 = fullStreet.length > 100 ? fullStreet.substring(100) : "";
+      
       const naqelPayload = {
         descriptionOfGoods: "Cosmetics & Skincare",
         cod: 0, // Assuming 0 for now as ShipmentRequest doesn't explicitly have it
@@ -37,7 +42,8 @@ export class NaqelService {
           consigneeAddress: {
             countryCode: request.recipient.address.country.length === 2 ? undefined : request.recipient.address.country, // Will try to auto-map in naqel-api if needed
             city: request.recipient.address.city,
-            line1: request.recipient.address.street,
+            line1: line1,
+            line2: line2,
             postCode: request.recipient.address.postalCode,
           },
         },

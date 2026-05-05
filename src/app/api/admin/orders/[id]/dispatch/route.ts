@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminApiSession } from "@/lib/admin-session";
-import { createNaqelShipment, createNaqelManifest } from "@/services/shipping/naqel-api";
+import { createNaqelShipment } from "@/services/shipping/naqel-api";
 import { OrderStatus } from "@prisma/client";
 
 // ─── Country code helpers ─────────────────────────────────────────────────────
@@ -49,42 +49,22 @@ function sanitizePhone(phone: string | undefined | null): string {
 }
 
 /**
- * Splits a long address string into multiple lines at the nearest comma or space.
- * Max length per line is 35 characters for courier labels.
+ * Truncates address to max 100 characters for Address1 (GNTEQ requirement).
+ * Address2 is used as overflow but may not print on label.
+ * Address3 is ignored (not reflected on label).
  */
-function splitAddress(address: string, maxLength: number = 35): string[] {
-  if (!address) return ["N/A"];
+function splitAddress(address: string): { line1: string; line2: string } {
+  if (!address) return { line1: "N/A", line2: "" };
+  
   const trimmed = address.trim();
-  if (trimmed.length <= maxLength) return [trimmed];
-
-  const lines: string[] = [];
-  let remaining = trimmed;
-
-  // We can have up to 3 lines for Naqel
-  while (remaining.length > 0 && lines.length < 3) {
-    if (remaining.length <= maxLength) {
-      lines.push(remaining);
-      break;
-    }
-
-    // Find the best split point (last comma or space within maxLength)
-    let splitIdx = remaining.lastIndexOf(",", maxLength);
-    if (splitIdx === -1) {
-      splitIdx = remaining.lastIndexOf(" ", maxLength);
-    }
-    
-    // Fallback to maxLength if no space/comma
-    if (splitIdx === -1 || splitIdx === 0) {
-      splitIdx = maxLength;
-    }
-
-    lines.push(remaining.substring(0, splitIdx).trim());
-    remaining = remaining.substring(splitIdx).trim();
-    // Clean up leading commas/spaces for the next part
-    if (remaining.startsWith(",")) remaining = remaining.substring(1).trim();
-  }
-
-  return lines;
+  
+  // Address1: max 100 chars (hard truncation per GNTEQ spec)
+  const line1 = trimmed.length > 100 ? trimmed.substring(0, 100) : trimmed;
+  
+  // Address2: overflow from Address1 (may not print on label)
+  const line2 = trimmed.length > 100 ? trimmed.substring(100) : "";
+  
+  return { line1, line2 };
 }
 
 // ─── Aramex helper ────────────────────────────────────────────────────────────
@@ -213,9 +193,9 @@ async function dispatchNaqel(order: any, dimensions: any) {
   const numTotal = Number(order.total) || 10;
   const codValue = order.paymentMethod?.toLowerCase() === "cod" ? numTotal : 0;
 
-  // Address splitting logic (Max 35 chars per line)
-  const fullStreet = shipping.address_1 || "N/A";
-  const addressParts = splitAddress(fullStreet);
+  // Address splitting logic (Max 100 chars for line1 per GNTEQ spec)
+  const fullStreet = `${shipping.address_1 || "N/A"}${shipping.address_2 ? " " + shipping.address_2 : ""}`.trim();
+  const { line1, line2 } = splitAddress(fullStreet);
 
   // Dynamic weight calculation (do not trust order.totalWeight if it's 0)
   let calculatedWeight = 0;
@@ -253,9 +233,9 @@ async function dispatchNaqel(order: any, dimensions: any) {
         city: shipping.city || "Dubai",
         // Naqel District field for Area names
         district: shipping.state || shipping.city || "Dubai",
-        line1: addressParts[0],
-        line2: addressParts[1] || shipping.address_2 || "",
-        line3: addressParts[2] || "",
+        line1: line1,
+        line2: line2,
+        // line3 ignored per GNTEQ spec (not reflected on label)
         postCode: shipping.postcode || "",
         longitude: "",
         latitude: "",
@@ -320,13 +300,9 @@ async function dispatchNaqel(order: any, dimensions: any) {
     throw new Error(`Naqel returned no AWB: ${JSON.stringify(result)}`);
   }
 
-  // CRITICAL: Call CreateManifest after shipment is generated to ensure tracking works
-  try {
-    console.log(`[Naqel] Generating manifest for AWB: ${awb}`);
-    await createNaqelManifest({ airwaybills: [awb] });
-  } catch (manifestError: any) {
-    console.error("[Naqel] Manifest call failed (non-critical):", manifestError.message);
-    // We don't throw here to avoid failing the whole process if only manifest fails
+  // Validate that waybill starts with 511 (GNTEQ Shipping Engine)
+  if (!awb.startsWith("511")) {
+    console.warn(`[Naqel] Warning: AWB ${awb} does not start with 511. Legacy 803 prefix detected.`);
   }
 
   return {

@@ -587,17 +587,9 @@ export async function POST(req: Request) {
       }
     });
 
-    // Trigger real-time notification for admin — ONLY for COD orders
-    // For Tabby/Tamara/Stripe, notifications are sent AFTER payment confirmation via webhook
-    if (isCOD) {
-      await notifyNewOrder({
-        id: order.id,
-        total: order.total ?? 0,
-        currency: order.currency,
-        userName: shipping?.first_name ? `${shipping.first_name} ${shipping.last_name || ''}` : undefined,
-        email: order.email || undefined,
-      }).catch(err => console.error("Pusher notification failed:", err));
-    }
+    // Admin notifications are sent AFTER payment confirmation:
+    // - COD: sent in /api/payments/cod after confirmation
+    // - Stripe/Tabby/Tamara: sent via webhooks after payment
 
     // Decrement stock for each ordered item
     for (const orderItem of orderItemsData) {
@@ -613,8 +605,6 @@ export async function POST(req: Request) {
         });
       }
     }
-
-    revalidatePath('/ueadmin/orders');
 
     // NOTE: Customer confirmation email is NOT sent here.
     // It is sent AFTER payment is confirmed:
