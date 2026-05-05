@@ -27,22 +27,25 @@ export function GlobalInitializer() {
   useEffect(() => {
     if (!_hasHydrated) return;
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const testCountry = urlParams.get('test_country');
     const autoDetected = localStorage.getItem("country-auto-detected");
     const langStorage = localStorage.getItem("language-storage");
     
     // Only skip if we've already successfully auto-detected or user has manually set it
-    if (autoDetected && langStorage) {
+    // BUT always proceed if we have a test_country parameter in the URL
+    if (autoDetected && langStorage && !testCountry) {
       setInitialized(true);
       return;
     }
+
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
     
     // Support testing via URL: ?test_country=AE
-    const urlParams = new URLSearchParams(window.location.search);
-    const testCountry = urlParams.get('test_country');
     const apiUrl = testCountry ? `/api/geo?test_country=${testCountry}` : "/api/geo";
+
 
     fetch(apiUrl, { signal: controller.signal })
       .then(res => res.json())
