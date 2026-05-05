@@ -68,14 +68,8 @@ export function Navbar() {
 
   const t = translations[(mounted ? currentLanguage.code : "en") as keyof typeof translations];
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !detectedCountry) {
-      import("@/lib/country-detection").then(({ detectUserCountry }) => {
-        const detected = detectUserCountry();
-        setDetectedCountry(detected);
-      });
-    }
-  }, [detectedCountry, setDetectedCountry]);
+  // Country detection is now handled by GlobalInitializer
+
 
   const navLinks = [
     { href: "/", label: t.nav.home },

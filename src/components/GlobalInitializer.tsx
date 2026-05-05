@@ -27,11 +27,11 @@ export function GlobalInitializer() {
   useEffect(() => {
     if (!_hasHydrated) return;
 
-    const countryStorage = localStorage.getItem("country-storage");
+    const autoDetected = localStorage.getItem("country-auto-detected");
     const langStorage = localStorage.getItem("language-storage");
     
-    // If we already have stored preferences, don't auto-detect
-    if (countryStorage && langStorage) {
+    // Only skip if we've already successfully auto-detected or user has manually set it
+    if (autoDetected && langStorage) {
       setInitialized(true);
       return;
     }
@@ -39,8 +39,12 @@ export function GlobalInitializer() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
     
-    // Try our internal geo API first (uses Vercel headers)
-    fetch("/api/geo", { signal: controller.signal })
+    // Support testing via URL: ?test_country=AE
+    const urlParams = new URLSearchParams(window.location.search);
+    const testCountry = urlParams.get('test_country');
+    const apiUrl = testCountry ? `/api/geo?test_country=${testCountry}` : "/api/geo";
+
+    fetch(apiUrl, { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
         clearTimeout(timeoutId);
@@ -49,41 +53,37 @@ export function GlobalInitializer() {
         if (countryCode && GULF_COUNTRIES.includes(countryCode)) {
           const config = IP_MAP[countryCode];
           if (config) {
-            // Set country (this also sets currency in useCountryStore)
             setCountry(countryCode);
-            // Sync with legacy currency store
             setLegacyCurrency(config.currency);
             
             if (!langStorage) {
               setLanguage(config.lang);
             }
-            console.log(`[GeoInit] Auto-detected country: ${countryCode}`);
+            localStorage.setItem("country-auto-detected", "true");
           }
         } else {
           // If not in Gulf countries, use default (Kuwait)
-          console.log(`[GeoInit] Country ${countryCode} not in Gulf list, using default: ${DEFAULT_CONFIG.country}`);
-          if (!countryStorage) {
-            setCountry(DEFAULT_CONFIG.country);
-            setLegacyCurrency(DEFAULT_CONFIG.currency);
-          }
+          setCountry(DEFAULT_CONFIG.country);
+          setLegacyCurrency(DEFAULT_CONFIG.currency);
+          
           if (!langStorage) {
             setLanguage(DEFAULT_CONFIG.lang);
           }
+          localStorage.setItem("country-auto-detected", "true");
         }
         setInitialized(true);
       })
-      .catch((err) => {
+      .catch(() => {
         clearTimeout(timeoutId);
-        console.warn('[GeoInit] Detection failed or timed out, using defaults', err);
         
-        // Fallback to defaults if no storage
-        if (!countryStorage) {
-          setCountry(DEFAULT_CONFIG.country);
-          setLegacyCurrency(DEFAULT_CONFIG.currency);
-        }
+        // Fallback to defaults
+        setCountry(DEFAULT_CONFIG.country);
+        setLegacyCurrency(DEFAULT_CONFIG.currency);
+        
         if (!langStorage) {
           setLanguage(DEFAULT_CONFIG.lang);
         }
+        localStorage.setItem("country-auto-detected", "true");
         setInitialized(true);
       });
       

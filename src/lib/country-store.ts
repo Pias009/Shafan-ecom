@@ -43,7 +43,9 @@ export const useCountryStore = create<CountryState>()(
         const storeCode = countryToStore[upperCode] || 'UAE';
         if (typeof document !== 'undefined') {
           document.cookie = `store_code=${storeCode}; path=/; max-age=${60 * 60 * 24 * 30}`;
+          localStorage.setItem("country-auto-detected", "true");
         }
+
 
         set({ 
           selectedCountry: upperCode, 
@@ -64,7 +66,9 @@ export const useCountryStore = create<CountryState>()(
         const storeCode = countryToStore[country] || 'UAE';
         if (typeof document !== 'undefined') {
           document.cookie = `store_code=${storeCode}; path=/; max-age=${60 * 60 * 24 * 30}`;
+          localStorage.setItem("country-auto-detected", "true");
         }
+
 
         set({ 
           selectedCountry: country, 
