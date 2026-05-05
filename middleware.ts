@@ -51,9 +51,25 @@ export async function middleware(req: NextRequest) {
   const hasStore = req.cookies.get('store_code')
   if (hasStore) return NextResponse.next()
 
+  // Detect country from Vercel headers
+  const countryCode = (req.headers.get('x-vercel-ip-country') || 'KW').toUpperCase()
+  
+  const countryToStore: Record<string, string> = {
+    'AE': 'UAE', 
+    'SA': 'SAUDI', 
+    'KW': 'KUWAIT', 
+    'BH': 'BAHRAIN', 
+    'OM': 'OMAN', 
+    'QA': 'QAR'
+  };
+  
+  // Strict check: only auto-detect for the 6 GCC countries, otherwise default to KUWAIT
+  const storeCode = countryToStore[countryCode] || 'KUWAIT'
+
   const res = NextResponse.next()
-  res.cookies.set('store_code', 'UAE', { path: '/', maxAge: 60 * 60 * 24 * 30 })
+  res.cookies.set('store_code', storeCode, { path: '/', maxAge: 60 * 60 * 24 * 30 })
   return res
+
 }
 
 // HTML for locked website overlay

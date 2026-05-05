@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
+import { useCurrencyStore } from "@/lib/currency-store";
 import { useLanguageStore } from "@/lib/language-store";
+import { useCountryStore } from "@/lib/country-store";
+
+const GULF_COUNTRIES = ['AE', 'KW', 'BH', 'SA', 'OM', 'QA'];
 
 const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
   AE: { currency: "AED", lang: "en" },
@@ -11,64 +14,81 @@ const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
   BH: { currency: "BHD", lang: "ar" },
   QA: { currency: "QAR", lang: "ar" },
   OM: { currency: "OMR", lang: "ar" },
-  US: { currency: "USD", lang: "en" },
 };
 
-const DEFAULT_CONFIG = { currency: "AED", lang: "en" as const };
+const DEFAULT_CONFIG = { country: "KW", currency: "KWD", lang: "ar" as const };
 
 export function GlobalInitializer() {
-  const { setCurrency } = useCurrencyStore();
+  const { setCurrency: setLegacyCurrency } = useCurrencyStore();
   const { setLanguage } = useLanguageStore();
+  const { setCountry, _hasHydrated } = useCountryStore();
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    const storage = localStorage.getItem("currency-storage");
+    if (!_hasHydrated) return;
+
+    const countryStorage = localStorage.getItem("country-storage");
     const langStorage = localStorage.getItem("language-storage");
     
-    const initDefaults = () => {
-      if (!storage) setCurrency(DEFAULT_CONFIG.currency);
-      if (!langStorage) setLanguage(DEFAULT_CONFIG.lang);
-      setInitialized(true);
-    };
-    
-    if (storage && langStorage) {
+    // If we already have stored preferences, don't auto-detect
+    if (countryStorage && langStorage) {
       setInitialized(true);
       return;
     }
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
     
-    fetch("https://ipapi.co/json/", { signal: controller.signal })
-      .then(res => {
-        if (!res.ok) throw new Error('API error');
-        return res.json();
-      })
+    // Try our internal geo API first (uses Vercel headers)
+    fetch("/api/geo", { signal: controller.signal })
+      .then(res => res.json())
       .then(data => {
         clearTimeout(timeoutId);
-        if (data?.country_code) {
-          const config = IP_MAP[data.country_code];
+        const countryCode = data?.country?.toUpperCase();
+        
+        if (countryCode && GULF_COUNTRIES.includes(countryCode)) {
+          const config = IP_MAP[countryCode];
           if (config) {
-            if (!storage && SUPPORTED_CURRENCIES.find(c => c.code === config.currency)) {
-              setCurrency(config.currency);
-            }
+            // Set country (this also sets currency in useCountryStore)
+            setCountry(countryCode);
+            // Sync with legacy currency store
+            setLegacyCurrency(config.currency);
+            
             if (!langStorage) {
               setLanguage(config.lang);
             }
+            console.log(`[GeoInit] Auto-detected country: ${countryCode}`);
+          }
+        } else {
+          // If not in Gulf countries, use default (Kuwait)
+          console.log(`[GeoInit] Country ${countryCode} not in Gulf list, using default: ${DEFAULT_CONFIG.country}`);
+          if (!countryStorage) {
+            setCountry(DEFAULT_CONFIG.country);
+            setLegacyCurrency(DEFAULT_CONFIG.currency);
+          }
+          if (!langStorage) {
+            setLanguage(DEFAULT_CONFIG.lang);
           }
         }
         setInitialized(true);
       })
       .catch((err) => {
         clearTimeout(timeoutId);
-        if (err.name === 'AbortError') {
-          console.log('IP detection timeout, using defaults');
+        console.warn('[GeoInit] Detection failed or timed out, using defaults', err);
+        
+        // Fallback to defaults if no storage
+        if (!countryStorage) {
+          setCountry(DEFAULT_CONFIG.country);
+          setLegacyCurrency(DEFAULT_CONFIG.currency);
         }
-        initDefaults();
+        if (!langStorage) {
+          setLanguage(DEFAULT_CONFIG.lang);
+        }
+        setInitialized(true);
       });
       
     return () => clearTimeout(timeoutId);
-  }, [setCurrency, setLanguage]);
+  }, [_hasHydrated, setCountry, setLegacyCurrency, setLanguage]);
 
   return null;
 }

@@ -30,7 +30,7 @@ interface CurrencyState {
 export const useCurrencyStore = create<CurrencyState>()(
   persist(
     (set, get) => ({
-      currentCurrency: SUPPORTED_CURRENCIES[0],
+      currentCurrency: SUPPORTED_CURRENCIES.find(c => c.code === "KWD") || SUPPORTED_CURRENCIES[0],
       setCurrency: (code) => {
         const currency = SUPPORTED_CURRENCIES.find((c) => c.code === code);
         if (currency) set({ currentCurrency: currency });

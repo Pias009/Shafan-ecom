@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { SUPPORTED_COUNTRIES } from "./countries";
 
 /**
- * Default country fallback (Kuwait - for developer ease)
+ * Default country fallback (Kuwait)
  */
 export const DEFAULT_COUNTRY = "KW";
 
@@ -17,20 +17,18 @@ export const COUNTRY_TO_CURRENCY: Record<string, string> = {
   SA: "SAR",
   OM: "OMR",
   QA: "QAR",
-  BD: "BDT",
-  US: "USD",
 };
 
 export function getCurrencyForDetectedCountry(countryCode: string): string {
-  return COUNTRY_TO_CURRENCY[countryCode.toUpperCase()] || "USD";
+  return COUNTRY_TO_CURRENCY[countryCode.toUpperCase()] || "KWD";
 }
 
 /**
  * Detects user's country based on available methods:
  * 1. From localStorage (user selection)
- * 2. From browser language/region
- * 3. From IP geolocation (if implemented)
- * 4. Default fallback (UAE)
+ * 2. From browser language/region (if in Gulf)
+ * 3. From timezone (if in Gulf)
+ * 4. Default fallback (KW)
  */
 export function detectUserCountry(): string {
   if (typeof window === "undefined") {
@@ -48,7 +46,7 @@ export function detectUserCountry(): string {
   const regionMatch = browserLanguage.match(/-([A-Z]{2})$/);
   if (regionMatch) {
     const regionCode = regionMatch[1].toUpperCase();
-    if (SUPPORTED_COUNTRIES.some((c: any) => c.code === regionCode)) {
+    if (GULF_COUNTRIES.includes(regionCode)) {
       return regionCode;
     }
   }
@@ -56,49 +54,18 @@ export function detectUserCountry(): string {
   // 3. Check timezone for region hint
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (timezone.includes("Dubai") || timezone.includes("Abu Dhabi")) {
-      return "AE";
-    }
-    if (timezone.includes("Riyadh") || timezone.includes("Jeddah")) {
-      return "SA";
-    }
-    if (timezone.includes("Kuwait")) {
-      return "KW";
-    }
-    if (timezone.includes("Muscat")) {
-      return "OM";
-    }
-    if (timezone.includes("Doha")) {
-      return "QA";
-    }
+    if (timezone.includes("Dubai") || timezone.includes("Abu Dhabi")) return "AE";
+    if (timezone.includes("Riyadh") || timezone.includes("Jeddah")) return "SA";
+    if (timezone.includes("Kuwait")) return "KW";
+    if (timezone.includes("Muscat")) return "OM";
+    if (timezone.includes("Doha")) return "QA";
+    if (timezone.includes("Bahrain")) return "BH";
   } catch (error) {
     // Timezone detection failed
   }
 
-  // 4. Default fallback - if detected country is not in Gulf, default to Kuwait
-  // But allow Bangladesh (BD) for BD users
-  const detectedCountry = DEFAULT_COUNTRY;
-  
-  // Check timezone for Bangladesh
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz.includes("Dhaka")) {
-      return "BD";
-    }
-  } catch (error) {
-    // Timezone detection failed
-  }
-  
-  // Check browser language for Bangladesh
-  const lang = navigator.language || "en-US";
-  if (lang.toLowerCase().includes("bn") || lang.toLowerCase().includes("bangla")) {
-    return "BD";
-  }
-  
-  if (!GULF_COUNTRIES.includes(detectedCountry)) {
-    return DEFAULT_COUNTRY; // KW
-  }
-  return detectedCountry;
+  // 4. Default fallback
+  return DEFAULT_COUNTRY;
 }
 
 /**
@@ -120,10 +87,10 @@ export function getUserCountry(): string {
 }
 
 /**
- * React hook for country detection (to be used in components)
+ * React hook for country detection
  */
 export function useUserCountry(): string {
-  const [country, setCountry] = useState("KW");
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
 
   useEffect(() => {
     setCountry(detectUserCountry());
