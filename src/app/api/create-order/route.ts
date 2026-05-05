@@ -545,6 +545,7 @@ export async function POST(req: Request) {
     const isCOD = payment_method?.toLowerCase() === 'cod';
     
     let order = null;
+    let shipment = null;
     
     if (isCOD) {
       // COD orders are created immediately
@@ -576,40 +577,44 @@ export async function POST(req: Request) {
           items: true,
         }
       });
+
+      // Create shipment record separately ONLY for COD (others created in webhooks)
+      shipment = await (prisma as any).shipment.create({
+        data: {
+          orderId: order.id,
+          courier,
+          trackingCode,
+          trackingUrl: `https://global-courier.com/track/${trackingCode}`,
+          status: "Created"
+        }
+      });
+
+      // Decrement stock for each ordered item
+      for (const orderItem of orderItemsData) {
+        const product = await prisma.product.findUnique({
+          where: { id: orderItem.productId }
+        });
+        if (product && product.stockQuantity !== null) {
+          await prisma.product.update({
+            where: { id: orderItem.productId },
+            data: {
+              stockQuantity: Math.max(0, product.stockQuantity - orderItem.quantity)
+            }
+          });
+        }
+      }
     } else {
-      // For Stripe/Tabby/Tamara: Store order data in session/payment intent metadata
-      // The order will be created in the webhook after successful payment
+      // For Stripe/Tabby/Tamara: Return success so frontend can proceed to payment
       console.log(`Order data prepared for ${payment_method}. Will create after payment confirmation.`);
+      return NextResponse.json({
+        success: true,
+        message: "Order data prepared for payment",
+        paymentMethod: payment_method
+      });
     }
 
-    // Create shipment record separately
-    const shipment = await (prisma as any).shipment.create({
-      data: {
-        orderId: order.id,
-        courier,
-        trackingCode,
-        trackingUrl: `https://global-courier.com/track/${trackingCode}`,
-        status: "Created"
-      }
-    });
-
-    // Admin notifications are sent AFTER payment confirmation:
-    // - COD: sent in /api/payments/cod after confirmation
-    // - Stripe/Tabby/Tamara: sent via webhooks after payment
-
-    // Decrement stock for each ordered item
-    for (const orderItem of orderItemsData) {
-      const product = await prisma.product.findUnique({
-        where: { id: orderItem.productId }
-      });
-      if (product && product.stockQuantity !== null) {
-        await prisma.product.update({
-          where: { id: orderItem.productId },
-          data: {
-            stockQuantity: Math.max(0, product.stockQuantity - orderItem.quantity)
-          }
-        });
-      }
+    if (!order) {
+      return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
     }
 
     // NOTE: Customer confirmation email is NOT sent here.
