@@ -27,7 +27,8 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "NEXTAUTH_URL": "https://www.shanfaglobal.com"
+    "NEXTAUTH_URL": "https://www.shanfaglobal.com",
+    "NAQEL_API_URL": "https://dev.gnteq.app"
   },
   "build": {
     "env": {
