@@ -237,7 +237,8 @@ function PaymentPageContent() {
     setTamaraLoading(true);
     const tid = toast.loading("Connecting to Tamara...");
     try {
-      const res = await fetch("/api/payments/tamara/create-session", {
+      // CACHE-BUSTER: Added timestamp to force Vercel to use fresh code
+      const res = await fetch(`/api/payments/tamara/create-session?t=${Date.now()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: id }),

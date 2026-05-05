@@ -161,6 +161,10 @@ export async function POST(request: NextRequest) {
       checkoutId: session.checkout_id,
       checkoutUrl: session.checkout_url,
       status: session.status,
+    }, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+      }
     });
 
   } catch (error: any) {
@@ -176,7 +180,12 @@ export async function POST(request: NextRequest) {
           vercel_url: process.env.VERCEL_URL
         }
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        }
+      }
     );
   }
 }
