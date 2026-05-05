@@ -65,6 +65,16 @@ export async function POST(request: NextRequest) {
       return `${phonePrefix}${clean}`;
     };
 
+    const getBaseUrl = () => {
+      let url = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+      if (!url.startsWith("http")) {
+        url = `https://${url}`;
+      }
+      return url.replace(/\/$/, ""); // Remove trailing slash
+    };
+
+    const baseUrl = getBaseUrl();
+
     const session = await tamaraService.createSession({
       orderReferenceId: order.id,
       description: `Order #${order.id.substring(0, 8)}`,
@@ -117,10 +127,10 @@ export async function POST(request: NextRequest) {
         name: "Order Discount"
       } : undefined,
       merchantUrls: {
-        success: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/checkout/success?order_id=${order.id}&payment=tamara`,
-        cancel: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/checkout/payment/${order.id}?canceled=tamara`,
-        failure: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/checkout/payment/${order.id}?failed=tamara`,
-        notification: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/api/payments/tamara/webhook`,
+        success: `${baseUrl}/checkout/success?order_id=${order.id}&payment=tamara`,
+        cancel: `${baseUrl}/checkout/payment/${order.id}?canceled=tamara`,
+        failure: `${baseUrl}/checkout/payment/${order.id}?failed=tamara`,
+        notification: `${baseUrl}/api/payments/tamara/webhook`,
       },
     });
 
