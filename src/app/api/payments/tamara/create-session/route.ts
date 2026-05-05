@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
 
     let countryCode = (order.shippingAddress as any)?.country?.toUpperCase() || "AE";
     
-    // Auto-correct for Bangladesh testing only in development or sandbox
+    // FORCE UAE FOR SANDBOX OR DEVELOPMENT ONLY
     const isSandbox = (process.env.TAMARA_API_URL || "").includes("sandbox");
-    if (countryCode === "BD" || (isSandbox && process.env.NODE_ENV === "development")) {
+    if (isSandbox || process.env.NODE_ENV === "development") {
       countryCode = "AE";
     }
 
