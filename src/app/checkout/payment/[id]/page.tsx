@@ -242,16 +242,12 @@ function PaymentPageContent() {
         body: JSON.stringify({ orderId: id }),
       });
       
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error("Invalid response from server. Please try again.");
-      }
+      const data = await res.json();
 
-      if (!res.ok || data.error) {
-        throw new Error(data.error || `Server error: ${res.status}`);
+      if (!res.ok) {
+        // Show specific error from server if available
+        const errorMessage = data.error || `Server error: ${res.status}`;
+        throw new Error(errorMessage);
       }
 
       if (data.checkoutUrl) {
@@ -261,7 +257,11 @@ function PaymentPageContent() {
         throw new Error("No checkout URL received from Tamara.");
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to initialize Tamara payment", { id: tid });
+      console.error("Tamara Payment Error:", err);
+      toast.error(err.message || "Failed to initialize Tamara payment", { 
+        id: tid,
+        duration: 5000 // Show for longer so user can read it
+      });
       setTamaraLoading(false);
     }
   };
