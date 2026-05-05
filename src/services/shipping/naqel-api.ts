@@ -10,7 +10,7 @@
  */
 
 const NAQEL_API_URL =
-  process.env.NAQEL_API_URL || "https://api.naqelshipment.com";
+  process.env.NAQEL_API_URL || "https://dev.gnteq.app";
 const NAQEL_CUSTOMER_CODE =
   process.env.NAQEL_CUSTOMER_CODE;
 const NAQEL_BRANCH_CODE =
