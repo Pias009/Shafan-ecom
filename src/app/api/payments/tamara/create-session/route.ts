@@ -49,6 +49,11 @@ export async function POST(request: NextRequest) {
     const billingAddress = order.billingAddress as any;
     const shippingAddress = order.shippingAddress as any;
 
+    const toFixed = (val: any) => {
+      const num = Number(val);
+      return isNaN(num) ? "0.00" : num.toFixed(2);
+    };
+
     const formatPhone = (raw: string | undefined) => {
       // If testing from Bangladesh, use a guaranteed Tamara sandbox test number
       if (countryCode === "AE" && (order.shippingAddress as any)?.country?.toUpperCase() === "BD") {
@@ -97,17 +102,17 @@ export async function POST(request: NextRequest) {
       },
       items: order.items.map((item, index) => ({
         sku: item.productId || `SKU-${index}`,
-        name: item.nameSnapshot,
+        name: item.nameSnapshot || "Product",
         type: "physical" as const,
-        unitPrice: { amount: Number(item.unitPrice).toFixed(2), currency },
+        unitPrice: { amount: toFixed(item.unitPrice), currency },
         quantity: item.quantity,
         imageUrl: item.imageSnapshot || undefined,
       })),
-      totalAmount: { amount: Number(order.total).toFixed(2), currency },
-      shippingAmount: { amount: Number(order.shipping || 0).toFixed(2), currency },
-      taxAmount: { amount: Number(order.taxAmount || 0).toFixed(2), currency },
+      totalAmount: { amount: toFixed(order.total), currency },
+      shippingAmount: { amount: toFixed(order.shipping), currency },
+      taxAmount: { amount: toFixed(order.taxAmount), currency },
       discount: order.discount ? {
-        amount: Number(order.discount).toFixed(2),
+        amount: toFixed(order.discount),
         currency,
         name: "Order Discount"
       } : undefined,
