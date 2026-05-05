@@ -12,13 +12,12 @@ const COUNTRY_TO_REGION: Record<string, { region: TamaraRegion; currency: Tamara
 };
 
 export async function POST(request: NextRequest) {
-  // MASTER TRY-CATCH to prevent any 500 without a message
   try {
     let body;
     try {
       body = await request.json();
     } catch (e) {
-      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
     }
 
     const { orderId } = body;
@@ -26,36 +25,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    console.log(`[Tamara Session] Starting for Order ID: ${orderId}`);
-
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: { items: true },
     });
 
     if (!order) {
-      console.error(`[Tamara Session] Order not found: ${orderId}`);
-      return NextResponse.json({ error: `Order not found: ${orderId}` }, { status: 404 });
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Safety check for status
     if (order.status !== "ORDER_RECEIVED" && order.paymentStatus === "PAID") {
-      return NextResponse.json({ error: "Order is already paid" }, { status: 400 });
+      return NextResponse.json({ error: "Order is already processed" }, { status: 400 });
     }
 
     let countryCode = (order.shippingAddress as any)?.country?.toUpperCase() || "AE";
     
-    // FORCE UAE FOR SANDBOX TESTING
+    // Auto-correct for Bangladesh testing only in development or sandbox
     const isSandbox = (process.env.TAMARA_API_URL || "").includes("sandbox");
-    if (isSandbox || countryCode === "BD" || process.env.NODE_ENV === "development") {
-      console.log("DEBUG: Forcing UAE (AE) for Sandbox/BD/Dev testing");
+    if (countryCode === "BD" || (isSandbox && process.env.NODE_ENV === "development")) {
       countryCode = "AE";
     }
 
     const regionConfig = COUNTRY_TO_REGION[countryCode] || COUNTRY_TO_REGION["AE"];
     const { region, currency, phonePrefix } = regionConfig;
-
-    console.log(`[Tamara] Resolved Market: ${countryCode} | Currency: ${currency} | Sandbox: ${isSandbox}`);
 
     const tamaraService = new TamaraService();
     const billingAddress = order.billingAddress as any;
@@ -72,7 +64,7 @@ export async function POST(request: NextRequest) {
     };
 
     const formatPhone = (raw: string | undefined) => {
-      // If testing from Bangladesh, use a guaranteed Tamara sandbox test number
+      // Use test number if country was forced to AE for Bangladesh testing
       if (countryCode === "AE" && (order.shippingAddress as any)?.country?.toUpperCase() === "BD") {
         return "+971500000001";
       }
@@ -88,8 +80,6 @@ export async function POST(request: NextRequest) {
     };
 
     const baseUrl = getBaseUrl();
-
-    console.log(`[Tamara Session] Creating session for ${order.id} in ${region} (${currency})`);
 
     const session = await tamaraService.createSession({
       orderReferenceId: order.id,
@@ -130,8 +120,7 @@ export async function POST(request: NextRequest) {
         const qty = item.quantity || 1;
         let up = Number(item.unitPrice || 0);
         
-        // SMART MATH FIX: If (unitPrice * qty) is way higher than the order total, 
-        // it means unitPrice is likely the subtotal for that line item.
+        // Smart Math Fix: adjust if unitPrice is actually the line subtotal
         if (up * qty > (order.total || 0) && up > 0) {
           up = up / qty;
         }
@@ -176,29 +165,16 @@ export async function POST(request: NextRequest) {
       checkoutUrl: session.checkout_url,
       status: session.status,
     }, {
-      headers: {
-        "Cache-Control": "no-store, max-age=0",
-      }
+      headers: { "Cache-Control": "no-store" }
     });
 
   } catch (error: any) {
-    console.error("CRITICAL Tamara error:", error);
-    
+    console.error("Tamara Production Error:", error);
     return NextResponse.json(
-      { 
-        error: error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error)) || "Unknown Tamara Error",
-        debug: {
-          url: process.env.TAMARA_API_URL,
-          token_present: !!process.env.TAMARA_ACCESS_TOKEN,
-          base_url: process.env.NEXT_PUBLIC_BASE_URL,
-          vercel_url: process.env.VERCEL_URL
-        }
-      },
+      { error: error.message || "Failed to create Tamara session" },
       { 
         status: 500,
-        headers: {
-          "Cache-Control": "no-store, max-age=0",
-        }
+        headers: { "Cache-Control": "no-store" }
       }
     );
   }

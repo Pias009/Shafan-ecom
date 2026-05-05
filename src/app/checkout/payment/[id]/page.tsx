@@ -233,7 +233,6 @@ function PaymentPageContent() {
   };
 
   const handleTamaraPayment = async () => {
-    console.log("🚀 TAMARA_START - Order ID:", id);
     setTamaraLoading(true);
     const tid = toast.loading("Connecting to Tamara...");
     try {
