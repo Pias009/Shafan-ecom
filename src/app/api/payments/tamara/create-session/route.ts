@@ -12,13 +12,21 @@ const COUNTRY_TO_REGION: Record<string, { region: TamaraRegion; currency: Tamara
 };
 
 export async function POST(request: NextRequest) {
+  // MASTER TRY-CATCH to prevent any 500 without a message
   try {
-    const body = await request.json();
-    const { orderId } = body;
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 });
+    }
 
+    const { orderId } = body;
     if (!orderId) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
+
+    console.log(`[Tamara Session] Starting for Order ID: ${orderId}`);
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -26,11 +34,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      console.error(`[Tamara Session] Order not found: ${orderId}`);
+      return NextResponse.json({ error: `Order not found: ${orderId}` }, { status: 404 });
     }
 
-    if (order.status !== "ORDER_RECEIVED") {
-      return NextResponse.json({ error: "Order is not pending payment" }, { status: 400 });
+    // Safety check for status
+    if (order.status !== "ORDER_RECEIVED" && order.paymentStatus === "PAID") {
+      return NextResponse.json({ error: "Order is already paid" }, { status: 400 });
     }
 
     let countryCode = (order.shippingAddress as any)?.country?.toUpperCase() || "AE";
@@ -45,15 +55,17 @@ export async function POST(request: NextRequest) {
     const { region, currency, phonePrefix } = regionConfig;
 
     const tamaraService = new TamaraService();
-
     const billingAddress = order.billingAddress as any;
     const shippingAddress = order.shippingAddress as any;
 
     const toFixed = (val: any) => {
       if (val === null || val === undefined) return "0.00";
-      // Convert to string first to handle Prisma Decimal objects
-      const num = Number(val.toString());
-      return isNaN(num) ? "0.00" : num.toFixed(2);
+      try {
+        const num = Number(val.toString());
+        return isNaN(num) ? "0.00" : num.toFixed(2);
+      } catch (e) {
+        return "0.00";
+      }
     };
 
     const formatPhone = (raw: string | undefined) => {
@@ -62,62 +74,61 @@ export async function POST(request: NextRequest) {
         return "+971500000001";
       }
       const phone = raw || "501234567";
-      // Remove common GCC prefixes and leading zero
       const clean = phone.replace(/^(\+971|971|\+966|966|\+965|965|\+973|973|\+974|974|\+968|968|0)/, "");
       return `${phonePrefix}${clean}`;
     };
 
     const getBaseUrl = () => {
-      let url = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-      if (!url.startsWith("http")) {
-        url = `https://${url}`;
-      }
-      return url.replace(/\/$/, ""); // Remove trailing slash
+      let url = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://www.shanfaglobal.com");
+      if (!url.startsWith("http")) url = `https://${url}`;
+      return url.replace(/\/$/, "");
     };
 
     const baseUrl = getBaseUrl();
 
+    console.log(`[Tamara Session] Creating session for ${order.id} in ${region} (${currency})`);
+
     const session = await tamaraService.createSession({
       orderReferenceId: order.id,
-      description: `Order #${order.id.substring(0, 8)}`,
+      description: `Order #${order.id.substring(order.id.length - 8)}`,
       currency,
       locale: "en-US",
       paymentType: "pay_later",
       consumer: {
         firstName: shippingAddress?.first_name || billingAddress?.first_name || "Customer",
-        lastName: shippingAddress?.last_name || billingAddress?.last_name || "",
-        email: order.email || "test@example.com",
+        lastName: shippingAddress?.last_name || billingAddress?.last_name || "User",
+        email: order.email || "customer@example.com",
         phone: formatPhone(shippingAddress?.phone || billingAddress?.phone),
         country: countryCode,
       },
       billingAddress: {
         firstName: billingAddress?.first_name || "Customer",
-        lastName: billingAddress?.last_name || "",
-        line1: billingAddress?.address_1 || "Dubai Mall",
+        lastName: billingAddress?.last_name || "User",
+        line1: billingAddress?.address_1 || "Address Line 1",
         line2: billingAddress?.address_2,
-        city: billingAddress?.city || "Dubai",
-        region: billingAddress?.state || "Dubai",
+        city: billingAddress?.city || "City",
+        region: billingAddress?.state || "Region",
         postcode: billingAddress?.postal_code || "00000",
         country: countryCode,
         phone: formatPhone(billingAddress?.phone),
       },
       shippingAddress: {
         firstName: shippingAddress?.first_name || "Customer",
-        lastName: shippingAddress?.last_name || "",
-        line1: shippingAddress?.address_1 || "Dubai Mall",
+        lastName: shippingAddress?.last_name || "User",
+        line1: shippingAddress?.address_1 || "Address Line 1",
         line2: shippingAddress?.address_2,
-        city: shippingAddress?.city || "Dubai",
-        region: shippingAddress?.state || "Dubai",
+        city: shippingAddress?.city || "City",
+        region: shippingAddress?.state || "Region",
         postcode: shippingAddress?.postal_code || "00000",
         country: countryCode,
         phone: formatPhone(shippingAddress?.phone),
       },
       items: order.items.map((item, index) => ({
         sku: item.productId || `SKU-${index}`,
-        name: item.nameSnapshot || "Product",
+        name: item.nameSnapshot || "Product Item",
         type: "physical" as const,
         unitPrice: { amount: toFixed(item.unitPrice), currency },
-        quantity: item.quantity,
+        quantity: item.quantity || 1,
         imageUrl: item.imageSnapshot || undefined,
       })),
       totalAmount: { amount: toFixed(order.total), currency },
@@ -140,7 +151,7 @@ export async function POST(request: NextRequest) {
       where: { id: orderId },
       data: {
         paymentMethod: "tamara",
-        paymentMethodTitle: `Tamara ${currency === "AED" ? "Pay Later" : "Installments"}`,
+        paymentMethodTitle: `Tamara ${currency} Installments`,
         tamaraCheckoutId: session.checkout_id,
       },
     });
@@ -153,22 +164,16 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error("Tamara session creation error:", error);
-    
-    // Include debug info so we can diagnose env var issues on Vercel
-    const tamaraUrl = process.env.TAMARA_API_URL || "NOT SET (using default sandbox)";
-    const tokenPresent = !!process.env.TAMARA_ACCESS_TOKEN;
-    const tokenPrefix = process.env.TAMARA_ACCESS_TOKEN?.substring(0, 20) || "MISSING";
+    console.error("CRITICAL Tamara error:", error);
     
     return NextResponse.json(
       { 
-        error: error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error)) || "Failed to create Tamara session",
+        error: error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error)) || "Unknown Tamara Error",
         debug: {
-          tamara_api_url: tamaraUrl,
-          token_present: tokenPresent,
-          token_prefix: tokenPrefix + "...",
-          next_public_base_url: process.env.NEXT_PUBLIC_BASE_URL || "NOT SET",
-          vercel_url: process.env.VERCEL_URL || "NOT SET",
+          url: process.env.TAMARA_API_URL,
+          token_present: !!process.env.TAMARA_ACCESS_TOKEN,
+          base_url: process.env.NEXT_PUBLIC_BASE_URL,
+          vercel_url: process.env.VERCEL_URL
         }
       },
       { status: 500 }

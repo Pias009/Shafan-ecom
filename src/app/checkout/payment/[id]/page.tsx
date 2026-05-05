@@ -242,10 +242,15 @@ function PaymentPageContent() {
         body: JSON.stringify({ orderId: id }),
       });
       
-      const data = await res.json();
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Server returned invalid response (${res.status}). Please check Vercel logs.`);
+      }
 
       if (!res.ok) {
-        // Show specific error from server if available
         const errorMessage = data.error || `Server error: ${res.status}`;
         throw new Error(errorMessage);
       }

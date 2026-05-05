@@ -13,15 +13,17 @@ export class TamaraService {
   private notificationToken: string;
 
   constructor() {
-    this.baseUrl = process.env.TAMARA_API_URL || "https://api-sandbox.tamara.co";
-    this.accessToken = process.env.TAMARA_ACCESS_TOKEN || "";
-    this.notificationToken = process.env.TAMARA_NOTIFICATION_TOKEN || "";
+    this.baseUrl = (process.env.TAMARA_API_URL || "https://api-sandbox.tamara.co").trim();
+    this.accessToken = (process.env.TAMARA_ACCESS_TOKEN || "").trim();
+    this.notificationToken = (process.env.TAMARA_NOTIFICATION_TOKEN || "").trim();
   }
 
   private getHeaders() {
+    // Ensure no newlines in token which can crash fetch in Node.js
+    const cleanToken = this.accessToken.replace(/[\n\r]/g, "");
     return {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${this.accessToken}`,
+      Authorization: `Bearer ${cleanToken}`,
       "Tamara-Version": "2.0",
     };
   }
@@ -37,27 +39,36 @@ export class TamaraService {
       is_mobile: params.isMobile || false,
       
       // Tamara requires 'items' (not products) and each item needs a 'total_amount'
-      items: params.items.map(item => ({
-        reference_id: item.sku,
-        sku: item.sku,
-        name: item.name,
-        type: item.type || "Physical",
-        unit_price: item.unitPrice,
-        quantity: item.quantity,
-        total_amount: {
-          amount: (Number(item.unitPrice.amount) * item.quantity).toFixed(2),
-          currency: item.unitPrice.currency
-        },
-        description: item.description || item.name,
-        image_url: item.imageUrl,
-        product_url: item.productUrl,
-      })),
+      items: params.items.map(item => {
+        const unitPrice = Number(item.unitPrice.amount || 0);
+        const quantity = Number(item.quantity || 1);
+        const itemTotal = (unitPrice * quantity).toFixed(2);
+
+        return {
+          reference_id: item.sku || `ITEM-${Math.random().toString(36).substr(2, 9)}`,
+          sku: item.sku || "SKU",
+          name: item.name || "Product",
+          type: item.type || "Physical",
+          unit_price: {
+            amount: unitPrice.toFixed(2),
+            currency: item.unitPrice.currency
+          },
+          quantity: quantity,
+          total_amount: {
+            amount: itemTotal,
+            currency: item.unitPrice.currency
+          },
+          description: item.description || item.name || "Product",
+          image_url: item.imageUrl || undefined,
+          product_url: item.productUrl || undefined,
+        };
+      }),
 
       consumer: {
-        first_name: params.consumer.firstName,
-        last_name: params.consumer.lastName,
-        email: params.consumer.email,
-        phone_number: params.consumer.phone,
+        first_name: params.consumer.firstName || "Customer",
+        last_name: params.consumer.lastName || "User",
+        email: params.consumer.email || "customer@example.com",
+        phone_number: params.consumer.phone || "+971500000001",
       },
 
       billing_address: {
