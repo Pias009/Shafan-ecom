@@ -132,8 +132,21 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error("Tamara session creation error:", error);
+    
+    // Include debug info so we can diagnose env var issues on Vercel
+    const tamaraUrl = process.env.TAMARA_API_URL || "NOT SET (using default sandbox)";
+    const tokenPresent = !!process.env.TAMARA_ACCESS_TOKEN;
+    const tokenPrefix = process.env.TAMARA_ACCESS_TOKEN?.substring(0, 20) || "MISSING";
+    
     return NextResponse.json(
-      { error: error.message || "Failed to create Tamara session" },
+      { 
+        error: error.message || "Failed to create Tamara session",
+        debug: {
+          tamara_api_url: tamaraUrl,
+          token_present: tokenPresent,
+          token_prefix: tokenPrefix + "...",
+        }
+      },
       { status: 500 }
     );
   }

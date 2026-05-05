@@ -4,6 +4,8 @@ import { TabbyService } from "@/services/payments/tabby";
 import { TamaraService } from "@/services/payments/tamara";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { createShipmentForOrder } from "@/services/shipping/order-shipment";
+import { notifyNewOrder } from "@/lib/pusher";
+import { sendEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   const tabbySignature = request.headers.get("x-tabby-signature");
@@ -22,6 +24,63 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Webhook error:", error);
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
+
+/**
+ * Send admin notification + email after a successful payment
+ */
+async function notifyPaymentConfirmed(orderId: string, provider: string) {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true },
+    });
+
+    if (!order) return;
+
+    const shippingAddress = order.shippingAddress as any;
+    const customerName = shippingAddress?.first_name
+      ? `${shippingAddress.first_name} ${shippingAddress.last_name || ""}`
+      : "Customer";
+
+    // Pusher real-time notification
+    await notifyNewOrder({
+      id: order.id,
+      total: order.total ?? 0,
+      currency: order.currency,
+      userName: customerName,
+      email: order.email || undefined,
+    }).catch((err) => console.error("Pusher notification failed:", err));
+
+    // Admin email notification
+    if (process.env.ADMIN_EMAIL) {
+      const adminItemsList = order.items
+        .map((item: any) => `${item.nameSnapshot || "Product"} x${item.quantity}`)
+        .join(", ");
+
+      await sendEmail({
+        to: process.env.ADMIN_EMAIL,
+        subject: `✅ ${provider} Payment Confirmed — Order #${order.id} — ${order.currency.toUpperCase()} ${order.total?.toFixed(2)}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #333;">✅ Payment Confirmed via ${provider}!</h2>
+            <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
+              <tr><td style="padding: 8px 0; color: #666;">Order ID</td><td style="padding: 8px 0;"><strong>#${order.id}</strong></td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Customer</td><td style="padding: 8px 0;">${order.email || customerName}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${order.currency.toUpperCase()} ${order.total?.toFixed(2)}</strong></td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">${provider}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
+            </table>
+            <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || "https://www.shanfaglobal.com"}/ueadmin/orders/${order.id}" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order</a></p>
+          </div>
+        `,
+      }).catch(console.error);
+    }
+
+    console.log(`[Payment Confirmed] ${provider} — Order #${order.id} — Admin notified`);
+  } catch (err) {
+    console.error("Failed to send post-payment notification:", err);
   }
 }
 
@@ -50,6 +109,9 @@ async function handleTabbyWebhook(payload: string, signature: string) {
       data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: PaymentStatus.PAID },
     });
     
+    // Notify admin NOW — payment is confirmed
+    await notifyPaymentConfirmed(order.id, "Tabby");
+
     // Trigger Naqel Shipment ONLY AFTER CAPTURE
     try {
       await createShipmentForOrder(order.id);
@@ -62,6 +124,9 @@ async function handleTabbyWebhook(payload: string, signature: string) {
         where: { id: order.id },
         data: { status: OrderStatus.PROCESSING, paymentStatus: PaymentStatus.PAID },
       });
+
+      // Notify admin — payment authorized
+      await notifyPaymentConfirmed(order.id, "Tabby");
     }
   }
 
@@ -93,6 +158,9 @@ async function handleTamaraWebhook(payload: string, signature: string) {
       data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: PaymentStatus.PAID },
     });
 
+    // Notify admin NOW — payment is confirmed
+    await notifyPaymentConfirmed(order.id, "Tamara");
+
     // Trigger Naqel Shipment ONLY AFTER CAPTURE
     try {
       await createShipmentForOrder(order.id);
@@ -104,6 +172,9 @@ async function handleTamaraWebhook(payload: string, signature: string) {
       where: { id: order.id },
       data: { status: OrderStatus.PROCESSING, paymentStatus: PaymentStatus.PAID },
     });
+
+    // Notify admin — payment approved
+    await notifyPaymentConfirmed(order.id, "Tamara");
   }
 
   return NextResponse.json({ received: true });

@@ -587,14 +587,17 @@ export async function POST(req: Request) {
       }
     });
 
-    // Trigger real-time notification for admin
-    await notifyNewOrder({
-      id: order.id,
-      total: order.total ?? 0,
-      currency: order.currency,
-      userName: shipping?.first_name ? `${shipping.first_name} ${shipping.last_name || ''}` : undefined,
-      email: order.email || undefined,
-    }).catch(err => console.error("Pusher notification failed:", err));
+    // Trigger real-time notification for admin — ONLY for COD orders
+    // For Tabby/Tamara/Stripe, notifications are sent AFTER payment confirmation via webhook
+    if (isCOD) {
+      await notifyNewOrder({
+        id: order.id,
+        total: order.total ?? 0,
+        currency: order.currency,
+        userName: shipping?.first_name ? `${shipping.first_name} ${shipping.last_name || ''}` : undefined,
+        email: order.email || undefined,
+      }).catch(err => console.error("Pusher notification failed:", err));
+    }
 
     // Decrement stock for each ordered item
     for (const orderItem of orderItemsData) {
@@ -777,20 +780,21 @@ export async function POST(req: Request) {
       console.log(`[Order Email] Skipping email - already sent or no email address for order ${order.id}`);
     }
 
-    // Always notify admin of new orders (both COD and prepaid)
-    if (process.env.ADMIN_EMAIL) {
+    // Notify admin — ONLY for COD orders at creation time
+    // For Tabby/Tamara/Stripe, admin email is sent AFTER payment confirmation via webhook
+    if (isCOD && process.env.ADMIN_EMAIL) {
       const adminItemsList = order.items.map((item: any) => `${item.name || 'Product'} x${item.quantity}`).join(', ');
       await sendEmail({
         to: process.env.ADMIN_EMAIL,
-        subject: isCOD ? `New COD Order #${order.id} - ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}` : `New Order #${order.id} - PAID ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}`,
+        subject: `New COD Order #${order.id} - ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px;">
-            <h2 style="color: #333;">New Order Received! ${isCOD ? '💵 Cash on Delivery' : '✅ Paid'}</h2>
+            <h2 style="color: #333;">New Order Received! 💵 Cash on Delivery</h2>
             <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
               <tr><td style="padding: 8px 0; color: #666;">Order ID</td><td style="padding: 8px 0;"><strong>#${order.id}</strong></td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Customer</td><td style="padding: 8px 0;">${customerEmail || 'Guest'}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${order.currency.toUpperCase()} ${order.total?.toFixed(2)}</strong></td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">${isCOD ? 'Cash on Delivery' : 'Credit Card'}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">Cash on Delivery</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
             </table>
             <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/ueadmin/orders/${order.id}" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order</a></p>
