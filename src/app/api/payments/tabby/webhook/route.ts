@@ -33,9 +33,11 @@ export async function POST(request: NextRequest) {
         ],
       },
     });
-
+    
     if (!order) {
-      console.log("Order not found for webhook:", orderId);
+      console.log("Order not found for Tabby webhook:", orderId);
+      // Order should have been created in create-order route
+      // If not found, we can't process this webhook
       return NextResponse.json({ received: true });
     }
 

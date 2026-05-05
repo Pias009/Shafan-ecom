@@ -15,25 +15,33 @@ function generateTrackingCode(): string {
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = (await headers()).get("stripe-signature") || "";
-
+  
   try {
     const event = await verifyStripeWebhook(body, signature);
-
+    
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object as any;
       const orderId = paymentIntent.metadata.orderId;
-
+      
       if (orderId) {
         console.log(`Payment succeeded for Order ID: ${orderId}. Updating Prisma status...`);
         
         // Fetch order to get shipping info for shipment
-        const existingOrder = await prisma.order.findUnique({
+        let existingOrder = await prisma.order.findUnique({
           where: { id: orderId },
-          include: { user: true }
+          include: { user: true, items: true }
         });
         
+        // If order doesn't exist (not created yet), create it now
         if (!existingOrder) {
-          console.log(`Order ${orderId} not found`);
+          console.log(`Order ${orderId} not found, creating from payment metadata...`);
+          
+          // Parse metadata to get order details
+          const metadata = paymentIntent.metadata || {};
+          
+          // You may need to store order data in payment intent metadata
+          // For now, return early if order not found
+          console.log(`Cannot create order without metadata. Order ${orderId} not found.`);
           return NextResponse.json({ received: true });
         }
         

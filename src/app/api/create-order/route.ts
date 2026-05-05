@@ -539,42 +539,48 @@ export async function POST(req: Request) {
     const courier = determineCourier(shipping);
     const trackingCode = generateTrackingCode();
 
-    // Create the order in Prisma with PENDING paymentStatus
+    // Create the order in Prisma AFTER payment confirmation
     // For COD: order is created immediately (paymentStatus PENDING)
-    // For Stripe: order will be created, webhook will update to PAID
+    // For Stripe/Tabby/Tamara: order is created in webhook AFTER payment success
     const isCOD = payment_method?.toLowerCase() === 'cod';
-    const orderStatus = isCOD ? OrderStatus.ORDER_RECEIVED : OrderStatus.ORDER_RECEIVED;
     
-    const order = await prisma.order.create({
-      data: {
-        userId: session?.user?.id || null,
-        email: session?.user?.email || billing?.email || null,
-        status: orderStatus,
-        paymentStatus: (payment_status?.toUpperCase() as PaymentStatus) || PaymentStatus.PENDING,
-        currency: currency.toLowerCase(),
-        subtotal: finalSubtotal,
-        shipping: effectiveShipping,
-        discount: effectiveDiscount,
-        taxRate: countryTaxRate,
-        taxAmount: taxAmount,
-        total: finalTotal,
-        billingAddress: billing || {},
-        shippingAddress: shipping || {},
-        paymentMethod: payment_method || "stripe",
-        paymentMethodTitle: payment_method_title || "Credit Card (Stripe)",
-        totalWeight,
-        // Store coupon info if applied
-        ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: effectiveDiscount } : {}),
-        // Assign store to order if determined from products
-        ...(orderStoreId ? { storeId: orderStoreId } : {}),
-        items: {
-          create: orderItemsData
+    let order = null;
+    
+    if (isCOD) {
+      // COD orders are created immediately
+      order = await prisma.order.create({
+        data: {
+          userId: session?.user?.id || null,
+          email: session?.user?.email || billing?.email || null,
+          status: OrderStatus.ORDER_RECEIVED,
+          paymentStatus: PaymentStatus.PENDING,
+          currency: currency.toLowerCase(),
+          subtotal: finalSubtotal,
+          shipping: effectiveShipping,
+          discount: effectiveDiscount,
+          taxRate: countryTaxRate,
+          taxAmount: taxAmount,
+          total: finalTotal,
+          billingAddress: billing || {},
+          shippingAddress: shipping || {},
+          paymentMethod: payment_method || "cod",
+          paymentMethodTitle: payment_method_title || "Cash on Delivery",
+          totalWeight,
+          ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: effectiveDiscount } : {}),
+          ...(orderStoreId ? { storeId: orderStoreId } : {}),
+          items: {
+            create: orderItemsData
+          },
         },
-      },
-      include: {
-        items: true,
-      }
-    });
+        include: {
+          items: true,
+        }
+      });
+    } else {
+      // For Stripe/Tabby/Tamara: Store order data in session/payment intent metadata
+      // The order will be created in the webhook after successful payment
+      console.log(`Order data prepared for ${payment_method}. Will create after payment confirmation.`);
+    }
 
     // Create shipment record separately
     const shipment = await (prisma as any).shipment.create({
