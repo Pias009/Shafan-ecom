@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TamaraService, TamaraRegion, TamaraCurrency } from "@/services/payments/tamara";
 
-const COUNTRY_TO_REGION: Record<string, { region: TamaraRegion; currency: TamaraCurrency }> = {
-  AE: { region: "UAE", currency: "AED" },
-  SA: { region: "SAU", currency: "SAR" },
-  KW: { region: "KWT", currency: "KWD" },
-  BH: { region: "BHR", currency: "BHD" },
-  QA: { region: "QAT", currency: "QAR" },
-  OM: { region: "OMN", currency: "OMR" },
+const COUNTRY_TO_REGION: Record<string, { region: TamaraRegion; currency: TamaraCurrency; phonePrefix: string }> = {
+  AE: { region: "UAE", currency: "AED", phonePrefix: "+971" },
+  SA: { region: "SAU", currency: "SAR", phonePrefix: "+966" },
+  KW: { region: "KWT", currency: "KWD", phonePrefix: "+965" },
+  BH: { region: "BHR", currency: "BHD", phonePrefix: "+973" },
+  QA: { region: "QAT", currency: "QAR", phonePrefix: "+974" },
+  OM: { region: "OMN", currency: "OMR", phonePrefix: "+968" },
 };
 
 export async function POST(request: NextRequest) {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const regionConfig = COUNTRY_TO_REGION[countryCode] || COUNTRY_TO_REGION["AE"];
-    const { region, currency } = regionConfig;
+    const { region, currency, phonePrefix } = regionConfig;
 
     const tamaraService = new TamaraService();
 
@@ -55,8 +55,9 @@ export async function POST(request: NextRequest) {
         return "+971500000001";
       }
       const phone = raw || "501234567";
-      const clean = phone.replace(/^(\+971|971|\+966|966|0)/, "");
-      return `${countryCode === "SA" ? "+966" : "+971"}${clean}`;
+      // Remove common GCC prefixes and leading zero
+      const clean = phone.replace(/^(\+971|971|\+966|966|\+965|965|\+973|973|\+974|974|\+968|968|0)/, "");
+      return `${phonePrefix}${clean}`;
     };
 
     const session = await tamaraService.createSession({
@@ -111,10 +112,10 @@ export async function POST(request: NextRequest) {
         name: "Order Discount"
       } : undefined,
       merchantUrls: {
-        success: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?order_id=${order.id}&payment=tamara`,
-        cancel: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${order.id}?canceled=tamara`,
-        failure: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${order.id}?failed=tamara`,
-        notification: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/tamara/webhook`,
+        success: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/checkout/success?order_id=${order.id}&payment=tamara`,
+        cancel: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/checkout/payment/${order.id}?canceled=tamara`,
+        failure: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/checkout/payment/${order.id}?failed=tamara`,
+        notification: `${process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`}/api/payments/tamara/webhook`,
       },
     });
 
@@ -149,6 +150,8 @@ export async function POST(request: NextRequest) {
           tamara_api_url: tamaraUrl,
           token_present: tokenPresent,
           token_prefix: tokenPrefix + "...",
+          next_public_base_url: process.env.NEXT_PUBLIC_BASE_URL || "NOT SET",
+          vercel_url: process.env.VERCEL_URL || "NOT SET",
         }
       },
       { status: 500 }
