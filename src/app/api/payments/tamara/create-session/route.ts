@@ -45,14 +45,17 @@ export async function POST(request: NextRequest) {
 
     let countryCode = (order.shippingAddress as any)?.country?.toUpperCase() || "AE";
     
-    // AUTO-CORRECTION FOR TESTING FROM BANGLADESH
-    if (countryCode === "BD" || process.env.NODE_ENV === "development") {
-      console.log("DEBUG: Auto-correcting Bangladesh/Dev address to UAE for Tamara testing");
+    // FORCE UAE FOR SANDBOX TESTING
+    const isSandbox = (process.env.TAMARA_API_URL || "").includes("sandbox");
+    if (isSandbox || countryCode === "BD" || process.env.NODE_ENV === "development") {
+      console.log("DEBUG: Forcing UAE (AE) for Sandbox/BD/Dev testing");
       countryCode = "AE";
     }
 
     const regionConfig = COUNTRY_TO_REGION[countryCode] || COUNTRY_TO_REGION["AE"];
     const { region, currency, phonePrefix } = regionConfig;
+
+    console.log(`[Tamara] Resolved Market: ${countryCode} | Currency: ${currency} | Sandbox: ${isSandbox}`);
 
     const tamaraService = new TamaraService();
     const billingAddress = order.billingAddress as any;
