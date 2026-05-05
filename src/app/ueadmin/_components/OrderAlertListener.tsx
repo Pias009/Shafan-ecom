@@ -111,12 +111,21 @@ export function OrderAlertListener() {
         </div>
       </div>
     ), {
-      duration: 15000,
+      duration: 2000,
       position: 'top-right',
     });
   };
 
   useEffect(() => {
+    // Sync with localStorage on mount to prevent repeat alerts on refresh/navigation
+    const cachedId = localStorage.getItem('last_notified_order_id');
+    if (cachedId) {
+      latestOrderIdRef.current = cachedId;
+      setLatestOrderId(cachedId);
+      hasInitializedRef.current = true;
+      setHasInitialized(true);
+    }
+
     const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
     const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
 
@@ -154,6 +163,7 @@ export function OrderAlertListener() {
             if (!hasInitializedRef.current) {
               setLatestOrderId(data.id);
               latestOrderIdRef.current = data.id;
+              localStorage.setItem('last_notified_order_id', data.id);
               setHasInitialized(true);
               hasInitializedRef.current = true;
             } else if (data.id !== latestOrderIdRef.current) {
@@ -163,6 +173,7 @@ export function OrderAlertListener() {
                 currency: data.currency,
                 userName: data.customerName,
               });
+              localStorage.setItem('last_notified_order_id', data.id);
             }
           }
         }

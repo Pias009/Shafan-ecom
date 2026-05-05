@@ -25,6 +25,22 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
   const [availableBrands, setAvailableBrands] = useState(brands);
   
   // Ensure numeric fields are properly converted to numbers
+  // Initialize all supported country prices
+  const supportedCountries = [
+    { code: 'AE', currency: 'AED' },
+    { code: 'SA', currency: 'SAR' },
+    { code: 'KW', currency: 'KWD' },
+    { code: 'BH', currency: 'BHD' },
+    { code: 'OM', currency: 'OMR' },
+    { code: 'QA', currency: 'QAR' }
+  ];
+
+  const initialCountryPrices = initialProduct.countryPrices || [];
+  const fullCountryPrices = supportedCountries.map(sc => {
+    const existing = initialCountryPrices.find((cp: any) => cp.country === sc.code);
+    return existing || { country: sc.code, price: 0, currency: sc.currency, active: true };
+  });
+
   const normalizedProduct = {
     ...initialProduct,
     price: Number(initialProduct.price) || 0,
@@ -37,6 +53,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     brandName: initialProduct.brand?.name || '',
     weight: initialProduct.weight || 0,
     weightUnit: initialProduct.weightUnit || 'kg',
+    countryPrices: fullCountryPrices,
   };
   
   const [product, setProduct] = useState(normalizedProduct);
@@ -117,13 +134,18 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     const parsedPrice = allowedValue === '' ? 0 : (parseCommaSeparatedPriceInput(allowedValue, countryCurrencyMap[countryCode] || 'AED') || 0);
 
     if (existingIndex > -1) {
-      newPrices[existingIndex] = { ...newPrices[existingIndex], price: parsedPrice };
+      newPrices[existingIndex] = { 
+        ...newPrices[existingIndex], 
+        price: parsedPrice,
+        _displayValue: rawValue // Store raw input value while editing to preserve dots/commas
+      };
     } else {
       newPrices.push({
         country: countryCode,
         price: parsedPrice,
         currency: countryCurrencyMap[countryCode] || 'AED',
-        active: true
+        active: true,
+        _displayValue: rawValue
       });
     }
     
@@ -166,11 +188,11 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     }
     
     if (allowedValue === '') {
-      setProduct({ ...product, price: 0 });
+      setProduct({ ...product, price: 0, _basePriceDisplay: '' });
       return;
     }
     const parsed = parseCommaSeparatedPriceInput(allowedValue, product.currency || 'USD');
-    setProduct({ ...product, price: parsed || 0 });
+    setProduct({ ...product, price: parsed || 0, _basePriceDisplay: rawValue });
   };
 
   const handleBasePriceBlur = () => {
@@ -205,11 +227,11 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     }
     
     if (allowedValue === '') {
-      setProduct({ ...product, discountPrice: 0 });
+      setProduct({ ...product, discountPrice: 0, _discountDisplay: '' });
       return;
     }
     const parsed = parseCommaSeparatedPriceInput(allowedValue, product.currency || 'USD');
-    setProduct({ ...product, discountPrice: parsed || 0 });
+    setProduct({ ...product, discountPrice: parsed || 0, _discountDisplay: rawValue });
   };
 
   const handleDiscountBlur = () => {

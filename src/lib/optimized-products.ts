@@ -76,6 +76,14 @@ const PRODUCT_LIST_SELECT = {
   },
   createdAt: true,
   updatedAt: true,
+  countryPrices: {
+    select: {
+      country: true,
+      price: true,
+      currency: true,
+      active: true,
+    }
+  },
 };
 
 // Select all fields for product detail
@@ -202,7 +210,24 @@ export async function getOptimizedProducts(
 
     // Transform products
     const products = dbProducts.map((p: any) => {
-      const price = Number(p.storePrice) || Number(p.price) || 0;
+      // Get user's country from store code mapping
+      const countryMap: Record<string, string> = {
+        'UAE': 'AE', 'KUWAIT': 'KW', 'SAUDI': 'SA', 'BAHRAIN': 'BH', 'OMAN': 'OM', 'QATAR': 'QA',
+      };
+      const userCountry = storeCode ? (countryMap[storeCode.toUpperCase()] || 'AE') : 'AE';
+
+      // Get price from country-specific prices if available
+      let price = Number(p.storePrice) || Number(p.price) || 0;
+      let currency = p.currency?.toUpperCase() || 'USD';
+
+      if (p.countryPrices && p.countryPrices.length > 0) {
+        const countryPrice = p.countryPrices.find((cp: any) => cp.country === userCountry && cp.active);
+        if (countryPrice && Number(countryPrice.price) > 0) {
+          price = Number(countryPrice.price);
+          currency = countryPrice.currency?.toUpperCase() || 'AED';
+        }
+      }
+
       const discountPrice = Number(p.discountPrice) || 0;
       const salePrice = discountPrice > 0 ? price - discountPrice : null;
 
@@ -237,7 +262,7 @@ export async function getOptimizedProducts(
         salePriceCents: salePrice,
         discountPrice: discountPrice > 0 ? discountPrice : null,
         discountCents: discountPrice > 0 ? discountPrice : null,
-        currency: p.currency?.toUpperCase() || 'USD',
+        currency: currency,
         active: p.active,
         hot: p.hot,
         trending: p.trending,

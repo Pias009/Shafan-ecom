@@ -289,24 +289,19 @@ useEffect(() => {
         const cached = localStorage.getItem("user-country");
 
         const countryToStore: Record<string, string> = {
-          'AE': 'UAE',
+          'AE': 'UAE', 'SA': 'SAUDI', 'KW': 'KUWAIT', 'BH': 'BAHRAIN', 'OM': 'OMAN', 'QA': 'QATAR',
         };
 
         const countryToCurrency: Record<string, string> = {
-          'AE': 'AED',
-          'KW': 'KWD',
-          'SA': 'SAR',
-          'BH': 'BHD',
-          'OM': 'OMR',
-          'QA': 'QAR',
+          'AE': 'AED', 'KW': 'KWD', 'SA': 'SAR', 'BH': 'BHD', 'OM': 'OMR', 'QA': 'QAR',
         };
 
         let country = cached;
         if (storeCode) {
           const storeToCountry: Record<string, string> = {
-            'UAE': 'AE',
+            'UAE': 'AE', 'SAUDI': 'SA', 'KUWAIT': 'KW', 'BAHRAIN': 'BH', 'OMAN': 'OM', 'QATAR': 'QA',
           };
-          country = storeToCountry[storeCode] || country;
+          country = storeToCountry[storeCode.toUpperCase()] || country;
         }
 
         if (country && countryToCurrency[country]) {

@@ -35,6 +35,16 @@ export const useCountryStore = create<CountryState>()(
       setCountry: (countryCode: string) => {
         const upperCode = countryCode.toUpperCase();
         const currency = COUNTRY_TO_CURRENCY[upperCode] || getCurrencyForCountry(upperCode);
+        
+        // Sync with store_code cookie for server-side logic
+        const countryToStore: Record<string, string> = {
+          'AE': 'UAE', 'SA': 'SAUDI', 'KW': 'KUWAIT', 'BH': 'BAHRAIN', 'OM': 'OMAN', 'QA': 'QAR'
+        };
+        const storeCode = countryToStore[upperCode] || 'UAE';
+        if (typeof document !== 'undefined') {
+          document.cookie = `store_code=${storeCode}; path=/; max-age=${60 * 60 * 24 * 30}`;
+        }
+
         set({ 
           selectedCountry: upperCode, 
           selectedCurrency: currency 
@@ -46,6 +56,16 @@ export const useCountryStore = create<CountryState>()(
         if (upperCurrency === "BDT") {
           country = "KW";
         }
+        
+        // Sync with store_code cookie for server-side logic
+        const countryToStore: Record<string, string> = {
+          'AE': 'UAE', 'SA': 'SAUDI', 'KW': 'KUWAIT', 'BH': 'BAHRAIN', 'OM': 'OMAN', 'QA': 'QAR'
+        };
+        const storeCode = countryToStore[country] || 'UAE';
+        if (typeof document !== 'undefined') {
+          document.cookie = `store_code=${storeCode}; path=/; max-age=${60 * 60 * 24 * 30}`;
+        }
+
         set({ 
           selectedCountry: country, 
           selectedCurrency: upperCurrency 
