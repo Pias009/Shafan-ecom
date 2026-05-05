@@ -1,5 +1,5 @@
-export type TamaraRegion = "UAE" | "SAU";
-export type TamaraCurrency = "AED" | "SAR";
+export type TamaraRegion = "UAE" | "SAU" | "KWT" | "BHR" | "QAT" | "OMN";
+export type TamaraCurrency = "AED" | "SAR" | "KWD" | "BHD" | "QAR" | "OMR";
 
 export type TamaraPaymentStatus = 
   | "initiated"

@@ -5,6 +5,10 @@ import { TamaraService, TamaraRegion, TamaraCurrency } from "@/services/payments
 const COUNTRY_TO_REGION: Record<string, { region: TamaraRegion; currency: TamaraCurrency }> = {
   AE: { region: "UAE", currency: "AED" },
   SA: { region: "SAU", currency: "SAR" },
+  KW: { region: "KWT", currency: "KWD" },
+  BH: { region: "BHR", currency: "BHD" },
+  QA: { region: "QAT", currency: "QAR" },
+  OM: { region: "OMN", currency: "OMR" },
 };
 
 export async function POST(request: NextRequest) {
