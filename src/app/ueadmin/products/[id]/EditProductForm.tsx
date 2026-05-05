@@ -108,16 +108,25 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
       }
     }
     
-    const newPrices = product.countryPrices?.map((c: any) => {
-      if (c.country === countryCode) {
-        if (allowedValue === '') {
-          return { ...c, price: 0 };
-        }
-        const parsed = parseCommaSeparatedPriceInput(allowedValue, c.currency || 'AED');
-        return { ...c, price: parsed || 0 };
-      }
-      return c;
-    }) || [];
+    const countryCurrencyMap: Record<string, string> = {
+      'AE': 'AED', 'SA': 'SAR', 'KW': 'KWD', 'BH': 'BHD', 'OM': 'OMR', 'QA': 'QAR'
+    };
+
+    let newPrices = [...(product.countryPrices || [])];
+    const existingIndex = newPrices.findIndex((c: any) => c.country === countryCode);
+    const parsedPrice = allowedValue === '' ? 0 : (parseCommaSeparatedPriceInput(allowedValue, countryCurrencyMap[countryCode] || 'AED') || 0);
+
+    if (existingIndex > -1) {
+      newPrices[existingIndex] = { ...newPrices[existingIndex], price: parsedPrice };
+    } else {
+      newPrices.push({
+        country: countryCode,
+        price: parsedPrice,
+        currency: countryCurrencyMap[countryCode] || 'AED',
+        active: true
+      });
+    }
+    
     setProduct({ ...product, countryPrices: newPrices });
   };
 
@@ -125,12 +134,9 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     const cp = product.countryPrices?.find((c: any) => c.country === countryCode);
     if (cp && cp.price > 0) {
       const formatted = formatPriceForAdmin(cp.price, currency || 'AED');
-      const newPrices = product.countryPrices?.map((c: any) => {
-        if (c.country === countryCode) {
-          return { ...c, _displayValue: formatted };
-        }
-        return c;
-      }) || [];
+      const newPrices = product.countryPrices.map((c: any) => 
+        c.country === countryCode ? { ...c, _displayValue: formatted } : c
+      );
       setProduct({ ...product, countryPrices: newPrices });
     }
   };
@@ -846,18 +852,30 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                     onChange={handleChange}
                     className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"
                   />
-                <div className="flex items-center justify-between pt-2 border-t border-black/5">
-                   <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Sale Price (USD)</span>
-                   <input 
-                     name="discountPrice"
-                     type="text"
-                     value={product._discountDisplay || (product.discountPrice ? formatPriceForAdmin(product.discountPrice, "USD") : "")}
-                     onChange={(e) => handleDiscountChange(e.target.value)}
-                     onBlur={handleDiscountBlur}
-                     placeholder="0.00"
-                     className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black text-red-500"
-                   />
-                </div>
+               </div>
+               <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Base Price (USD)</span>
+                  <input 
+                    name="price"
+                    type="text"
+                    value={product._basePriceDisplay || (product.price ? formatPriceForAdmin(product.price, "USD") : "")}
+                    onChange={(e) => handleBasePriceChange(e.target.value)}
+                    onBlur={handleBasePriceBlur}
+                    placeholder="0.00"
+                    className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"
+                  />
+               </div>
+               <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Discount Price (USD)</span>
+                  <input 
+                    name="discountPrice"
+                    type="text"
+                    value={product._discountDisplay || (product.discountPrice ? formatPriceForAdmin(product.discountPrice, "USD") : "")}
+                    onChange={(e) => handleDiscountChange(e.target.value)}
+                    onBlur={handleDiscountBlur}
+                    placeholder="0.00"
+                    className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black text-red-500"
+                  />
                </div>
             </div>
           </section>

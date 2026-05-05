@@ -3,6 +3,7 @@ import { getAdminApiSession } from '@/lib/admin-session';
 import { z } from 'zod';
 import { uploadFromUrl } from '@/lib/cloudinary';
 import { revalidatePath } from 'next/cache';
+import { clearProductCache } from '@/lib/optimized-products';
 
 const UpdateSchema = z.object({
   name: z.string().optional(),
@@ -253,6 +254,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     
     revalidatePath('/');
     revalidatePath('/products');
+    revalidatePath(`/products/${id}`);
+    await clearProductCache(id);
     
     return new Response(JSON.stringify(updated), { status: 303, headers: { 'Location': '/ueadmin/products' } });
   } catch (e) {
@@ -319,6 +322,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     revalidatePath('/');
     revalidatePath('/products');
+    revalidatePath(`/products/${id}`);
+    await clearProductCache(id);
     
     return new Response(JSON.stringify({
       success: true,

@@ -492,12 +492,14 @@ export async function getProductsBatch(ids: string[], storeCode?: string) {
 // Clear product cache (useful for admin updates)
 export async function clearProductCache(productId?: string) {
   if (productId) {
-    await productCache.delete(`product:${productId}:all`);
-    await productCache.delete(`product:${productId}:*`);
+    // Clear product detail cache for all store combinations
+    await productCache.deleteByPrefix(`product:${productId}`);
+    // Also clear batch caches that might contain this product
+    await productCache.deleteByPrefix(`products_batch`);
+    // Clear product list caches since prices might have changed
+    await productCache.deleteByPrefix(`products:`);
   } else {
     // Clear all product-related cache
-    const stats = productCache.getStats();
-    console.log('Clearing product cache, previous stats:', stats);
-    // In a real implementation, you would clear cache entries with product: prefix
+    await productCache.clear();
   }
 }

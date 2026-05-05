@@ -88,6 +88,18 @@ export class CacheOptimizer {
     this.cache.delete(key);
   }
 
+  async deleteByPrefix(prefix: string): Promise<void> {
+    const keysToDelete: string[] = [];
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(prefix)) {
+        keysToDelete.push(key);
+      }
+    }
+    for (const key of keysToDelete) {
+      this.cache.delete(key);
+    }
+  }
+
   async clear(): Promise<void> {
     this.cache.clear();
     this.hits = 0;
