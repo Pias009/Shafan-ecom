@@ -47,7 +47,24 @@ export async function POST(request: NextRequest) {
     }
 
     const regionConfig = COUNTRY_TO_REGION[countryCode] || COUNTRY_TO_REGION["AE"];
-    const { region, currency, phonePrefix } = regionConfig;
+    let { region, currency, phonePrefix } = regionConfig;
+
+    // USE ORDER CURRENCY IF IT'S A VALID GULF CURRENCY SUPPORTED BY TAMARA
+    const orderCurrency = (order.currency || "AED").toUpperCase() as TamaraCurrency;
+    const supportedCurrencies: TamaraCurrency[] = ["AED", "SAR", "KWD", "BHD", "QAR", "OMR"];
+    
+    if (supportedCurrencies.includes(orderCurrency)) {
+      currency = orderCurrency;
+      
+      // IMPORTANT: If we are using a non-AED currency, we SHOULD NOT force AE as the country
+      // as Tamara will reject AED/KWD mismatch. 
+      // Only force AE if the order was already AE or if we are in a completely unsupported country.
+      if (countryCode === "AE" && currency !== "AED") {
+        // Find correct country for this currency
+        const revMap: Record<string, string> = { KWD: "KW", SAR: "SA", BHD: "BH", OMR: "OM", QAR: "QA" };
+        if (revMap[currency]) countryCode = revMap[currency];
+      }
+    }
 
     const tamaraService = new TamaraService();
     const billingAddress = order.billingAddress as any;
@@ -69,20 +86,38 @@ export async function POST(request: NextRequest) {
         return "+971500000001";
       }
       const phone = raw || "501234567";
-      const clean = phone.replace(/^(\+971|971|\+966|966|\+965|965|\+973|973|\+974|974|\+968|968|0)/, "");
+      // Remove non-digits
+      const digits = phone.replace(/\D/g, "");
+      // Remove leading zero or country codes
+      const clean = digits.replace(/^(971|966|965|973|974|968|0)/, "");
       return `${phonePrefix}${clean}`;
     };
 
     const getBaseUrl = () => {
-      let url = process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://www.shanfaglobal.com");
+      // Priority: env variable > request header (host) > fallback
+      let url = process.env.NEXT_PUBLIC_BASE_URL;
+      
+      if (!url && typeof window !== "undefined") {
+        url = window.location.origin;
+      }
+      
+      if (!url && request.headers.get("host")) {
+        const host = request.headers.get("host");
+        const protocol = host?.includes("localhost") ? "http" : "https";
+        url = `${protocol}://${host}`;
+      }
+      
+      if (!url) url = "https://www.shanfaglobal.com";
+      
       if (!url.startsWith("http")) url = `https://${url}`;
       return url.replace(/\/$/, "");
     };
 
     const baseUrl = getBaseUrl();
+    console.log("DEBUG: Using Base URL for Tamara:", baseUrl);
 
     const session = await tamaraService.createSession({
-      orderReferenceId: order.id,
+      orderReferenceId: process.env.NODE_ENV === "development" ? `${order.id}-${Date.now().toString().slice(-4)}` : order.id,
       description: `Order #${order.id.substring(order.id.length - 8)}`,
       currency,
       locale: "en-US",

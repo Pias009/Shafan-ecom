@@ -40,7 +40,24 @@ export async function POST(request: NextRequest) {
     }
 
     const regionConfig = COUNTRY_TO_REGION[countryCode] || COUNTRY_TO_REGION["AE"];
-    const { region, currency } = regionConfig;
+    let { region, currency } = regionConfig;
+
+    // SYNC CURRENCY WITH ORDER IF SUPPORTED
+    const orderCurrency = (order.currency || "AED").toUpperCase() as TabbyCurrency;
+    const supportedCurrencies: TabbyCurrency[] = ["AED", "SAR", "KWD"];
+    if (supportedCurrencies.includes(orderCurrency)) {
+      currency = orderCurrency;
+      // Ensure country matches currency
+      if (countryCode === "AE" && currency === "SAR") countryCode = "SA";
+      if (countryCode === "AE" && currency === "KWD") countryCode = "KW";
+    }
+
+    // IN DEVELOPMENT: Force UAE region and AED currency for the test key to work
+    if (process.env.NODE_ENV === "development") {
+      region = "UAE";
+      currency = "AED";
+      console.log("DEBUG: Forcing Tabby to UAE/AED for localhost testing");
+    }
 
     const tabbyService = new TabbyService(region);
 
@@ -53,16 +70,49 @@ export async function POST(request: NextRequest) {
         return "+97150000001";
       }
       const phone = raw || "501234567";
-      const clean = phone.replace(/^(\+971|971|\+966|966|0)/, "");
-      return `${countryCode === "SA" ? "+966" : "+971"}${clean}`;
+      // Remove non-digits
+      const digits = phone.replace(/\D/g, "");
+      // Remove leading zero or country codes
+      const clean = digits.replace(/^(971|966|965|973|974|968|0)/, "");
+      
+      const prefixes: Record<string, string> = {
+        AE: "+971",
+        SA: "+966",
+        KW: "+965",
+        BH: "+973",
+        QA: "+974",
+        OM: "+968"
+      };
+      
+      return `${prefixes[countryCode] || "+971"}${clean}`;
     };
+
+    const getBaseUrl = () => {
+      let url = process.env.NEXT_PUBLIC_BASE_URL;
+      if (!url && request.headers.get("host")) {
+        const host = request.headers.get("host");
+        const protocol = host?.includes("localhost") ? "http" : "https";
+        url = `${protocol}://${host}`;
+      }
+      if (!url) url = "https://www.shanfaglobal.com";
+      if (!url.startsWith("http")) url = `https://${url}`;
+      return url.replace(/\/$/, "");
+    };
+
+    const baseUrl = getBaseUrl();
 
     const session = await tabbyService.createSession({
       amount: Number(order.total),
       currency,
       orderId: order.id,
-      orderReferenceId: order.id,
+      // Add random suffix in development to avoid duplicate order reference errors
+      orderReferenceId: process.env.NODE_ENV === "development" ? `${order.id}-${Date.now().toString().slice(-4)}` : order.id,
       description: `Order #${order.id.substring(0, 8)}`,
+      merchant_urls: {
+        success: `${baseUrl}/checkout/success?order_id=${order.id}&payment=tabby`,
+        cancel: `${baseUrl}/checkout/payment/${order.id}?canceled=tabby`,
+        failure: `${baseUrl}/checkout/payment/${order.id}?rejected=tabby`,
+      },
       buyer: {
         email: (() => {
           if (countryCode === "AE" && process.env.NODE_ENV === "development") {
@@ -82,13 +132,23 @@ export async function POST(request: NextRequest) {
         city: shippingAddress?.city || "Dubai",
         zip: shippingAddress?.postal_code || "00000",
       },
-      items: order.items.map((item) => ({
-        title: item.nameSnapshot,
-        description: item.nameSnapshot,
-        quantity: item.quantity,
-        unitPrice: Number(item.unitPrice).toFixed(2),
-        imageUrl: item.imageSnapshot || undefined,
-      })),
+      items: order.items.map((item) => {
+        const qty = item.quantity || 1;
+        let up = Number(item.unitPrice || 0);
+
+        // Smart Math Fix: adjust if unitPrice is actually the line subtotal
+        if (up * qty > (order.total || 0) && up > 0) {
+          up = up / qty;
+        }
+
+        return {
+          title: item.nameSnapshot,
+          description: item.nameSnapshot,
+          quantity: qty,
+          unitPrice: up.toFixed(2),
+          imageUrl: item.imageSnapshot || undefined,
+        };
+      }),
       taxAmount: Number(order.taxAmount || 0),
       shippingAmount: Number(order.shipping || 0),
       discountAmount: Number(order.discount || 0),

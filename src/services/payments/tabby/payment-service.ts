@@ -19,8 +19,8 @@ export class TabbyService {
   private baseUrl: string;
 
   constructor(region: TabbyRegion = "UAE") {
-    this.apiKey = process.env.TABBY_API_KEY || "";
-    this.merchantCode = process.env.TABBY_MERCHANT_CODE || "";
+    this.apiKey = (process.env.TABBY_API_KEY || "").trim();
+    this.merchantCode = (process.env.TABBY_MERCHANT_CODE || "").trim();
     this.region = region;
     this.baseUrl = TABBY_API_BASE_URLS[region];
   }
@@ -38,15 +38,15 @@ export class TabbyService {
       headers: this.getHeaders(),
       body: JSON.stringify({
         payment: {
-          amount: params.amount.toFixed(2),
+          amount: params.amount.toFixed(["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2),
           currency: params.currency,
           description: params.description || `Order ${params.orderId}`,
           buyer: params.buyer,
           shipping_address: params.shippingAddress,
           order: {
-            tax_amount: params.taxAmount ? params.taxAmount.toFixed(2) : "0.00",
-            shipping_amount: params.shippingAmount ? params.shippingAmount.toFixed(2) : "0.00",
-            discount_amount: params.discountAmount ? params.discountAmount.toFixed(2) : "0.00",
+            tax_amount: params.taxAmount ? params.taxAmount.toFixed(["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2) : "0.00",
+            shipping_amount: params.shippingAmount ? params.shippingAmount.toFixed(["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2) : "0.00",
+            discount_amount: params.discountAmount ? params.discountAmount.toFixed(["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2) : "0.00",
             reference_id: params.orderReferenceId,
             items: params.items.map(item => ({
               title: item.title,
@@ -63,23 +63,26 @@ export class TabbyService {
         },
         lang: "en",
         merchant_code: this.merchantCode,
-        merchant_urls: {
-          success: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?order_id=${params.orderId}&payment=tabby`,
-          cancel: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${params.orderId}?canceled=tabby`,
-          failure: `${process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${params.orderId}?rejected=tabby`,
+        merchant_urls: params.merchant_urls || {
+          success: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.shanfaglobal.com"}/checkout/success?order_id=${params.orderId}&payment=tabby`,
+          cancel: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.shanfaglobal.com"}/checkout/payment/${params.orderId}?canceled=tabby`,
+          failure: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.shanfaglobal.com"}/checkout/payment/${params.orderId}?rejected=tabby`,
         },
       }),
     });
 
     if (!response.ok) {
-      let errorMessage = `Tabby session creation failed: ${response.status}`;
+      const errorText = await response.text();
+      let errorData;
       try {
-        const error = await response.json();
-        errorMessage = error.message || errorMessage;
+        errorData = JSON.parse(errorText);
       } catch (e) {
-        // Fallback to status code error if body is not JSON
+        errorData = { message: errorText };
       }
-      throw new Error(errorMessage);
+      console.error("Tabby API FULL Error Response:", JSON.stringify(errorData, null, 2));
+      
+      const msg = errorData.message || errorData.error || (errorData.errors && JSON.stringify(errorData.errors)) || `Status: ${response.status}`;
+      throw new Error(`Tabby Rejection: ${msg}`);
     }
 
     const text = await response.text();

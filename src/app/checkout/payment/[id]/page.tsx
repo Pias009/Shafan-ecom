@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, CreditCard, Loader2, Banknote, Wallet } from "lucide-react";
+import { CheckCircle2, CreditCard, Loader2, Banknote, Wallet, Info, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { loadStripe } from "@stripe/stripe-js";
@@ -143,6 +143,7 @@ function PaymentPageContent() {
   const [codLoading, setCodLoading] = useState(false);
   const [tabbyLoading, setTabbyLoading] = useState(false);
   const [tamaraLoading, setTamaraLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchOrderAndStripe() {
@@ -200,6 +201,7 @@ function PaymentPageContent() {
 
   const handleTabbyPayment = async () => {
     setTabbyLoading(true);
+    setError(null);
     const tid = toast.loading("Connecting to Tabby...");
     try {
       const res = await fetch("/api/payments/tabby/create-session", {
@@ -227,6 +229,8 @@ function PaymentPageContent() {
         throw new Error("No checkout URL received from Tabby.");
       }
     } catch (err: any) {
+      console.error("Tabby Error:", err);
+      setError(err.message || "Failed to initialize Tabby payment");
       toast.error(err.message || "Failed to initialize Tabby payment", { id: tid });
       setTabbyLoading(false);
     }
@@ -234,9 +238,9 @@ function PaymentPageContent() {
 
   const handleTamaraPayment = async () => {
     setTamaraLoading(true);
+    setError(null);
     const tid = toast.loading("Connecting to Tamara...");
     try {
-      // CACHE-BUSTER: Added timestamp to force Vercel to use fresh code
       const res = await fetch(`/api/payments/tamara/create-session?t=${Date.now()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -264,9 +268,10 @@ function PaymentPageContent() {
       }
     } catch (err: any) {
       console.error("Tamara Payment Error:", err);
+      setError(err.message || "Failed to initialize Tamara payment");
       toast.error(err.message || "Failed to initialize Tamara payment", { 
         id: tid,
-        duration: 5000 // Show for longer so user can read it
+        duration: 5000 
       });
       setTamaraLoading(false);
     }
@@ -292,35 +297,59 @@ function PaymentPageContent() {
               <p className="font-body text-[10px] md:text-sm text-black/40 mt-1 uppercase font-bold tracking-widest">Order ID: {id.substring(0, 8)}</p>
             </div>
 
-            <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase tracking-widest text-black/30 px-2">Express Checkout</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  onClick={handleTabbyPayment}
-                  disabled={tabbyLoading}
-                  className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#3ECF8E] hover:bg-[#3ECF8E]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#3ECF8E]/20 overflow-hidden h-14 md:h-16"
-                >
-                  <div className="flex items-center gap-3 ml-5">
-                    <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-6" />
-                  </div>
-                  <div className="mr-5 bg-black/10 px-3 py-1.5 rounded-full text-[10px] font-black text-black uppercase tracking-widest">
-                    {tabbyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay in 4"}
-                  </div>
-                </button>
-
-                <button
-                  onClick={handleTamaraPayment}
-                  disabled={tamaraLoading}
-                  className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#FF4D4D] hover:bg-[#FF4D4D]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#FF4D4D]/20 overflow-hidden h-14 md:h-16"
-                >
-                  <div className="flex items-center gap-3 ml-5">
-                    <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara" className="h-8" />
-                  </div>
-                  <div className="mr-5 bg-white/20 px-3 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
-                    {tamaraLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Installments"}
-                  </div>
+            {/* Error Message Display */}
+            {error && (
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                <div className="p-2 bg-white rounded-full text-red-500 shadow-sm">
+                  <Info className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-red-600">Payment Notice</div>
+                  <div className="text-[11px] text-red-500 font-medium line-clamp-2">{error}</div>
+                </div>
+                <button onClick={() => setError(null)} className="text-red-300 hover:text-red-500 transition">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
+            )}
+
+            <div className="space-y-4">
+              {(country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+                <>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/30 px-2">Express Checkout</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {(country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
+                      <button
+                        onClick={handleTabbyPayment}
+                        disabled={tabbyLoading}
+                        className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#3ECF8E] hover:bg-[#3ECF8E]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#3ECF8E]/20 overflow-hidden h-14 md:h-16"
+                      >
+                        <div className="flex items-center gap-3 ml-5">
+                          <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-6" />
+                        </div>
+                        <div className="mr-5 bg-black/10 px-3 py-1.5 rounded-full text-[10px] font-black text-black uppercase tracking-widest">
+                          {tabbyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay in 4"}
+                        </div>
+                      </button>
+                    )}
+
+                    {(country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+                      <button
+                        onClick={handleTamaraPayment}
+                        disabled={tamaraLoading}
+                        className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#FF4D4D] hover:bg-[#FF4D4D]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#FF4D4D]/20 overflow-hidden h-14 md:h-16"
+                      >
+                        <div className="flex items-center gap-3 ml-5">
+                          <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara" className="h-8" />
+                        </div>
+                        <div className="mr-5 bg-white/20 px-3 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
+                          {tamaraLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Installments"}
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-4">
@@ -355,33 +384,37 @@ function PaymentPageContent() {
                   {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
                 </div>
 
-                <div 
-                  onClick={() => setMethod("tabby")}
-                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-[#3ECF8E] shadow-lg" : "border-black/5 hover:border-black/10"}`}
-                >
-                  <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tabby" ? "bg-[#3ECF8E] text-black" : "bg-black/5"}`}>
-                    <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="w-8 md:w-10" />
+                {(country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
+                  <div 
+                    onClick={() => setMethod("tabby")}
+                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-[#3ECF8E] shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                  >
+                    <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tabby" ? "bg-[#3ECF8E] text-black" : "bg-black/5"}`}>
+                      <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="w-8 md:w-10" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-base md:text-lg">Tabby</div>
+                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Split into 4 interest-free payments</div>
+                    </div>
+                    {method === "tabby" && <CheckCircle2 className="text-[#3ECF8E]" size={18} />}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-base md:text-lg">Tabby</div>
-                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Split into 4 interest-free payments</div>
-                  </div>
-                  {method === "tabby" && <CheckCircle2 className="text-[#3ECF8E]" size={18} />}
-                </div>
+                )}
 
-                <div 
-                  onClick={() => setMethod("tamara")}
-                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-[#FF4D4D] shadow-lg" : "border-black/5 hover:border-black/10"}`}
-                >
-                  <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tamara" ? "bg-[#FF4D4D] text-white" : "bg-black/5"}`}>
-                    <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara" className="w-8 md:w-10" />
+                {(country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+                  <div 
+                    onClick={() => setMethod("tamara")}
+                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-[#FF4D4D] shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                  >
+                    <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tamara" ? "bg-[#FF4D4D] text-white" : "bg-black/5"}`}>
+                      <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara" className="w-8 md:w-10" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-base md:text-lg">Tamara</div>
+                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Split your payments with Tamara</div>
+                    </div>
+                    {method === "tamara" && <CheckCircle2 className="text-[#FF4D4D]" size={18} />}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-base md:text-lg">Tamara</div>
-                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Split your payments with Tamara</div>
-                  </div>
-                  {method === "tamara" && <CheckCircle2 className="text-[#FF4D4D]" size={18} />}
-                </div>
+                )}
               </div>
             </div>
 

@@ -109,4 +109,9 @@ export interface TabbySessionRequest {
   shippingAmount?: number;
   discountAmount?: number;
   metadata?: Record<string, string>;
+  merchant_urls?: {
+    success: string;
+    cancel: string;
+    failure: string;
+  };
 }

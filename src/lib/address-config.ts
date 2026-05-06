@@ -57,6 +57,12 @@ export const COUNTRY_CONFIG: Record<string, CountryConfig> = {
     taxRate: 0,
     regions: ['Doha', 'Al Rayyan', 'Al Wakrah', 'Al Khor', 'Umm Salal'],
   },
+  BD: {
+    code: 'BD', name: 'Bangladesh (Test)', active: true, currency: 'AED',
+    minOrder: 1, deliveryFee: 0, freeDelivery: 1, estimatedDays: 1,
+    taxRate: 0,
+    regions: ['Dhaka', 'Chittagong', 'Sylhet', 'Rajshahi'],
+  },
 };
 
 /**

@@ -40,9 +40,10 @@ export class TamaraService {
       
       // Tamara requires 'items' (not products) and each item needs a 'total_amount'
       items: params.items.map(item => {
+        const decimals = ["BHD", "KWD", "OMR"].includes(item.unitPrice.currency.toUpperCase()) ? 3 : 2;
         const unitPrice = Number(item.unitPrice.amount || 0);
         const quantity = Number(item.quantity || 1);
-        const itemTotal = (unitPrice * quantity).toFixed(2);
+        const itemTotal = (unitPrice * quantity).toFixed(decimals);
 
         return {
           reference_id: item.sku || `ITEM-${Math.random().toString(36).substr(2, 9)}`,
@@ -50,7 +51,7 @@ export class TamaraService {
           name: item.name || "Product",
           type: item.type || "Physical",
           unit_price: {
-            amount: unitPrice.toFixed(2),
+            amount: unitPrice.toFixed(decimals),
             currency: item.unitPrice.currency
           },
           quantity: quantity,
@@ -135,8 +136,11 @@ export class TamaraService {
       } catch (e) {
         errorData = { message: errorText };
       }
-      console.error("Tamara API Full Error Response:", JSON.stringify(errorData, null, 2));
-      throw new Error(errorData.message || errorData.errors?.[0]?.message || `Tamara session creation failed: ${response.status}`);
+      console.error("Tamara API FULL Error Response:", JSON.stringify(errorData, null, 2));
+      
+      // More descriptive error for common issues
+      const msg = errorData.message || errorData.errors?.[0]?.message || `Status: ${response.status}`;
+      throw new Error(`Tamara Rejection: ${msg}`);
     }
 
     return await response.json();
