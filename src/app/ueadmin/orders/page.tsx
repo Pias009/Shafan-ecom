@@ -157,14 +157,8 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     return <div className="p-20 text-center font-black opacity-20 italic text-3xl">Unauthorized Access</div>;
   }
 
-  // Build where clause - only show orders with confirmed payments
-  // Show orders where: payment is PAID OR (payment method is COD and COD is confirmed)
-  const where: any = {
-    OR: [
-      { paymentStatus: 'PAID' },
-      { AND: [{ paymentMethod: 'cod' }, { emailConfirmationSent: true }] }
-    ]
-  };
+  // Build where clause - Show all orders for the admin to manage
+  const where: any = {};
 
   // Filter by status if specified
   if (status !== 'ALL') {
