@@ -806,11 +806,11 @@ export async function POST(req: Request) {
     }
 
     // Notify admin — ONLY for COD orders at creation time
-    // For Tabby/Tamara/Stripe, admin email is sent AFTER payment confirmation via webhook
-    if (isCOD && process.env.ADMIN_EMAIL) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (isCOD && adminEmail) {
       const adminItemsList = order.items.map((item: any) => `${item.name || 'Product'} x${item.quantity}`).join(', ');
       await sendEmail({
-        to: process.env.ADMIN_EMAIL,
+        to: adminEmail,
         subject: `New COD Order #${order.id} - ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px;">
