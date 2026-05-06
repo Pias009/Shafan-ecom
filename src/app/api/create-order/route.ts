@@ -619,7 +619,17 @@ export async function POST(req: Request) {
 
     // Trigger real-time notification for admin panel
     try {
-      await notifyNewOrder(order);
+      const shippingAddress = order.shippingAddress as any;
+      const userName = shippingAddress?.fullName || 
+                       (shippingAddress?.firstName ? `${shippingAddress.firstName} ${shippingAddress.lastName || ""}` : "Guest Customer");
+
+      await notifyNewOrder({
+        id: order.id,
+        total: Number(order.total) || 0,
+        currency: order.currency.toUpperCase(),
+        userName: userName.trim(),
+        email: order.email || "No Email"
+      });
       console.log(`[Pusher] Live notification sent for order ${order.id}`);
     } catch (pusherErr) {
       console.error("[Pusher] Failed to send live notification:", pusherErr);
