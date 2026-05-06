@@ -610,12 +610,22 @@ export async function POST(req: Request) {
     }
 
     // Return the created order details
-    return NextResponse.json({
+    const orderResponse = {
       success: true,
       orderId: order.id,
       message: "Order created successfully",
       paymentMethod: payment_method
-    });
+    };
+
+    // Trigger real-time notification for admin panel
+    try {
+      await notifyNewOrder(order);
+      console.log(`[Pusher] Live notification sent for order ${order.id}`);
+    } catch (pusherErr) {
+      console.error("[Pusher] Failed to send live notification:", pusherErr);
+    }
+
+    return NextResponse.json(orderResponse);
 
     if (!order) {
       return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
