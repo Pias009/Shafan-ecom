@@ -810,8 +810,8 @@ export async function POST(req: Request) {
     if (isCOD && adminEmail) {
       const adminItemsList = order.items.map((item: any) => `${item.name || 'Product'} x${item.quantity}`).join(', ');
       await sendEmail({
-        to: adminEmail,
-        subject: `New COD Order #${order.id} - ${order.total?.toFixed(2)} ${order.currency.toUpperCase()}`,
+        to: adminEmail as string,
+        subject: `New COD Order #${order.id} - ${Number(order.total || 0).toFixed(2)} ${order.currency.toUpperCase()}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px;">
             <h2 style="color: #333;">New Order Received! 💵 Cash on Delivery</h2>
