@@ -48,7 +48,30 @@ body {
   width: 100%;
   max-width: 100vw;
   background: #fdfaf5;
-  /* Fallback cream */
+  /* Prevent text selection and blue highlight on mobile */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Protection for images */
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  pointer-events: none; /* Only if you don't need clicks on images */
+}
+
+/* Re-enable selection for inputs and textareas so users can still type */
+input, textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 body::before {

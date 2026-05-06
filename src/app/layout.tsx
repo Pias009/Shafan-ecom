@@ -12,6 +12,7 @@ import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import { GTMProvider } from "@/components/GTMProvider";
 import { GAProvider } from "@/components/GAProvider";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
+import ContentProtection from "@/components/ContentProtection";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -74,6 +75,7 @@ export default function RootLayout({
           <MetaPixelProvider />
           <SpeedInsights />
           <Analytics />
+          <ContentProtection />
         </Providers>
       </body>
     </html>
