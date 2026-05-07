@@ -18,6 +18,24 @@ export class TamaraService {
     this.notificationToken = (process.env.TAMARA_NOTIFICATION_TOKEN || "").trim();
   }
 
+  private cleanPhone(phone: string | undefined): string {
+    if (!phone) return "";
+    // Remove all non-numeric characters
+    let cleaned = phone.replace(/\D/g, "");
+    // Remove leading zeros
+    cleaned = cleaned.replace(/^0+/, "");
+    // Remove country codes if they exist at the start
+    const countryCodes = ["971", "966", "965", "973", "974", "968"];
+    for (const code of countryCodes) {
+      if (cleaned.startsWith(code)) {
+        cleaned = cleaned.substring(code.length);
+        break;
+      }
+    }
+    // Final clean of any new leading zeros
+    return cleaned.replace(/^0+/, "");
+  }
+
   private getHeaders() {
     // Ensure no newlines in token which can crash fetch in Node.js
     const cleanToken = this.accessToken.replace(/[\n\r]/g, "");
@@ -43,7 +61,7 @@ export class TamaraService {
         const decimals = ["BHD", "KWD", "OMR"].includes(item.unitPrice.currency.toUpperCase()) ? 3 : 2;
         const unitPrice = Number(item.unitPrice.amount || 0);
         const quantity = Number(item.quantity || 1);
-        const itemTotal = (unitPrice * quantity).toFixed(decimals);
+        const itemTotal = (unitPrice * quantity);
 
         return {
           reference_id: item.sku || `ITEM-${Math.random().toString(36).substr(2, 9)}`,
@@ -56,7 +74,7 @@ export class TamaraService {
           },
           quantity: quantity,
           total_amount: {
-            amount: itemTotal,
+            amount: itemTotal.toFixed(decimals),
             currency: item.unitPrice.currency
           },
           description: item.description || item.name || "Product",
@@ -69,7 +87,7 @@ export class TamaraService {
         first_name: params.consumer.firstName || "Customer",
         last_name: params.consumer.lastName || "User",
         email: params.consumer.email || "customer@example.com",
-        phone_number: params.consumer.phone || "+971500000001",
+        phone_number: this.cleanPhone(params.consumer.phone),
       },
 
       billing_address: {
@@ -81,7 +99,7 @@ export class TamaraService {
         region: params.billingAddress.region,
         postal_code: params.billingAddress.postcode,
         country_code: params.billingAddress.country,
-        phone_number: params.billingAddress.phone,
+        phone_number: this.cleanPhone(params.billingAddress.phone || params.consumer.phone),
       },
 
       shipping_address: {
@@ -93,7 +111,7 @@ export class TamaraService {
         region: params.shippingAddress.region,
         postal_code: params.shippingAddress.postcode,
         country_code: params.shippingAddress.country,
-        phone_number: params.shippingAddress.phone,
+        phone_number: this.cleanPhone(params.shippingAddress.phone || params.consumer.phone),
       },
 
       // Mandatory top-level objects even if 0
@@ -119,6 +137,38 @@ export class TamaraService {
         notification: params.merchantUrls.notification || `${params.merchantUrls.success.split('/checkout')[0]}/api/payments/tamara/webhook`
       } : undefined,
     };
+
+    // 1. Currency Validation: Must strictly match the geo-location country code
+    const countryToCurrency: Record<string, string> = {
+      'AE': 'AED', 'SA': 'SAR', 'KW': 'KWD', 'BH': 'BHD', 'QA': 'QAR', 'OM': 'OMR'
+    };
+    const expectedCurrency = countryToCurrency[payload.country_code.toUpperCase()];
+    if (expectedCurrency && payload.total_amount.currency !== expectedCurrency) {
+      console.warn(`[Tamara] Currency mismatch: expected ${expectedCurrency} for ${payload.country_code}, but got ${payload.total_amount.currency}. Correcting...`);
+      const newCurrency = expectedCurrency as any;
+      payload.total_amount.currency = newCurrency;
+      payload.shipping_amount.currency = newCurrency;
+      payload.tax_amount.currency = newCurrency;
+      payload.discount.currency = newCurrency;
+      payload.items.forEach(item => {
+        item.unit_price.currency = newCurrency;
+        item.total_amount.currency = newCurrency;
+      });
+    }
+
+    // 2. Math Check: Ensure top-level total_amount matches the sum of all line item amounts to avoid 400 errors
+    const itemsTotal = payload.items.reduce((acc, item) => acc + Number(item.total_amount.amount), 0);
+    const shippingAmt = Number(payload.shipping_amount.amount);
+    const taxAmt = Number(payload.tax_amount.amount);
+    const discountAmt = Number(payload.discount.amount);
+    
+    const decimals = ["BHD", "KWD", "OMR"].includes(payload.total_amount.currency.toUpperCase()) ? 3 : 2;
+    const calculatedTotal = (itemsTotal + shippingAmt + taxAmt - discountAmt).toFixed(decimals);
+    
+    if (payload.total_amount.amount !== calculatedTotal) {
+      console.warn(`[Tamara] Math mismatch: payload total ${payload.total_amount.amount} vs calculated ${calculatedTotal}. Overriding with calculated total.`);
+      payload.total_amount.amount = calculatedTotal;
+    }
 
     console.log("Tamara API Request Payload:", JSON.stringify(payload, null, 2));
 

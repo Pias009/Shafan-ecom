@@ -25,6 +25,24 @@ export class TabbyService {
     this.baseUrl = TABBY_API_BASE_URLS[region];
   }
 
+  private cleanPhone(phone: string | undefined): string {
+    if (!phone) return "";
+    // Remove all non-numeric characters
+    let cleaned = phone.replace(/\D/g, "");
+    // Remove leading zeros
+    cleaned = cleaned.replace(/^0+/, "");
+    // Remove country codes if they exist at the start
+    const countryCodes = ["971", "966", "965", "973", "974", "968"];
+    for (const code of countryCodes) {
+      if (cleaned.startsWith(code)) {
+        cleaned = cleaned.substring(code.length);
+        break;
+      }
+    }
+    // Final clean of any new leading zeros
+    return cleaned.replace(/^0+/, "");
+  }
+
   private getHeaders(): HeadersInit {
     return {
       "Content-Type": "application/json",
@@ -33,25 +51,59 @@ export class TabbyService {
   }
 
   async createSession(params: TabbySessionRequest): Promise<TabbySession> {
+    const decimals = ["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2;
+    
+    // 1. Phone Cleaning
+    if (params.buyer) {
+      params.buyer.phone = this.cleanPhone(params.buyer.phone);
+    }
+    if (params.shippingAddress) {
+      // TabbyShippingAddress doesn't support phone field in its schema
+    }
+
+    // 2. Currency Validation
+    const regionToCurrency: Record<TabbyRegion, string> = {
+      UAE: "AED",
+      KSA: "SAR",
+      Kuwait: "KWD",
+    };
+    const expectedCurrency = regionToCurrency[this.region];
+    if (expectedCurrency && params.currency !== expectedCurrency) {
+        console.warn(`[Tabby] Currency mismatch: expected ${expectedCurrency} for region ${this.region}, but got ${params.currency}. Correcting...`);
+        params.currency = expectedCurrency as any;
+    }
+
+    // 3. Math Check: Ensure top-level amount matches sum of items + shipping + tax - discount
+    const itemsTotal = params.items.reduce((acc, item) => acc + (Number(item.unitPrice) * item.quantity), 0);
+    const shippingAmt = params.shippingAmount || 0;
+    const taxAmt = params.taxAmount || 0;
+    const discountAmt = params.discountAmount || 0;
+    const calculatedAmount = Number((itemsTotal + shippingAmt + taxAmt - discountAmt).toFixed(decimals));
+
+    if (Math.abs(params.amount - calculatedAmount) > 0.01) {
+      console.warn(`[Tabby] Math mismatch: amount ${params.amount} vs calculated ${calculatedAmount}. Using calculated.`);
+      params.amount = calculatedAmount;
+    }
+
     const response = await fetch(`${this.baseUrl}/api/v2/checkout`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify({
         payment: {
-          amount: params.amount.toFixed(["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2),
+          amount: params.amount.toFixed(decimals),
           currency: params.currency,
           description: params.description || `Order ${params.orderId}`,
           buyer: params.buyer,
           shipping_address: params.shippingAddress,
           order: {
-            tax_amount: params.taxAmount ? params.taxAmount.toFixed(["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2) : "0.00",
-            shipping_amount: params.shippingAmount ? params.shippingAmount.toFixed(["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2) : "0.00",
-            discount_amount: params.discountAmount ? params.discountAmount.toFixed(["BHD", "KWD", "OMR"].includes(params.currency.toUpperCase()) ? 3 : 2) : "0.00",
+            tax_amount: taxAmt.toFixed(decimals),
+            shipping_amount: shippingAmt.toFixed(decimals),
+            discount_amount: discountAmt.toFixed(decimals),
             reference_id: params.orderReferenceId,
             items: params.items.map(item => ({
               title: item.title,
               quantity: item.quantity,
-              unit_price: item.unitPrice,
+              unit_price: Number(item.unitPrice).toFixed(decimals),
               image_url: item.imageUrl,
               category: item.category || "General",
             })),

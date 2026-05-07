@@ -62,7 +62,7 @@ export async function GET() {
       const rawImage   = Array.isArray(product.images) ? product.images[0] ?? '' : '';
       const imageLink  = rawImage.replace(/&/g, '&amp;');
 
-      const link         = `${SITE_URL}/products/${product.slug || product.id}`;
+      const link         = `${SITE_URL}/products/${product.id}`;
       const availability = product.stockQuantity && product.stockQuantity > 0
         ? 'in_stock'
         : 'out_of_stock';

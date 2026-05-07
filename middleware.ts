@@ -12,10 +12,18 @@ export async function middleware(req: NextRequest) {
   // 1. FAST EXCLUSIONS
   const isStaticAsset = pathname.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|mp4|webm)$/)
   const isApi = pathname.startsWith('/api/')
+  const userAgent = req.headers.get('user-agent') || ''
+  const isBot = userAgent.toLowerCase().includes('googlebot') || 
+                userAgent.toLowerCase().includes('merchantbot') ||
+                userAgent.toLowerCase().includes('adsbot')
+
+  const isWebhook = pathname.includes('/webhook') || 
+                    pathname.includes('/callback') ||
+                    pathname.startsWith('/api/payments/')
   const isNextInternal = pathname.startsWith('/_next/')
   const isLockStatusApi = pathname === '/api/lock/status'
-  
-  if (isStaticAsset || isNextInternal || isLockStatusApi) return NextResponse.next()
+
+  if (isStaticAsset || isNextInternal || isLockStatusApi || isBot || isWebhook) return NextResponse.next()
 
   // 2. ADMIN PROTECTION
   if (pathname.startsWith('/ueadmin')) {
