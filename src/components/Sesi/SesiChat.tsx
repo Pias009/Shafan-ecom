@@ -9,6 +9,7 @@ import ProductPrescriptionCard from "./ProductPrescriptionCard";
 import SkinTestCTA from "./SkinTestCTA";
 import ProductRecommendationCard from "./ProductRecommendationCard";
 import CooldownScreen from "./CooldownScreen";
+import { pickSesiGif } from "@/lib/sesi/gifs";
 
 const MAX_QUESTIONS_BEFORE_COOLDOWN = 5;
 
@@ -78,13 +79,13 @@ export default function SesiChat() {
       playSequentialMessages(
         [
           "Hiiiii! I'm Sesi! Your personal skin bestie! 👋✨",
-          "I'm here to help you discover your perfect skincare routine! 💖",
+          "What would you like to do today?",
         ],
         () => {
           setShowQuickReplies([
-            "Suggest me products 💡",
-            "What's a skin test? 🤔",
-            "Maybe later",
+            "🔍 Check my skin type",
+            "💡 Suggest products",
+            "💬 Chat with Sesi",
           ]);
         }
       );
@@ -239,7 +240,8 @@ export default function SesiChat() {
 
       const data = await res.json();
 
-      addMessage(data.text, false);
+      const gifUrl = pickSesiGif(data.text, persona) ?? undefined;
+      addMessage(data.text, false, "text", undefined, gifUrl);
       addAIHistory("assistant", data.text);
 
       if (data.chartData) {
@@ -297,25 +299,24 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "Suggest me products 💡") {
+    if (reply === "🔍 Check my skin type") {
       addMessage(reply, true);
       addAIHistory("user", reply);
-      advanceState("PRODUCT_REQUEST");
+      advanceState("SKIN_ANALYSIS");
       setShowQuickReplies([]);
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Yay! Let's find your perfect products! 🎁✨",
-            "First, what's your skin type?",
+            "Great! Let's find your skin type! ✨",
+            "After washing your face and waiting 30 minutes, how does it feel?",
           ],
           () => {
             setShowQuickReplies([
-              "Oily ✨",
-              "Dry 🏜️",
-              "Combination 🌗",
-              "Sensitive 🤧",
-              "Normal 😊",
-              "I don't know 🤷",
+              "Tight & dry 🏜️",
+              "Shiny everywhere ✨",
+              "Oily in T-zone 🌗",
+              "Comfortable 😊",
+              "Red & itchy 🤧",
             ]);
           }
         );
@@ -323,7 +324,51 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "I don't know 🤷") {
+    if (reply === "💡 Suggest products") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      advanceState("PRODUCT_REQUEST");
+      setShowQuickReplies([]);
+      setTimeout(() => {
+        addMessage("What's your skin type? ✨", false);
+        setShowQuickReplies([
+          "Oily ✨",
+          "Dry 🏜️",
+          "Combination 🌗",
+          "Sensitive 🤧",
+          "Normal 😊",
+          "Not sure — help me!",
+        ]);
+      }, 500);
+      return;
+    }
+
+    if (reply === "💬 Chat with Sesi") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setShowQuickReplies([]);
+      setTimeout(() => {
+        playSequentialMessages(
+          [
+            "Yay! Let's chat! 💖✨",
+            "Tell me about your skin — what's bothering you or what do you want to improve?",
+          ],
+          () => {
+            setShowQuickReplies([
+              "My skin is dry",
+              "I have acne 😣",
+              "Dark spots 🌑",
+              "Want glowing skin ✨",
+              "Anti-aging tips ⏳",
+              "Something else 💬",
+            ]);
+          }
+        );
+      }, 300);
+      return;
+    }
+
+    if (reply === "Not sure — help me!") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       advanceState("SKIN_ANALYSIS");
@@ -332,19 +377,116 @@ export default function SesiChat() {
         playSequentialMessages(
           [
             "No worries! Let's do a quick test! 🧪✨",
-            "Wash your face, wait 30 minutes, then tell me: How does your skin feel?",
+            "Wash your face, wait 30 min, then tell me: how does it feel?",
           ],
           () => {
             setShowQuickReplies([
               "Tight & dry 🏜️",
               "Shiny everywhere ✨",
-              "Oily in T-zone only 🌗",
-              "Comfortable & soft 😊",
+              "Oily in T-zone 🌗",
+              "Comfortable 😊",
               "Red & itchy 🤧",
             ]);
           }
         );
       }, 300);
+      return;
+    }
+
+    if (reply === "My skin is dry") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setSkinType("dry");
+      setSkinConcerns(["hydration"]);
+      setShowQuickReplies([]);
+      setTimeout(() => {
+        addMessage("Dry skin needs lots of hydration! 💧 Let me find perfect products for you! ✨", false);
+        setTimeout(() => {
+          fetchProductRecommendations("dry", ["hydration"]);
+        }, 1500);
+      }, 500);
+      return;
+    }
+
+    if (reply === "I have acne 😣") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setSkinConcerns(["acne"]);
+      setShowQuickReplies([]);
+      setTimeout(() => {
+        addMessage("Acne can be tough but we'll fix it! 💪✨ What's your skin type?", false);
+        setShowQuickReplies([
+          "Oily ✨",
+          "Dry 🏜️",
+          "Combination 🌗",
+          "Sensitive 🤧",
+        ]);
+      }, 500);
+      return;
+    }
+
+    if (reply === "Dark spots 🌑") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setSkinConcerns(["dark spot"]);
+      setShowQuickReplies([]);
+      setTimeout(() => {
+        addMessage("Dark spots? I know exactly what to help! ✨ What's your skin type?", false);
+        setShowQuickReplies([
+          "Oily ✨",
+          "Dry 🏜️",
+          "Combination 🌗",
+          "Sensitive 🤧",
+          "Normal 😊",
+        ]);
+      }, 500);
+      return;
+    }
+
+    if (reply === "Want glowing skin ✨") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setSkinConcerns(["brightening"]);
+      setShowQuickReplies([]);
+      setTimeout(() => {
+        addMessage("Glowing skin is coming your way! ✨💖 What's your skin type?", false);
+        setShowQuickReplies([
+          "Oily ✨",
+          "Dry 🏜️",
+          "Combination 🌗",
+          "Sensitive 🤧",
+          "Normal 😊",
+        ]);
+      }, 500);
+      return;
+    }
+
+    if (reply === "Anti-aging tips ⏳") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setSkinConcerns(["aging"]);
+      setShowQuickReplies([]);
+      setTimeout(() => {
+        addMessage("Let's keep your skin young and fresh! ✨ What's your skin type?", false);
+        setShowQuickReplies([
+          "Oily ✨",
+          "Dry 🏜️",
+          "Combination 🌗",
+          "Sensitive 🤧",
+          "Normal 😊",
+        ]);
+      }, 500);
+      return;
+    }
+
+    if (reply === "Something else 💬") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setShowQuickReplies([]);
+      addMessage(
+        "Tell me anything about your skin! I'm here to help! 💖✨",
+        false
+      );
       return;
     }
 
@@ -363,28 +505,33 @@ export default function SesiChat() {
         "Sensitive 🤧": "sensitive",
         "Normal 😊": "normal",
       };
-      setSkinType(typeMap[reply] || "normal");
+      const detectedType = typeMap[reply] || "normal";
+      setSkinType(detectedType);
 
       setShowQuickReplies([]);
       setTimeout(() => {
-        addMessage(
-          "Great! What are your main skin concerns? (pick one or more below)",
-          false
-        );
-        setShowQuickReplies([
-          "Acne 😣",
-          "Dark spots 🌑",
-          "Anti-aging ⏳",
-          "Dull skin 💤",
-          "Pores 🔍",
-          "No concerns, just glow! ✨",
-        ]);
+        if (skinConcerns.length > 0) {
+          addMessage(`Perfect! Let me find the best products for your ${detectedType} skin! ✨`, false);
+          setTimeout(() => {
+            fetchProductRecommendations(detectedType, skinConcerns);
+          }, 1000);
+        } else {
+          addMessage("Great! What are your main skin concerns? ✨", false);
+          setShowQuickReplies([
+            "Acne 😣",
+            "Dark spots 🌑",
+            "Anti-aging ⏳",
+            "Dull skin 💤",
+            "Pores 🔍",
+            "Just glow! ✨",
+          ]);
+        }
       }, 500);
       return;
     }
 
     if (
-      ["Acne 😣", "Dark spots 🌑", "Anti-aging ⏳", "Dull skin 💤", "Pores 🔍", "No concerns, just glow! ✨"].includes(
+      ["Acne 😣", "Dark spots 🌑", "Anti-aging ⏳", "Dull skin 💤", "Pores 🔍", "Just glow! ✨"].includes(
         reply
       )
     ) {
@@ -397,24 +544,23 @@ export default function SesiChat() {
         "Anti-aging ⏳": "aging",
         "Dull skin 💤": "dull",
         "Pores 🔍": "pores",
-        "No concerns, just glow! ✨": "brightening",
+        "Just glow! ✨": "brightening",
       };
-      setSkinConcerns([concernMap[reply] || "brightening"]);
+      const concern = concernMap[reply] || "brightening";
+      setSkinConcerns([concern]);
 
       setShowQuickReplies([]);
       setTimeout(() => {
         addMessage("Analyzing your skin profile... 🧪✨", false);
         setTimeout(() => {
-          fetchProductRecommendations(skinType || "normal", [
-            concernMap[reply] || "brightening",
-          ]);
+          fetchProductRecommendations(skinType || "normal", [concern]);
         }, 1500);
       }, 300);
       return;
     }
 
     if (
-      ["Tight & dry 🏜️", "Shiny everywhere ✨", "Oily in T-zone only 🌗", "Comfortable & soft 😊", "Red & itchy 🤧"].includes(
+      ["Tight & dry 🏜️", "Shiny everywhere ✨", "Oily in T-zone 🌗", "Comfortable 😊", "Red & itchy 🤧"].includes(
         reply
       )
     ) {
@@ -424,8 +570,8 @@ export default function SesiChat() {
       const testMap: Record<string, string> = {
         "Tight & dry 🏜️": "dry",
         "Shiny everywhere ✨": "oily",
-        "Oily in T-zone only 🌗": "combination",
-        "Comfortable & soft 😊": "normal",
+        "Oily in T-zone 🌗": "combination",
+        "Comfortable 😊": "normal",
         "Red & itchy 🤧": "sensitive",
       };
       const detectedType = testMap[reply] || "normal";
@@ -436,7 +582,7 @@ export default function SesiChat() {
         playSequentialMessages(
           [
             `Based on your test, you have ${detectedType} skin! 🎯`,
-            "Now let's find your perfect products! What's your main concern?",
+            "What's your main concern?",
           ],
           () => {
             setShowQuickReplies([
@@ -491,39 +637,28 @@ export default function SesiChat() {
       addMessage(reply, true);
       addAIHistory("user", reply);
       addMessage(
-        "A skin test is like a magic check-up for your skin! eee! It helps me understand what your skin needs to be happy! 🌸",
+        "A skin test helps me understand your skin type! Just wash your face, wait 30 min, and tell me how it feels! 🌸",
         false
       );
-      setShowQuickReplies(["Let's do it! ✨", "Suggest products instead 💡"]);
+      setShowQuickReplies(["Let's do it! 🔍", "Suggest products 💡"]);
       return;
     }
 
-    if (reply === "Not now") {
-      addMessage(reply, true);
-      addAIHistory("user", reply);
-      addMessage(
-        "That's okay! Just tap me when you're ready for a glow up! 💖",
-        false
-      );
-      setShowQuickReplies([]);
-      return;
-    }
-
-    if (reply === "Let's do it! ✨") {
-      advanceState("DR_SESI_DIAGNOSIS");
+    if (reply === "Let's do it! 🔍") {
+      advanceState("SKIN_ANALYSIS");
       setShowQuickReplies([]);
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Okay... let me put on my special doctor glasses! 👓",
-            "Dr. Sesi is here! Let's start your skin check-up! First question: How does your skin feel right now? 💧",
+            "Great! After washing your face, how does it feel? ✨",
           ],
           () => {
             setShowQuickReplies([
-              "Dry and tight 🏜️",
-              "Oily and shiny ✨",
+              "Tight & dry 🏜️",
+              "Shiny everywhere ✨",
+              "Oily in T-zone 🌗",
               "Comfortable 😊",
-              "I don't know 🤷",
+              "Red & itchy 🤧",
             ]);
           }
         );
@@ -540,20 +675,20 @@ export default function SesiChat() {
     if (reply === "Yes, let's go! 🚀") {
       addMessage(reply, true);
       addAIHistory("user", reply);
-      advanceState("DR_SESI_DIAGNOSIS");
+      advanceState("SKIN_ANALYSIS");
       setShowQuickReplies([]);
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Yay! Let me put on my doctor glasses! 👓✨",
-            "Dr. Sesi is here! Tell me: how does your skin feel right now?",
+            "Yay! Let's find your skin type! ✨",
+            "How does your skin feel after washing?",
           ],
           () => {
             setShowQuickReplies([
-              "Dry and tight 🏜️",
-              "Oily and shiny ✨",
+              "Tight & dry 🏜️",
+              "Shiny everywhere ✨",
+              "Oily in T-zone 🌗",
               "Comfortable 😊",
-              "I don't know 🤷",
             ]);
           }
         );
@@ -753,20 +888,36 @@ export default function SesiChat() {
                 msg.fromUser ? "justify-end" : "justify-start"
               }`}
             >
-              <div
-                className={`max-w-[90%] px-4 py-3 rounded-3xl text-sm leading-relaxed ${
-                  msg.fromUser
-                    ? isDoctorMode
-                      ? "bg-teal-500/90 text-white rounded-br-md"
-                      : "bg-pink-500/90 text-white rounded-br-md"
-                    : msg.type === "routine_pivot"
-                    ? "bg-gradient-to-r from-amber-100/90 to-orange-100/90 backdrop-blur-md text-amber-800 rounded-bl-md shadow-sm border border-amber-200/50 font-bold"
-                    : msg.type === "product_recommendation"
-                    ? "bg-white/80 backdrop-blur-md text-gray-800 rounded-bl-md shadow-sm border border-gray-100/50"
-                    : "bg-white/80 backdrop-blur-md text-gray-800 rounded-bl-md shadow-sm border border-gray-100/50"
-                }`}
-              >
-                {renderMessageContent(msg)}
+              <div className="flex flex-col items-start gap-2 max-w-[90%]">
+                {msg.gifUrl && !msg.fromUser && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="rounded-2xl overflow-hidden shadow-md border border-gray-100/50 w-40 h-40"
+                  >
+                    <img
+                      src={msg.gifUrl}
+                      alt="Sesi reaction"
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.div>
+                )}
+                <div
+                  className={`px-4 py-3 rounded-3xl text-sm leading-relaxed ${
+                    msg.fromUser
+                      ? isDoctorMode
+                        ? "bg-teal-500/90 text-white rounded-br-md"
+                        : "bg-pink-500/90 text-white rounded-br-md"
+                      : msg.type === "routine_pivot"
+                      ? "bg-gradient-to-r from-amber-100/90 to-orange-100/90 backdrop-blur-md text-amber-800 rounded-bl-md shadow-sm border border-amber-200/50 font-bold"
+                      : msg.type === "product_recommendation"
+                      ? "bg-white/80 backdrop-blur-md text-gray-800 rounded-bl-md shadow-sm border border-gray-100/50"
+                      : "bg-white/80 backdrop-blur-md text-gray-800 rounded-bl-md shadow-sm border border-gray-100/50"
+                  }`}
+                >
+                  {renderMessageContent(msg)}
+                </div>
               </div>
             </motion.div>
           ))}

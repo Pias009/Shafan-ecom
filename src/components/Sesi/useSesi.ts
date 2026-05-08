@@ -38,6 +38,7 @@ export interface ChatMessage {
   state: SesiStateName;
   type: "text" | "skin_test_cta" | "product_prescription" | "chart" | "routine_pivot" | "product_recommendation" | "skin_analysis" | "cooldown";
   productId?: string;
+  gifUrl?: string;
 }
 
 interface SesiStore {
@@ -63,7 +64,7 @@ interface SesiStore {
   setOpen: (open: boolean) => void;
   advanceState: (next: SesiStateName) => void;
   setPersona: (persona: "baby" | "doctor") => void;
-  addMessage: (text: string, fromUser: boolean, type?: ChatMessage["type"], productId?: string) => void;
+  addMessage: (text: string, fromUser: boolean, type?: ChatMessage["type"], productId?: string, gifUrl?: string) => void;
   setTyping: (typing: boolean) => void;
   setRadarData: (data: Partial<RadarMetric>) => void;
   setChartData: (data: Record<string, number>) => void;
@@ -134,11 +135,19 @@ export const useSesi = create<SesiStore>((set) => ({
 
   setPersona: (persona) => set({ persona }),
 
-  addMessage: (text, fromUser, type = "text", productId) =>
+  addMessage: (text: string, fromUser: boolean, type?: ChatMessage["type"], productId?: string, gifUrl?: string) =>
     set((state) => ({
       messages: [
         ...state.messages,
-        { id: `${Date.now()}-${Math.random()}`, text, fromUser, state: state.state, type, productId },
+        {
+          id: `${Date.now()}-${Math.random()}`,
+          text,
+          fromUser,
+          state: state.state,
+          type: type ?? "text",
+          productId,
+          gifUrl,
+        },
       ],
     })),
 

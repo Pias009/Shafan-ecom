@@ -3,7 +3,7 @@
 import { useRef, useLayoutEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSesi } from "./useSesi";
-import { Search, Sparkles, Stethoscope } from "lucide-react";
+import { Search, Sparkles, Stethoscope, Smile, Star, Droplets } from "lucide-react";
 
 const STORAGE_KEY = "sesi-position";
 
@@ -95,22 +95,24 @@ export default function SesiIcon() {
                   animate={{ scale: 1, rotate: 0 }}
                   exit={{ scale: 0, rotate: 20 }}
                   transition={{ type: "spring", stiffness: 400, damping: 18 }}
-                  className="flex flex-col items-center justify-center"
+                  className="relative flex items-center justify-center"
                 >
-                  <div className="text-3xl sm:text-4xl leading-none">{"\u{1F469}\u200D\u2695\uFE0F"}</div>
+                  <Stethoscope className="w-8 h-8 sm:w-10 sm:h-10 text-teal-500" strokeWidth={1.5} />
+
                   <motion.div
-                    className="absolute -top-0.5 -right-0.5 bg-teal-500 rounded-full p-1"
-                    animate={{ rotate: [0, 10, -10, 0] }}
+                    className="absolute -top-1 -right-1 bg-teal-500 rounded-full p-0.5"
+                    animate={{ rotate: [0, 15, -15, 0] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <Stethoscope className="w-2.5 h-2.5 text-white" />
+                    <Search className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" strokeWidth={2.5} />
                   </motion.div>
+
                   <motion.div
-                    className="absolute bottom-1 right-1 w-4 h-4 bg-teal-400 rounded-full flex items-center justify-center"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2.5, repeat: Infinity }}
+                    className="absolute -bottom-0.5 -left-1"
+                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <Search className="w-2.5 h-2.5 text-white" />
+                    <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-400" />
                   </motion.div>
                 </motion.div>
               ) : (
@@ -120,15 +122,40 @@ export default function SesiIcon() {
                   animate={{ scale: 1, rotate: 0 }}
                   exit={{ scale: 0, rotate: 20 }}
                   transition={{ type: "spring", stiffness: 400, damping: 18 }}
-                  className="flex flex-col items-center justify-center"
+                  className="relative flex items-center justify-center"
                 >
-                  <div className="text-3xl sm:text-4xl leading-none">{"\u{1F476}"}</div>
+                  <Smile className="w-8 h-8 sm:w-10 sm:h-10 text-pink-500" strokeWidth={1.5} />
+
                   <motion.div
-                    className="absolute bottom-1 right-1 w-4 h-4 bg-pink-400 rounded-full flex items-center justify-center"
-                    animate={{ scale: [1, 1.2, 1] }}
+                    className="absolute -top-1 -left-1"
+                    animate={{ rotate: [0, 360], scale: [1, 1.3, 1] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  >
+                    <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 fill-amber-400" />
+                  </motion.div>
+
+                  <motion.div
+                    className="absolute -top-1 -right-1"
+                    animate={{ rotate: [360, 0], scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2.5, repeat: Infinity }}
+                  >
+                    <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-pink-400" />
+                  </motion.div>
+
+                  <motion.div
+                    className="absolute -bottom-0.5 left-1/2 -translate-x-1/2"
+                    animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <Sparkles className="w-2.5 h-2.5 text-white" />
+                    <Droplets className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-300" />
+                  </motion.div>
+
+                  <motion.div
+                    className="absolute -bottom-1 -right-2"
+                    animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 1.8, repeat: Infinity, delay: 0.5 }}
+                  >
+                    <Star className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-rose-300 fill-rose-300" />
                   </motion.div>
                 </motion.div>
               )}
