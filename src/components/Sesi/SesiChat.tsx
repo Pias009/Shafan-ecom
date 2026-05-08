@@ -11,7 +11,7 @@ import ProductRecommendationCard from "./ProductRecommendationCard";
 import CooldownScreen from "./CooldownScreen";
 import { pickSesiGif } from "@/lib/sesi/gifs";
 
-const MAX_QUESTIONS_BEFORE_COOLDOWN = 5;
+const MAX_QUESTIONS_BEFORE_COOLDOWN = 8;
 
 export default function SesiChat() {
   const {
@@ -240,7 +240,7 @@ export default function SesiChat() {
 
       const data = await res.json();
 
-      const gifUrl = pickSesiGif(data.text, persona) ?? undefined;
+      const gifUrl = state === "REVEAL_SHINE" ? (pickSesiGif(data.text, persona) ?? undefined) : undefined;
       addMessage(data.text, false, "text", undefined, gifUrl);
       addAIHistory("assistant", data.text);
 
@@ -272,9 +272,11 @@ export default function SesiChat() {
 
       if (state === "DR_SESI_DIAGNOSIS" && !showQuickReplies.length) {
         setShowQuickReplies([
-          "I don't know... 🤷",
-          "Can you explain? 📖",
-          "Next question",
+          "Yes, that's me ✅",
+          "Not really ❌",
+          "I'm not sure 🤷",
+          "Tell me more 📖",
+          "Next question ➡️",
         ]);
       }
     } catch {
@@ -753,6 +755,8 @@ export default function SesiChat() {
               "Oily ✨",
               "Normal 😊",
               "Sensitive 🤧",
+              "Combination 🌗",
+              "I don't know 🤷",
             ]);
           }
         );
@@ -894,7 +898,7 @@ export default function SesiChat() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className="rounded-2xl overflow-hidden shadow-md border border-gray-100/50 w-40 h-40"
+                    className="rounded-2xl overflow-hidden shadow-md border border-gray-100/50 w-28 h-28"
                   >
                     <img
                       src={msg.gifUrl}
@@ -962,10 +966,10 @@ export default function SesiChat() {
                     : "bg-white/70 backdrop-blur-md border-gray-200/50"
                 }`}
               >
-                <span
-                  className={`text-sm font-medium ${
-                    isDoctorMode ? "text-teal-700" : "text-gray-700"
-                  }`}
+                  <span
+                    className={`text-sm font-medium ${
+                      isDoctorMode ? "text-teal-700" : "text-gray-700"
+                    }`}
                 >
                   {reply}
                 </span>

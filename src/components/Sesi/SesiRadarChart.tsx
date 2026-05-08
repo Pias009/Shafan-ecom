@@ -33,15 +33,15 @@ export default function SesiRadarChart() {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
-      className="bg-white/70 backdrop-blur-md rounded-3xl p-4 border border-teal-100/50 shadow-sm"
+      className="bg-white/70 backdrop-blur-md rounded-2xl p-3 border border-teal-100/50 shadow-sm"
     >
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-        <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">
-          Sesi&apos;s Skin Scan
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+        <span className="text-[9px] font-bold text-teal-600 uppercase tracking-widest">
+          Skin Scan
         </span>
       </div>
-      <div className="w-full h-48 sm:h-56">
+      <div className="w-full h-36 sm:h-44">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={chartData}>
             <PolarGrid stroke="#e0f2f1" strokeWidth={1} />
@@ -65,13 +65,13 @@ export default function SesiRadarChart() {
           </RadarChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-2 grid grid-cols-5 gap-1 text-center">
+      <div className="mt-1.5 grid grid-cols-5 gap-0.5 text-center">
         {ALLOWED_KEYS.map((key) => (
           <div key={key} className="flex flex-col items-center">
-            <span className="text-[8px] font-bold text-gray-500 uppercase">
+            <span className="text-[7px] font-bold text-gray-500 uppercase">
               {key.split(" ")[0]}
             </span>
-            <span className="text-[10px] font-black text-teal-600">
+            <span className="text-[9px] font-black text-teal-600">
               {data[key]}%
             </span>
           </div>
