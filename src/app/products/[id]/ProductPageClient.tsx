@@ -69,15 +69,6 @@ export default function ProductPageClient({ product, recommendations }: ProductP
     ...(product.images || [])
   ].filter((img, index, self) => img && self.indexOf(img) === index) as string[];
 
-  // Auto-slide
-  useEffect(() => {
-    if (allImages.length <= 1 || isEnlarged) return;
-    const timer = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [allImages.length, isEnlarged]);
-
   // ViewItem event via DataLayer
   useEffect(() => {
     if (product?.id) {
