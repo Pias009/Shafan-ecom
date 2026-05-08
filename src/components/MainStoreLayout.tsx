@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { MobileBottomNav } from "./MobileBottomNav";
-import SesiWidget from "./SesiWidget";
+import Sesi from "./Sesi";
 
 export function MainStoreLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -29,7 +29,7 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
       </main>
       <Footer />
       <MobileBottomNav />
-      {/* <SesiWidget /> */}
+      <Sesi />
     </div>
   );
 }
