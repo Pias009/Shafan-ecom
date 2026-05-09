@@ -24,7 +24,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (productCategoryName) {
     const sameCategory = await prisma.product.findMany({
       where: { 
-        id: { not: id },
+        id: { not: product.id },
         active: true,
         productCategories: {
           some: {
@@ -80,7 +80,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (recommendations.length < 4 && productBrandName) {
     const brandRecs = await prisma.product.findMany({
       where: { 
-        id: { not: id },
+        id: { not: product.id },
         active: true,
         brand: { name: productBrandName },
         NOT: { id: { in: recommendations.map((r: any) => r.id) } }
