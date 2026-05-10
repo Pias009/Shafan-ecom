@@ -57,11 +57,11 @@ export default async function RoutinesPage() {
   const products = await getRoutineProducts(storeCode);
   const countryCode = getCountryCodeFromStore(storeCode);
   
-  const transformed = products.map((p: any) => {
-    const countryPrice = getPriceFromCountryPrices(p.countryPrices, countryCode);
-    const originalPrice = countryPrice || p.regularPrice || p.price || 0;
-    const currentPrice = countryPrice || p.salePrice || originalPrice;
-    const categoryNames = p.productCategories?.map((c: any) => c.category.name) || [];
+  const transformed = products?.map((p: any) => {
+    const countryPrice = getPriceFromCountryPrices(p?.countryPrices, countryCode);
+    const originalPrice = countryPrice || p?.regularPrice || p?.price || 0;
+    const currentPrice = countryPrice || p?.salePrice || originalPrice;
+    const categoryNames = p?.productCategories?.map((c: any) => c?.category?.name) || [];
     const primaryCategory = categoryNames[0] || "Skin Care";
     
     return {
@@ -72,15 +72,15 @@ export default async function RoutinesPage() {
       regularPrice: originalPrice,
       regularPriceCents: originalPrice,
       discountPrice: currentPrice < originalPrice ? originalPrice : undefined,
-      brandName: p.brandName || p.brand?.name || "Generic",
+      brandName: p?.brandName || p?.brand?.name || "Generic",
       categoryName: primaryCategory,
-      subCategoryName: p.subCategory?.name || "Routine",
-      imageUrl: p.mainImage,
-      images: p.images || [],
-      skinTones: p.productSkinTones?.map((t: any) => t.skinTone) || [],
-      skinConcerns: p.productSkinConcerns?.map((c: any) => c.skinConcern) || []
+      subCategoryName: p?.subCategory?.name || "Routine",
+      imageUrl: p?.mainImage,
+      images: p?.images || [],
+      skinTones: p?.productSkinTones?.map((t: any) => t?.skinTone) || [],
+      skinConcerns: p?.productSkinConcerns?.map((c: any) => c?.skinConcern) || []
     };
-  });
+  }) || [];
   
   return (
     <ProductsClient 

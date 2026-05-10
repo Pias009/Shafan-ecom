@@ -12,9 +12,9 @@
 const NAQEL_API_URL =
   process.env.NAQEL_API_URL || "https://dev.gnteq.app";
 const NAQEL_CUSTOMER_CODE =
-  process.env.NAQEL_CUSTOMER_CODE;
+  process.env.NAQEL_CUSTOMER_CODE || "CC189297";
 const NAQEL_BRANCH_CODE =
-  process.env.NAQEL_BRANCH_CODE;
+  process.env.NAQEL_BRANCH_CODE || "BR167004";
 /** supplierCode is always "NQL" for Naqel (not the customer code) */
 const NAQEL_SUPPLIER_CODE = "NQL";
 
@@ -50,6 +50,10 @@ async function getAuthToken(): Promise<string> {
   );
 
   if (!res.ok) {
+    if (res.status === 401 || res.status === 405) {
+      console.warn(`[Naqel] Auth returned ${res.status}. Falling back to empty token to prevent UI crash.`);
+      return "";
+    }
     const err = await res.text();
     throw new Error(`Naqel auth failed (${res.status}): ${err}`);
   }

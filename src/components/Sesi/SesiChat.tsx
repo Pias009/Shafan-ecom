@@ -179,8 +179,9 @@ export default function SesiChat() {
       );
       setShowQuickReplies(["Try different skin type 🔄", "Ask Sesi anything 💬"]);
     }
+    } catch {
       addMessage(
-        "eee! Sesi is having trouble finding products... try again! ✨",
+        "eee! Dr. Sesi's magic lens is a bit blurry! 🩺 The shipping magic is resting. Try again in a moment! ✨",
         false
       );
     } finally {
@@ -281,7 +282,7 @@ export default function SesiChat() {
       }
     } catch {
       addMessage(
-        "eee! Sesi is having trouble thinking... try again! ✨",
+        "eee! Dr. Sesi's magic lens is a bit blurry! 🩺 The shipping magic is resting. Try again in a moment! ✨",
         false
       );
     } finally {
