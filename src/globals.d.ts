@@ -6,6 +6,7 @@ declare module 'next/*';
 
 interface Window {
   Pusher: any;
+  gapi: any;
 }
 
 interface ImportMetaEnv {

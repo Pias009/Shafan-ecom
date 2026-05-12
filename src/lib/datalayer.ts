@@ -2,6 +2,8 @@ const DEFAULT_CURRENCY = typeof process !== 'undefined' && process.env.NEXT_PUBL
   ? process.env.NEXT_PUBLIC_DEFAULT_CURRENCY
   : 'AED';
 
+import { fbEvent } from './fpixel';
+
 type DataLayerEvent = Record<string, unknown>;
 
 let trackingQueue: any[] = [];
@@ -77,6 +79,18 @@ export function trackViewItem(product: {
       ],
     },
   });
+
+  // Meta Pixel ViewContent
+  if (product.id) {
+    fbEvent('ViewContent', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: 'product',
+      value: product.price,
+      currency: (product.currency || DEFAULT_CURRENCY).toUpperCase(),
+      content_category: product.category,
+    });
+  }
 }
 
 export function trackAddToCart(product: {
@@ -107,6 +121,18 @@ export function trackAddToCart(product: {
       ],
     },
   });
+
+  // Meta Pixel AddToCart
+  if (product.id) {
+    fbEvent('AddToCart', {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: 'product',
+      value: product.price * (product.quantity || 1),
+      currency: (product.currency || DEFAULT_CURRENCY).toUpperCase(),
+      content_category: product.category,
+    });
+  }
 }
 
 export function trackRemoveFromCart(product: {
@@ -164,6 +190,15 @@ export function trackBeginCheckout(cart: {
       })),
     },
   });
+
+  // Meta Pixel InitiateCheckout
+  fbEvent('InitiateCheckout', {
+    content_ids: cart.items.map(i => i.id).filter(Boolean),
+    content_type: 'product',
+    value: cart.value,
+    currency: (cart.currency || DEFAULT_CURRENCY).toUpperCase(),
+    num_items: cart.items.length,
+  });
 }
 
 export function trackAddPaymentInfo(order: {
@@ -210,7 +245,7 @@ export function trackPurchase(order: {
     brand?: string;
     variant?: string;
   }[];
-}): void {
+}, eventId?: string): void {
   pushToDataLayer({
     event: 'purchase',
     ecommerce: {
@@ -231,6 +266,15 @@ export function trackPurchase(order: {
       })),
     },
   });
+
+  // Meta Pixel Purchase
+  fbEvent('Purchase', {
+    content_ids: order.items.map(i => i.id).filter(Boolean),
+    content_type: 'product',
+    value: order.value,
+    currency: (order.currency || DEFAULT_CURRENCY).toUpperCase(),
+    num_items: order.items.length,
+  }, { eventId: eventId || `purchase_${order.id}` });
 }
 
 export function trackViewItemList(items: {

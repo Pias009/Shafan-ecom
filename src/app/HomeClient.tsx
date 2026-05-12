@@ -25,6 +25,7 @@ import { SUPPORTED_COUNTRIES } from "@/lib/countries";
 import HomeBannerSlider from "@/components/HomeBannerSlider";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
+import { trackAddToCart } from "@/lib/datalayer";
 import { fbEvent } from "@/lib/fpixel";
 
 import dynamic from "next/dynamic";
@@ -406,12 +407,14 @@ useEffect(() => {
     };
     addItem(cartItem, 1);
     
-    fbEvent('AddToCart', {
-      content_ids: [product.id],
-      content_type: 'product',
-      content_name: product.name,
-      value: product.price || product.priceCents || 0,
-      currency: 'SAR',
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price || product.priceCents || 0,
+      currency: selectedCurrency || 'AED',
+      category: product.category?.name || product.category || "General",
+      brand: product.brand?.name || product.brand || "Generic",
+      quantity: 1,
     });
     
     toast.success(`Added ${product.name} to cart`);

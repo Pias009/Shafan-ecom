@@ -8,8 +8,9 @@ import Link from "next/link";
 import { Loader } from "@/components/Loader";
 import { motion } from "framer-motion";
 import { fbEvent } from "@/lib/fpixel";
-import { pushToDataLayer } from "@/lib/datalayer";
+import { pushToDataLayer, trackPurchase } from "@/lib/datalayer";
 import { firePurchaseCAPI } from "@/app/actions/meta-capi";
+import Script from "next/script";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -17,7 +18,15 @@ function SuccessContent() {
   const [valid, setValid] = useState(false);
   const [checking, setChecking] = useState(true);
   const [countdown, setCountdown] = useState(5);
-  const [orderData, setOrderData] = useState<{ total: number; currency: string; items: Array<{ productId: string; quantity: number; unitPrice: number | null }> } | null>(null);
+  const [orderData, setOrderData] = useState<{
+    id: string;
+    email: string;
+    total: number;
+    currency: string;
+    deliveryCountry: string;
+    estimatedDeliveryDate: string;
+    items: Array<{ productId: string; quantity: number; unitPrice: number | null; gtin?: string }>;
+  } | null>(null);
   const purchaseFiredRef = useRef(false);
 
   const orderId = searchParams?.get("orderId") || searchParams?.get("order_id");
@@ -42,13 +51,23 @@ function SuccessContent() {
             router.push("/account/orders");
             return;
           }
+          const orderDate = new Date(data.createdAt);
+          orderDate.setDate(orderDate.getDate() + 5);
+          const estimatedDeliveryDate = orderDate.toISOString().split('T')[0];
+
           setOrderData({
+            id: data.id,
+            email: data.email || "",
             total: data.total,
             currency: data.currency ?? "AED",
-            items: data.items?.map((item: { productId: string; quantity: number; unitPrice: number | null }) => ({
+            deliveryCountry: data.shippingAddress?.country || "KW",
+            estimatedDeliveryDate,
+            items: data.items?.map((item: any) => ({
               productId: item.productId,
+              name: item.product?.name || "Product",
               quantity: item.quantity,
               unitPrice: item.unitPrice,
+              gtin: item.product?.sku || undefined,
             })) ?? [],
           });
         } catch {
@@ -79,19 +98,17 @@ function SuccessContent() {
     const numItems = orderData.items.reduce((sum, item) => sum + item.quantity, 0);
 
     // GA4 purchase event via dataLayer (also used by GTM for Meta Pixel tracking)
-    pushToDataLayer({
-      event: 'purchase',
-      ecommerce: {
-        transaction_id: orderId,
-        value: orderData.total,
-        currency: orderData.currency.toUpperCase(),
-        items: orderData.items.map((item) => ({
-          item_id: item.productId,
-          price: item.unitPrice ?? 0,
-          quantity: item.quantity,
-        })),
-      },
-    });
+    trackPurchase({
+      id: orderId,
+      value: orderData.total,
+      currency: orderData.currency.toUpperCase(),
+      items: orderData.items.map((item) => ({
+        id: item.productId,
+        name: item.name,
+        price: item.unitPrice ?? 0,
+        quantity: item.quantity,
+      })),
+    }, eventId);
 
     void firePurchaseCAPI(orderId, eventId);
   }, [valid, orderId, orderData]);
@@ -105,6 +122,35 @@ function SuccessContent() {
     const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [valid, countdown, router, redirectUrl]);
+
+  // Google Customer Reviews Opt-In
+  useEffect(() => {
+    if (!valid || !orderData || !window.gapi) return;
+
+    const renderGoogleOptIn = () => {
+      window.gapi.load('surveyoptin', function() {
+        window.gapi.surveyoptin.render({
+          "merchant_id": 5510071757,
+          "order_id": orderData.id,
+          "email": orderData.email,
+          "delivery_country": orderData.deliveryCountry,
+          "estimated_delivery_date": orderData.estimatedDeliveryDate,
+          "products": orderData.items
+            .filter(item => item.gtin)
+            .map(item => ({ "gtin": item.gtin })),
+        });
+      });
+    };
+
+    // Ensure the function is called after the script is fully loaded
+    if (window.gapi.surveyoptin) {
+      renderGoogleOptIn();
+    } else {
+      // Small delay to ensure gapi is ready
+      const timer = setTimeout(renderGoogleOptIn, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [valid, orderData]);
 
   if (checking) {
     return (
@@ -252,6 +298,10 @@ function SuccessContent() {
           </div>
         ))}
       </motion.div>
+      <Script
+        src="https://apis.google.com/js/platform.js"
+        strategy="afterInteractive"
+      />
     </div>
   );
 }
