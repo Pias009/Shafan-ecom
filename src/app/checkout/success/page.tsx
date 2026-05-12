@@ -25,7 +25,7 @@ function SuccessContent() {
     currency: string;
     deliveryCountry: string;
     estimatedDeliveryDate: string;
-    items: Array<{ productId: string; quantity: number; unitPrice: number | null; gtin?: string }>;
+    items: Array<{ productId: string; name: string; quantity: number; unitPrice: number | null; gtin?: string }>;
   } | null>(null);
   const purchaseFiredRef = useRef(false);
 
