@@ -36,6 +36,7 @@ function isValidImageUrl(url: any): boolean {
 function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, couponMaxLimit, removeCoupon, subtotal, discount, total, shipping, taxRate, taxAmount, freeDelivery, t, selectedCountry, applyCoupon }: any) {
   const router = useRouter();
   const hasAddress = useCartStore(state => state.hasAddress);
+  const setHasAddress = useCartStore(state => state.setHasAddress);
   const { data: session } = useSession();
   const [couponInput, setCouponInput] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
@@ -195,31 +196,37 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
   const [loadingAddress, setLoadingAddress] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     async function fetchAddress() {
       try {
         if (session) {
           const res = await fetch("/api/account/address");
-          if (res.ok) {
+          if (res.ok && isMounted) {
             const data = await res.json();
             setAddress(data);
-            if (data) useCartStore.getState().setHasAddress(true);
+            if (data) {
+              setHasAddress(true);
+            }
           }
         } else {
           const guestStr = localStorage.getItem('guest_address');
-          if (guestStr) {
+          if (guestStr && isMounted) {
             const data = JSON.parse(guestStr);
             setAddress(data);
-            if (data) useCartStore.getState().setHasAddress(true);
+            if (data) {
+              setHasAddress(true);
+            }
           }
         }
       } catch (e) {
         console.error(e);
       } finally {
-        setLoadingAddress(false);
+        if (isMounted) setLoadingAddress(false);
       }
     }
     fetchAddress();
-  }, [session]);
+    return () => { isMounted = false; };
+  }, [session, setHasAddress]);
 
   return (
     <div className="pt-24 md:pt-32 pb-20 px-4 md:px-6 max-w-6xl mx-auto">
@@ -478,8 +485,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
 
             <button
               onClick={handleCheckout}
-              disabled={!address}
-              className="mt-8 md:mt-10 w-full rounded-full bg-black text-white py-4 md:py-5 font-body text-[10px] md:text-xs font-black tracking-[0.2em] transition hover:scale-[1.02] shadow-xl shadow-black/20 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-8 md:mt-10 w-full rounded-full bg-black text-white py-4 md:py-5 font-body text-[10px] md:text-xs font-black tracking-[0.2em] transition hover:scale-[1.02] shadow-xl shadow-black/20 active:scale-95 flex items-center justify-center gap-2"
             >
               {t.cart.checkout}
             </button>

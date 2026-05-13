@@ -4,19 +4,21 @@ import { useEffect, useState } from "react";
 import { useCurrencyStore } from "@/lib/currency-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { useCountryStore } from "@/lib/country-store";
+import { useCartStore } from "@/lib/cart-store";
+import { useSession } from "next-auth/react";
 
 const GULF_COUNTRIES = ['AE', 'KW', 'BH', 'SA', 'OM', 'QA'];
 
 const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
   AE: { currency: "AED", lang: "en" },
-  KW: { currency: "KWD", lang: "ar" },
-  SA: { currency: "SAR", lang: "ar" },
-  BH: { currency: "BHD", lang: "ar" },
-  QA: { currency: "QAR", lang: "ar" },
-  OM: { currency: "OMR", lang: "ar" },
+  KW: { currency: "KWD", lang: "en" },
+  SA: { currency: "SAR", lang: "en" },
+  BH: { currency: "BHD", lang: "en" },
+  QA: { currency: "QAR", lang: "en" },
+  OM: { currency: "OMR", lang: "en" },
 };
 
-const DEFAULT_CONFIG = { country: "KW", currency: "KWD", lang: "ar" as const };
+const DEFAULT_CONFIG = { country: "KW", currency: "KWD", lang: "en" as const };
 
 export function GlobalInitializer() {
   const { setCurrency: setLegacyCurrency } = useCurrencyStore();
@@ -92,6 +94,35 @@ export function GlobalInitializer() {
       
     return () => clearTimeout(timeoutId);
   }, [_hasHydrated, setCountry, setLegacyCurrency, setLanguage]);
+
+  // Global address sync
+  const setHasAddress = useCartStore(state => state.setHasAddress);
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (!_hasHydrated) return;
+
+    async function checkAddress() {
+      try {
+        if (session) {
+          const res = await fetch("/api/account/address");
+          if (res.ok) {
+            const data = await res.json();
+            if (data) setHasAddress(true);
+          }
+        } else {
+          const guestStr = localStorage.getItem('guest_address');
+          if (guestStr) {
+            const data = JSON.parse(guestStr);
+            if (data) setHasAddress(true);
+          }
+        }
+      } catch (e) {
+        // Silently fail, don't break the app
+      }
+    }
+    checkAddress();
+  }, [_hasHydrated, session, setHasAddress]);
 
   return null;
 }

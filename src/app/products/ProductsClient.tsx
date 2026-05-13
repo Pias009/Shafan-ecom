@@ -236,25 +236,25 @@ export default function ProductsClient({
 
   const brands = useMemo(() => {
     if (filterOptions?.brands) {
-      return [t.product.all, ...[...filterOptions.brands].sort()];
+      return ["All", ...[...filterOptions.brands].sort()];
     }
     const set = new Set(products.map(p => p.brandName).filter(Boolean));
-    return [t.product.all, ...Array.from(set).sort()];
-  }, [products, t.product.all, filterOptions]);
+    return ["All", ...Array.from(set).sort()];
+  }, [products, filterOptions]);
 
   const categoriesList = useMemo(() => {
     if (filterOptions?.categories) {
-      return [t.product.all, ...[...filterOptions.categories].sort()];
+      return ["All", ...[...filterOptions.categories].sort()];
     }
     const set = new Set(products.map(p => p.categoryName).filter(Boolean));
-    return [t.product.all, ...Array.from(set).sort()];
-  }, [products, t.product.all, filterOptions]);
+    return ["All", ...Array.from(set).sort()];
+  }, [products, filterOptions]);
 
   const subCategories = useMemo(() => {
     if (filterOptions?.subCategories) {
       return ['All', ...[...filterOptions.subCategories].sort()];
     }
-    const filteredProducts = selectedCategory === t.product.all 
+    const filteredProducts = (selectedCategory === "All" || selectedCategory === t.product.all)
       ? products 
       : products.filter(p => p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
     const set = new Set(filteredProducts.map(p => p.subCategoryName).filter(Boolean));
@@ -265,7 +265,7 @@ export default function ProductsClient({
     if (filterOptions?.skinTones) {
       return ['All', ...[...filterOptions.skinTones].sort()];
     }
-    const filteredProducts = selectedCategory === t.product.all 
+    const filteredProducts = (selectedCategory === "All" || selectedCategory === t.product.all)
       ? products 
       : products.filter(p => p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
     const skinToneSet = new Set<string>();
@@ -284,7 +284,7 @@ export default function ProductsClient({
     if (filterOptions?.skinConcerns) {
       return ['All', ...[...filterOptions.skinConcerns].sort()];
     }
-    const filteredProducts = selectedCategory === t.product.all 
+    const filteredProducts = (selectedCategory === "All" || selectedCategory === t.product.all)
       ? products 
       : products.filter(p => p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
     const concernSet = new Set<string>();
@@ -307,9 +307,9 @@ export default function ProductsClient({
         (p.brandName || '').toLowerCase().includes(searchInput.toLowerCase()) ||
         (p.categoryName || '').toLowerCase().includes(searchInput.toLowerCase()) ||
         (p.subCategoryName || '').toLowerCase().includes(searchInput.toLowerCase());
-      const matchesBrand = brand === t.product.all || (p.brandName || '').toLowerCase() === brand.toLowerCase();
+      const matchesBrand = brand === "All" || brand === t.product.all || (p.brandName || '').toLowerCase() === brand.toLowerCase();
       const matchesPrice = price <= maxPrice;
-      const matchesCategory = selectedCategory === t.product.all || 
+      const matchesCategory = selectedCategory === "All" || selectedCategory === t.product.all || 
         (p.categories && p.categories.some((c: string) => c.toLowerCase() === selectedCategory.toLowerCase())) ||
         (p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
       const matchesSubCategory = selectedSubCategory === 'All' || (p.subCategoryName && p.subCategoryName.toLowerCase() === selectedSubCategory.toLowerCase());
@@ -551,7 +551,7 @@ return sorted;
                     onChange={(e) => setBrand(e.target.value)}
                     className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
                   >
-                    {brands.map(b => <option key={b} value={b}>{b}</option>)}
+                    {brands.map(b => <option key={b} value={b}>{b === "All" ? t.product.all : b}</option>)}
                   </select>
                 </div>
 
@@ -567,7 +567,7 @@ return sorted;
                     }}
                     className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
                   >
-                    {categoriesList.map((c: string) => <option key={c} value={c}>{c}</option>)}
+                    {categoriesList.map((c: string) => <option key={c} value={c}>{c === "All" ? t.product.all : c}</option>)}
                   </select>
                 </div>
 
@@ -650,7 +650,7 @@ return sorted;
         </AnimatePresence>
 
           <div className="mt-12 md:mt-20 space-y-12 md:space-y-24">
-            {categoriesList.filter(cat => cat !== t.product.all && cat !== 'All').map((cat) => {
+            {categoriesList.filter(cat => cat !== "All" && cat !== t.product.all).map((cat) => {
               const productsInCat = filtered.filter(p =>
                 (p.categoryName && p.categoryName.toLowerCase() === cat.toLowerCase()) ||
                 (p.categories && Array.isArray(p.categories) && p.categories.some((c: string) => c.toLowerCase() === cat.toLowerCase()))
@@ -740,8 +740,8 @@ return sorted;
                 <button 
                     onClick={() => { 
                       setSearchInput(""); 
-                      setBrand(t.product.all); 
-                      setSelectedCategory(t.product.all);
+                      setBrand("All"); 
+                      setSelectedCategory("All");
                       setSelectedSubCategory('All');
                       setSelectedSkinTone('All');
                       setMaxPrice(100000); 
