@@ -13,6 +13,11 @@ export async function POST(request: NextRequest) {
     const tamaraService = new TamaraService();
     const isValid = tamaraService.verifyWebhook(payload, signature);
 
+    if (!isValid) {
+      console.error("[Tamara Webhook] Invalid signature detected. Payload rejected.");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
     // Parse the raw JSON payload to extract event data
     const webhookPayload = JSON.parse(payload) as Record<string, any>;
 

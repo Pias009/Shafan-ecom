@@ -19,6 +19,8 @@ import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackBeginCheckout } from "@/lib/datalayer";
+import TabbyPromo from "@/components/TabbyPromo";
+import TamaraPromo from "@/components/TamaraPromo";
 
 function getCurrencyForCountry(countryCode: string): string {
   const currencies: Record<string, string> = {
@@ -434,6 +436,20 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                     <p className="text-[9px] text-red-500/70 font-medium">Please provide your shipping address to calculate final taxes and enable checkout.</p>
                   </div>
                 )}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-black/5">
+                <TabbyPromo 
+                  price={total} 
+                  currency={getCurrencyForCountry(selectedCountry)} 
+                  publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
+                  merchantCode="SGAE" 
+                />
+                <TamaraPromo 
+                  price={total} 
+                  currency={getCurrencyForCountry(selectedCountry)} 
+                  publicKey={process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || ""} 
+                />
               </div>
 
               <div className="mt-6 pt-4 border-t border-black/5">

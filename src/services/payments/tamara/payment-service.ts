@@ -1,4 +1,4 @@
-
+import jwt from "jsonwebtoken";
 import {
   TamaraSessionRequest,
   TamaraSessionResponse,
@@ -209,7 +209,22 @@ export class TamaraService {
     return await response.json();
   }
 
-  async capturePayment(params: TamaraCaptureRequest): Promise<TamaraWebhookPayload> {
+  async authoriseOrder(orderId: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/orders/${orderId}/authorise`, {
+      method: "POST",
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error(`Tamara authorise failed for order ${orderId}:`, err);
+      throw new Error(`Tamara authorise failed: ${err}`);
+    }
+
+    return await response.json();
+  }
+
+  async capturePayment(params: TamaraCaptureRequest): Promise<any> {
     const response = await fetch(`${this.baseUrl}/orders/${params.orderId}/captures`, {
       method: "POST",
       headers: this.getHeaders(),
@@ -220,13 +235,15 @@ export class TamaraService {
     });
 
     if (!response.ok) {
-      throw new Error(`Tamara capture failed: ${response.status}`);
+      const err = await response.text();
+      console.error(`Tamara capture failed for order ${params.orderId}:`, err);
+      throw new Error(`Tamara capture failed: ${err}`);
     }
 
     return await response.json();
   }
 
-  async refundPayment(params: TamaraRefundRequest): Promise<TamaraWebhookPayload> {
+  async refundPayment(params: TamaraRefundRequest): Promise<any> {
     const response = await fetch(`${this.baseUrl}/orders/${params.orderId}/refunds`, {
       method: "POST",
       headers: this.getHeaders(),
@@ -237,7 +254,9 @@ export class TamaraService {
     });
 
     if (!response.ok) {
-      throw new Error(`Tamara refund failed: ${response.status}`);
+      const err = await response.text();
+      console.error(`Tamara refund failed for order ${params.orderId}:`, err);
+      throw new Error(`Tamara refund failed: ${err}`);
     }
 
     return await response.json();
@@ -257,8 +276,19 @@ export class TamaraService {
   }
 
   verifyWebhook(payload: any, signature: string): boolean {
-    // In production, verify the notification token
-    // For sandbox, we can skip or implement simple check
-    return true;
+    if (!signature || !this.notificationToken) {
+      console.warn("[Tamara] Webhook verification skipped: missing signature or notification token");
+      return process.env.NODE_ENV !== "production";
+    }
+
+    try {
+      // HS256 JWT validation using the notification_key
+      const decoded = jwt.verify(signature, this.notificationToken, { algorithms: ["HS256"] });
+      console.log("[Tamara] Webhook signature verified:", decoded);
+      return true;
+    } catch (error) {
+      console.error("[Tamara] Webhook signature verification failed:", error);
+      return false;
+    }
   }
 }

@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { getAdminApiSession } from '@/lib/admin-session';
-import { OrderStatus, ReturnStatus } from '@prisma/client';
+import { OrderStatus, ReturnStatus, PaymentStatus } from '@prisma/client';
+import { TamaraService } from '@/services/payments/tamara';
+import { TamaraCurrency } from '@/services/payments/tamara/types';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -109,6 +111,43 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       where: { id },
       data: updateData
     });
+
+    // Handle Tamara lifecycle triggers if status changed to ORDER_CONFIRMED
+    if (updateData.status === OrderStatus.ORDER_CONFIRMED && order.tamaraCheckoutId) {
+      try {
+        const tamaraService = new TamaraService();
+        console.log(`[Admin] Triggering Tamara authorise/capture for order ${id}`);
+        
+        // 1. Authorise (mandatory first step for some Tamara flows)
+        await tamaraService.authoriseOrder(order.tamaraCheckoutId).catch(e => {
+          console.warn("[Tamara] Authorise already done or failed:", e.message);
+        });
+
+        // 2. Capture (triggers funds transfer)
+        await tamaraService.capturePayment({
+          orderId: order.tamaraCheckoutId,
+          totalAmount: {
+            amount: (order.total ?? 0).toString(),
+            currency: (order.currency ?? "AED").toUpperCase() as TamaraCurrency
+          },
+          shippingInfo: {
+            shipping_company: "Naqel",
+            tracking_number: (order as any).trackingId || "PENDING",
+            tracking_url: (order as any).trackingUrl || ""
+          }
+        });
+
+        console.log(`[Admin] Tamara payment captured for order ${id}`);
+        
+        // Update payment status
+        await prisma.order.update({
+          where: { id },
+          data: { paymentStatus: PaymentStatus.PAID }
+        });
+      } catch (err: any) {
+        console.error(`[Admin] Tamara trigger failed for order ${id}:`, err.message);
+      }
+    }
 
     return new Response(JSON.stringify(order), { headers: { 'Content-Type': 'application/json' } });
   } catch (error: any) {

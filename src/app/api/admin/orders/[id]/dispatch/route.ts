@@ -404,7 +404,11 @@ export async function POST(
     if (canAdvance) {
       await (prisma as any).order.update({
         where: { id },
-        data: { status: OrderStatus.IN_TRANSIT },
+        data: { 
+          status: OrderStatus.IN_TRANSIT,
+          trackingId: dispatchResult.trackingCode,
+          trackingUrl: dispatchResult.trackingUrl
+        },
       });
     }
 

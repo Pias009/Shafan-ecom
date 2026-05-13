@@ -37,3 +37,35 @@ export async function GET(
     return NextResponse.json({ error: "Failed to fetch order details" }, { status: 500 });
   }
 }
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const { status } = await req.json();
+
+    if (status !== 'CANCELLED') {
+      return NextResponse.json({ error: "Only cancellation is allowed via this endpoint" }, { status: 400 });
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+    });
+
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: { status: 'CANCELLED' as any },
+    });
+
+    return NextResponse.json(updatedOrder);
+  } catch (error) {
+    console.error("Update Order Error:", error);
+    return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
+  }
+}

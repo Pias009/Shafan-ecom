@@ -362,6 +362,8 @@ model Order {
   couponCode            String? // Coupon code used
   items                 OrderItem[]
   totalWeight           Float?          @default(0)
+  trackingId            String?
+  trackingUrl           String?
   shipment              Shipment?
   discountUsages        DiscountUsage[]
   // Cancellation

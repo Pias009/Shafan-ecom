@@ -153,7 +153,19 @@ function PaymentPageContent() {
         if (orderData.error) throw new Error(orderData.error);
         setOrder(orderData);
 
-        // Removed automatic redirect for COD to allow selection/confirmation on this page
+        // If returned with cancel param, update order status in DB
+        const canceled = searchParams?.get("canceled") || searchParams?.get("failed");
+        if (canceled && orderData.status !== 'CANCELLED') {
+          console.log(`Order ${id} was canceled/failed via ${canceled}. Updating status...`);
+          await fetch(`/api/orders/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'CANCELLED' })
+          }).catch(console.error);
+          
+          // Show notice to user
+          setError(`Your payment via ${canceled} was not completed. You can try another method.`);
+        }
 
         try {
           const stripeRes = await fetch("/api/payments/stripe/create-intent", {

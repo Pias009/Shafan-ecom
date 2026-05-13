@@ -315,11 +315,22 @@ export async function trackNaqelShipment(airwaybill: string): Promise<any> {
   });
 
   if (!res.ok) {
+    if (res.status === 404) {
+      console.warn(`[Naqel] Tracking returned 404 for AWB: ${airwaybill}`);
+      return { success: false, events: [], message: "Tracking information not found" };
+    }
     const err = await res.text();
-    throw new Error(`Naqel tracking error (${res.status}): ${err}`);
+    console.error(`[Naqel] Tracking error (${res.status}): ${err}`);
+    return { success: false, events: [], error: err };
   }
 
-  return res.json();
+  const data = await res.json();
+  // Ensure we return an object with events array even if empty
+  return {
+    success: true,
+    events: data?.events || data?.trackingHistory || [],
+    raw: data
+  };
 }
 
 // ---------------------------------------------------------------------------
