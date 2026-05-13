@@ -153,13 +153,7 @@ function PaymentPageContent() {
         if (orderData.error) throw new Error(orderData.error);
         setOrder(orderData);
 
-        // Remove automatic redirect for COD to allow selection/confirmation on this page
-        /* 
-        if (orderData.paymentMethod === "cod") {
-          router.push(`/checkout/success?orderId=${id}&cod=true`);
-          return;
-        }
-        */
+        // Removed automatic redirect for COD to allow selection/confirmation on this page
 
         try {
           const stripeRes = await fetch("/api/payments/stripe/create-intent", {
@@ -288,7 +282,15 @@ function PaymentPageContent() {
   );
 
   const shipping = order?.shippingAddress || {};
-  const country = (order?.shippingAddress as any)?.country?.toUpperCase() || "";
+  let country = (order?.shippingAddress as any)?.country?.toUpperCase() || "";
+
+  // Fallback to currency-based country detection if shipping country is missing
+  if (!country && order?.currency) {
+    const currencyToCountry: Record<string, string> = {
+      'AED': 'AE', 'SAR': 'SA', 'KWD': 'KW', 'BHD': 'BH', 'OMR': 'OM', 'QAR': 'QA', 'BDT': 'BD'
+    };
+    country = currencyToCountry[order.currency.toUpperCase()] || "";
+  }
 
   return (
     <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black flex flex-col">

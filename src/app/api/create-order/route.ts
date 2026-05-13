@@ -315,6 +315,10 @@ export async function POST(req: Request) {
       }
     }
 
+    // Ensure addresses have the normalized country code for payment gateway compatibility
+    if (finalBilling) finalBilling.country = finalBilling.country || countryCode;
+    if (finalShipping) finalShipping.country = finalShipping.country || countryCode;
+
     if (!finalBilling || !finalShipping) {
       return NextResponse.json({ error: "Shipping address is required to place an order." }, { status: 400 });
     }
@@ -552,8 +556,8 @@ export async function POST(req: Request) {
         total: finalTotal,
         billingAddress: billing || {},
         shippingAddress: shipping || {},
-        paymentMethod: payment_method || "cod",
-        paymentMethodTitle: payment_method_title || "Credit Card",
+        paymentMethod: payment_method || null,
+        paymentMethodTitle: payment_method_title || "Pending Selection",
         totalWeight,
         ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: effectiveDiscount } : {}),
         ...(orderStoreId ? { storeId: orderStoreId } : {}),
