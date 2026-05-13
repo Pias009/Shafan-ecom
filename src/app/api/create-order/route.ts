@@ -210,11 +210,6 @@ async function applyDiscount(
       }
     }
 
-    // Check max uses per order (usually 1)
-    if (discount.maxUsesPerOrder && discount.maxUsesPerOrder > 1) {
-      console.log(`Coupon allows up to ${discount.maxUsesPerOrder} uses per order`);
-    }
-
     // Calculate discount amount
     let rawDiscount = 0;
     if (discount.discountType === "PERCENTAGE") {
@@ -225,24 +220,18 @@ async function applyDiscount(
       rawDiscount = 0;
     }
 
-    // Apply discount cap if configured (maximum discount amount to prevent excessive losses on large orders)
+    // Apply discount cap if configured
     let discountAmount = rawDiscount;
     const countryMaxLimits = discount.countryMaxLimits as Record<string, number> | null;
-    
-    // Use country-specific cap if available, otherwise use global cap
     const maxCap = countryMaxLimits?.[countryCode] || discount.maxLimitAmount;
+    
     if (maxCap && maxCap > 0) {
       discountAmount = Math.min(rawDiscount, maxCap);
-      console.log(`Discount capped: ${rawDiscount} -> ${discountAmount} (cap: ${maxCap} for ${countryCode})`);
     } else if (discount.maxLimitAmount && discount.maxLimitAmount > 0) {
       discountAmount = Math.min(rawDiscount, discount.maxLimitAmount);
-      console.log(`Discount capped: ${rawDiscount} -> ${discountAmount} (global cap: ${discount.maxLimitAmount})`);
     }
 
-    // Cap discount at subtotal (can't exceed order total)
     discountAmount = Math.min(discountAmount, subtotal);
-
-    console.log(`Applied discount ${couponCode}: ${discountAmount} (type: ${usageType})`);
 
     return { discount: discountAmount, discountCodeUsed: discount.id };
   } catch (error) {
@@ -509,31 +498,29 @@ export async function POST(req: Request) {
     }
 
     // Final total = (Subtotal + Shipping) - Discount
-    // For admin orders, use client-provided values if they are valid numbers
     const effectiveSubtotal = (isUserAdmin && typeof clientSubtotal === 'number') ? clientSubtotal : subtotal;
     const effectiveShipping = (isUserAdmin && typeof clientShippingFee === 'number') ? clientShippingFee : shippingFee;
     const effectiveDiscount = (isUserAdmin && typeof clientDiscount === 'number') ? clientDiscount : discount;
 
-    // Tax calculation (excluding — applied on top of subtotal+shipping-discount)
+    // Tax calculation
     const countryTaxRate = (COUNTRY_CONFIG[countryCode]?.taxRate) || 0;
     const preTaxTotal = effectiveSubtotal + effectiveShipping - effectiveDiscount;
     const taxAmount = Math.round(preTaxTotal * countryTaxRate * 100) / 100;
 
-    const effectiveTotal = (isUserAdmin && typeof clientTotal === 'number' && clientTotal > 0) 
+    let effectiveTotal = (isUserAdmin && typeof clientTotal === 'number' && clientTotal > 0) 
       ? clientTotal 
       : (preTaxTotal + taxAmount);
     
     // Round total based on currency (KWD, BHD, OMR = 3 decimals, others = 2 decimals)
     const highDecimalsCurrencies = ['KWD', 'BHD', 'OMR'];
     const decimals = highDecimalsCurrencies.includes(currency.toUpperCase()) ? 3 : 2;
+    
     const finalTotal = Math.round(effectiveTotal * Math.pow(10, decimals)) / Math.pow(10, decimals);
     const finalSubtotal = Math.round(effectiveSubtotal * Math.pow(10, decimals)) / Math.pow(10, decimals);
     
-    console.log(`Order totals | Subtotal: ${finalSubtotal} | Shipping: ${effectiveShipping} | Discount: ${effectiveDiscount} | Tax: ${taxAmount} | Total: ${finalTotal}`);
-
-    // Server-side price validation (prevent tampering)
-    const expectedServerTotal = Math.round((finalSubtotal + effectiveShipping - effectiveDiscount + taxAmount) * Math.pow(10, decimals)) / Math.pow(10, decimals);
-    console.log(`Price validation: clientTotal=${clientTotal}, serverTotal=${expectedServerTotal}`);
+    if (isNaN(finalTotal) || finalTotal < 0) {
+      throw new Error("Invalid order total calculated. Please check your cart items.");
+    }
 
     // Determine courier based on shipping address
     const courier = determineCourier(shipping);
@@ -609,226 +596,11 @@ export async function POST(req: Request) {
       }
     }
 
-    // Return the created order details
-    const orderResponse = {
-      success: true,
-      orderId: order.id,
-      message: "Order created successfully",
-      paymentMethod: payment_method
-    };
-
-    // Trigger real-time notification for admin panel
-    try {
-      const shippingAddress = order.shippingAddress as any;
-      const userName = shippingAddress?.fullName || 
-                       (shippingAddress?.firstName ? `${shippingAddress.firstName} ${shippingAddress.lastName || ""}` : "Guest Customer");
-
-      await notifyNewOrder({
-        id: order.id,
-        total: Number(order.total) || 0,
-        currency: order.currency.toUpperCase(),
-        userName: userName.trim(),
-        email: order.email || "No Email"
-      });
-      console.log(`[Pusher] Live notification sent for order ${order.id}`);
-    } catch (pusherErr) {
-      console.error("[Pusher] Failed to send live notification:", pusherErr);
-    }
-
-    return NextResponse.json(orderResponse);
-
-    if (!order) {
-      return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
-    }
-
-    // NOTE: Customer confirmation email is NOT sent here.
-    // It is sent AFTER payment is confirmed:
-    //   - COD: sent in /api/payments/cod after "Confirm Cash on Delivery" is clicked
-    //   - Stripe: sent in /api/payments/stripe/webhook after payment_intent.succeeded
-    const customerEmail = session?.user?.email || billing?.email || shipping?.email || order.email;
-    const customerName = shipping?.first_name 
-      ? `${shipping.first_name} ${shipping.last_name || ''}` 
-      : 'Customer';
-
-    if (false) {
-      // Placeholder block — email logic moved to payment confirmation routes
-      console.log(`[Order Email] Deferred for order ${order.id} to ${customerEmail}`);
-
-      const DOMAIN = 'https://shanafaglobal.com';
-      const DASHBOARD_URL = `${DOMAIN}/account`;
-      const TRACKING_URL = shipment?.trackingUrl || `${DOMAIN}/account/orders/${order.id}`;
-      
-      // Prepare order items with full details
-      const orderItems = order.items.map((item: any) => ({
-        id: item.productId,
-        name: item.name || item.product?.name || 'Product',
-        quantity: item.quantity,
-        price: item.unitPrice || item.price,
-        brand: item.product?.brand?.name,
-        imageUrl: item.product?.mainImage || item.imageUrl,
-      }));
-
-      // Enhanced email HTML with tracking and links
-      const orderUrl = `${DOMAIN}/account/orders/${order.id}`;
-      const paymentMethodText = isCOD ? 'Cash on Delivery' : (order.paymentMethodTitle || 'Credit Card');
-      const paymentStatusText = isCOD ? 'Cash on Delivery' : 'Paid';
-      const deliveryEstimate = '2-3 business days';
-
-      const itemsHtml = orderItems.map((item: any) => {
-        const itemTotal = (item.price * item.quantity).toFixed(2);
-        const productUrl = `${DOMAIN}/product/${item.id}`;
-        return `
-          <tr>
-            <td style="padding: 12px 8px; border-bottom: 1px solid #eee;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;" />` : ''}
-                <div>
-                  <a href="${productUrl}" style="font-weight: 500; color: #333; text-decoration: none;">${item.name}</a>
-                  ${item.brand ? `<div style="font-size: 11px; color: #888; text-transform: uppercase;">${item.brand}</div>` : ''}
-                </div>
-              </div>
-            </td>
-            <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; color: #666;">x${item.quantity}</td>
-            <td style="padding: 12px 8px; border-bottom: 1px solid #eee; text-align: right; color: #333;">${order.currency.toUpperCase()} ${itemTotal}</td>
-          </tr>
-        `;
-      }).join('');
-
-      const emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; border-radius: 16px 16px 0 0;">
-            <h1 style="color: white; margin: 0 0 10px; font-size: 28px;">Order Confirmed! 🎉</h1>
-            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 16px;">Thank you for shopping with SHANFA</p>
-          </div>
-          
-          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e9ecef;">
-            <p style="color: #495057; font-size: 16px; margin: 0 0 20px;">Hello <strong>${customerName}</strong>,</p>
-            
-            <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <div>
-                  <h2 style="color: #333; margin: 0 0 5px; font-size: 20px;">Order #${order.id}</h2>
-                  <p style="color: #6c757d; margin: 0; font-size: 13px;">${new Date(order.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                </div>
-                <div style="text-align: right;">
-                  <span style="background: ${isCOD ? '#ffc107' : '#28a745'}; color: ${isCOD ? '#000' : '#fff'}; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block;">${paymentStatusText}</span>
-                  <p style="color: #6c757d; margin: 8px 0 0; font-size: 12px;">📦 Est. delivery: ${deliveryEstimate}</p>
-                </div>
-              </div>
-              
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
-                <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
-                  <span style="color: #6c757d;">Payment Method</span>
-                  <div style="color: #333; font-weight: 600;">${paymentMethodText}</div>
-                </div>
-                <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
-                  <span style="color: #6c757d;">Estimated Delivery</span>
-                  <div style="color: #333; font-weight: 600;">${deliveryEstimate}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-              <h3 style="color: #333; margin: 0 0 16px; font-size: 16px;">Order Items</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="border-bottom: 2px solid #dee2e6;">
-                    <th style="padding: 8px; text-align: left; color: #6c757d; font-size: 11px; text-transform: uppercase;">Product</th>
-                    <th style="padding: 8px; text-align: center; color: #6c757d; font-size: 11px; text-transform: uppercase;">Qty</th>
-                    <th style="padding: 8px; text-align: right; color: #6c757d; font-size: 11px; text-transform: uppercase;">Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${itemsHtml}
-                </tbody>
-              </table>
-              
-              <div style="border-top: 2px solid #dee2e6; margin-top: 16px; padding-top: 16px;">
-                <table style="width: 100%;">
-                  <tr><td style="padding: 4px 0; color: #6c757d;">Subtotal</td><td style="padding: 4px 0; text-align: right; color: #333;">${order.currency.toUpperCase()} ${order.subtotal?.toFixed(2)}</td></tr>
-                  <tr><td style="padding: 4px 0; color: #6c757d;">Shipping</td><td style="padding: 4px 0; text-align: right; color: #333;">${order.currency.toUpperCase()} ${order.shipping?.toFixed(2)}</td></tr>
-                  ${order.discountAmount ? `<tr><td style="padding: 4px 0; color: #28a745;">Discount</td><td style="padding: 4px 0; text-align: right; color: #28a745;">-${order.currency.toUpperCase()} ${(order.discountAmount ?? 0).toFixed(2)}</td></tr>` : ''}
-                  <tr style="font-weight: bold; font-size: 18px; border-top: 2px solid #333; margin-top: 8px;">
-                    <td style="padding: 12px 0 0;">Total</td>
-                    <td style="padding: 12px 0 0; text-align: right; color: #667eea;">${order.currency.toUpperCase()} ${order.total?.toFixed(2)}</td>
-                  </tr>
-                </table>
-              </div>
-            </div>
-            
-            ${shipping ? `
-            <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
-              <h3 style="color: #333; margin: 0 0 12px; font-size: 16px;">Shipping Address</h3>
-              <p style="color: #495057; margin: 0; line-height: 1.6;">
-                ${shipping.first_name} ${shipping.last_name || ''}<br>
-                ${shipping.address_1 || ''}<br>
-                ${shipping.city || ''}, ${shipping.country || ''}<br>
-                ${shipping.phone ? `📞 ${shipping.phone}` : ''}
-              </p>
-            </div>` : ''}
-            
-            <div style="display: flex; gap: 12px; margin: 24px 0;">
-              <a href="${orderUrl}" style="flex: 1; background: #667eea; color: white; padding: 16px 24px; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 600; font-size: 14px;">📋 My Orders</a>
-              <a href="${TRACKING_URL}" style="flex: 1; background: #28a745; color: white; padding: 16px 24px; border-radius: 10px; text-align: center; text-decoration: none; font-weight: 600; font-size: 14px;">🚚 Track Order</a>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
-              <p style="color: #6c757d; margin: 0 0 8px; font-size: 13px;"><strong>Need Help?</strong></p>
-              <p style="margin: 0; font-size: 13px;">
-                <a href="${DOMAIN}/contact" style="color: #667eea;">Contact Support</a> · 
-                <a href="${DASHBOARD_URL}" style="color: #667eea;">My Dashboard</a> · 
-                <a href="${DOMAIN}/returns" style="color: #667eea;">Returns</a>
-              </p>
-            </div>
-            
-            <p style="color: #6c757d; font-size: 12px; text-align: center; margin: 24px 0 0;">
-              Thank you for shopping with SHANFA GLOBAL!<br>
-              <a href="${DOMAIN}" style="color: #667eea;">shanafaglobal.com</a>
-            </p>
-          </div>
-        </div>
-      `;
-
-      await sendEmail({
-        to: customerEmail,
-        subject: `Order Confirmed #${order.id} - SHANFA`,
-        html: emailHtml,
-      }).catch((err) => {
-        console.error("Failed to send order email:", err);
-        // If email failed, reset the flag so it can be retried
-        prisma.order.update({
-          where: { id: order.id },
-          data: { emailConfirmationSent: false }
-        }).catch(() => {});
-      });
-    } else {
-      console.log(`[Order Email] Skipping email - already sent or no email address for order ${order.id}`);
-    }
-
-    // Notify admin — ONLY for COD orders at creation time
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (isCOD && adminEmail) {
-      const adminItemsList = order.items.map((item: any) => `${item.name || 'Product'} x${item.quantity}`).join(', ');
-      await sendEmail({
-        to: adminEmail as string,
-        subject: `New COD Order #${order.id} - ${Number(order.total || 0).toFixed(2)} ${order.currency.toUpperCase()}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; padding: 20px;">
-            <h2 style="color: #333;">New Order Received! 💵 Cash on Delivery</h2>
-            <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
-              <tr><td style="padding: 8px 0; color: #666;">Order ID</td><td style="padding: 8px 0;"><strong>#${order.id}</strong></td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Customer</td><td style="padding: 8px 0;">${customerEmail || 'Guest'}</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${order.currency.toUpperCase()} ${order.total?.toFixed(2)}</strong></td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">Cash on Delivery</td></tr>
-              <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
-            </table>
-            <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/ueadmin/orders/${order.id}" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order</a></p>
-          </div>
-        `
-      }).catch(console.error);
-    }
+    // Admin email notification for COD is now handled in /api/payments/cod 
+    // to ensure it only sends AFTER the user confirms on the payment page.
 
     return NextResponse.json({
+      success: true,
       orderId: order.id,
       subtotal: finalSubtotal,
       shipping: effectiveShipping,
@@ -837,7 +609,8 @@ export async function POST(req: Request) {
       status: order.status,
       freeDelivery,
       courier: shipment?.courier,
-      trackingCode: shipment?.trackingCode
+      trackingCode: shipment?.trackingCode,
+      paymentMethod: payment_method
     });
   } catch (error: any) {
     console.error("=== CREATE ORDER ERROR ===");
@@ -857,8 +630,13 @@ export async function POST(req: Request) {
       } else if (errorMessage.includes("required") || errorMessage.includes("must be")) {
         errorStatus = 400;
       }
+    } else if (typeof error === 'string') {
+      errorMessage = error;
     }
     
-    return NextResponse.json({ error: errorMessage }, { status: errorStatus });
+    return NextResponse.json({ 
+      error: errorMessage || "Order creation failed",
+      message: errorMessage || "Order creation failed"
+    }, { status: errorStatus });
   }
 }

@@ -170,16 +170,9 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
           localStorage.setItem('recent_order', data.orderId);
         }
         toast.success("Order created! Redirecting...", { id: "checkout" });
-        if (paymentMethod === "cod") {
-          useLoadingStore.getState().setRedirecting(true, "Finalizing your order...");
-          router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
-        } else if (paymentMethod === "tabby" || paymentMethod === "tamara" || paymentMethod === "stripe") {
-          useLoadingStore.getState().setRedirecting(true, "Creating your order...");
-          router.push(`/checkout/payment/${data.orderId}?method=${paymentMethod}`);
-        } else {
-          useLoadingStore.getState().setRedirecting(true, "Creating your order...");
-          router.push(`/checkout/payment/${data.orderId}`);
-        }
+        // Always redirect to payment page to allow confirmation or method change
+        useLoadingStore.getState().setRedirecting(true, "Redirecting to secure payment...");
+        router.push(`/checkout/payment/${data.orderId}?method=${paymentMethod}`);
       } else if (!orderRes.ok) {
         toast.error(data?.error || `Server error (${orderRes.status})`, { id: "checkout" });
         console.error("Order failed:", orderRes.status, data);

@@ -153,10 +153,13 @@ function PaymentPageContent() {
         if (orderData.error) throw new Error(orderData.error);
         setOrder(orderData);
 
+        // Remove automatic redirect for COD to allow selection/confirmation on this page
+        /* 
         if (orderData.paymentMethod === "cod") {
           router.push(`/checkout/success?orderId=${id}&cod=true`);
           return;
         }
+        */
 
         try {
           const stripeRes = await fetch("/api/payments/stripe/create-intent", {
