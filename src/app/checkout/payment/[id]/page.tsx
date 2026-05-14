@@ -9,6 +9,8 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentRequestButtonElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import dynamic from "next/dynamic";
 import { Price } from "@/components/Price";
+import TabbyPromo from "@/components/TabbyPromo";
+import TamaraWidget from "@/components/TamaraWidget";
 
 const StripePaymentForm = dynamic(() => import("@/components/StripePaymentForm"), {
   ssr: false,
@@ -403,6 +405,21 @@ function PaymentPageContent() {
                       </button>
                     )}
                   </div>
+                  
+                  {/* Global Promo Widgets */}
+                  <div className="bg-black/[0.02] rounded-3xl p-4 border border-black/5">
+                    <TabbyPromo 
+                      id="TabbyPromoGlobal"
+                      price={order.total} 
+                      currency={order.currency?.toUpperCase() || "AED"} 
+                      publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
+                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
+                    />
+                    <TamaraWidget 
+                      price={order.total} 
+                      currency={order.currency?.toUpperCase() || "AED"} 
+                    />
+                  </div>
                 </>
               )}
             </div>
@@ -538,18 +555,19 @@ function PaymentPageContent() {
                       Split your purchase into 4 equal payments — no interest, no fees, no catch.
                     </p>
                   </div>
-                  {/* Tabby on-site messaging snippet */}
-                  <div
-                    id="TabbyPromoCheckout"
-                    className="tabby-promo"
-                    data-price={order.total?.toString()}
-                    data-currency={order.currency?.toUpperCase() || "AED"}
-                    data-installments-count="4"
-                    data-lang="en"
-                    data-source="checkout"
-                    data-public-key={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
-                    data-merchant-code={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
-                  />
+                  <div className="my-4 border-t border-black/5 pt-4">
+                    <TabbyPromo 
+                      id="TabbyPromoDetail"
+                      price={order.total} 
+                      currency={order.currency?.toUpperCase() || "AED"} 
+                      publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
+                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
+                    />
+                    <TamaraWidget 
+                      price={order.total} 
+                      currency={order.currency?.toUpperCase() || "AED"} 
+                    />
+                  </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-1">
                     <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Total Amount</div>
                     <div className="font-black text-2xl">
@@ -581,6 +599,12 @@ function PaymentPageContent() {
                     <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
                       Split your payments into flexible installments.
                     </p>
+                  </div>
+                  <div className="my-4 border-t border-black/5 pt-4">
+                    <TamaraWidget 
+                      price={order.total} 
+                      currency={order.currency?.toUpperCase() || "AED"} 
+                    />
                   </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-2">
                     <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Total Amount</div>

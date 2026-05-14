@@ -443,7 +443,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                   price={total} 
                   currency={getCurrencyForCountry(selectedCountry)} 
                   publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
-                  merchantCode="SGAE" 
+                  merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
                 />
                 <TamaraWidget 
                   price={total} 

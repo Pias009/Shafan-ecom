@@ -7,11 +7,11 @@ interface TabbyPromoProps {
   currency: string;
   publicKey: string;
   merchantCode: string;
+  id?: string;
 }
 
-export default function TabbyPromo({ price, currency, publicKey, merchantCode }: TabbyPromoProps) {
+export default function TabbyPromo({ price, currency, publicKey, merchantCode, id = "TabbyPromo" }: TabbyPromoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const initRef = useRef(false);
 
   useEffect(() => {
     const scriptId = "tabby-promo-script";
@@ -22,7 +22,7 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode }:
       if (containerRef.current) containerRef.current.innerHTML = "";
       try {
         new (window as any).TabbyPromo({
-          selector: "#TabbyPromo",
+          selector: `#${id}`,
           currency: currency,
           price: price.toString(),
           installmentsCount: 4,
@@ -37,23 +37,18 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode }:
     }
 
     if (document.getElementById(scriptId)) {
-      // Script already loaded — just re-init
       initPromo();
-      return;
+    } else {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://checkout.tabby.ai/tabby-promo.js";
+      script.async = true;
+      script.onload = initPromo;
+      document.body.appendChild(script);
     }
-
-    const script = document.createElement("script");
-    script.id = scriptId;
-    script.src = "https://checkout.tabby.ai/tabby-promo.js";
-    script.async = true;
-    script.onload = initPromo;
-    document.body.appendChild(script);
-
-    // Cleanup: only remove if this is the unmount of the LAST consumer
-    // We intentionally leave the script tag for performance (re-used globally)
-  }, [price, currency, publicKey, merchantCode]);
+  }, [price, currency, publicKey, merchantCode, id]);
 
   return (
-    <div id="TabbyPromo" ref={containerRef} className="my-4 min-h-[50px]" />
+    <div id={id} ref={containerRef} className="my-4 min-h-[50px]" />
   );
 }
