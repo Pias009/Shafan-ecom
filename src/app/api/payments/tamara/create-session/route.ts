@@ -95,20 +95,19 @@ export async function POST(request: NextRequest) {
 
     const getBaseUrl = () => {
       // Priority: env variable > request header (host) > fallback
-      let url = process.env.NEXT_PUBLIC_BASE_URL;
+      let url = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL;
       
-      if (!url && typeof window !== "undefined") {
-        url = window.location.origin;
-      }
-      
-      if (!url && request.headers.get("host")) {
+      if (!url && request.headers.get("x-forwarded-host")) {
+        const host = request.headers.get("x-forwarded-host");
+        const proto = request.headers.get("x-forwarded-proto") || "https";
+        url = `${proto}://${host}`;
+      } else if (!url && request.headers.get("host")) {
         const host = request.headers.get("host");
         const protocol = host?.includes("localhost") ? "http" : "https";
         url = `${protocol}://${host}`;
       }
       
       if (!url) url = "https://www.shanfaglobal.com";
-      
       if (!url.startsWith("http")) url = `https://${url}`;
       return url.replace(/\/$/, "");
     };
@@ -116,8 +115,11 @@ export async function POST(request: NextRequest) {
     const baseUrl = getBaseUrl();
     console.log("DEBUG: Using Base URL for Tamara:", baseUrl);
 
+    // ALWAYS add a suffix to avoid "duplicate reference ID" errors on Tamara
+    const uniqueRefId = `${order.id}-${Date.now().toString().slice(-4)}`;
+
     const session = await tamaraService.createSession({
-      orderReferenceId: process.env.NODE_ENV === "development" ? `${order.id}-${Date.now().toString().slice(-4)}` : order.id,
+      orderReferenceId: uniqueRefId,
       description: `Order #${order.id.substring(order.id.length - 8)}`,
       currency,
       locale: "en-US",
@@ -153,18 +155,14 @@ export async function POST(request: NextRequest) {
       },
       items: order.items.map((item, index) => {
         const qty = item.quantity || 1;
-        let up = Number(item.unitPrice || 0);
-        
-        // Smart Math Fix: adjust if unitPrice is actually the line subtotal
-        if (up * qty > (order.total || 0) && up > 0) {
-          up = up / qty;
-        }
+        const up = Number(item.unitPrice || 0);
+        const decimals = ["BHD", "KWD", "OMR"].includes(currency.toUpperCase()) ? 3 : 2;
 
         return {
           sku: item.productId || `SKU-${index}`,
           name: item.nameSnapshot || "Product Item",
           type: "physical" as const,
-          unitPrice: { amount: up.toFixed(2), currency },
+          unitPrice: { amount: up.toFixed(decimals), currency },
           quantity: qty,
           imageUrl: item.imageSnapshot || undefined,
         };

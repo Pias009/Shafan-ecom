@@ -28,11 +28,13 @@ export async function POST(request: NextRequest) {
     const orderReferenceId = webhookPayload?.order_reference_id ?? webhookPayload?.orderReferenceId;
     const status = webhookPayload?.status;
 
+    const baseOrderId = orderReferenceId?.includes('-') ? orderReferenceId.split('-')[0] : orderReferenceId;
+
     const order = await prisma.order.findFirst({
       where: {
         OR: [
           { tamaraCheckoutId: orderId },
-          { id: orderReferenceId },
+          { id: baseOrderId },
         ],
       },
     });
