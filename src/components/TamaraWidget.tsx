@@ -15,18 +15,23 @@ export default function TamaraWidget({ price, currency }: TamaraWidgetProps) {
     setMounted(true);
     // Load Tamara widget script
     const scriptId = "tamara-widget-script";
+    
+    function initTamara() {
+      if ((window as any).TamaraWidget) {
+        (window as any).TamaraWidget.init({ lang: 'en' });
+        (window as any).TamaraWidget.render();
+      }
+    }
+
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
       script.id = scriptId;
       script.src = "https://cdn.tamara.co/widget/v2/tamara-widget.js";
       script.async = true;
+      script.onload = initTamara;
       document.body.appendChild(script);
     } else {
-      // Re-initialize if script already exists and window object is available
-      if ((window as any).TamaraWidget) {
-        (window as any).TamaraWidget.init({ lang: 'en' });
-        (window as any).TamaraWidget.render();
-      }
+      initTamara();
     }
   }, [price, currency]);
 
@@ -36,7 +41,7 @@ export default function TamaraWidget({ price, currency }: TamaraWidgetProps) {
     <div className="my-4 min-h-[50px]">
       {/* @ts-ignore */}
       <tamara-widget
-        type="tamara-summary"
+        type="pdp"
         amount={price.toString()}
         currency={currency}
         public-key={publicKey}
