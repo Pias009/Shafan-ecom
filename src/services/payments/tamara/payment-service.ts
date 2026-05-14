@@ -15,24 +15,14 @@ export class TamaraService {
   constructor() {
     this.baseUrl = (process.env.TAMARA_API_URL || "https://api-sandbox.tamara.co").trim();
     this.accessToken = (process.env.TAMARA_ACCESS_TOKEN || "").trim();
-    this.notificationToken = (process.env.TAMARA_NOTIFICATION_TOKEN || "").trim();
+    this.notificationToken = (process.env.TAMARA_NOTIFICATION_KEY || "").trim();
   }
 
   private cleanPhone(phone: string | undefined): string {
     if (!phone) return "";
     // Remove all non-numeric characters
     let cleaned = phone.replace(/\D/g, "");
-    // Remove leading zeros
-    cleaned = cleaned.replace(/^0+/, "");
-    // Remove country codes if they exist at the start
-    const countryCodes = ["971", "966", "965", "973", "974", "968"];
-    for (const code of countryCodes) {
-      if (cleaned.startsWith(code)) {
-        cleaned = cleaned.substring(code.length);
-        break;
-      }
-    }
-    // Final clean of any new leading zeros
+    // Remove leading zeros only (not country codes)
     return cleaned.replace(/^0+/, "");
   }
 

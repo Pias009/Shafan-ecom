@@ -144,6 +144,7 @@ function PaymentPageContent() {
   const [tabbyLoading, setTabbyLoading] = useState(false);
   const [tamaraLoading, setTamaraLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tabbyRejected, setTabbyRejected] = useState(false);
 
   useEffect(() => {
     async function fetchOrderAndStripe() {
@@ -160,19 +161,27 @@ function PaymentPageContent() {
 
         if ((canceled || failed || rejected) && orderData.status !== 'CANCELLED') {
           const reason = canceled || failed || rejected;
-          console.log(`Order ${id} was ${reason} via ${reason}. Updating status...`);
-          
-          await fetch(`/api/orders/${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'CANCELLED' })
-          }).catch(console.error);
-          
-          // Show notice to user
+          console.log(`Order ${id} cancelled/rejected via ${reason}.`);
+
+          // Only update order status to CANCELLED for non-rejection cases
+          // Rejected orders remain ORDER_RECEIVED so the user can retry
+          if (reason !== 'tabby') {
+            await fetch(`/api/orders/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'CANCELLED' })
+            }).catch(console.error);
+          }
+
           if (rejected === 'tabby') {
-            setError("Tabby was unable to approve this payment. This can happen due to Tabby's internal risk assessment. Please try another payment method.");
+            setTabbyRejected(true);
+            setMethod("tabby");
+            setError(
+              "Tabby was unable to approve this payment. This may be due to Tabby's risk assessment or eligibility criteria. " +
+              "You can try again with Tabby or choose another payment method."
+            );
           } else {
-            setError(`Your payment via ${reason} was not completed. You can try another method.`);
+            setError(`Your payment via ${reason} was not completed. Please try another method.`);
           }
         }
 
@@ -325,17 +334,37 @@ function PaymentPageContent() {
 
             {/* Error Message Display */}
             {error && (
-              <div className="p-4 rounded-2xl bg-red-50 border border-red-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                <div className="p-2 bg-white rounded-full text-red-500 shadow-sm">
-                  <Info className="w-4 h-4" />
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-200 space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-white rounded-full text-red-500 shadow-sm shrink-0">
+                    <Info className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-red-600 mb-1">
+                      {tabbyRejected ? "Tabby Payment Not Approved" : "Payment Notice"}
+                    </div>
+                    <div className="text-[11px] text-red-500 font-medium leading-relaxed">{error}</div>
+                  </div>
+                  <button onClick={() => { setError(null); setTabbyRejected(false); }} className="text-red-300 hover:text-red-500 transition shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-red-600">Payment Notice</div>
-                  <div className="text-[11px] text-red-500 font-medium line-clamp-2">{error}</div>
-                </div>
-                <button onClick={() => setError(null)} className="text-red-300 hover:text-red-500 transition">
-                  <X className="w-4 h-4" />
-                </button>
+                {tabbyRejected && (
+                  <div className="flex gap-2 pl-10">
+                    <button
+                      onClick={() => { setError(null); setTabbyRejected(false); handleTabbyPayment(); }}
+                      className="px-4 py-2 rounded-full bg-[#3ECF8E] text-black text-[10px] font-black uppercase tracking-widest hover:bg-[#3ECF8E]/90 transition"
+                    >
+                      Try Again with Tabby
+                    </button>
+                    <button
+                      onClick={() => { setError(null); setTabbyRejected(false); setMethod("card"); }}
+                      className="px-4 py-2 rounded-full bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-black/80 transition"
+                    >
+                      Pay by Card
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -366,7 +395,7 @@ function PaymentPageContent() {
                         className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#FF4D4D] hover:bg-[#FF4D4D]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#FF4D4D]/20 overflow-hidden h-14 md:h-16"
                       >
                         <div className="flex items-center gap-3 ml-5">
-                          <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara" className="h-8" />
+                          <img src="https://cdn.tamara.co/assets/svg/tamara-logo-en.svg" alt="Tamara" className="h-8" />
                         </div>
                         <div className="mr-5 bg-white/20 px-3 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
                           {tamaraLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Installments"}
@@ -411,7 +440,7 @@ function PaymentPageContent() {
                 </div>
 
                 {(country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
-                  <div 
+                  <div
                     onClick={() => setMethod("tabby")}
                     className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-[#3ECF8E] shadow-lg" : "border-black/5 hover:border-black/10"}`}
                   >
@@ -419,8 +448,8 @@ function PaymentPageContent() {
                       <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="w-8 md:w-10" />
                     </div>
                     <div className="flex-1">
-                      <div className="font-bold text-base md:text-lg">Tabby</div>
-                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Split into 4 interest-free payments</div>
+                      <div className="font-bold text-base md:text-lg">Tabby | Pay in 4 interest-free payments</div>
+                      <div className="text-[10px] md:text-xs text-black/40 font-medium">No interest. No fees. Split into 4 payments.</div>
                     </div>
                     {method === "tabby" && <CheckCircle2 className="text-[#3ECF8E]" size={18} />}
                   </div>
@@ -432,7 +461,7 @@ function PaymentPageContent() {
                     className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-[#FF4D4D] shadow-lg" : "border-black/5 hover:border-black/10"}`}
                   >
                     <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tamara" ? "bg-[#FF4D4D] text-white" : "bg-black/5"}`}>
-                      <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara" className="w-8 md:w-10" />
+                      <img src="https://cdn.tamara.co/assets/svg/tamara-logo-en.svg" alt="Tamara" className="w-8 md:w-10" />
                     </div>
                     <div className="flex-1">
                       <div className="font-bold text-base md:text-lg">Tamara</div>
@@ -501,20 +530,33 @@ function PaymentPageContent() {
               {method === "tabby" && (
                 <div className="py-8 text-center space-y-6 max-w-md mx-auto">
                   <div className="flex justify-center">
-                    <div className="w-16 h-16 rounded-full bg-[#3ECF8E]/10 flex items-center justify-center">
-                      <Wallet className="w-8 h-8 text-[#3ECF8E]" />
-                    </div>
+                    <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-10" />
                   </div>
                   <div className="space-y-2">
-                    <p className="font-bold text-lg">Pay in 4 with Tabby</p>
+                    <p className="font-bold text-lg">Tabby | Pay in 4 interest-free payments</p>
                     <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
-                      No interest. No fees. No catch.
+                      Split your purchase into 4 equal payments — no interest, no fees, no catch.
                     </p>
                   </div>
-                  <div className="bg-black/5 rounded-2xl p-4 space-y-2">
+                  {/* Tabby on-site messaging snippet */}
+                  <div
+                    id="TabbyPromoCheckout"
+                    className="tabby-promo"
+                    data-price={order.total?.toString()}
+                    data-currency={order.currency?.toUpperCase() || "AED"}
+                    data-installments-count="4"
+                    data-lang="en"
+                    data-source="checkout"
+                    data-public-key={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
+                    data-merchant-code={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
+                  />
+                  <div className="bg-black/5 rounded-2xl p-4 space-y-1">
                     <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Total Amount</div>
                     <div className="font-black text-2xl">
                       <Price amount={order.total} />
+                    </div>
+                    <div className="text-[10px] text-black/40 font-medium">
+                      ≈ <Price amount={order.total / 4} /> × 4 payments
                     </div>
                   </div>
                   <button
@@ -522,7 +564,7 @@ function PaymentPageContent() {
                     disabled={tabbyLoading}
                     className="w-full h-14 md:h-16 rounded-full bg-[#3ECF8E] hover:bg-[#3ECF8E]/90 text-black font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-[#3ECF8E]/20 disabled:opacity-50 flex items-center justify-center gap-3"
                   >
-                    {tabbyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Tabby Payment"}
+                    {tabbyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Pay in 4 with Tabby"}
                   </button>
                 </div>
               )}

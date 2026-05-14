@@ -1,20 +1,20 @@
 export type TabbyRegion = "UAE" | "KSA" | "Kuwait";
 export type TabbyCurrency = "AED" | "SAR" | "KWD";
 
-export type TabbyPaymentStatus = 
-  | "PENDING" 
-  | "APPROVED" 
-  | "REJECTED" 
-  | "EXPIRED" 
-  | "AUTHORIZED" 
-  | "CAPTURED" 
-  | "CLOSED" 
+export type TabbyPaymentStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "EXPIRED"
+  | "AUTHORIZED"
+  | "CAPTURED"
+  | "CLOSED"
   | "VOIDED";
 
-export type TabbySessionStatus = 
-  | "PENDING" 
-  | "APPROVED" 
-  | "REJECTED" 
+export type TabbySessionStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
   | "EXPIRED";
 
 export interface TabbyBuyer {
@@ -22,6 +22,10 @@ export interface TabbyBuyer {
   phone?: string;
   name?: string;
   dob?: string;
+  /** ISO 8601 date string for account registration (Tabby pre-scoring) */
+  registered_since?: string;
+  /** Number of completed orders (Tabby pre-scoring) */
+  loyalty_level?: number;
 }
 
 export interface TabbyShippingAddress {
@@ -37,6 +41,28 @@ export interface TabbyItem {
   unitPrice: string;
   imageUrl?: string;
   category?: string;
+}
+
+export interface TabbyOrderHistoryEntry {
+  purchased_at: string;
+  amount: string;
+  currency: string;
+  payment_method: string;
+  status: string;
+  buyer: {
+    email: string;
+    phone: string;
+    name: string;
+  };
+  order: {
+    reference_id: string;
+    items: { title: string; quantity: number; unit_price: string }[];
+  };
+  shipping_address: {
+    city: string;
+    address: string;
+    zip: string;
+  };
 }
 
 export interface TabbySession {
@@ -92,6 +118,9 @@ export interface TabbyWebhookPayload {
     currency: TabbyCurrency;
     order_id?: string;
     payment_id?: string;
+    order?: {
+      reference_id?: string;
+    };
     type?: string;
   };
 }
@@ -105,6 +134,8 @@ export interface TabbySessionRequest {
   buyer: TabbyBuyer;
   shippingAddress?: TabbyShippingAddress;
   items: TabbyItem[];
+  /** Up to 10 past orders for Tabby pre-scoring */
+  order_history?: TabbyOrderHistoryEntry[];
   taxAmount?: number;
   shippingAmount?: number;
   discountAmount?: number;

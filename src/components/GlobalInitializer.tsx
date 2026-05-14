@@ -124,5 +124,16 @@ export function GlobalInitializer() {
     checkAddress();
   }, [_hasHydrated, session, setHasAddress]);
 
+  // Load Tabby promo script globally so on-site snippets render on any page
+  useEffect(() => {
+    const scriptId = "tabby-promo-script";
+    if (document.getElementById(scriptId)) return;
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = "https://checkout.tabby.ai/tabby-promo.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   return null;
 }

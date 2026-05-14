@@ -85,6 +85,10 @@ export class TabbyService {
       params.amount = calculatedAmount;
     }
 
+    const buyerPayload: Record<string, any> = { ...params.buyer };
+    if (params.buyer?.registered_since) buyerPayload.registered_since = params.buyer.registered_since;
+    if (typeof params.buyer?.loyalty_level === "number") buyerPayload.loyalty_level = params.buyer.loyalty_level;
+
     const response = await fetch(`${this.baseUrl}/api/v2/checkout`, {
       method: "POST",
       headers: this.getHeaders(),
@@ -93,7 +97,11 @@ export class TabbyService {
           amount: params.amount.toFixed(decimals),
           currency: params.currency,
           description: params.description || `Order ${params.orderId}`,
-          buyer: params.buyer,
+          buyer: buyerPayload,
+          buyer_history: params.order_history && params.order_history.length > 0
+            ? { registered_since: params.buyer?.registered_since, loyalty_level: params.buyer?.loyalty_level ?? 0, orders_count: params.order_history.length }
+            : undefined,
+          order_history: params.order_history ?? [],
           shipping_address: params.shippingAddress,
           order: {
             tax_amount: taxAmt.toFixed(decimals),
@@ -105,7 +113,7 @@ export class TabbyService {
               quantity: item.quantity,
               unit_price: Number(item.unitPrice).toFixed(decimals),
               image_url: item.imageUrl,
-              category: item.category || "General",
+              category: item.category && item.category !== "General" ? item.category : "Unclassified",
             })),
           },
           metadata: {
@@ -186,6 +194,25 @@ export class TabbyService {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || `Tabby void failed: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async refundPayment(paymentId: string, amount: number, currency: TabbyCurrency): Promise<any> {
+    const decimals = ["BHD", "KWD", "OMR"].includes(currency.toUpperCase()) ? 3 : 2;
+    const response = await fetch(`${this.baseUrl}/api/v2/payments/${paymentId}/refunds`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        amount: amount.toFixed(decimals),
+        currency,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: `Status ${response.status}` }));
+      throw new Error(err.message || `Tabby refund failed: ${response.status}`);
     }
 
     return response.json();

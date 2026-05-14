@@ -70,13 +70,15 @@ export async function POST(request: NextRequest) {
     const billingAddress = order.billingAddress as any;
     const shippingAddress = order.shippingAddress as any;
 
+    const decimals = ["KWD", "BHD", "OMR"].includes(currency.toUpperCase()) ? 3 : 2;
+
     const toFixed = (val: any) => {
-      if (val === null || val === undefined) return "0.00";
+      if (val === null || val === undefined) return `0.${"0".repeat(decimals)}`;
       try {
         const num = Number(val.toString());
-        return isNaN(num) ? "0.00" : num.toFixed(2);
+        return isNaN(num) ? `0.${"0".repeat(decimals)}` : num.toFixed(decimals);
       } catch (e) {
-        return "0.00";
+        return `0.${"0".repeat(decimals)}`;
       }
     };
 
@@ -156,7 +158,6 @@ export async function POST(request: NextRequest) {
       items: order.items.map((item, index) => {
         const qty = item.quantity || 1;
         const up = Number(item.unitPrice || 0);
-        const decimals = ["BHD", "KWD", "OMR"].includes(currency.toUpperCase()) ? 3 : 2;
 
         return {
           sku: item.productId || `SKU-${index}`,

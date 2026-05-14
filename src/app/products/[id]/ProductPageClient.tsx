@@ -18,7 +18,7 @@ import { formatDescription, VisualDescription } from "@/utils/formatText";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackViewItem, trackAddToCart as trackAddToCartDataLayer } from "@/lib/datalayer";
 import TabbyPromo from "@/components/TabbyPromo";
-import TamaraPromo from "@/components/TamaraPromo";
+import TamaraWidget from "@/components/TamaraWidget";
 
 const ProductQuickViewModal = lazy(() => import("@/components/ProductQuickViewModal").then(m => ({ default: m.ProductQuickViewModal })));
 
@@ -308,10 +308,9 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
                   merchantCode="SGAE" 
                 />
-                <TamaraPromo 
+                <TamaraWidget 
                   price={displayPrice} 
                   currency={product.currency?.toUpperCase() || 'AED'} 
-                  publicKey={process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || ""} 
                 />
               </div>
             )}

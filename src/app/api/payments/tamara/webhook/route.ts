@@ -8,7 +8,8 @@ import { sendEmail } from "@/lib/email";
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.text();
-    const signature = request.headers.get("x-tamara-signature") || "";
+    // Tamara sends the JWT in x-tamara-token header
+    const signature = request.headers.get("x-tamara-token") || request.headers.get("x-tamara-signature") || "";
 
     const tamaraService = new TamaraService();
     const isValid = tamaraService.verifyWebhook(payload, signature);
@@ -55,6 +56,31 @@ export async function POST(request: NextRequest) {
           where: { id: order.id },
           data: { status: OrderStatus.PROCESSING, paymentStatus: PaymentStatus.PAID },
         });
+        
+        try {
+          console.log(`[Tamara Webhook] Authorising order ${orderId}...`);
+          await tamaraService.authoriseOrder(orderId);
+          
+          console.log(`[Tamara Webhook] Capturing payment for order ${orderId}...`);
+          const decimals = ["BHD", "KWD", "OMR"].includes(order.currency.toUpperCase()) ? 3 : 2;
+          const formattedTotal = Number(order.total || 0).toFixed(decimals);
+          
+          await tamaraService.capturePayment({
+            orderId: orderId,
+            totalAmount: {
+              amount: formattedTotal,
+              currency: order.currency.toUpperCase() as any
+            },
+            shippingInfo: {
+              shipping_company: "Standard Delivery",
+              tracking_number: orderId,
+            }
+          });
+          console.log(`[Tamara Webhook] Successfully captured payment for order ${orderId}`);
+        } catch (authCapErr) {
+          console.error(`[Tamara Webhook] Failed to authorise/capture order ${orderId}:`, authCapErr);
+        }
+        
         paymentConfirmed = true;
         break;
 

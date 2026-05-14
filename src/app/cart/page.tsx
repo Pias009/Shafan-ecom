@@ -20,7 +20,7 @@ import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackBeginCheckout } from "@/lib/datalayer";
 import TabbyPromo from "@/components/TabbyPromo";
-import TamaraPromo from "@/components/TamaraPromo";
+import TamaraWidget from "@/components/TamaraWidget";
 
 function getCurrencyForCountry(countryCode: string): string {
   const currencies: Record<string, string> = {
@@ -445,10 +445,9 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                   publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
                   merchantCode="SGAE" 
                 />
-                <TamaraPromo 
+                <TamaraWidget 
                   price={total} 
                   currency={getCurrencyForCountry(selectedCountry)} 
-                  publicKey={process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || ""} 
                 />
               </div>
 
@@ -483,7 +482,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                         : "border-black/20 text-black/60 hover:border-black/40"
                        }`}
                   >
-                    <img src="https://cdn.tamara.co/assets/svg/tamara-logo-badge-en.svg" alt="Tamara" className="h-5" />
+                    <img src="https://cdn.tamara.co/assets/svg/tamara-logo-en.svg" alt="Tamara" className="h-5" />
                   </button>
                   <button
                     type="button"

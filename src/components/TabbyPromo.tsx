@@ -11,18 +11,18 @@ interface TabbyPromoProps {
 
 export default function TabbyPromo({ price, currency, publicKey, merchantCode }: TabbyPromoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const initRef = useRef(false);
 
   useEffect(() => {
-    // Tabby snippet initialization
-    const script = document.createElement("script");
-    script.src = "https://checkout.tabby.ai/tabby-promo.js";
-    script.async = true;
-    document.body.appendChild(script);
+    const scriptId = "tabby-promo-script";
 
-    script.onload = () => {
-      if ((window as any).TabbyPromo) {
+    function initPromo() {
+      if (!(window as any).TabbyPromo || !containerRef.current) return;
+      // Clear previous widget before re-rendering
+      if (containerRef.current) containerRef.current.innerHTML = "";
+      try {
         new (window as any).TabbyPromo({
-          selector: '#TabbyPromo',
+          selector: "#TabbyPromo",
           currency: currency,
           price: price.toString(),
           installmentsCount: 4,
@@ -31,18 +31,29 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode }:
           publicKey: publicKey,
           merchantCode: merchantCode,
         });
+      } catch (e) {
+        console.warn("[TabbyPromo] Init error:", e);
       }
-    };
+    }
 
-    return () => {
-      // Clean up if needed
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
+    if (document.getElementById(scriptId)) {
+      // Script already loaded — just re-init
+      initPromo();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = "https://checkout.tabby.ai/tabby-promo.js";
+    script.async = true;
+    script.onload = initPromo;
+    document.body.appendChild(script);
+
+    // Cleanup: only remove if this is the unmount of the LAST consumer
+    // We intentionally leave the script tag for performance (re-used globally)
   }, [price, currency, publicKey, merchantCode]);
 
   return (
-    <div id="TabbyPromo" ref={containerRef} className="my-4 min-h-[50px]"></div>
+    <div id="TabbyPromo" ref={containerRef} className="my-4 min-h-[50px]" />
   );
 }

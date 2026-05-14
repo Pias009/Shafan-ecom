@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { OrderStatus, ReturnStatus } from "@prisma/client";
+import { TabbyService } from "@/services/payments/tabby";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerAuthSession();
@@ -41,12 +42,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       if (diffMinutes <= 30) {
         const updated = await prisma.order.update({
           where: { id },
-          data: { 
+          data: {
             status: OrderStatus.CANCELLED,
             cancelReason: reason || "Auto-approved (within 30 mins)",
-            cancelRequestedAt: now
-          }
+            cancelRequestedAt: now,
+          },
         });
+
+        // If paid via Tabby, trigger a refund via Tabby API
+        if (
+          order.paymentMethod === "tabby" &&
+          order.tabbyPaymentId &&
+          order.paymentStatus === "PAID"
+        ) {
+          try {
+            const tabbyService = new TabbyService();
+            await tabbyService.refundPayment(
+              order.tabbyPaymentId,
+              Number(order.total || 0),
+              (order.currency || "AED") as any
+            );
+            console.log(`[OrderAction] Tabby refund triggered for order ${id}`);
+          } catch (refundErr: any) {
+            console.error(`[OrderAction] Tabby refund failed for order ${id}:`, refundErr.message);
+            // Non-blocking: cancellation still succeeds; admin can refund manually
+          }
+        }
+
         return NextResponse.json({ message: "Order cancelled successfully", order: updated });
       } else {
         // Over 30 minutes -> Request for Admin

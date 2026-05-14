@@ -9,6 +9,7 @@ import PaymentStatusEditor from './_components/PaymentStatusEditor';
 import { OrderStatus } from '@prisma/client';
 import RequestAlerts from './RequestAlerts';
 import OrderEditor from './_components/OrderEditor';
+import TamaraRefundAction from './_components/TamaraRefundAction';
 
 function formatPrice(amount: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
@@ -94,6 +95,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           
           {/* Quick Stats & Actions */}
           <div className="flex flex-wrap items-center gap-3">
+            <TamaraRefundAction 
+              orderId={order.id} 
+              tamaraCheckoutId={order.tamaraCheckoutId} 
+              orderTotal={order.total} 
+              currency={order.currency} 
+            />
             <OrderEditor order={order} />
             <InvoiceDownload orderId={order.id} />
           </div>
