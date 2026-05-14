@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       console.log("DEBUG: Forcing Tabby to UAE/AED for localhost testing");
     }
 
+    const decimals = ["KWD", "BHD", "OMR"].includes(currency) ? 3 : 2;
     const tabbyService = new TabbyService(region);
 
     const billingAddress = order.billingAddress as any;
@@ -134,18 +135,13 @@ export async function POST(request: NextRequest) {
       },
       items: order.items.map((item) => {
         const qty = item.quantity || 1;
-        let up = Number(item.unitPrice || 0);
-
-        // Smart Math Fix: adjust if unitPrice is actually the line subtotal
-        if (up * qty > (order.total || 0) && up > 0) {
-          up = up / qty;
-        }
+        const up = Number(item.unitPrice || 0);
 
         return {
           title: item.nameSnapshot,
           description: item.nameSnapshot,
           quantity: qty,
-          unitPrice: up.toFixed(2),
+          unitPrice: up.toFixed(decimals), // Use the same decimal precision as the total
           imageUrl: item.imageSnapshot || undefined,
         };
       }),

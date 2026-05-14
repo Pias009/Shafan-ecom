@@ -153,10 +153,15 @@ function PaymentPageContent() {
         if (orderData.error) throw new Error(orderData.error);
         setOrder(orderData);
 
-        // If returned with cancel param, update order status in DB
-        const canceled = searchParams?.get("canceled") || searchParams?.get("failed");
-        if (canceled && orderData.status !== 'CANCELLED') {
-          console.log(`Order ${id} was canceled/failed via ${canceled}. Updating status...`);
+        // If returned with cancel/reject param, update order status in DB
+        const canceled = searchParams?.get("canceled");
+        const failed = searchParams?.get("failed");
+        const rejected = searchParams?.get("rejected");
+
+        if ((canceled || failed || rejected) && orderData.status !== 'CANCELLED') {
+          const reason = canceled || failed || rejected;
+          console.log(`Order ${id} was ${reason} via ${reason}. Updating status...`);
+          
           await fetch(`/api/orders/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -164,7 +169,11 @@ function PaymentPageContent() {
           }).catch(console.error);
           
           // Show notice to user
-          setError(`Your payment via ${canceled} was not completed. You can try another method.`);
+          if (rejected === 'tabby') {
+            setError("Tabby was unable to approve this payment. This can happen due to Tabby's internal risk assessment. Please try another payment method.");
+          } else {
+            setError(`Your payment via ${reason} was not completed. You can try another method.`);
+          }
         }
 
         try {

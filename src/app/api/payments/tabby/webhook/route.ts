@@ -68,6 +68,10 @@ export async function POST(request: NextRequest) {
       case "payment.declined":
       case "payment.rejected":
         console.log("Tabby payment declined for order:", order.id);
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { status: "CANCELLED" },
+        });
         break;
 
       case "payment.expired":
