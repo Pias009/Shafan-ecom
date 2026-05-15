@@ -2,8 +2,9 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, CreditCard, Loader2, Banknote, Wallet, Info, X } from "lucide-react";
+import { CheckCircle2, CreditCard, Loader2, Banknote, Wallet, Info, X, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
+import { useRef } from "react";
 
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentRequestButtonElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -147,6 +148,16 @@ function PaymentPageContent() {
   const [tamaraLoading, setTamaraLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tabbyRejected, setTabbyRejected] = useState(false);
+  const actionAreaRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to payment form when method is selected
+  useEffect(() => {
+    if (method && !loading) {
+      setTimeout(() => {
+        actionAreaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  }, [method, loading]);
 
   useEffect(() => {
     async function fetchOrderAndStripe() {
@@ -491,7 +502,10 @@ function PaymentPageContent() {
               </div>
             </div>
 
-            <div className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-black/5 bg-white shadow-xl">
+            <div 
+              ref={actionAreaRef}
+              className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-black/5 bg-white shadow-xl scroll-mt-24"
+            >
               {method === "card" && clientSecret && stripePromise && (
                 <Elements 
                   key={clientSecret} 
@@ -508,6 +522,13 @@ function PaymentPageContent() {
                 >
                   <StripePaymentForm orderId={id} order={order} />
                 </Elements>
+              )}
+
+              {method === "card" && !clientSecret && stripePromise && (
+                <div className="py-12 text-center flex flex-col items-center gap-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-black/10" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-black/30">Initializing Secure Card Form...</p>
+                </div>
               )}
 
               {method === "card" && !stripePromise && (

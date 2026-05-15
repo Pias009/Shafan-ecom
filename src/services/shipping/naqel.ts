@@ -93,7 +93,7 @@ export class NaqelService {
           success: true,
           trackingNumber: shipment.airwaybill,
           labelUrl: shipment.labelDownloadUrl,
-          trackingUrl: `https://www.naqelexpress.com/en/tracking?awb=${shipment.airwaybill}`,
+          trackingUrl: `https://www.naqelexpress.com/tracking?tracking_number=${shipment.airwaybill}`,
           carrier: "naqel",
           service: shipment.productType || "Express",
         };

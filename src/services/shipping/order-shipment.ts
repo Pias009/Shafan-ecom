@@ -81,14 +81,14 @@ export async function createShipmentForOrder(orderId: string) {
       update: {
         trackingCode: awb,
         courier: "Naqel",
-        trackingUrl: `https://www.naqelexpress.com/tracking/${awb}`,
+        trackingUrl: `https://www.naqelexpress.com/tracking?tracking_number=${awb}`,
         status: "Created",
       },
       create: {
         orderId: order.id,
         trackingCode: awb,
         courier: "Naqel",
-        trackingUrl: `https://www.naqelexpress.com/tracking/${awb}`,
+        trackingUrl: `https://www.naqelexpress.com/tracking?tracking_number=${awb}`,
         status: "Created",
       },
     });

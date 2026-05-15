@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
             success: true,
             provider: 'Naqel',
             trackingNumber: awb,
-            trackingUrl: awb ? `https://www.naqelexpress.com/tracking/${awb}` : null,
+            trackingUrl: awb ? `https://www.naqelexpress.com/tracking?tracking_number=${awb}` : null,
             labelUrl,
           });
         } catch (e: any) {

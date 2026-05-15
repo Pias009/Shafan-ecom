@@ -307,7 +307,7 @@ async function dispatchNaqel(order: any, dimensions: any) {
 
   return {
     trackingCode: awb,
-    trackingUrl: `https://www.naqelexpress.com/en/tracking?awb=${awb}`,
+    trackingUrl: `https://www.naqelexpress.com/tracking?tracking_number=${awb}`,
     labelUrl: shipment?.labelDownloadUrl || null,
     raw: result,
   };
