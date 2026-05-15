@@ -1,50 +1,84 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Script from "next/script";
 
 interface TamaraWidgetProps {
   price: number | string;
   currency: string;
+  country?: string;
 }
 
-export default function TamaraWidget({ price, currency }: TamaraWidgetProps) {
+export default function TamaraWidget({ price, currency, country = "AE" }: TamaraWidgetProps) {
   const [mounted, setMounted] = useState(false);
-  const publicKey = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "";
+  const publicKey = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "561ee41b-e351-4543-ab2d-934866b6b8af";
 
   useEffect(() => {
     setMounted(true);
-    // Load Tamara widget script
-    const scriptId = "tamara-widget-script";
     
-    function initTamara() {
-      if ((window as any).TamaraWidget) {
-        (window as any).TamaraWidget.init({ lang: 'en' });
-        (window as any).TamaraWidget.render();
-      }
+    // Set global config before script loads
+    if (typeof window !== "undefined") {
+      (window as any).tamaraWidgetConfig = {
+        lang: 'en',
+        country: country.toUpperCase(),
+        publicKey: publicKey,
+        style: {
+          fontSize: '14px',
+          badgeRatio: 1.0,
+        }
+      };
     }
 
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement("script");
-      script.id = scriptId;
-      script.src = "https://cdn.tamara.co/widget/v2/tamara-widget.js";
-      script.async = true;
-      script.onload = initTamara;
-      document.body.appendChild(script);
-    } else {
-      initTamara();
+    const refreshTamara = () => {
+      if ((window as any).TamaraWidgetV2) {
+        try {
+          (window as any).TamaraWidgetV2.refresh();
+        } catch (e) {
+          console.warn("Tamara Refresh Error:", e);
+        }
+      }
+    };
+
+    if (mounted) {
+      refreshTamara();
+      // Periodically try to refresh in case script loads later
+      const timer = setTimeout(refreshTamara, 1000);
+      const timer2 = setTimeout(refreshTamara, 3000);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(timer2);
+      };
     }
-  }, [price, currency]);
+  }, [mounted, price, currency, country, publicKey]);
 
   if (!mounted) return null;
 
+  const formattedAmount = Number(price).toFixed(2);
+
   return (
-    <div className="my-4 min-h-[50px]">
+    <div className="my-4 min-h-[60px] w-full">
+      <Script 
+        src="https://cdn.tamara.co/widget-v2/tamara-widget.js" 
+        strategy="afterInteractive"
+        onLoad={() => {
+          if ((window as any).TamaraWidgetV2) {
+            try {
+              (window as any).TamaraWidgetV2.refresh();
+            } catch (e) {
+              console.error("Tamara OnLoad Error:", e);
+            }
+          }
+        }}
+      />
+      
+      {/* Official Tamara V2 Widget Tag */}
       {/* @ts-ignore */}
       <tamara-widget
-        type="pdp"
-        amount={price.toString()}
-        currency={currency}
-        public-key={publicKey}
+        key={`tamara-v2-${price}-${currency}-${country}`}
+        type="tamara-summary"
+        amount={formattedAmount}
+        currency={currency.toUpperCase()}
+        country={country.toUpperCase()}
         language="en"
       />
     </div>

@@ -448,6 +448,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 <TamaraWidget 
                   price={total} 
                   currency={getCurrencyForCountry(selectedCountry)} 
+                  country={selectedCountry}
                 />
               </div>
 

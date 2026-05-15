@@ -418,6 +418,7 @@ function PaymentPageContent() {
                     <TamaraWidget 
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
+                      country={country}
                     />
                   </div>
                 </>
@@ -566,6 +567,7 @@ function PaymentPageContent() {
                     <TamaraWidget 
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
+                      country={country}
                     />
                   </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-1">
@@ -604,6 +606,7 @@ function PaymentPageContent() {
                     <TamaraWidget 
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
+                      country={country}
                     />
                   </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-2">
