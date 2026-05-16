@@ -480,7 +480,7 @@ function PaymentPageContent() {
                     <TamaraWidget 
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
-                      country={country}
+                      country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(country?.toUpperCase() || "") ? country : "AE"}
                     />
                   </div>
                 </>

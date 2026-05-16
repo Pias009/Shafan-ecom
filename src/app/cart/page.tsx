@@ -438,7 +438,8 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 )}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-black/5">
+              <div className="mt-6 pt-4 border-t border-black/5 flex flex-col gap-3">
+                <div className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-1">Payment Options</div>
                 <TabbyPromo 
                   price={total} 
                   currency={getCurrencyForCountry(selectedCountry)} 
@@ -448,7 +449,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 <TamaraWidget 
                   price={total} 
                   currency={getCurrencyForCountry(selectedCountry)} 
-                  country={selectedCountry}
+                  country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(selectedCountry.toUpperCase()) ? selectedCountry : "AE"}
                 />
               </div>
 
