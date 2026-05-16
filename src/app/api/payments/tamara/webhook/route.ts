@@ -52,12 +52,16 @@ export async function POST(request: NextRequest) {
     switch (eventType) {
       case "order_approved":
       case "payment.approved":
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { status: OrderStatus.PROCESSING, paymentStatus: PaymentStatus.PAID },
-        });
+        // DO NOT update status yet, wait for capture success below
         
         try {
+          // IDEMPOTENCY CHECK: Do not capture if already paid
+          if (order.paymentStatus === "PAID" || order.status === OrderStatus.ORDER_CONFIRMED) {
+            console.log(`[Tamara Webhook] Order ${order.id} is already paid. Skipping capture.`);
+            paymentConfirmed = false; // Set to false to avoid duplicate notifications
+            break;
+          }
+
           console.log(`[Tamara Webhook] Authorising order ${orderId}...`);
           await tamaraService.authoriseOrder(orderId);
           
@@ -77,6 +81,13 @@ export async function POST(request: NextRequest) {
             }
           });
           console.log(`[Tamara Webhook] Successfully captured payment for order ${orderId}`);
+
+          // Update DB ONLY AFTER successful capture
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: "PAID" as any },
+          });
+          paymentConfirmed = true;
         } catch (authCapErr) {
           console.error(`[Tamara Webhook] Failed to authorise/capture order ${orderId}:`, authCapErr);
         }
@@ -85,9 +96,16 @@ export async function POST(request: NextRequest) {
         break;
 
       case "payment.captured":
+        // IDEMPOTENCY CHECK: Do not process if already paid
+        if (order.paymentStatus === "PAID" || order.status === OrderStatus.ORDER_CONFIRMED) {
+          console.log(`[Tamara Webhook] Order ${order.id} already marked as paid. Skipping captured logic.`);
+          paymentConfirmed = false;
+          break;
+        }
+
         await prisma.order.update({
           where: { id: order.id },
-          data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: PaymentStatus.PAID },
+          data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: "PAID" as any },
         });
         paymentConfirmed = true;
         break;

@@ -164,14 +164,8 @@ export async function POST(req: Request) {
       }
     });
 
-    // Trigger real-time notification to admin panel
-    notifyNewOrder({
-      id: order.id,
-      total: Number(order.total) || 0,
-      currency: order.currency || "aed",
-      userName: session.user.name || undefined,
-      email: session.user.email || undefined,
-    }).catch(console.error);
+    // Notification will be triggered via webhooks upon successful payment
+    // or via the COD endpoint for cash orders.
 
     return NextResponse.json({
       orderId: order.id,

@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { AdminSidebar } from './AdminSidebar'
 import AdminGuard from './AdminGuard'
 import { OrderAlertListener } from './OrderAlertListener'
-import { StuckOrdersProvider } from './StuckOrdersProvider'
 
 export function UeAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,7 +16,6 @@ export function UeAdminLayoutContent({ children }: { children: React.ReactNode }
   return (
     <AdminGuard>
       <OrderAlertListener />
-      <StuckOrdersProvider />
       <div className="min-h-screen flex bg-[#FAF9F6] selection:bg-black selection:text-white">
           <main className="flex-1 w-full min-h-screen flex flex-col">
             {children}
@@ -30,7 +28,6 @@ export function UeAdminLayoutContent({ children }: { children: React.ReactNode }
   return (
     <AdminGuard>
       <OrderAlertListener />
-      <StuckOrdersProvider />
       <div className="min-h-screen flex bg-[#FAF9F6] selection:bg-black selection:text-white">
         <div className="fixed inset-y-0 left-0 hidden lg:block">
            <AdminSidebar />

@@ -49,6 +49,13 @@ export async function POST(request: NextRequest) {
         const decimals = ["KWD", "BHD", "OMR"].includes(order.currency?.toUpperCase()) ? 3 : 2;
 
         try {
+          // IDEMPOTENCY CHECK: Do not capture if already paid
+          if (order.paymentStatus === "PAID" || order.status === OrderStatus.ORDER_CONFIRMED) {
+            console.log(`[Tabby Webhook] Order ${order.id} is already paid. Skipping capture.`);
+            paymentConfirmed = true; 
+            break;
+          }
+
           const captured = await tabbyService.capturePayment(
             paymentId,
             Number(order.total || 0),
@@ -60,32 +67,32 @@ export async function POST(request: NextRequest) {
             where: { id: order.id },
             data: {
               status: OrderStatus.ORDER_CONFIRMED,
-              paymentStatus: PaymentStatus.PAID,
+              paymentStatus: "PAID" as any,
             },
           });
           paymentConfirmed = true;
-        } catch (captureErr) {
-          console.error(`[Tabby Webhook] Capture FAILED for order ${order.id}:`, captureErr);
-          // Still mark as PROCESSING so admin can investigate
-          await prisma.order.update({
-            where: { id: order.id },
-            data: {
-              status: OrderStatus.PROCESSING,
-              paymentStatus: PaymentStatus.PAID,
-            },
-          });
-          paymentConfirmed = true;
+        } catch (captureErr: any) {
+          console.error(`[Tabby Webhook] Capture FAILED for order ${order.id}:`, captureErr.message);
+          // Rule 3: DO NOT update to PAID if capture fails.
+          // Keep as PENDING so it can be investigated or retried manually.
         }
         break;
       }
 
       // ── CAPTURED: already captured (in case we receive this later) ───────────
       case "CAPTURED": {
+        // IDEMPOTENCY CHECK: Do not process if already paid
+        if (order.paymentStatus === "PAID" || order.status === OrderStatus.ORDER_CONFIRMED) {
+          console.log(`[Tabby Webhook] Order ${order.id} already marked as paid. Skipping CAPTURED logic.`);
+          paymentConfirmed = false; // Set to false to avoid duplicate notifications
+          break;
+        }
+
         await prisma.order.update({
           where: { id: order.id },
           data: {
             status: OrderStatus.ORDER_CONFIRMED,
-            paymentStatus: PaymentStatus.PAID,
+            paymentStatus: "PAID" as any,
           },
         });
         paymentConfirmed = true;

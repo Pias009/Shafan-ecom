@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-interface TabbyPromoProps {
+interface TabbyCardProps {
   price: number | string;
   currency: string;
   publicKey: string;
@@ -10,31 +10,31 @@ interface TabbyPromoProps {
   id?: string;
 }
 
-export default function TabbyPromo({ price, currency, publicKey, merchantCode, id = "TabbyPromo" }: TabbyPromoProps) {
+export default function TabbyCard({ price, currency, publicKey, merchantCode, id = "tabbyCard" }: TabbyCardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const scriptId = "tabby-promo-script";
+    const scriptId = "tabby-card-script";
 
-    function initPromo() {
-      if (!(window as any).TabbyPromo || !containerRef.current) return;
+    function initCard() {
+      if (!(window as any).TabbyCard || !containerRef.current) return;
       
       // Clear previous widget before re-rendering
       containerRef.current.innerHTML = "";
       
       try {
-        new (window as any).TabbyPromo({
+        new (window as any).TabbyCard({
           selector: `#${id}`,
           currency: currency,
           price: price.toString(),
           installmentsCount: 4,
           lang: "en",
-          source: "product",
           publicKey: publicKey,
           merchantCode: merchantCode,
         });
+        console.log(`[TabbyCard] Initialized widget for selector: #${id}`);
       } catch (e) {
-        console.warn("[TabbyPromo] Init error:", e);
+        console.warn("[TabbyCard] Init error:", e);
       }
     }
 
@@ -42,18 +42,19 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode, i
     const existingScript = document.getElementById(scriptId);
     
     if (existingScript) {
-      if ((window as any).TabbyPromo) {
-        initPromo();
+      if ((window as any).TabbyCard) {
+        initCard();
       } else {
-        existingScript.addEventListener('load', initPromo);
-        return () => existingScript.removeEventListener('load', initPromo);
+        // Script is added but not yet loaded
+        existingScript.addEventListener('load', initCard);
+        return () => existingScript.removeEventListener('load', initCard);
       }
     } else {
       const script = document.createElement("script");
       script.id = scriptId;
-      script.src = "https://checkout.tabby.ai/tabby-promo.js";
+      script.src = "https://checkout.tabby.ai/tabby-card.js";
       script.async = true;
-      script.onload = initPromo;
+      script.onload = initCard;
       document.body.appendChild(script);
     }
   }, [price, currency, publicKey, merchantCode, id]);
@@ -63,7 +64,7 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode, i
       key={`${id}-${price}`} // Force fresh mount if price changes
       id={id} 
       ref={containerRef} 
-      className="my-4 min-h-[50px] w-full" 
+      className="my-2 min-h-[40px] w-full" 
     />
   );
 }

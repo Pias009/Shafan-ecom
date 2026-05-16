@@ -118,15 +118,25 @@ async function handleTabbyWebhook(payload: string, signature: string) {
     } catch (e) {
       console.error("Failed to create Naqel shipment for order:", order.id, e);
     }
-  } else if (eventType === "payment.approved" || eventType === "payment.authorization") {
-    if (paymentStatus === "AUTHORIZED") {
+  } else if (eventType === "payment.authorized" || paymentStatus === "AUTHORIZED") {
+    // ── Rule 3: Must Capture before Success ──
+    console.log(`[Generic Webhook] Payment AUTHORIZED for ${order.id}. Triggering capture...`);
+    try {
+      const tabbyService = new TabbyService();
+      await tabbyService.capturePayment(
+        paymentId, 
+        Number(order.total || 0), 
+        (order.currency || "AED") as any
+      );
+      
+      // Update DB ONLY AFTER successful capture call
       await prisma.order.update({
         where: { id: order.id },
-        data: { status: OrderStatus.PROCESSING, paymentStatus: PaymentStatus.PAID },
+        data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: "PAID" as any },
       });
-
-      // Notify admin — payment authorized
       await notifyPaymentConfirmed(order.id, "Tabby");
+    } catch (err: any) {
+      console.error(`[Generic Webhook] Capture FAILED for ${order.id}:`, err.message);
     }
   }
 
@@ -155,7 +165,7 @@ async function handleTamaraWebhook(payload: string, signature: string) {
   if (eventType === "payment.captured") {
     await prisma.order.update({
       where: { id: order.id },
-      data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: PaymentStatus.PAID },
+      data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: "PAID" as any },
     });
 
     // Notify admin NOW — payment is confirmed
@@ -168,13 +178,34 @@ async function handleTamaraWebhook(payload: string, signature: string) {
       console.error("Failed to create Naqel shipment for order:", order.id, e);
     }
   } else if (eventType === "order_approved" || eventType === "payment.approved") {
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { status: OrderStatus.PROCESSING, paymentStatus: PaymentStatus.PAID },
-    });
+    // ── Rule 3: Must Capture before Success ──
+    console.log(`[Generic Webhook] Tamara APPROVED for ${order.id}. Triggering capture...`);
+    try {
+      const tamaraService = new TamaraService();
+      const decimals = ["BHD", "KWD", "OMR"].includes(order.currency.toUpperCase()) ? 3 : 2;
+      
+      await tamaraService.authoriseOrder(tamaraOrderId);
+      await tamaraService.capturePayment({
+        orderId: tamaraOrderId,
+        totalAmount: {
+          amount: Number(order.total || 0).toFixed(decimals),
+          currency: order.currency.toUpperCase() as any
+        },
+        shippingInfo: {
+          shipping_company: "Standard Delivery",
+          tracking_number: order.id,
+        }
+      });
 
-    // Notify admin — payment approved
-    await notifyPaymentConfirmed(order.id, "Tamara");
+      // Update DB ONLY AFTER successful capture
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: "PAID" as any },
+      });
+      await notifyPaymentConfirmed(order.id, "Tamara");
+    } catch (err: any) {
+      console.error(`[Generic Webhook] Tamara Capture FAILED for ${order.id}:`, err.message);
+    }
   }
 
   return NextResponse.json({ received: true });

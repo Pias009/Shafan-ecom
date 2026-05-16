@@ -93,12 +93,7 @@ export async function createShipmentForOrder(orderId: string) {
       },
     });
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        status: "ORDER_CONFIRMED",
-      },
-    });
+    // Status update is handled by payment webhooks or admin manual action
   }
 
   return { success: true, trackingNumber: awb, labelUrl };

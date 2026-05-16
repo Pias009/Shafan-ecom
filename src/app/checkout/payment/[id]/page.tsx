@@ -11,6 +11,7 @@ import { Elements, PaymentRequestButtonElement, useStripe, useElements } from "@
 import dynamic from "next/dynamic";
 import { Price } from "@/components/Price";
 import TabbyPromo from "@/components/TabbyPromo";
+import TabbyCard from "@/components/TabbyCard";
 import TamaraWidget from "@/components/TamaraWidget";
 
 const StripePaymentForm = dynamic(() => import("@/components/StripePaymentForm"), {
@@ -148,6 +149,9 @@ function PaymentPageContent() {
   const [tamaraLoading, setTamaraLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tabbyRejected, setTabbyRejected] = useState(false);
+  const [editablePhone, setEditablePhone] = useState("");
+  const [editableEmail, setEditableEmail] = useState("");
+  const [showEditFields, setShowEditFields] = useState(false);
   const actionAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to payment form when method is selected
@@ -189,28 +193,33 @@ function PaymentPageContent() {
           if (rejected === 'tabby') {
             setTabbyRejected(true);
             setMethod("tabby");
+            setEditablePhone((orderData.shippingAddress as any)?.phone || "");
+            setEditableEmail(orderData.email || "");
             setError(
-              "Tabby was unable to approve this payment. This may be due to Tabby's risk assessment or eligibility criteria. " +
-              "You can try again with Tabby or choose another payment method."
+              "Tabby was unable to approve this purchase. This decision is automated and based on Tabby's responsible shopping guidelines. " +
+              "Common reasons include outstanding payments, spending limits, or incomplete information. " +
+              "Please verify your contact details below or use an alternative payment method."
             );
           } else {
             setError(`Your payment via ${reason} was not completed. Please try another method.`);
           }
         }
 
-        try {
-          const stripeRes = await fetch("/api/payments/stripe/create-intent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: id }),
-          });
+        if (method === "card") {
+          try {
+            const stripeRes = await fetch("/api/payments/stripe/create-intent", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: id }),
+            });
 
-          const stripeData = await stripeRes.json();
-          if (stripeData.clientSecret) {
-            setClientSecret(stripeData.clientSecret);
+            const stripeData = await stripeRes.json();
+            if (stripeData.clientSecret) {
+              setClientSecret(stripeData.clientSecret);
+            }
+          } catch (stripeErr) {
+            console.error("Stripe initialization failed:", stripeErr);
           }
-        } catch (stripeErr) {
-          console.error("Stripe initialization failed:", stripeErr);
         }
       } catch (err: any) {
         toast.error(err.message || "Failed to load order details");
@@ -239,15 +248,20 @@ function PaymentPageContent() {
     }
   };
 
-  const handleTabbyPayment = async () => {
+  const handleTabbyPayment = async (overrides?: { phone?: string; email?: string }) => {
     setTabbyLoading(true);
     setError(null);
     const tid = toast.loading("Connecting to Tabby...");
     try {
+      // If we have overrides, we should ideally update the order/user first or pass them to the session API
       const res = await fetch("/api/payments/tabby/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: id }),
+        body: JSON.stringify({ 
+          orderId: id,
+          ...(overrides?.phone ? { phone: overrides.phone } : {}),
+          ...(overrides?.email ? { email: overrides.email } : {}),
+        }),
       });
       
       const text = await res.text();
@@ -363,19 +377,56 @@ function PaymentPageContent() {
                   </button>
                 </div>
                 {tabbyRejected && (
-                  <div className="flex gap-2 pl-10">
-                    <button
-                      onClick={() => { setError(null); setTabbyRejected(false); handleTabbyPayment(); }}
-                      className="px-4 py-2 rounded-full bg-[#3ECF8E] text-black text-[10px] font-black uppercase tracking-widest hover:bg-[#3ECF8E]/90 transition"
-                    >
-                      Try Again with Tabby
-                    </button>
-                    <button
-                      onClick={() => { setError(null); setTabbyRejected(false); setMethod("card"); }}
-                      className="px-4 py-2 rounded-full bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-black/80 transition"
-                    >
-                      Pay by Card
-                    </button>
+                  <div className="space-y-4 pl-10">
+                    {showEditFields ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase tracking-wider text-black/40">Phone Number</label>
+                          <input 
+                            type="text" 
+                            value={editablePhone} 
+                            onChange={(e) => setEditablePhone(e.target.value)}
+                            placeholder="+971..."
+                            className="w-full bg-white border border-black/10 rounded-xl px-3 py-2 text-xs font-bold"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black uppercase tracking-wider text-black/40">Email Address</label>
+                          <input 
+                            type="email" 
+                            value={editableEmail} 
+                            onChange={(e) => setEditableEmail(e.target.value)}
+                            placeholder="email@example.com"
+                            className="w-full bg-white border border-black/10 rounded-xl px-3 py-2 text-xs font-bold"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-black/50 font-medium italic">
+                        Tip: Verify your contact info or try a smaller cart amount.
+                      </div>
+                    )}
+                    
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => {
+                          if (showEditFields) {
+                            handleTabbyPayment({ phone: editablePhone, email: editableEmail });
+                          } else {
+                            setShowEditFields(true);
+                          }
+                        }}
+                        className="px-4 py-2 rounded-full bg-[#3ECF8E] text-black text-[10px] font-black uppercase tracking-widest hover:bg-[#3ECF8E]/90 transition"
+                      >
+                        {showEditFields ? "Update & Retry Tabby" : "Modify Details & Retry"}
+                      </button>
+                      <button
+                        onClick={() => { setError(null); setTabbyRejected(false); setMethod("card"); }}
+                        className="px-4 py-2 rounded-full bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-black/80 transition"
+                      >
+                        Use Credit Card
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -388,7 +439,7 @@ function PaymentPageContent() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {(country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
                       <button
-                        onClick={handleTabbyPayment}
+                        onClick={() => handleTabbyPayment()}
                         disabled={tabbyLoading}
                         className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#3ECF8E] hover:bg-[#3ECF8E]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#3ECF8E]/20 overflow-hidden h-14 md:h-16"
                       >
@@ -403,7 +454,7 @@ function PaymentPageContent() {
 
                     {(country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
                       <button
-                        onClick={handleTamaraPayment}
+                        onClick={() => handleTamaraPayment()}
                         disabled={tamaraLoading}
                         className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#FF4D4D] hover:bg-[#FF4D4D]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#FF4D4D]/20 overflow-hidden h-14 md:h-16"
                       >
@@ -471,16 +522,25 @@ function PaymentPageContent() {
                 {(country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
                   <div
                     onClick={() => setMethod("tabby")}
-                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-[#3ECF8E] shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                    className={`flex flex-col gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-[#3ECF8E] shadow-lg" : "border-black/5 hover:border-black/10"}`}
                   >
-                    <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tabby" ? "bg-[#3ECF8E] text-black" : "bg-black/5"}`}>
-                      <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="w-8 md:w-10" />
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tabby" ? "bg-[#3ECF8E] text-black" : "bg-black/5"}`}>
+                        <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="w-8 md:w-10" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-base md:text-lg">Tabby | Pay in 4 interest-free payments</div>
+                        <div className="text-[10px] md:text-xs text-black/40 font-medium">No interest. No fees. Split into 4 payments.</div>
+                      </div>
+                      {method === "tabby" && <CheckCircle2 className="text-[#3ECF8E]" size={18} />}
                     </div>
-                    <div className="flex-1">
-                      <div className="font-bold text-base md:text-lg">Tabby | Pay in 4 interest-free payments</div>
-                      <div className="text-[10px] md:text-xs text-black/40 font-medium">No interest. No fees. Split into 4 payments.</div>
-                    </div>
-                    {method === "tabby" && <CheckCircle2 className="text-[#3ECF8E]" size={18} />}
+                    <TabbyCard 
+                      id="tabbyCardSelection"
+                      price={order.total} 
+                      currency={order.currency?.toUpperCase() || "AED"} 
+                      publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
+                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
+                    />
                   </div>
                 )}
 
@@ -578,8 +638,8 @@ function PaymentPageContent() {
                     </p>
                   </div>
                   <div className="my-4 border-t border-black/5 pt-4">
-                    <TabbyPromo 
-                      id="TabbyPromoDetail"
+                    <TabbyCard 
+                      id="tabbyCardAction"
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
                       publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
@@ -601,7 +661,7 @@ function PaymentPageContent() {
                     </div>
                   </div>
                   <button
-                    onClick={handleTabbyPayment}
+                    onClick={() => handleTabbyPayment()}
                     disabled={tabbyLoading}
                     className="w-full h-14 md:h-16 rounded-full bg-[#3ECF8E] hover:bg-[#3ECF8E]/90 text-black font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-[#3ECF8E]/20 disabled:opacity-50 flex items-center justify-center gap-3"
                   >
@@ -637,7 +697,7 @@ function PaymentPageContent() {
                     </div>
                   </div>
                   <button
-                    onClick={handleTamaraPayment}
+                    onClick={() => handleTamaraPayment()}
                     disabled={tamaraLoading}
                     className="w-full h-14 md:h-16 rounded-full bg-[#FF4D4D] hover:bg-[#FF4D4D]/90 text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-[#FF4D4D]/20 disabled:opacity-50 flex items-center justify-center gap-3"
                   >

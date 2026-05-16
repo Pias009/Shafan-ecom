@@ -4,6 +4,7 @@ import { verifyStripeWebhook } from "@/services/payments/stripe/payment-service"
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
+import { notifyNewOrder } from "@/lib/pusher";
 import { createAramexShipment } from "@/lib/shipping/aramex";
 
 function generateTrackingCode(): string {
@@ -236,6 +237,14 @@ export async function POST(req: Request) {
         }
 
         // Send notification to admin (Optional) - always notify admin of payment
+        await notifyNewOrder({
+          id: updatedOrder.id,
+          total: Number(updatedOrder.total) ?? 0,
+          currency: updatedOrder.currency || 'aed',
+          userName: customerName || undefined,
+          email: customerEmail || undefined,
+        }).catch(err => console.error("[Stripe Webhook] Pusher notification failed:", err));
+
         if (process.env.ADMIN_EMAIL) {
           await sendEmail({
             to: process.env.ADMIN_EMAIL,

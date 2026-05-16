@@ -546,7 +546,7 @@ export async function POST(req: Request) {
         userId: session?.user?.id || null,
         email: session?.user?.email || billing?.email || null,
         status: OrderStatus.ORDER_RECEIVED,
-        paymentStatus: PaymentStatus.PENDING,
+        paymentStatus: "PENDING" as any,
         currency: currency.toLowerCase(),
         subtotal: finalSubtotal,
         shipping: effectiveShipping,

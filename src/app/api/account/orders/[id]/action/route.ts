@@ -49,23 +49,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           },
         });
 
-        // If paid via Tabby, trigger a refund via Tabby API
-        if (
-          order.paymentMethod === "tabby" &&
-          order.tabbyPaymentId &&
-          order.paymentStatus === "PAID"
-        ) {
+        // If paid via Tabby, trigger a refund or void via Tabby API
+        if (order.paymentMethod === "tabby" && order.tabbyPaymentId) {
           try {
             const tabbyService = new TabbyService();
-            await tabbyService.refundPayment(
-              order.tabbyPaymentId,
-              Number(order.total || 0),
-              (order.currency || "AED") as any
-            );
-            console.log(`[OrderAction] Tabby refund triggered for order ${id}`);
+            // Fetch latest payment status from Tabby
+            const tabbyPayment = await tabbyService.getPayment(order.tabbyPaymentId);
+            
+            if (tabbyPayment.status === "CAPTURED") {
+              await tabbyService.refundPayment(
+                order.tabbyPaymentId,
+                Number(order.total || 0),
+                (order.currency || "AED") as any
+              );
+              console.log(`[OrderAction] Tabby refund triggered for order ${id}`);
+            } else if (tabbyPayment.status === "AUTHORIZED") {
+              await tabbyService.voidPayment(order.tabbyPaymentId);
+              console.log(`[OrderAction] Tabby void (close) triggered for order ${id}`);
+            }
           } catch (refundErr: any) {
-            console.error(`[OrderAction] Tabby refund failed for order ${id}:`, refundErr.message);
-            // Non-blocking: cancellation still succeeds; admin can refund manually
+            console.error(`[OrderAction] Tabby cancellation action failed for order ${id}:`, refundErr.message);
           }
         }
 

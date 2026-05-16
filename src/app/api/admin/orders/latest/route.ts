@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAdminApiSession, getAccessibleStoreIds } from "@/lib/admin-session";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -16,7 +17,12 @@ export async function GET() {
 
     const latestOrder = await (prisma as any).order.findFirst({
       where: {
-        storeId: { in: accessibleStoreIds }
+        storeId: { in: accessibleStoreIds },
+        OR: [
+          { paymentMethod: "cod" },
+          { paymentStatus: "PAID" as any },
+          { status: { not: "ORDER_RECEIVED" as any } } // Also include if status moved past received
+        ]
       },
       select: {
         id: true,
