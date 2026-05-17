@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.status !== ("PENDING" as any) && order.status !== "ORDER_RECEIVED") {
+    if (order.status !== "ORDER_RECEIVED") {
       return NextResponse.json({ error: "Order is not pending payment" }, { status: 400 });
     }
 
@@ -114,7 +114,36 @@ export async function POST(request: NextRequest) {
     const buyerEmail = order.email || order.user?.email;
 
     if (buyerEmail) {
-      // DISABLED HISTORY FOR TESTING STABILITY
+      try {
+        const pastOrders = await prisma.order.findMany({
+          where: {
+            email: buyerEmail,
+            paymentStatus: "PAID",
+            status: { not: "CANCELLED" }
+          },
+          select: {
+            createdAt: true,
+            total: true,
+            status: true
+          },
+          orderBy: { createdAt: "desc" },
+          take: 5
+        });
+        
+        if (pastOrders && pastOrders.length > 0) {
+          orderHistory = pastOrders.map(o => ({
+            purchased_at: o.createdAt.toISOString(),
+            amount: Number(o.total || 0).toFixed(decimals),
+            status: o.status === "ORDER_CONFIRMED" || o.status === "DELIVERED" ? "complete" : "processing"
+          }));
+        } else {
+          orderHistory = [];
+        }
+      } catch (err) {
+        console.error("Failed to fetch order history for Tabby:", err);
+        orderHistory = [];
+      }
+    } else {
       orderHistory = [];
     }
 

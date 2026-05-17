@@ -196,9 +196,7 @@ function PaymentPageContent() {
             setEditablePhone((orderData.shippingAddress as any)?.phone || "");
             setEditableEmail(orderData.email || "");
             setError(
-              "Tabby was unable to approve this purchase. This decision is automated and based on Tabby's responsible shopping guidelines. " +
-              "Common reasons include outstanding payments, spending limits, or incomplete information. " +
-              "Please verify your contact details below or use an alternative payment method."
+              "Tabby is unable to approve this purchase. Please use an alternative payment method for your order."
             );
           } else {
             setError(`Your payment via ${reason} was not completed. Please try another method.`);
