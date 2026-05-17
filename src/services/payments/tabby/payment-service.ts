@@ -27,20 +27,9 @@ export class TabbyService {
 
   private cleanPhone(phone: string | undefined): string {
     if (!phone) return "";
-    // Remove all non-numeric characters
-    let cleaned = phone.replace(/\D/g, "");
-    // Remove leading zeros
-    cleaned = cleaned.replace(/^0+/, "");
-    // Remove country codes if they exist at the start
-    const countryCodes = ["971", "966", "965", "973", "974", "968"];
-    for (const code of countryCodes) {
-      if (cleaned.startsWith(code)) {
-        cleaned = cleaned.substring(code.length);
-        break;
-      }
-    }
-    // Final clean of any new leading zeros
-    return cleaned.replace(/^0+/, "");
+    // Tabby requires the country code for Kuwait/KSA, so we must not strip it.
+    // The route.ts already formats it with the correct prefix (e.g. +965...)
+    return phone;
   }
 
   private getHeaders(): HeadersInit {
@@ -80,7 +69,9 @@ export class TabbyService {
     const discountAmt = params.discountAmount || 0;
     const calculatedAmount = Number((itemsTotal + shippingAmt + taxAmt - discountAmt).toFixed(decimals));
 
-    if (Math.abs(params.amount - calculatedAmount) > 0.01) {
+    // For 3-decimal currencies like KWD, even 0.005 difference causes Tabby API rejection.
+    // We strictly enforce the calculated amount.
+    if (params.amount !== calculatedAmount) {
       console.warn(`[Tabby] Math mismatch: amount ${params.amount} vs calculated ${calculatedAmount}. Using calculated.`);
       params.amount = calculatedAmount;
     }
@@ -124,9 +115,9 @@ export class TabbyService {
         lang: "en",
         merchant_code: this.merchantCode,
         merchant_urls: params.merchant_urls || {
-          success: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.shanfaglobal.com"}/checkout/success?order_id=${params.orderId}&payment=tabby`,
-          cancel: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.shanfaglobal.com"}/checkout/payment/${params.orderId}?canceled=tabby`,
-          failure: `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.shanfaglobal.com"}/checkout/payment/${params.orderId}?rejected=tabby`,
+          success: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?order_id=${params.orderId}&payment=tabby`,
+          cancel: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${params.orderId}?status=cancel&orderId=${params.orderId}&canceled=tabby`,
+          failure: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL}/checkout/payment/${params.orderId}?status=reject&orderId=${params.orderId}&rejected=tabby`,
         },
       }),
     });

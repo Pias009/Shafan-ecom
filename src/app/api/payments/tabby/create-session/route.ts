@@ -172,9 +172,9 @@ export async function POST(request: NextRequest) {
           : order.id,
       description: `Order #${order.id.substring(0, 8)}`,
       merchant_urls: {
-        success: `${baseUrl}/checkout/success?order_id=${order.id}&payment=tabby`,
-        cancel: `${baseUrl}/checkout/payment/${order.id}?canceled=tabby`,
-        failure: `${baseUrl}/checkout/payment/${order.id}?rejected=tabby`,
+        success: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/success?order_id=${order.id}&payment=tabby`,
+        cancel: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/payment/${order.id}?status=cancel&orderId=${order.id}&canceled=tabby`,
+        failure: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/payment/${order.id}?status=reject&orderId=${order.id}&rejected=tabby`,
       },
       buyer: {
         email: (() => {
@@ -195,9 +195,9 @@ export async function POST(request: NextRequest) {
         loyalty_level: process.env.NODE_ENV === "development" ? 0 : loyaltyLevel,
       },
       shippingAddress: {
-        address: shippingAddress?.address_1 || "Dubai Mall",
-        city: shippingAddress?.city || "Dubai",
-        zip: shippingAddress?.postal_code || "00000",
+        address: shippingAddress?.address_1 || (countryCode === "KW" ? "Kuwait City" : countryCode === "SA" ? "Riyadh" : "Dubai Mall"),
+        city: shippingAddress?.city || (countryCode === "KW" ? "Kuwait City" : countryCode === "SA" ? "Riyadh" : "Dubai"),
+        zip: shippingAddress?.postal_code || (countryCode === "SA" ? "12211" : "00000"),
       },
       items: order.items.map((item) => {
         const qty = item.quantity || 1;
