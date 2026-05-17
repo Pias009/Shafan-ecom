@@ -8,8 +8,12 @@ import { sendEmail } from "@/lib/email";
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.text();
-    // Tamara sends the JWT in x-tamara-token header
-    const signature = request.headers.get("x-tamara-token") || request.headers.get("x-tamara-signature") || "";
+    // Tamara sends the JWT in Authorization header as Bearer token, or x-tamara-token header
+    const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+    let signature = request.headers.get("x-tamara-token") || request.headers.get("x-tamara-signature") || "";
+    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
+      signature = authHeader.substring(7).trim();
+    }
 
     const tamaraService = new TamaraService();
     const isValid = tamaraService.verifyWebhook(payload, signature);
@@ -90,9 +94,9 @@ export async function POST(request: NextRequest) {
           paymentConfirmed = true;
         } catch (authCapErr) {
           console.error(`[Tamara Webhook] Failed to authorise/capture order ${orderId}:`, authCapErr);
+          paymentConfirmed = false;
         }
         
-        paymentConfirmed = true;
         break;
 
       case "payment.captured":
@@ -122,7 +126,7 @@ export async function POST(request: NextRequest) {
       case "order_cancelled":
         await prisma.order.update({
           where: { id: order.id },
-          data: { status: OrderStatus.CANCELLED, paymentStatus: PaymentStatus.CANCELLED },
+          data: { paymentStatus: PaymentStatus.CANCELLED }, // Preserve OrderStatus.ORDER_RECEIVED for cart recovery
         });
         break;
 

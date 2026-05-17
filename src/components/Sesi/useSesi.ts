@@ -41,6 +41,53 @@ export interface ChatMessage {
   gifUrl?: string;
 }
 
+export interface PanelSize {
+  width: number;
+  height: number;
+}
+
+const PANEL_SIZE_KEY = "sesi-panel-size";
+const PANEL_POS_KEY = "sesi-panel-position";
+
+const DEFAULT_PANEL_SIZE: PanelSize = { width: 380, height: 580 };
+const MIN_PANEL_SIZE: PanelSize = { width: 280, height: 400 };
+const MAX_PANEL_SIZE: PanelSize = { width: 700, height: 900 };
+
+function loadPanelSize(): PanelSize | null {
+  try {
+    const raw = localStorage.getItem(PANEL_SIZE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.width === "number" && typeof parsed.height === "number") {
+        return {
+          width: Math.max(MIN_PANEL_SIZE.width, Math.min(MAX_PANEL_SIZE.width, parsed.width)),
+          height: Math.max(MIN_PANEL_SIZE.height, Math.min(MAX_PANEL_SIZE.height, parsed.height)),
+        };
+      }
+    }
+  } catch { }
+  return null;
+}
+
+function savePanelSize(size: PanelSize) {
+  try { localStorage.setItem(PANEL_SIZE_KEY, JSON.stringify(size)); } catch { }
+}
+
+function loadPanelPosition(): { x: number; y: number } | null {
+  try {
+    const raw = localStorage.getItem(PANEL_POS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.x === "number" && typeof parsed.y === "number") return parsed;
+    }
+  } catch { }
+  return null;
+}
+
+function savePanelPosition(pos: { x: number; y: number }) {
+  try { localStorage.setItem(PANEL_POS_KEY, JSON.stringify(pos)); } catch { }
+}
+
 interface SesiStore {
   enabled: boolean;
   isOpen: boolean;
@@ -60,6 +107,9 @@ interface SesiStore {
   lastQuestionTime: number | null;
   cooldownExpiry: number | null;
   hasPurchased: boolean;
+  isMinimized: boolean;
+  panelSize: PanelSize;
+  panelPosition: { x: number; y: number } | null;
 
   setOpen: (open: boolean) => void;
   advanceState: (next: SesiStateName) => void;
@@ -80,6 +130,9 @@ interface SesiStore {
   markPurchased: () => void;
   triggerCooldown: () => void;
   clearCooldown: () => void;
+  toggleMinimize: () => void;
+  setPanelSize: (size: PanelSize) => void;
+  setPanelPosition: (pos: { x: number; y: number }) => void;
   reset: () => void;
 }
 
@@ -110,6 +163,9 @@ export const useSesi = create<SesiStore>((set) => ({
   lastQuestionTime: null,
   cooldownExpiry: null,
   hasPurchased: false,
+  isMinimized: false,
+  panelSize: loadPanelSize() ?? DEFAULT_PANEL_SIZE,
+  panelPosition: loadPanelPosition(),
 
   setOpen: (open) => set({ isOpen: open }),
 
@@ -223,6 +279,18 @@ export const useSesi = create<SesiStore>((set) => ({
 
   markRoutineComplete: () => set({ routineTimerActive: false }),
 
+  toggleMinimize: () => set((state) => ({ isMinimized: !state.isMinimized })),
+
+  setPanelSize: (size) => {
+    savePanelSize(size);
+    set({ panelSize: size });
+  },
+
+  setPanelPosition: (pos) => {
+    savePanelPosition(pos);
+    set({ panelPosition: pos });
+  },
+
   reset: () =>
     set({
       isOpen: false,
@@ -242,5 +310,8 @@ export const useSesi = create<SesiStore>((set) => ({
       lastQuestionTime: null,
       cooldownExpiry: null,
       hasPurchased: false,
+      isMinimized: false,
+      panelSize: DEFAULT_PANEL_SIZE,
+      panelPosition: null,
     }),
 }));

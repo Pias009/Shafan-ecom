@@ -479,6 +479,7 @@ function PaymentPageContent() {
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
                       country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(country?.toUpperCase() || "") ? country : "AE"}
+                      widgetType="cart"
                     />
                   </div>
                 </>
@@ -647,6 +648,7 @@ function PaymentPageContent() {
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
                       country={country}
+                      widgetType="cart"
                     />
                   </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-1">
@@ -686,6 +688,7 @@ function PaymentPageContent() {
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
                       country={country}
+                      widgetType="cart"
                     />
                   </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-2">

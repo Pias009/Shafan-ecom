@@ -7,9 +7,10 @@ interface TamaraWidgetProps {
   price: number | string;
   currency: string;
   country?: string;
+  widgetType?: "product" | "cart" | "summary";
 }
 
-export default function TamaraWidget({ price, currency, country = "AE" }: TamaraWidgetProps) {
+export default function TamaraWidget({ price, currency, country = "AE", widgetType = "summary" }: TamaraWidgetProps) {
   const [mounted, setMounted] = useState(false);
   const publicKey = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "561ee41b-e351-4543-ab2d-934866b6b8af";
 
@@ -72,15 +73,35 @@ export default function TamaraWidget({ price, currency, country = "AE" }: Tamara
       />
       
       {/* Official Tamara V2 Widget Tag */}
-      {/* @ts-ignore */}
-      <tamara-widget
-        key={`tamara-v2-${price}-${currency}-${country}`}
-        type="tamara-summary"
-        amount={formattedAmount}
-        currency={currency.toUpperCase()}
-        country={country.toUpperCase()}
-        language="en"
-      />
+      {widgetType === "product" ? (
+        // @ts-ignore
+        <tamara-product-widget
+          key={`tamara-product-${price}-${currency}-${country}`}
+          amount={formattedAmount}
+          currency={currency.toUpperCase()}
+          country={country.toUpperCase()}
+          language="en"
+        />
+      ) : widgetType === "cart" ? (
+        // @ts-ignore
+        <tamara-cart-widget
+          key={`tamara-cart-${price}-${currency}-${country}`}
+          amount={formattedAmount}
+          currency={currency.toUpperCase()}
+          country={country.toUpperCase()}
+          language="en"
+        />
+      ) : (
+        // @ts-ignore
+        <tamara-widget
+          key={`tamara-v2-${price}-${currency}-${country}`}
+          type="tamara-summary"
+          amount={formattedAmount}
+          currency={currency.toUpperCase()}
+          country={country.toUpperCase()}
+          language="en"
+        />
+      )}
     </div>
   );
 }

@@ -312,6 +312,7 @@ export default function ProductPageClient({ product, recommendations }: ProductP
                   price={displayPrice} 
                   currency={product.currency?.toUpperCase() || 'AED'} 
                   country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(selectedCountry.toUpperCase()) ? selectedCountry : "AE"}
+                  widgetType="product"
                 />
               </div>
             )}

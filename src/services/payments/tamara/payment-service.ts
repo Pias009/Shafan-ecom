@@ -124,7 +124,7 @@ export class TamaraService {
         success: params.merchantUrls.success,
         cancel: params.merchantUrls.cancel,
         failure: params.merchantUrls.failure,
-        notification: params.merchantUrls.notification || `${params.merchantUrls.success.split('/checkout')[0]}/api/payments/tamara/webhook`
+        notification: params.merchantUrls.notification
       } : undefined,
     };
 

@@ -450,6 +450,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                   price={total} 
                   currency={getCurrencyForCountry(selectedCountry)} 
                   country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(selectedCountry.toUpperCase()) ? selectedCountry : "AE"}
+                  widgetType="cart"
                 />
               </div>
 

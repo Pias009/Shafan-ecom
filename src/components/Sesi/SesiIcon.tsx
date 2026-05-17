@@ -31,7 +31,7 @@ function savePosition(x: number, y: number) {
 }
 
 export default function SesiIcon() {
-  const { isOpen, persona, state, setOpen, cooldownExpiry } = useSesi();
+  const { isOpen, isMinimized, persona, state, setOpen, toggleMinimize, cooldownExpiry } = useSesi();
   const constraintsRef = useRef<HTMLDivElement>(null);
   const [initialPos, setInitialPos] = useState<{ x: number; y: number } | null>(null);
   const [isOnCooldown, setIsOnCooldown] = useState(() => cooldownExpiry ? cooldownExpiry > Date.now() : false);
@@ -49,7 +49,13 @@ export default function SesiIcon() {
     setTimeout(() => setInitialPos(pos), 0);
   }, []);
 
-  const handleOpen = () => setOpen(!isOpen);
+  const handleOpen = () => {
+    if (isOpen && isMinimized) {
+      toggleMinimize();
+    } else {
+      setOpen(!isOpen);
+    }
+  };
 
   const handleDragEnd = (
     _: MouseEvent | TouchEvent | PointerEvent,
