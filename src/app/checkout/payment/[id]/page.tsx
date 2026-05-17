@@ -555,6 +555,7 @@ function PaymentPageContent() {
                       <div className="font-bold text-base md:text-lg">Tamara</div>
                       <div className="text-[10px] md:text-xs text-black/40 font-medium">Split your payments with Tamara</div>
                     </div>
+                    <img src="https://cdn.tamara.co/assets/svg/tamara-badge-en.svg" alt="Tamara Badge" className="h-6 md:h-8 hidden sm:block shrink-0" />
                     {method === "tamara" && <CheckCircle2 className="text-[#FF4D4D]" size={18} />}
                   </div>
                 )}

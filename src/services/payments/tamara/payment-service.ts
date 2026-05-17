@@ -20,10 +20,11 @@ export class TamaraService {
 
   private cleanPhone(phone: string | undefined): string {
     if (!phone) return "";
-    // Remove all non-numeric characters
-    let cleaned = phone.replace(/\D/g, "");
-    // Remove leading zeros only (not country codes)
-    return cleaned.replace(/^0+/, "");
+    // Preserve '+' and digits. Remove spaces, dashes, parentheses
+    let cleaned = phone.replace(/[^\d+]/g, "");
+    // If user typed 00 instead of +, replace it
+    cleaned = cleaned.replace(/^00/, "+");
+    return cleaned;
   }
 
   private getHeaders() {
@@ -153,6 +154,12 @@ export class TamaraService {
     const discountAmt = Number(payload.discount.amount);
     
     const decimals = ["BHD", "KWD", "OMR"].includes(payload.total_amount.currency.toUpperCase()) ? 3 : 2;
+    
+    // FORMAT ALL OTHER AMOUNTS TO STRICT DECIMALS
+    payload.shipping_amount.amount = shippingAmt.toFixed(decimals);
+    payload.tax_amount.amount = taxAmt.toFixed(decimals);
+    payload.discount.amount = discountAmt.toFixed(decimals);
+
     const calculatedTotal = (itemsTotal + shippingAmt + taxAmt - discountAmt).toFixed(decimals);
     
     if (payload.total_amount.amount !== calculatedTotal) {
