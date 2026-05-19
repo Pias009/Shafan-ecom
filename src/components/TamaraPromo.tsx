@@ -30,6 +30,8 @@ export default function TamaraPromo({ price, currency, publicKey }: TamaraPromoP
         currency={currency}
         public-key={publicKey}
         language="en"
+        color-type="default"
+        data-color-type="default"
       />
     </div>
   );

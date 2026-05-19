@@ -304,13 +304,13 @@ export default function ProductPageClient({ product, recommendations }: ProductP
               <div className="flex flex-col gap-2">
                 <TabbyPromo 
                   price={displayPrice} 
-                  currency={product.currency?.toUpperCase() || 'AED'} 
+                  currency={priceInfo.currency?.toUpperCase() || 'AED'} 
                   publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
                   merchantCode="SGAE" 
                 />
                 <TamaraWidget 
                   price={displayPrice} 
-                  currency={product.currency?.toUpperCase() || 'AED'} 
+                  currency={priceInfo.currency?.toUpperCase() || 'AED'} 
                   country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(selectedCountry.toUpperCase()) ? selectedCountry : "AE"}
                   widgetType="product"
                 />

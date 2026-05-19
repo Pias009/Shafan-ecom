@@ -321,6 +321,23 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
               </div>
             );
           })}
+
+          {/* Tabby & Tamara installment widgets - rendered at the bottom of the products list */}
+          <div className="mt-6 bg-[#ffffff] rounded-3xl p-5 border border-black/5 flex flex-col gap-4 shadow-sm">
+            <div className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-1">Payment Options</div>
+            <TabbyPromo 
+              price={total} 
+              currency={getCurrencyForCountry(selectedCountry)} 
+              publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
+              merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
+            />
+            <TamaraWidget 
+              price={total} 
+              currency={getCurrencyForCountry(selectedCountry)} 
+              country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(selectedCountry.toUpperCase()) ? selectedCountry : "AE"}
+              widgetType="cart"
+            />
+          </div>
         </div>
 
         <div className="lg:col-span-4">
@@ -438,21 +455,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                 )}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-black/5 flex flex-col gap-3">
-                <div className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-1">Payment Options</div>
-                <TabbyPromo 
-                  price={total} 
-                  currency={getCurrencyForCountry(selectedCountry)} 
-                  publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
-                  merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
-                />
-                <TamaraWidget 
-                  price={total} 
-                  currency={getCurrencyForCountry(selectedCountry)} 
-                  country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(selectedCountry.toUpperCase()) ? selectedCountry : "AE"}
-                  widgetType="cart"
-                />
-              </div>
+
 
               <div className="mt-6 pt-4 border-t border-black/5">
                 <div className="text-[10px] md:text-xs font-black uppercase tracking-widest text-black/40 mb-3">Payment Method</div>
@@ -485,7 +488,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                         : "border-black/20 text-black/60 hover:border-black/40"
                        }`}
                   >
-                    <img src="https://cdn.tamara.co/assets/svg/tamara-logo-en.svg" alt="Tamara" className="h-5" />
+                    <img src={paymentMethod === "tamara" ? "/tamara-logo-white.svg" : "/tamara-logo-gradient.svg"} alt="Tamara" className="h-[26px] w-auto object-contain" />
                   </button>
                   <button
                     type="button"

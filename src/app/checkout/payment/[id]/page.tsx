@@ -454,12 +454,12 @@ function PaymentPageContent() {
                       <button
                         onClick={() => handleTamaraPayment()}
                         disabled={tamaraLoading}
-                        className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#FF4D4D] hover:bg-[#FF4D4D]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#FF4D4D]/20 overflow-hidden h-14 md:h-16"
+                        className="group relative flex items-center justify-between p-1 rounded-3xl bg-white border border-gray-200 hover:border-gray-300 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg overflow-hidden h-14 md:h-16"
                       >
                         <div className="flex items-center gap-3 ml-5">
-                          <img src="https://cdn.tamara.co/assets/svg/tamara-logo-en.svg" alt="Tamara" className="h-8" />
+                          <img src="https://cdn.tamara.co/assets/svg/tamara-logo-en.svg" alt="Tamara" className="h-7 md:h-8" />
                         </div>
-                        <div className="mr-5 bg-white/20 px-3 py-1.5 rounded-full text-[10px] font-black text-white uppercase tracking-widest">
+                        <div className="mr-5 bg-black/5 px-3 py-1.5 rounded-full text-[10px] font-black text-black uppercase tracking-widest">
                           {tamaraLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Installments"}
                         </div>
                       </button>
@@ -546,17 +546,16 @@ function PaymentPageContent() {
                 {(country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
                   <div 
                     onClick={() => setMethod("tamara")}
-                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-[#FF4D4D] shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-gray-900 shadow-lg" : "border-black/5 hover:border-black/10"}`}
                   >
-                    <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tamara" ? "bg-[#FF4D4D] text-white" : "bg-black/5"}`}>
-                      <img src="https://cdn.tamara.co/assets/svg/tamara-logo-en.svg" alt="Tamara" className="w-8 md:w-10" />
+                    <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center transition-all ${method === "tamara" ? "bg-black text-white" : "bg-black/5"}`}>
+                      <img src={method === "tamara" ? "/tamara-logo-white.svg" : "/tamara-logo-gradient.svg"} alt="Tamara" className="w-14 md:w-16 object-contain" />
                     </div>
                     <div className="flex-1">
                       <div className="font-bold text-base md:text-lg">Tamara</div>
                       <div className="text-[10px] md:text-xs text-black/40 font-medium">Split your payments with Tamara</div>
                     </div>
-                    <img src="https://cdn.tamara.co/assets/svg/tamara-badge-en.svg" alt="Tamara Badge" className="h-6 md:h-8 hidden sm:block shrink-0" />
-                    {method === "tamara" && <CheckCircle2 className="text-[#FF4D4D]" size={18} />}
+                    {method === "tamara" && <CheckCircle2 className="text-gray-900" size={18} />}
                   </div>
                 )}
               </div>
@@ -674,8 +673,8 @@ function PaymentPageContent() {
               {method === "tamara" && (
                 <div className="py-8 text-center space-y-6 max-w-md mx-auto">
                   <div className="flex justify-center">
-                    <div className="w-16 h-16 rounded-full bg-[#FF4D4D]/10 flex items-center justify-center">
-                      <Wallet className="w-8 h-8 text-[#FF4D4D]" />
+                    <div className="w-auto h-12 flex items-center justify-center bg-white border border-gray-100 shadow-sm px-6 py-3 rounded-2xl">
+                      <img src="/tamara-logo-gradient.svg" alt="Tamara" className="h-6 shrink-0 object-contain" />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -701,7 +700,7 @@ function PaymentPageContent() {
                   <button
                     onClick={() => handleTamaraPayment()}
                     disabled={tamaraLoading}
-                    className="w-full h-14 md:h-16 rounded-full bg-[#FF4D4D] hover:bg-[#FF4D4D]/90 text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-[#FF4D4D]/20 disabled:opacity-50 flex items-center justify-center gap-3"
+                    className="w-full h-14 md:h-16 rounded-full bg-black hover:bg-black/90 text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-black/20 disabled:opacity-50 flex items-center justify-center gap-3"
                   >
                     {tamaraLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Tamara Payment"}
                   </button>
