@@ -14,6 +14,7 @@ import TabbyPromo from "@/components/TabbyPromo";
 import TabbyCard from "@/components/TabbyCard";
 import TamaraWidget from "@/components/TamaraWidget";
 import { useLanguageStore } from "@/lib/language-store";
+import { trackAddPaymentInfo } from "@/lib/datalayer";
 
 const StripePaymentForm = dynamic(() => import("@/components/StripePaymentForm"), {
   ssr: false,
@@ -233,6 +234,21 @@ function PaymentPageContent() {
 
   const handleCODPayment = async () => {
     setCodLoading(true);
+    // ✅ FACEBOOK PIXEL: AddPaymentInfo — COD
+    if (order) {
+      trackAddPaymentInfo({
+        id: order.id,
+        value: order.total,
+        currency: order.currency?.toUpperCase(),
+        paymentMethod: 'Cash on Delivery',
+        items: (order.items || []).map((item: any) => ({
+          id: item.productId,
+          name: item.nameSnapshot || 'Product',
+          price: Number(item.unitPrice) || 0,
+          quantity: item.quantity,
+        }))
+      });
+    }
     try {
       const res = await fetch("/api/payments/cod", {
         method: "POST",
@@ -252,6 +268,21 @@ function PaymentPageContent() {
   const handleTabbyPayment = async (overrides?: { phone?: string; email?: string }) => {
     setTabbyLoading(true);
     setError(null);
+    // ✅ FACEBOOK PIXEL: AddPaymentInfo — Tabby
+    if (order) {
+      trackAddPaymentInfo({
+        id: order.id,
+        value: order.total,
+        currency: order.currency?.toUpperCase(),
+        paymentMethod: 'Tabby Pay-in-4',
+        items: (order.items || []).map((item: any) => ({
+          id: item.productId,
+          name: item.nameSnapshot || 'Product',
+          price: Number(item.unitPrice) || 0,
+          quantity: item.quantity,
+        }))
+      });
+    }
     const tid = toast.loading("Connecting to Tabby...");
     try {
       // If we have overrides, we should ideally update the order/user first or pass them to the session API
@@ -294,6 +325,21 @@ function PaymentPageContent() {
   const handleTamaraPayment = async () => {
     setTamaraLoading(true);
     setError(null);
+    // ✅ FACEBOOK PIXEL: AddPaymentInfo — Tamara
+    if (order) {
+      trackAddPaymentInfo({
+        id: order.id,
+        value: order.total,
+        currency: order.currency?.toUpperCase(),
+        paymentMethod: 'Tamara Installments',
+        items: (order.items || []).map((item: any) => ({
+          id: item.productId,
+          name: item.nameSnapshot || 'Product',
+          price: Number(item.unitPrice) || 0,
+          quantity: item.quantity,
+        }))
+      });
+    }
     const tid = toast.loading("Connecting to Tamara...");
     try {
       const res = await fetch(`/api/payments/tamara/create-session?t=${Date.now()}`, {

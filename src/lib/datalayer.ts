@@ -227,6 +227,15 @@ export function trackAddPaymentInfo(order: {
       })),
     },
   });
+
+  // ✅ Meta Pixel AddPaymentInfo
+  fbEvent('AddPaymentInfo', {
+    content_ids: order.items.map(i => i.id).filter(Boolean),
+    content_type: 'product',
+    value: order.value,
+    currency: (order.currency || DEFAULT_CURRENCY).toUpperCase(),
+    num_items: order.items.length,
+  });
 }
 
 export function trackPurchase(order: {
@@ -309,4 +318,62 @@ export function trackSearch(query: string, resultsCount?: number): void {
     search_term: query,
     search_results_count: resultsCount,
   });
+
+  // ✅ Meta Pixel Search
+  fbEvent('Search', {
+    search_string: query,
+  });
+}
+
+// ✅ Meta Pixel: AddToWishlist
+export function trackAddToWishlist(product: {
+  id: string;
+  name: string;
+  price: number;
+  currency?: string;
+  category?: string;
+}): void {
+  pushToDataLayer({
+    event: 'add_to_wishlist',
+    ecommerce: {
+      currency: product.currency || DEFAULT_CURRENCY,
+      value: product.price,
+      items: [{
+        item_id: product.id,
+        item_name: product.name,
+        price: product.price,
+        item_category: product.category,
+      }],
+    },
+  });
+
+  fbEvent('AddToWishlist', {
+    content_ids: [product.id],
+    content_name: product.name,
+    content_type: 'product',
+    value: product.price,
+    currency: (product.currency || DEFAULT_CURRENCY).toUpperCase(),
+  });
+}
+
+// ✅ Meta Pixel: CompleteRegistration
+export function trackCompleteRegistration(method: string = 'email'): void {
+  pushToDataLayer({
+    event: 'sign_up',
+    method,
+  });
+
+  fbEvent('CompleteRegistration', {
+    content_name: method,
+    status: true,
+  });
+}
+
+// ✅ Meta Pixel: Contact
+export function trackContact(): void {
+  pushToDataLayer({
+    event: 'contact',
+  });
+
+  fbEvent('Contact');
 }

@@ -174,6 +174,24 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         if (typeof window !== 'undefined') {
           localStorage.setItem('recent_order', data.orderId);
         }
+
+        // ✅ FACEBOOK PIXEL: Fire InitiateCheckout event
+        trackBeginCheckout({
+          value: total,
+          currency: getCurrencyForCountry(selectedCountry),
+          items: items.map((i: any) => {
+            const { price: itemPrice } = getDisplayPrice(i, selectedCountry);
+            return {
+              id: i.id || i.productId,
+              name: i.name || i.nameSnapshot || 'Product',
+              price: Number(itemPrice) || 0,
+              quantity: Number(i.quantity) || 1,
+              category: i.categoryName || i.category?.name,
+              brand: typeof i.brand === 'string' ? i.brand : i.brand?.name,
+            };
+          }),
+        });
+
         toast.success("Order created! Redirecting...", { id: "checkout" });
         // Always redirect to payment page to allow confirmation or method change
         useLoadingStore.getState().setRedirecting(true, "Redirecting to secure payment...");
