@@ -37,6 +37,8 @@ function isValidImageUrl(url: any): boolean {
 
 function CartContent({ items, removeItem, updateQuantity, couponCode, couponDiscount, couponMaxLimit, removeCoupon, subtotal, discount, total, shipping, taxRate, taxAmount, freeDelivery, t, selectedCountry, applyCoupon }: any) {
   const router = useRouter();
+  const { currentLanguage } = useLanguageStore();
+  const isArabic = currentLanguage.code === "ar";
   const hasAddress = useCartStore(state => state.hasAddress);
   const setHasAddress = useCartStore(state => state.setHasAddress);
   const { data: session } = useSession();
@@ -488,7 +490,15 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                         : "border-black/20 text-black/60 hover:border-black/40"
                        }`}
                   >
-                    <img src={paymentMethod === "tamara" ? "/tamara-logo-white.svg" : "/tamara-logo-gradient.svg"} alt="Tamara" className="h-[26px] w-auto object-contain" />
+                    <img 
+                      src={
+                        paymentMethod === "tamara"
+                          ? (isArabic ? "/tamara-logo-white-ar.svg" : "/tamara-logo-white.svg")
+                          : (isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg")
+                      } 
+                      alt="Tamara" 
+                      className="h-[26px] w-auto object-contain" 
+                    />
                   </button>
                   <button
                     type="button"

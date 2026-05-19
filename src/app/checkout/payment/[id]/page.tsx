@@ -13,6 +13,7 @@ import { Price } from "@/components/Price";
 import TabbyPromo from "@/components/TabbyPromo";
 import TabbyCard from "@/components/TabbyCard";
 import TamaraWidget from "@/components/TamaraWidget";
+import { useLanguageStore } from "@/lib/language-store";
 
 const StripePaymentForm = dynamic(() => import("@/components/StripePaymentForm"), {
   ssr: false,
@@ -136,6 +137,8 @@ function PaymentRequestButtonWrapper({
 }
 
 function PaymentPageContent() {
+  const { currentLanguage } = useLanguageStore();
+  const isArabic = currentLanguage.code === "ar";
   const { id } = useParams() as { id: string };
   const searchParams = useSearchParams();
   const initialMethod = (searchParams?.get("method") as PaymentMethod) || "card";
@@ -549,11 +552,19 @@ function PaymentPageContent() {
                     className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-gray-900 shadow-lg" : "border-black/5 hover:border-black/10"}`}
                   >
                     <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center transition-all ${method === "tamara" ? "bg-black text-white" : "bg-black/5"}`}>
-                      <img src={method === "tamara" ? "/tamara-logo-white.svg" : "/tamara-logo-gradient.svg"} alt="Tamara" className="w-14 md:w-16 object-contain" />
+                      <img 
+                        src={
+                          method === "tamara"
+                            ? (isArabic ? "/tamara-logo-white-ar.svg" : "/tamara-logo-white.svg")
+                            : (isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg")
+                        } 
+                        alt="Tamara" 
+                        className="w-14 md:w-16 object-contain" 
+                      />
                     </div>
                     <div className="flex-1">
-                      <div className="font-bold text-base md:text-lg">Tamara</div>
-                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Split your payments with Tamara</div>
+                      <div className="font-bold text-base md:text-lg">{isArabic ? "تمارا" : "Tamara"}</div>
+                      <div className="text-[10px] md:text-xs text-black/40 font-medium">{isArabic ? "قسّم دفعاتك مع تمارا" : "Split your payments with Tamara"}</div>
                     </div>
                     {method === "tamara" && <CheckCircle2 className="text-gray-900" size={18} />}
                   </div>
@@ -670,17 +681,17 @@ function PaymentPageContent() {
                 </div>
               )}
 
-              {method === "tamara" && (
+               {method === "tamara" && (
                 <div className="py-8 text-center space-y-6 max-w-md mx-auto">
                   <div className="flex justify-center">
                     <div className="w-auto h-12 flex items-center justify-center bg-white border border-gray-100 shadow-sm px-6 py-3 rounded-2xl">
-                      <img src="/tamara-logo-gradient.svg" alt="Tamara" className="h-6 shrink-0 object-contain" />
+                      <img src={isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg"} alt="Tamara" className="h-6 shrink-0 object-contain" />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <p className="font-bold text-lg">Pay with Tamara</p>
+                    <p className="font-bold text-lg">{isArabic ? "الدفع بواسطة تمارا" : "Pay with Tamara"}</p>
                     <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
-                      Split your payments into flexible installments.
+                      {isArabic ? "قسّم دفعاتك إلى أقساط مرنة." : "Split your payments into flexible installments."}
                     </p>
                   </div>
                   <div className="my-4 border-t border-black/5 pt-4">
@@ -692,7 +703,7 @@ function PaymentPageContent() {
                     />
                   </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-2">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Total Amount</div>
+                    <div className="text-[10px] font-black uppercase tracking-wider text-black/30">{isArabic ? "المبلغ الإجمالي" : "Total Amount"}</div>
                     <div className="font-black text-2xl">
                       <Price amount={order.total} />
                     </div>
@@ -702,7 +713,7 @@ function PaymentPageContent() {
                     disabled={tamaraLoading}
                     className="w-full h-14 md:h-16 rounded-full bg-black hover:bg-black/90 text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-black/20 disabled:opacity-50 flex items-center justify-center gap-3"
                   >
-                    {tamaraLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Tamara Payment"}
+                    {tamaraLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isArabic ? "تأكيد الدفع بواسطة تمارا" : "Confirm Tamara Payment")}
                   </button>
                 </div>
               )}
