@@ -13,6 +13,30 @@ interface TabbyPromoProps {
 export default function TabbyPromo({ price, currency, publicKey, merchantCode, id = "TabbyPromo" }: TabbyPromoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Dynamic merchant code mapping based on currency
+  const resolvedMerchantCode = (() => {
+    const cleanCurrency = currency?.toUpperCase() || "AED";
+    const baseCode = merchantCode || "SGAE";
+    
+    const currencyToCountry: Record<string, string> = {
+      AED: "AE",
+      SAR: "SA",
+      KWD: "KW",
+      BHD: "BH",
+      OMR: "OM",
+      QAR: "QA"
+    };
+    
+    const targetCountry = currencyToCountry[cleanCurrency];
+    if (!targetCountry) return baseCode;
+    
+    if (baseCode.endsWith("AE") && baseCode.length >= 4) {
+      return baseCode.slice(0, -2) + targetCountry;
+    }
+    
+    return `SG${targetCountry}`;
+  })();
+
   useEffect(() => {
     const scriptId = "tabby-promo-script";
 
@@ -31,7 +55,7 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode, i
           lang: "en",
           source: "product",
           publicKey: publicKey,
-          merchantCode: merchantCode,
+          merchantCode: resolvedMerchantCode,
         });
       } catch (e) {
         console.warn("[TabbyPromo] Init error:", e);
@@ -56,11 +80,11 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode, i
       script.onload = initPromo;
       document.body.appendChild(script);
     }
-  }, [price, currency, publicKey, merchantCode, id]);
+  }, [price, currency, publicKey, resolvedMerchantCode, id]);
 
   return (
     <div 
-      key={`${id}-${price}`} // Force fresh mount if price changes
+      key={`${id}-${price}-${currency}-${resolvedMerchantCode}`} // Force fresh mount on configuration change
       id={id} 
       ref={containerRef} 
       className="my-4 min-h-[50px] w-full" 

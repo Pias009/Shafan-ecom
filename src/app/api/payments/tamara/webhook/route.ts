@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
 
     const [header, jwtPayload, signature] = parts;
     const dataToSign = `${header}.${jwtPayload}`;
-    const notificationKey = (process.env.TAMARA_NOTIFICATION_KEY || "").trim();
+    const notificationKey = (process.env.TAMARA_NOTIFICATION_TOKEN || process.env.TAMARA_NOTIFICATION_KEY || "").trim();
 
     if (!notificationKey) {
-      console.error("[Tamara Webhook] TAMARA_NOTIFICATION_KEY environment variable is not defined");
+      console.error("[Tamara Webhook] TAMARA_NOTIFICATION_TOKEN environment variable is not defined");
       return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
     }
 
@@ -60,12 +60,13 @@ export async function POST(request: NextRequest) {
     const orderReferenceId = webhookPayload?.order_reference_id ?? webhookPayload?.orderReferenceId;
 
     const baseOrderId = orderReferenceId?.includes('-') ? orderReferenceId.split('-')[0] : orderReferenceId;
+    const isValidObjectId = baseOrderId && /^[0-9a-fA-F]{24}$/.test(baseOrderId);
 
     const order = await prisma.order.findFirst({
       where: {
         OR: [
           { tamaraCheckoutId: orderId },
-          { id: baseOrderId },
+          ...(isValidObjectId ? [{ id: baseOrderId }] : []),
         ],
       },
     });
