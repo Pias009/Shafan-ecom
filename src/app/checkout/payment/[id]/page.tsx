@@ -587,6 +587,7 @@ function PaymentPageContent() {
                       currency={order.currency?.toUpperCase() || "AED"} 
                       publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
                       merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
+                      lang={isArabic ? "ar" : "en"}
                     />
                   </div>
                 )}
@@ -691,7 +692,8 @@ function PaymentPageContent() {
                       price={order.total} 
                       currency={order.currency?.toUpperCase() || "AED"} 
                       publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
-                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
+                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
+                      lang={isArabic ? "ar" : "en"}
                     />
                   </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-1">

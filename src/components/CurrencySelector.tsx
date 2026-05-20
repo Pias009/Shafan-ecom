@@ -12,6 +12,8 @@ const CURRENCY_LIST = [
   { code: "BHD", name: "Bahrain", flag: "🇧🇭" },
   { code: "QAR", name: "Qatar", flag: "🇶🇦" },
   { code: "OMR", name: "Oman", flag: "🇴🇲" },
+  { code: "USD", name: "Global", flag: "🌍" },
+  { code: "BDT", name: "Bangladesh", flag: "🇧🇩" },
 ];
 
 import { useRef } from "react";
@@ -20,7 +22,11 @@ export function CurrencySelector({ direction = "up", align = "right" }: { direct
   const { selectedCurrency, setCurrency } = useCountryStore();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const current = CURRENCY_LIST.find((c: any) => c.code === selectedCurrency) || CURRENCY_LIST[0];
+  const current = CURRENCY_LIST.find((c: any) => c.code === selectedCurrency) || {
+    code: selectedCurrency || "USD",
+    name: "Global",
+    flag: "🌍"
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

@@ -13,6 +13,8 @@ const CURRENCY_LIST = [
   { code: "BHD", name: "Bahrain", flag: "🇧🇭" },
   { code: "QAR", name: "Qatar", flag: "🇶🇦" },
   { code: "OMR", name: "Oman", flag: "🇴🇲" },
+  { code: "USD", name: "Global", flag: "🌍" },
+  { code: "BDT", name: "Bangladesh", flag: "🇧🇩" },
 ];
 
 const LANGUAGES = [

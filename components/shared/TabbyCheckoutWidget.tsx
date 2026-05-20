@@ -8,6 +8,7 @@ interface TabbyCheckoutWidgetProps {
   currency: string;
   publicKey: string;
   merchantCode: string;
+  lang?: "en" | "ar";
   loading: boolean;
   onPay: () => void;
 }
@@ -17,6 +18,7 @@ export default function TabbyCheckoutWidget({
   currency,
   publicKey,
   merchantCode,
+  lang = "en",
   loading,
   onPay,
 }: TabbyCheckoutWidgetProps) {
@@ -50,7 +52,7 @@ export default function TabbyCheckoutWidget({
           currency: (currency || "AED").toUpperCase(),
           price: String(price),
           installmentsCount: 4,
-          lang: "en",
+          lang: lang,
           publicKey,
           merchantCode: resolvedMerchantCode,
         });
@@ -75,7 +77,7 @@ export default function TabbyCheckoutWidget({
       script.onload = initCard;
       document.body.appendChild(script);
     }
-  }, [price, currency, publicKey, resolvedMerchantCode]);
+  }, [price, currency, publicKey, resolvedMerchantCode, lang]);
 
   return (
     <div className="py-8 text-center space-y-6 max-w-md mx-auto">

@@ -7,10 +7,11 @@ interface TabbyCardProps {
   currency: string;
   publicKey: string;
   merchantCode: string;
+  lang?: "en" | "ar";
   id?: string;
 }
 
-export default function TabbyCard({ price, currency, publicKey, merchantCode, id = "tabbyCard" }: TabbyCardProps) {
+export default function TabbyCard({ price, currency, publicKey, merchantCode, lang = "en", id = "tabbyCard" }: TabbyCardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Dynamic merchant code mapping based on currency
@@ -52,7 +53,7 @@ export default function TabbyCard({ price, currency, publicKey, merchantCode, id
           currency: currency,
           price: price.toString(),
           installmentsCount: 4,
-          lang: "en",
+          lang: lang,
           publicKey: publicKey,
           merchantCode: resolvedMerchantCode,
         });
@@ -81,11 +82,11 @@ export default function TabbyCard({ price, currency, publicKey, merchantCode, id
       script.onload = initCard;
       document.body.appendChild(script);
     }
-  }, [price, currency, publicKey, resolvedMerchantCode, id]);
+  }, [price, currency, publicKey, resolvedMerchantCode, lang, id]);
 
   return (
     <div 
-      key={`${id}-${price}-${currency}-${resolvedMerchantCode}`} // Force fresh mount on configuration change
+      key={`${id}-${price}-${currency}-${resolvedMerchantCode}-${lang}`} // Force fresh mount on configuration change
       id={id} 
       ref={containerRef} 
       className="my-2 min-h-[40px] w-full" 
