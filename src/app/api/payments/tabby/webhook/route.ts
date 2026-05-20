@@ -1,30 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { TabbyService } from "@/services/payments/tabby";
+import { TabbyService, TabbyRegion, TabbyWebhookPayload } from "@/services/payments/tabby";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
 
+const TABBY_REJECTION_STATUSES = new Set(["REJECTED", "EXPIRED", "CLOSED", "VOIDED"]);
+
+async function verifyPaymentWithTabby(paymentId: string, region: TabbyRegion = "UAE"): Promise<{
+  verified: boolean;
+  status: string;
+  details?: any;
+}> {
+  try {
+    const tabbyService = new TabbyService(region);
+    const payment = await tabbyService.getPayment(paymentId);
+
+    return {
+      verified: true,
+      status: payment.status,
+      details: payment,
+    };
+  } catch (err: any) {
+    console.error(`[Tabby Webhook] Status verification failed for ${paymentId}:`, err.message);
+    return {
+      verified: false,
+      status: "UNKNOWN",
+    };
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.text();
+    const rawPayload = await request.text();
     const signature = request.headers.get("x-tabby-signature") || "";
 
     const tabbyService = new TabbyService();
-    const webhookPayload = tabbyService.verifyWebhook(payload, signature);
+    let webhookPayload: TabbyWebhookPayload;
 
-    console.log("[Tabby Webhook] Received:", JSON.stringify(webhookPayload, null, 2));
+    try {
+      webhookPayload = tabbyService.verifyWebhook(rawPayload, signature);
+    } catch (verifyErr: any) {
+      console.error("[Tabby Webhook] Signature verification failed:", verifyErr.message);
+      return NextResponse.json({ received: true });
+    }
 
     const eventType = webhookPayload?.event?.type;
     const paymentStatus = webhookPayload?.payload?.status;
     const paymentId = webhookPayload?.payload?.id;
-    // Tabby may send order_id or reference_id in the payload
     const orderRef =
       webhookPayload?.payload?.order?.reference_id ||
       webhookPayload?.payload?.order_id ||
       webhookPayload?.payload?.payment_id;
 
-    // Find the order via payment ID (most reliable) then fall back to reference
+    console.log(
+      `[Tabby Webhook] Event: ${eventType}, Status: ${paymentStatus}, Payment: ${paymentId}, Ref: ${orderRef}`,
+    );
+
     const order = await prisma.order.findFirst({
       where: {
         OR: [
@@ -40,69 +72,85 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
+    if (order.paymentStatus === "PAID" || order.status === OrderStatus.ORDER_CONFIRMED) {
+      console.log(`[Tabby Webhook] Order ${order.id} already processed. Skipping.`);
+      return NextResponse.json({ received: true });
+    }
+
+    const verifiedStatus = await verifyPaymentWithTabby(paymentId);
+    const effectiveStatus = verifiedStatus.verified ? verifiedStatus.status : paymentStatus;
+
+    console.log(
+      `[Tabby Webhook] Order ${order.id}: webhook says "${paymentStatus}", Tabby API says "${verifiedStatus.status}" (verified: ${verifiedStatus.verified})`,
+    );
+
+    if (verifiedStatus.verified && TABBY_REJECTION_STATUSES.has(verifiedStatus.status) && paymentStatus !== "AUTHORIZED" && paymentStatus !== "CAPTURED") {
+      console.warn(`[Tabby Webhook] Verified status "${verifiedStatus.status}" is a rejection for order ${order.id}. Updating accordingly.`);
+
+      if (verifiedStatus.status === "REJECTED" || verifiedStatus.status === "EXPIRED") {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { paymentStatus: PaymentStatus.CANCELLED },
+        });
+      } else if (verifiedStatus.status === "CLOSED") {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { status: OrderStatus.CANCELLED, paymentStatus: PaymentStatus.CANCELLED },
+        });
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
     let paymentConfirmed = false;
 
-    switch (paymentStatus) {
-      // ── AUTHORIZED: immediately capture the payment ─────────────────────────
+    switch (effectiveStatus) {
       case "AUTHORIZED": {
-        console.log(`[Tabby Webhook] Payment AUTHORIZED for order ${order.id}. Triggering capture...`);
-        const decimals = ["KWD", "BHD", "OMR"].includes(order.currency?.toUpperCase()) ? 3 : 2;
+        console.log(`[Tabby Webhook] Authorized for order ${order.id}. Triggering capture...`);
 
         try {
-          // IDEMPOTENCY CHECK: Do not capture if already paid
-          if (order.paymentStatus === "PAID" || order.status === OrderStatus.ORDER_CONFIRMED) {
-            console.log(`[Tabby Webhook] Order ${order.id} is already paid. Skipping capture.`);
-            paymentConfirmed = true; 
-            break;
-          }
-
-          const captured = await tabbyService.capturePayment(
-            paymentId,
-            Number(order.total || 0),
-            (order.currency || "AED") as any
-          );
-          console.log(`[Tabby Webhook] Capture successful for order ${order.id}:`, captured?.status);
-
-          await prisma.order.update({
-            where: { id: order.id },
-            data: {
-              status: OrderStatus.ORDER_CONFIRMED,
-              paymentStatus: "PAID" as any,
+          const captureResp = await fetch(
+            `${request.nextUrl.origin}/api/payments/tabby/capture`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                paymentId,
+                orderId: order.id,
+                amount: Number(order.total || 0),
+                currency: order.currency || "AED",
+              }),
             },
-          });
-          paymentConfirmed = true;
+          );
+
+          const captureResult = await captureResp.json();
+
+          if (captureResp.ok && captureResult.success) {
+            console.log(`[Tabby Webhook] Capture succeeded for order ${order.id}`);
+            paymentConfirmed = true;
+          } else {
+            console.error(`[Tabby Webhook] Capture failed for order ${order.id}:`, captureResult.error);
+          }
         } catch (captureErr: any) {
-          console.error(`[Tabby Webhook] Capture FAILED for order ${order.id}:`, captureErr.message);
-          // Rule 3: DO NOT update to PAID if capture fails.
-          // Keep as PENDING so it can be investigated or retried manually.
+          console.error(`[Tabby Webhook] Capture error for order ${order.id}:`, captureErr.message);
         }
         break;
       }
 
-      // ── CAPTURED: already captured (in case we receive this later) ───────────
       case "CAPTURED": {
-        // IDEMPOTENCY CHECK: Do not process if already paid
-        if (order.paymentStatus === "PAID" || order.status === OrderStatus.ORDER_CONFIRMED) {
-          console.log(`[Tabby Webhook] Order ${order.id} already marked as paid. Skipping CAPTURED logic.`);
-          paymentConfirmed = false; // Set to false to avoid duplicate notifications
-          break;
-        }
-
         await prisma.order.update({
           where: { id: order.id },
           data: {
             status: OrderStatus.ORDER_CONFIRMED,
-            paymentStatus: "PAID" as any,
+            paymentStatus: PaymentStatus.PAID,
           },
         });
         paymentConfirmed = true;
         break;
       }
 
-      // ── REJECTED / EXPIRED / CLOSED ──────────────────────────────────────────
       case "REJECTED":
-        console.warn(`[Tabby Webhook] Payment REJECTED for order ${order.id}. NOT marking confirmed.`);
-        // Do NOT mark order as confirmed — just log and let the user retry
+        console.warn(`[Tabby Webhook] Payment REJECTED for order ${order.id}. Marking FAILED (not confirmed).`);
         await prisma.order.update({
           where: { id: order.id },
           data: { paymentStatus: PaymentStatus.CANCELLED },
@@ -110,7 +158,11 @@ export async function POST(request: NextRequest) {
         break;
 
       case "EXPIRED":
-        console.warn(`[Tabby Webhook] Payment EXPIRED for order ${order.id}`);
+        console.warn(`[Tabby Webhook] Payment EXPIRED for order ${order.id}. Marking FAILED.`);
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { paymentStatus: PaymentStatus.CANCELLED },
+        });
         break;
 
       case "CLOSED":
@@ -121,10 +173,9 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log(`[Tabby Webhook] Unhandled status: ${paymentStatus} (event: ${eventType})`);
+        console.log(`[Tabby Webhook] Unhandled status: ${effectiveStatus} (event: ${eventType})`);
     }
 
-    // ── Admin notification after confirmed payment ────────────────────────────
     if (paymentConfirmed) {
       const updatedOrder = await prisma.order.findUnique({
         where: { id: order.id },
@@ -152,15 +203,15 @@ export async function POST(request: NextRequest) {
 
           await sendEmail({
             to: process.env.ADMIN_EMAIL,
-            subject: `✅ Tabby Payment Confirmed — Order #${updatedOrder.id} — ${updatedOrder.currency?.toUpperCase()} ${updatedOrder.total?.toFixed(2)}`,
+            subject: `Tabby Payment Confirmed — Order #${updatedOrder.id} — ${updatedOrder.currency?.toUpperCase()} ${updatedOrder.total?.toFixed(2)}`,
             html: `
               <div style="font-family: Arial, sans-serif; padding: 20px;">
-                <h2 style="color: #333;">✅ Payment Confirmed via Tabby!</h2>
+                <h2 style="color: #333;">Payment Confirmed via Tabby!</h2>
                 <table style="border-collapse: collapse; width: 100%; max-width: 500px;">
                   <tr><td style="padding: 8px 0; color: #666;">Order ID</td><td style="padding: 8px 0;"><strong>#${updatedOrder.id}</strong></td></tr>
                   <tr><td style="padding: 8px 0; color: #666;">Customer</td><td style="padding: 8px 0;">${updatedOrder.email || customerName}</td></tr>
                   <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${updatedOrder.currency?.toUpperCase()} ${updatedOrder.total?.toFixed(2)}</strong></td></tr>
-                  <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">Tabby | Pay in 4 interest-free payments</td></tr>
+                  <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">Tabby</td></tr>
                   <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
                 </table>
                 <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || "https://www.shanfaglobal.com"}/ueadmin/orders/${updatedOrder.id}" style="background: #3ECF8E; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order</a></p>
@@ -168,8 +219,6 @@ export async function POST(request: NextRequest) {
             `,
           }).catch(console.error);
         }
-
-        console.log(`[Tabby Payment Confirmed] Order #${updatedOrder.id}`);
       }
     }
 

@@ -44,7 +44,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     
     const body = await request.json();
-    const { action, status, shippingAddress, billingAddress, items, total, subtotal } = body; 
+    const { action, status, shippingAddress, billingAddress, items, total, subtotal, deletedItemIds } = body; 
 
     let updateData: any = {};
     
@@ -82,6 +82,27 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
     } else {
       // Manual updates from admin panel
+      // Block editing if order is in courier process or beyond
+      const existingOrder = await prisma.order.findUnique({
+        where: { id },
+        select: { status: true }
+      });
+
+      if (existingOrder) {
+        const blockedStatuses: string[] = [
+          OrderStatus.IN_TRANSIT,
+          OrderStatus.ORDER_PICKED_UP,
+          OrderStatus.DELIVERED,
+          OrderStatus.CANCELLED,
+          OrderStatus.REFUNDED,
+        ];
+        if (blockedStatuses.includes(existingOrder.status)) {
+          return new Response(JSON.stringify({
+            error: `Cannot edit order with status "${existingOrder.status}". Order is already in transit, delivered, or cancelled.`
+          }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+        }
+      }
+
       if (status) updateData.status = status;
       if (shippingAddress) updateData.shippingAddress = shippingAddress;
       if (billingAddress) updateData.billingAddress = billingAddress;
@@ -90,20 +111,51 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
       // Handle items update
       if (items && Array.isArray(items)) {
-        // Delete old items and create new ones (simplest way to handle updates for complex items)
-        // Or we can update them individually if we have IDs.
-        // Assuming items have IDs, we update quantity.
+        // 1. Delete removed items
+        if (deletedItemIds && Array.isArray(deletedItemIds) && deletedItemIds.length > 0) {
+          await (prisma as any).orderItem.deleteMany({
+            where: { id: { in: deletedItemIds } }
+          });
+        }
+
+        // 2. Process each item
         for (const item of items) {
           if (item.id) {
+            // Update existing item (quantity + price)
             await (prisma as any).orderItem.update({
               where: { id: item.id },
               data: {
                 quantity: item.quantity,
-                // price can also be updated if needed
+                unitPrice: item.unitPrice,
+              }
+            });
+          } else if (item.productId) {
+            // Create new item (admin-added)
+            await (prisma as any).orderItem.create({
+              data: {
+                orderId: id,
+                productId: item.productId,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                nameSnapshot: item.nameSnapshot || 'Custom Item',
+                imageSnapshot: item.imageSnapshot || '',
+                weightSnapshot: item.weightSnapshot || 0,
+                weightUnitSnapshot: item.weightUnitSnapshot || 'kg',
+                adminAddedAt: new Date(),
               }
             });
           }
         }
+
+        // Recalculate total weight
+        const allItems = await (prisma as any).orderItem.findMany({
+          where: { orderId: id },
+          select: { quantity: true, weightSnapshot: true }
+        });
+        const totalWeight = allItems.reduce((sum: number, it: any) => {
+          return sum + ((it.weightSnapshot || 0) * (it.quantity || 0));
+        }, 0);
+        updateData.totalWeight = totalWeight;
       }
     }
 

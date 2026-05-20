@@ -119,23 +119,99 @@ export async function POST(request: NextRequest) {
           where: {
             email: buyerEmail,
             paymentStatus: "PAID",
-            status: { not: "CANCELLED" }
+            status: { not: "CANCELLED" },
+            // Strictly exclude the active session being created
+            id: { not: orderId },
           },
           select: {
+            id: true,
             createdAt: true,
             total: true,
-            status: true
+            currency: true,
+            status: true,
+            paymentMethod: true,
+            email: true,
+            shippingAddress: true,
+            items: {
+              select: {
+                nameSnapshot: true,
+                quantity: true,
+                unitPrice: true,
+              },
+              take: 5,
+            },
           },
           orderBy: { createdAt: "desc" },
-          take: 5
+          // Up to 10 past orders as required by Tabby pre-scoring spec
+          take: 10,
         });
-        
+
+        // Count of successfully completed paid orders for loyalty_level
+        loyaltyLevel = pastOrders.filter(
+          (o) => o.status === "ORDER_CONFIRMED" || o.status === "DELIVERED"
+        ).length;
+
         if (pastOrders && pastOrders.length > 0) {
-          orderHistory = pastOrders.map(o => ({
-            purchased_at: o.createdAt.toISOString(),
-            amount: Number(o.total || 0).toFixed(decimals),
-            status: o.status === "ORDER_CONFIRMED" || o.status === "DELIVERED" ? "complete" : "processing"
-          }));
+          const shippingAddr = order.shippingAddress as any;
+          const buyerName = shippingAddr?.first_name
+            ? `${shippingAddr.first_name} ${shippingAddr.last_name || ""}`.trim()
+            : "Customer";
+          const buyerPhone = formatPhone(
+            shippingAddr?.phone || (order.billingAddress as any)?.phone
+          );
+
+          orderHistory = pastOrders.map((o) => {
+            const oCurrency = (o.currency || currency).toUpperCase();
+            const oDecimals = ["KWD", "BHD", "OMR"].includes(oCurrency) ? 3 : 2;
+            const oAddr = o.shippingAddress as any;
+            return {
+              purchased_at: o.createdAt.toISOString(),
+              amount: Number(o.total || 0).toFixed(oDecimals),
+              currency: oCurrency,
+              // Map payment method to Tabby-accepted values
+              payment_method: (() => {
+                const pm = (o.paymentMethod || "card").toLowerCase();
+                if (pm === "tabby") return "card";
+                if (pm === "tamara") return "card";
+                if (pm === "cod") return "cash";
+                return "card";
+              })(),
+              status:
+                o.status === "ORDER_CONFIRMED" || o.status === "DELIVERED"
+                  ? "complete"
+                  : "processing",
+              buyer: {
+                email: o.email || buyerEmail,
+                phone: buyerPhone,
+                name: buyerName,
+              },
+              order: {
+                reference_id: o.id,
+                items: (o.items || []).map((item) => ({
+                  title: item.nameSnapshot || "Product",
+                  quantity: item.quantity || 1,
+                  unit_price: Number(item.unitPrice || 0).toFixed(oDecimals),
+                })),
+              },
+              shipping_address: {
+                city:
+                  oAddr?.city ||
+                  (countryCode === "KW"
+                    ? "Kuwait City"
+                    : countryCode === "SA"
+                    ? "Riyadh"
+                    : "Dubai"),
+                address:
+                  oAddr?.address_1 ||
+                  (countryCode === "KW"
+                    ? "Kuwait City"
+                    : countryCode === "SA"
+                    ? "Riyadh"
+                    : "Dubai Mall"),
+                zip: oAddr?.postal_code || "00000",
+              },
+            };
+          });
         } else {
           orderHistory = [];
         }
@@ -148,14 +224,13 @@ export async function POST(request: NextRequest) {
     }
 
     // registered_since: use user account creation date, or order creation as fallback
-    // registered_since: use user account creation date, or a date at least 6 months old for pre-scoring
     if (order.user?.createdAt) {
       registeredSince = order.user.createdAt.toISOString();
     } else {
-      // For guests/new users, simulate an older account to avoid risk loops
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      registeredSince = sixMonthsAgo.toISOString();
+      // For guest users default to 1 year ago (safer pre-scoring baseline)
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      registeredSince = oneYearAgo.toISOString();
     }
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -192,7 +267,7 @@ export async function POST(request: NextRequest) {
             : "Test Customer",
         // Tabby pre-scoring fields
         registered_since: registeredSince,
-        loyalty_level: process.env.NODE_ENV === "development" ? 0 : loyaltyLevel,
+        loyalty_level: loyaltyLevel,
       },
       shippingAddress: {
         address: shippingAddress?.address_1 || (countryCode === "KW" ? "Kuwait City" : countryCode === "SA" ? "Riyadh" : "Dubai Mall"),
@@ -227,44 +302,53 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        paymentMethod: "tabby",
-        paymentMethodTitle: "Tabby | Pay in 4 interest-free payments",
-        tabbySessionId: session.id,
-        tabbyPaymentId: session.payment.id,
-        // Update order details if overrides provided
-        ...(overrideEmail ? { email: overrideEmail } : {}),
-        ...(overridePhone ? {
-          shippingAddress: {
-            ...(order.shippingAddress as any),
-            phone: overridePhone
-          }
-        } : {}),
-      },
-    });
-
-    console.log("Tabby Session Response:", JSON.stringify(session, null, 2));
+    console.log("[Tabby] Session Response status:", session.status);
 
     const checkoutUrl =
       session.web_url ||
       session.configuration?.available_products?.installments?.[0]?.web_url;
 
-    // Pre-scoring rejection: do NOT mark order as confirmed
+    // ── PRE-SCORING REJECTION: guard before any DB mutation ─────────────────
+    // If Tabby rejects (e.g., '2-background-pre-scoring-reject' test credentials
+    // or any live rejection), return the official error message and do NOT
+    // write tabbySessionId / tabbyPaymentId to the order — the order stays
+    // in ORDER_RECEIVED so the customer can retry with another method.
     if (session.status === "REJECTED" || !checkoutUrl) {
       const rejectionCode = session.rejection_reason_code || "NOT_AVAILABLE";
       console.warn(`[Tabby] Session rejected: ${rejectionCode} for order ${orderId}`);
+      // Official Tabby user-facing error as per integration docs
       return NextResponse.json(
         {
           success: false,
           status: session.status,
           rejection_reason_code: rejectionCode,
-          error: `Tabby rejected this session: ${rejectionCode}`,
+          // Exact message from Tabby integration guide
+          error: "Tabby is unable to approve this purchase. Please use an alternative payment method for your order.",
         },
         { status: 400 }
       );
     }
+    // ────────────────────────────────────────────────────────────────────────
+
+    // Only update DB after confirming the session is valid and a checkout URL exists
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        paymentMethod: "tabby",
+        paymentMethodTitle: "Tabby",
+        tabbySessionId: session.id,
+        tabbyPaymentId: session.payment.id,
+        ...(overrideEmail ? { email: overrideEmail } : {}),
+        ...(overridePhone
+          ? {
+              shippingAddress: {
+                ...(order.shippingAddress as any),
+                phone: overridePhone,
+              },
+            }
+          : {}),
+      },
+    });
 
     return NextResponse.json({
       success: true,

@@ -506,7 +506,7 @@ function PaymentPageContent() {
                         className="group relative flex items-center justify-between p-1 rounded-3xl bg-white border border-gray-200 hover:border-gray-300 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg overflow-hidden h-14 md:h-16"
                       >
                         <div className="flex items-center gap-3 ml-5">
-                          <img src="https://cdn.tamara.co/assets/svg/tamara-logo-en.svg" alt="Tamara" className="h-7 md:h-8" />
+                          <img src={isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg"} alt="Tamara" className="h-7 md:h-8 object-contain w-auto" />
                         </div>
                         <div className="mr-5 bg-black/5 px-3 py-1.5 rounded-full text-[10px] font-black text-black uppercase tracking-widest">
                           {tamaraLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Installments"}
@@ -577,8 +577,7 @@ function PaymentPageContent() {
                         <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="w-8 md:w-10" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-bold text-base md:text-lg">Tabby | Pay in 4 interest-free payments</div>
-                        <div className="text-[10px] md:text-xs text-black/40 font-medium">No interest. No fees. Split into 4 payments.</div>
+                        <div className="font-bold text-base md:text-lg">Tabby</div>
                       </div>
                       {method === "tabby" && <CheckCircle2 className="text-[#3ECF8E]" size={18} />}
                     </div>
@@ -597,13 +596,9 @@ function PaymentPageContent() {
                     onClick={() => setMethod("tamara")}
                     className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-gray-900 shadow-lg" : "border-black/5 hover:border-black/10"}`}
                   >
-                    <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center transition-all ${method === "tamara" ? "bg-black text-white" : "bg-black/5"}`}>
+                    <div className="p-2.5 md:p-3 rounded-2xl flex items-center justify-center bg-black/5">
                       <img 
-                        src={
-                          method === "tamara"
-                            ? (isArabic ? "/tamara-logo-white-ar.svg" : "/tamara-logo-white.svg")
-                            : (isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg")
-                        } 
+                        src={isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg"} 
                         alt="Tamara" 
                         className="w-14 md:w-16 object-contain" 
                       />
@@ -688,10 +683,7 @@ function PaymentPageContent() {
                     <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-10" />
                   </div>
                   <div className="space-y-2">
-                    <p className="font-bold text-lg">Tabby | Pay in 4 interest-free payments</p>
-                    <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
-                      Split your purchase into 4 equal payments — no interest, no fees, no catch.
-                    </p>
+                    <p className="font-bold text-lg">Tabby</p>
                   </div>
                   <div className="my-4 border-t border-black/5 pt-4">
                     <TabbyCard 
@@ -701,20 +693,11 @@ function PaymentPageContent() {
                       publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
                       merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
                     />
-                    <TamaraWidget 
-                      price={order.total} 
-                      currency={order.currency?.toUpperCase() || "AED"} 
-                      country={country}
-                      widgetType="cart"
-                    />
                   </div>
                   <div className="bg-black/5 rounded-2xl p-4 space-y-1">
                     <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Total Amount</div>
                     <div className="font-black text-2xl">
                       <Price amount={order.total} />
-                    </div>
-                    <div className="text-[10px] text-black/40 font-medium">
-                      ≈ <Price amount={order.total / 4} /> × 4 payments
                     </div>
                   </div>
                   <button
@@ -722,7 +705,7 @@ function PaymentPageContent() {
                     disabled={tabbyLoading}
                     className="w-full h-14 md:h-16 rounded-full bg-[#3ECF8E] hover:bg-[#3ECF8E]/90 text-black font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-[#3ECF8E]/20 disabled:opacity-50 flex items-center justify-center gap-3"
                   >
-                    {tabbyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Pay in 4 with Tabby"}
+                    {tabbyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Pay with Tabby"}
                   </button>
                 </div>
               )}

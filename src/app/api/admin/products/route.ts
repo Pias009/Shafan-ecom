@@ -115,15 +115,34 @@ export async function GET(req: Request) {
     const select = searchParams.get('select');
 
     // Lightweight select for dropdowns/selectors
-    if (select === 'name,id' || select === 'name,id,sku') {
+    if (select === 'name,id' || select === 'name,id,sku' || select === 'name,id,sku,price,images,weight,weightUnit') {
+      const needsFullFields = select === 'name,id,sku,price,images,weight,weightUnit';
       const products = await prisma.product.findMany({
         where: { active: true },
-        select: select === 'name,id,sku'
-          ? { id: true, name: true, sku: true }
-          : { id: true, name: true },
+        select: needsFullFields
+          ? { id: true, name: true, sku: true, price: true, discountPrice: true, images: true, weight: true, weightUnit: true }
+          : select === 'name,id,sku'
+            ? { id: true, name: true, sku: true }
+            : { id: true, name: true },
         orderBy: { name: 'asc' },
         take: 1000,
       });
+      // Enrich products with best available price
+      if (needsFullFields) {
+        const productIds = products.map((p: any) => p.id);
+        const countryPrices = await (prisma as any).countryPrice.findMany({
+          where: { productId: { in: productIds }, active: true },
+          select: { productId: true, price: true, currency: true },
+        });
+        const priceMap: Record<string, any[]> = {};
+        for (const cp of countryPrices) {
+          if (!priceMap[cp.productId]) priceMap[cp.productId] = [];
+          priceMap[cp.productId].push(cp);
+        }
+        for (const p of products as any[]) {
+          (p as any).countryPrices = priceMap[p.id] || [];
+        }
+      }
       return new Response(JSON.stringify(products), { headers: { 'Content-Type': 'application/json' } });
     }
 

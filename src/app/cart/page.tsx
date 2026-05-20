@@ -59,7 +59,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
     setApplyingCoupon(false);
   }
 
-  async function handleCheckout() {
+  async function handleCheckout(methodOverride?: string) {
     if (!hasAddress) {
       toast.error(t.cart.addressRequired, {
         duration: 4000,
@@ -139,12 +139,14 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         return;
       }
 
+      const activeMethod = methodOverride || paymentMethod;
+
       let paymentMethodData = { payment_method: "stripe", payment_method_title: "Credit Card (Stripe)" };
-      if (paymentMethod === "cod") {
+      if (activeMethod === "cod") {
         paymentMethodData = { payment_method: "cod", payment_method_title: "Cash on Delivery" };
-      } else if (paymentMethod === "tabby") {
+      } else if (activeMethod === "tabby") {
         paymentMethodData = { payment_method: "tabby", payment_method_title: "Tabby Pay-in-4" };
-      } else if (paymentMethod === "tamara") {
+      } else if (activeMethod === "tamara") {
         paymentMethodData = { payment_method: "tamara", payment_method_title: "Tamara Installments" };
       }
 
@@ -195,7 +197,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
         toast.success("Order created! Redirecting...", { id: "checkout" });
         // Always redirect to payment page to allow confirmation or method change
         useLoadingStore.getState().setRedirecting(true, "Redirecting to secure payment...");
-        router.push(`/checkout/payment/${data.orderId}?method=${paymentMethod}`);
+        router.push(`/checkout/payment/${data.orderId}?method=${activeMethod}`);
       } else if (!orderRes.ok) {
         toast.error(data?.error || `Server error (${orderRes.status})`, { id: "checkout" });
         console.error("Order failed:", orderRes.status, data);
@@ -483,7 +485,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("stripe")}
-                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${paymentMethod === "stripe"
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition h-14 flex items-center justify-center ${paymentMethod === "stripe"
                         ? "border-black bg-black text-white"
                         : "border-black/20 text-black/60 hover:border-black/40"
                        }`}
@@ -492,36 +494,38 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod("tabby")}
-                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 ${paymentMethod === "tabby"
+                    onClick={() => {
+                      setPaymentMethod("tabby");
+                      handleCheckout("tabby");
+                    }}
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 h-14 ${paymentMethod === "tabby"
                         ? "border-[#3ECF8E] bg-[#3ECF8E] text-black"
                         : "border-black/20 text-black/60 hover:border-black/40"
                        }`}
                   >
-                    <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-4" />
+                    <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-6 md:h-7 object-contain w-auto" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod("tamara")}
-                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 ${paymentMethod === "tamara"
-                        ? "border-[#FF4D4D] bg-[#FF4D4D] text-white"
+                    onClick={() => {
+                      setPaymentMethod("tamara");
+                      handleCheckout("tamara");
+                    }}
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 h-14 ${paymentMethod === "tamara"
+                        ? "border-black bg-black/[0.02]"
                         : "border-black/20 text-black/60 hover:border-black/40"
                        }`}
                   >
                     <img 
-                      src={
-                        paymentMethod === "tamara"
-                          ? (isArabic ? "/tamara-logo-white-ar.svg" : "/tamara-logo-white.svg")
-                          : (isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg")
-                      } 
+                      src={isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg"} 
                       alt="Tamara" 
-                      className="h-[26px] w-auto object-contain" 
+                      className="h-7 md:h-8 object-contain w-auto" 
                     />
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaymentMethod("cod")}
-                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition ${paymentMethod === "cod"
+                    className={`p-3 rounded-lg border text-xs font-bold uppercase tracking-wider transition h-14 flex items-center justify-center ${paymentMethod === "cod"
                         ? "border-black bg-black text-white"
                         : "border-black/20 text-black/60 hover:border-black/40"
                        }`}
@@ -533,7 +537,7 @@ function CartContent({ items, removeItem, updateQuantity, couponCode, couponDisc
             </div>
 
             <button
-              onClick={handleCheckout}
+              onClick={() => handleCheckout()}
               className="mt-8 md:mt-10 w-full rounded-full bg-black text-white py-4 md:py-5 font-body text-[10px] md:text-xs font-black tracking-[0.2em] transition hover:scale-[1.02] shadow-xl shadow-black/20 active:scale-95 flex items-center justify-center gap-2"
             >
               {t.cart.checkout}

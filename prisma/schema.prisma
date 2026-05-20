@@ -399,17 +399,18 @@ model Order {
 }
 
 model OrderItem {
-  id             String  @id @default(auto()) @map("_id") @db.ObjectId
-  orderId        String  @db.ObjectId
-  productId      String  @db.ObjectId
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId        String   @db.ObjectId
+  productId      String   @db.ObjectId
   quantity       Int
   unitPrice      Float?
   nameSnapshot   String
   imageSnapshot  String?
   weightSnapshot Float?
   weightUnitSnapshot String?
-  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product        Product @relation(fields: [productId], references: [id])
+  adminAddedAt   DateTime?
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product  @relation(fields: [productId], references: [id])
 }
 
 model CourierService {

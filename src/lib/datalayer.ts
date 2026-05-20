@@ -4,6 +4,12 @@ const DEFAULT_CURRENCY = typeof process !== 'undefined' && process.env.NEXT_PUBL
 
 import { fbEvent } from './fpixel';
 
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
+
 type DataLayerEvent = Record<string, unknown>;
 
 let trackingQueue: any[] = [];
@@ -15,6 +21,23 @@ export function pushToDataLayer(event: DataLayerEvent): void {
   // Immediate push to GTM/DataLayer for real-time tracking
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push(event);
+
+  // Also fire directly to GA4 via gtag for ecommerce events
+  // This ensures events reach GA4 even without GTM tag configuration
+  if (typeof window.gtag === 'function') {
+    const ecommerce = (event as any).ecommerce;
+    if (ecommerce || event.event === 'search' || event.event === 'sign_up' || event.event === 'contact') {
+      const gtagParams: Record<string, unknown> = { ...ecommerce };
+      // For purchase events, ensure proper GA4 format
+      if (event.event === 'purchase' && ecommerce) {
+        gtagParams.transaction_id = ecommerce.transaction_id;
+        gtagParams.value = ecommerce.value;
+        gtagParams.currency = ecommerce.currency;
+        gtagParams.items = ecommerce.items;
+      }
+      window.gtag('event', event.event as string, gtagParams);
+    }
+  }
 
   // Debounced logging to our internal tracking API to save bandwidth/CPU
   trackingQueue.push({

@@ -64,6 +64,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
 
   const billing = order.billingAddress || {};
   const shipping = order.shippingAddress || {};
+  const adminAddedItems = (order.items || []).filter((it: any) => it.adminAddedAt);
 
   return (
     <div className="max-w-4xl mx-auto py-8 md:py-16 px-4 md:px-6 space-y-8 md:space-y-12">
@@ -143,7 +144,12 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
                 <Link href={`/products/${it.productId}`} className="font-bold text-xs truncate leading-tight hover:underline">
                   {it.name}
                 </Link>
-                <div className="text-[8px] font-black text-black/20 uppercase tracking-widest mt-1">Qty: {it.quantity}</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="text-[8px] font-black text-black/20 uppercase tracking-widest">Qty: {it.quantity}</div>
+                  {it.adminAddedAt && (
+                    <span className="text-[7px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Added by Store</span>
+                  )}
+                </div>
               </div>
                 <div className="text-right font-black text-xs shrink-0">
                 {formatPrice(Number(it.unitPrice) * it.quantity, order.currency)}
@@ -166,9 +172,14 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
               {order.items.map((it: any) => (
                 <tr key={it.id}>
                   <td className="px-8 py-6">
-                    <Link href={`/products/${it.productId}`} className="font-bold text-sm hover:underline">
-                      {it.name}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/products/${it.productId}`} className="font-bold text-sm hover:underline">
+                        {it.name}
+                      </Link>
+                      {it.adminAddedAt && (
+                        <span className="text-[8px] font-black uppercase tracking-widest bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">Added by Store</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-8 py-6 text-center font-black text-black/40">{it.quantity}</td>
                   <td className="px-8 py-6 text-right font-black text-sm">{formatPrice(Number(it.unitPrice) * it.quantity, order.currency)}</td>
@@ -225,7 +236,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
         </div>
       </section>
 
-      {/* Dynamic Actions: Cancel (30m) or Refund (Delivered) */}
+      {/* Dynamic Actions: Cancel (30m), Cancel Admin-Added Items, or Refund (Delivered) */}
       <OrderActions 
         orderId={order.id.toString()} 
         status={order.status} 
@@ -233,6 +244,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
         cancelRequest={order.cancelRequest}
         returnRequest={order.returnRequest}
         returnStatus={order.returnStatus}
+        adminAddedItems={adminAddedItems}
       />
     </div>
   );

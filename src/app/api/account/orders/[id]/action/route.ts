@@ -13,7 +13,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     // 1. Fetch order
     const order = await (prisma as any).order.findUnique({
       where: { id },
-      include: { user: true }
+      include: { user: true, items: true }
     });
 
     if (!order) {
@@ -85,6 +85,60 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         });
         return NextResponse.json({ message: "Cancellation request sent to admin", order: updated });
       }
+    }
+
+    if (action === "CANCEL_ADMIN_ITEMS") {
+      const adminItems = order.items.filter((it: any) => it.adminAddedAt);
+
+      if (!adminItems.length) {
+        return NextResponse.json({ error: "No store-added items to cancel" }, { status: 400 });
+      }
+
+      // Check all admin-added items are within 30 minutes
+      const now = new Date();
+      for (const item of adminItems) {
+        const addedAt = new Date(item.adminAddedAt);
+        const minsSinceAdded = (now.getTime() - addedAt.getTime()) / (1000 * 60);
+        if (minsSinceAdded > 30) {
+          return NextResponse.json({
+            error: `Cannot cancel "${item.nameSnapshot}" — the 30-minute cancellation window has expired.`
+          }, { status: 400 });
+        }
+      }
+
+      const adminItemIds = adminItems.map((it: any) => it.id);
+
+      // Delete admin-added items
+      await prisma.orderItem.deleteMany({
+        where: { id: { in: adminItemIds } }
+      });
+
+      // Recalculate totals from remaining items
+      const remainingItems = await (prisma as any).orderItem.findMany({
+        where: { orderId: id },
+        select: { quantity: true, unitPrice: true, weightSnapshot: true }
+      });
+
+      const newSubtotal = remainingItems.reduce((sum: number, it: any) =>
+        sum + ((it.unitPrice || 0) * (it.quantity || 0)), 0
+      );
+      const newTotalWeight = remainingItems.reduce((sum: number, it: any) =>
+        sum + ((it.weightSnapshot || 0) * (it.quantity || 0)), 0
+      );
+      const newTotal = newSubtotal + (order.shipping || 0) - (order.discountAmount || 0) + (order.taxAmount || 0);
+
+      await prisma.order.update({
+        where: { id },
+        data: {
+          subtotal: newSubtotal,
+          total: newTotal,
+          totalWeight: newTotalWeight,
+        }
+      });
+
+      return NextResponse.json({
+        message: `Cancelled ${adminItems.length} store-added item${adminItems.length > 1 ? 's' : ''} successfully. Order total has been updated.`
+      });
     }
 
     if (action === "RETURN") {

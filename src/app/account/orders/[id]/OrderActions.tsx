@@ -2,8 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { XCircle, RotateCcw, AlertCircle, Info } from "lucide-react";
+import { XCircle, RotateCcw, AlertCircle, Info, Clock, Package } from "lucide-react";
 import toast from "react-hot-toast";
+
+interface AdminAddedItem {
+  id: string;
+  nameSnapshot: string;
+  quantity: number;
+  unitPrice: number;
+  adminAddedAt: string;
+}
 
 interface OrderActionsProps {
   orderId: string;
@@ -12,15 +20,26 @@ interface OrderActionsProps {
   cancelRequest?: boolean;
   returnRequest?: boolean;
   returnStatus?: string;
+  adminAddedItems?: AdminAddedItem[];
 }
 
-export default function OrderActions({ 
-  orderId, 
-  status, 
-  createdAt, 
-  cancelRequest, 
-  returnRequest, 
-  returnStatus 
+function formatPrice(amount: number, currency: string): string {
+  const code = currency?.toUpperCase() || 'USD';
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
+  return `${code} ${(amount || 0).toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+}
+
+export default function OrderActions({
+  orderId,
+  status,
+  createdAt,
+  cancelRequest,
+  returnRequest,
+  returnStatus,
+  adminAddedItems,
 }: OrderActionsProps) {
   const [loading, setLoading] = useState(false);
   const [reason, setReason] = useState("");
@@ -31,24 +50,30 @@ export default function OrderActions({
   const now = new Date();
   const diffMinutes = (now.getTime() - orderDate.getTime()) / (1000 * 60);
   const diffDays = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24);
-  
+
   const isCancelled = status.toUpperCase() === "CANCELLED";
   const isDelivered = status.toUpperCase() === "DELIVERED";
-  
+
   const canCancel = !isCancelled && !isDelivered && status.toUpperCase() !== "REFUNDED";
   const canReturn = isDelivered && diffDays <= 7 && returnStatus === "NONE";
 
-  async function handleAction(action: "CANCEL" | "RETURN") {
+  // Admin-added items that are still cancelable (within 30 min of being added)
+  const cancelableAdminItems = (adminAddedItems || []).filter((item) => {
+    const addedAt = new Date(item.adminAddedAt);
+    const minsSinceAdded = (now.getTime() - addedAt.getTime()) / (1000 * 60);
+    return minsSinceAdded <= 30;
+  });
+
+  async function handleAction(action: "CANCEL" | "RETURN" | "CANCEL_ADMIN_ITEMS") {
     if (!reason && action === "RETURN") {
       toast.error("Please provide a reason for return");
       return;
     }
 
     setLoading(true);
-    const tid = toast.loading(`${action === "CANCEL" ? "Processing cancellation" : "Processing return"}...`);
+    const tid = toast.loading(`${action === "CANCEL" ? "Processing cancellation" : action === "CANCEL_ADMIN_ITEMS" ? "Removing store-added items" : "Processing return"}...`);
 
     try {
-      // Get guest email from localStorage if available
       const guestEmail = localStorage.getItem('guest_email');
 
       const res = await fetch(`/api/account/orders/${orderId}/action`, {
@@ -63,7 +88,7 @@ export default function OrderActions({
         toast.success(data.message || "Request sent successfully", { id: tid });
         setShowReasonInput(null);
         setReason("");
-        router.refresh(); 
+        router.refresh();
       } else {
         toast.error(data.error || "Action failed", { id: tid });
       }
@@ -102,6 +127,46 @@ export default function OrderActions({
         </div>
       )}
 
+      {/* Admin-Added Items Cancel Section */}
+      {cancelableAdminItems.length > 0 && !isCancelled && (
+        <div className="glass-panel rounded-2xl p-5 border border-blue-200 bg-blue-50/50">
+          <div className="flex items-start gap-3 mb-4">
+            <Package className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-widest text-blue-800">New Items Added by Store</h4>
+              <p className="text-[10px] font-medium text-blue-600 mt-1">
+                The store has added new items to your order. You can cancel these items within 30 minutes.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            {cancelableAdminItems.map((item) => {
+              const minsLeft = Math.max(0, 30 - Math.floor((now.getTime() - new Date(item.adminAddedAt).getTime()) / (1000 * 60)));
+              return (
+                <div key={item.id} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-blue-100">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-xs text-gray-900 truncate">{item.nameSnapshot}</div>
+                    <div className="text-[10px] font-bold text-gray-400 mt-0.5">Qty: {item.quantity} &times; {formatPrice(item.unitPrice, 'AED')}</div>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] font-black text-amber-600 flex-shrink-0">
+                    <Clock size={12} />
+                    <span>{minsLeft}m left</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => handleAction("CANCEL_ADMIN_ITEMS")}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white rounded-full py-3 text-[10px] font-black uppercase tracking-widest transition hover:bg-blue-700 active:scale-95 shadow-lg disabled:opacity-50"
+          >
+            <XCircle className="w-4 h-4" />
+            Cancel Store-Added Items
+          </button>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center gap-4">
         {canCancel && !cancelRequest && (
@@ -121,10 +186,10 @@ export default function OrderActions({
                 </p>
               </div>
             )}
-            
+
             {showReasonInput === "CANCEL" ? (
               <div className="space-y-3">
-                <textarea 
+                <textarea
                   placeholder="Reason for cancellation (optional)..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
@@ -162,7 +227,7 @@ export default function OrderActions({
           <div className="flex-1 min-w-[280px]">
              {showReasonInput === "RETURN" ? (
               <div className="space-y-3">
-                <textarea 
+                <textarea
                   placeholder="Reason for return (required)..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
@@ -199,5 +264,3 @@ export default function OrderActions({
     </div>
   );
 }
-
-

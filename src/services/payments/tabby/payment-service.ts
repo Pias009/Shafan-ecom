@@ -89,9 +89,13 @@ export class TabbyService {
           currency: params.currency,
           description: params.description || `Order ${params.orderId}`,
           buyer: buyerPayload,
-          buyer_history: params.order_history && params.order_history.length > 0
-            ? { registered_since: params.buyer?.registered_since, loyalty_level: params.buyer?.loyalty_level ?? 0, orders_count: params.order_history.length }
-            : undefined,
+          // buyer_history must always be sent for Tabby pre-scoring —
+          // even for new customers with 0 orders.
+          buyer_history: {
+            registered_since: params.buyer?.registered_since,
+            loyalty_level: params.buyer?.loyalty_level ?? 0,
+            orders_count: params.order_history?.length ?? 0,
+          },
           order_history: params.order_history ?? [],
           shipping_address: params.shippingAddress,
           order: {
@@ -159,20 +163,27 @@ export class TabbyService {
   }
 
   async capturePayment(paymentId: string, amount: number, currency: TabbyCurrency): Promise<TabbyPayment> {
-    const response = await fetch(`${this.baseUrl}/api/v2/payments/${paymentId}/captures`, {
+    // Tabby capture uses /api/v1/ (not v2) per integration spec
+    const decimals = ["KWD", "BHD", "OMR"].includes(currency.toUpperCase()) ? 3 : 2;
+    const response = await fetch(`${this.baseUrl}/api/v1/payments/${paymentId}/captures`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify({
-        amount: amount.toString(),
-        currency,
+        // Must be a properly-formatted decimal string matching the currency precision
+        amount: amount.toFixed(decimals),
       }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `Tabby capture failed: ${response.status}`);
+      const errorText = await response.text();
+      let errorData: any;
+      try { errorData = JSON.parse(errorText); } catch { errorData = { message: errorText }; }
+      console.error("[Tabby] Capture API error:", JSON.stringify(errorData));
+      throw new Error(errorData.message || `Tabby capture failed: ${response.status}`);
     }
 
+    // 204 No Content is a valid success response for some Tabby capture requests
+    if (response.status === 204) return { id: paymentId, status: "CAPTURED" } as any;
     return response.json();
   }
 
