@@ -9,15 +9,15 @@ import { sendEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   const tabbySignature = request.headers.get("x-tabby-signature");
-  const tamaraSignature = request.headers.get("x-tamara-signature");
+  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
 
   const payload = await request.text();
 
   try {
     if (tabbySignature) {
       return handleTabbyWebhook(payload, tabbySignature);
-    } else if (tamaraSignature) {
-      return handleTamaraWebhook(payload, tamaraSignature);
+    } else if (authHeader?.toLowerCase().startsWith("bearer ")) {
+      return handleTamaraWebhook(payload, authHeader.substring(7).trim());
     } else {
       return NextResponse.json({ error: "Unknown payment provider" }, { status: 400 });
     }
@@ -145,7 +145,12 @@ async function handleTabbyWebhook(payload: string, signature: string) {
 
 async function handleTamaraWebhook(payload: string, signature: string) {
   const tamaraService = new TamaraService();
-  tamaraService.verifyWebhook(payload, signature); // validates signature
+  const isValid = tamaraService.verifyWebhook(payload, signature);
+
+  if (!isValid) {
+    console.error("[Generic Webhook] Tamara signature validation failed");
+    return NextResponse.json({ error: "Invalid Signature" }, { status: 401 });
+  }
 
   // Parse raw JSON payload to extract event data
   const webhookPayload = JSON.parse(payload) as Record<string, any>;

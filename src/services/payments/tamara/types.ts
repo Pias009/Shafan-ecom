@@ -90,6 +90,16 @@ export interface TamaraWebhookPayload {
   };
 }
 
+export interface TamaraCaptureItem {
+  name: string;
+  quantity: number;
+  reference_id: string;
+  sku: string;
+  unit_price: { amount: string; currency: TamaraCurrency };
+  total_amount: { amount: string; currency: TamaraCurrency };
+  type: string;
+}
+
 export interface TamaraCaptureRequest {
   orderId: string;
   totalAmount: { amount: string; currency: TamaraCurrency };
@@ -100,6 +110,7 @@ export interface TamaraCaptureRequest {
   };
   taxAmount?: { amount: string; currency: TamaraCurrency };
   shippingAmount?: { amount: string; currency: TamaraCurrency };
+  items?: TamaraCaptureItem[];
 }
 
 export interface TamaraRefundRequest {

@@ -16,10 +16,13 @@ export async function POST(request: NextRequest) {
   try {
     const payload = await request.text();
     const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+    const queryToken = request.nextUrl.searchParams.get("tamaraToken");
 
     let token = "";
     if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
       token = authHeader.substring(7).trim();
+    } else if (queryToken) {
+      token = queryToken.trim();
     } else if (authHeader) {
       token = authHeader.trim();
     }
@@ -89,6 +92,7 @@ export async function POST(request: NextRequest) {
           ...(isValidObjectId ? [{ id: baseOrderId }] : []),
         ],
       },
+      include: { items: true },
     });
     
     if (!order) {
@@ -117,6 +121,25 @@ export async function POST(request: NextRequest) {
           const decimals = ["BHD", "KWD", "OMR"].includes(order.currency.toUpperCase()) ? 3 : 2;
           const formattedTotal = Number(order.total || 0).toFixed(decimals);
           
+          const captureItems = order.items.map(item => {
+            const itemTotal = (Number(item.unitPrice || 0) * item.quantity).toFixed(decimals);
+            return {
+              name: item.nameSnapshot || "Product",
+              quantity: item.quantity,
+              reference_id: item.productId,
+              sku: item.productId,
+              unit_price: {
+                amount: Number(item.unitPrice || 0).toFixed(decimals),
+                currency: order.currency.toUpperCase() as any,
+              },
+              total_amount: {
+                amount: itemTotal,
+                currency: order.currency.toUpperCase() as any,
+              },
+              type: "Physical",
+            };
+          });
+
           await tamaraService.capturePayment({
             orderId: orderId,
             totalAmount: {
@@ -126,7 +149,8 @@ export async function POST(request: NextRequest) {
             shippingInfo: {
               shipping_company: "Standard Delivery",
               tracking_number: orderId,
-            }
+            },
+            items: captureItems,
           });
           console.log(`[Tamara Webhook] Successfully captured payment for order ${orderId}`);
 

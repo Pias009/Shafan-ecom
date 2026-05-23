@@ -15,7 +15,7 @@ export class TamaraService {
   constructor() {
     this.baseUrl = (process.env.TAMARA_API_URL || "https://api-sandbox.tamara.co").trim();
     this.accessToken = (process.env.TAMARA_ACCESS_TOKEN || "").trim();
-    this.notificationToken = (process.env.TAMARA_NOTIFICATION_KEY || "").trim();
+    this.notificationToken = (process.env.TAMARA_NOTIFICATION_TOKEN || process.env.TAMARA_NOTIFICATION_KEY || "").trim();
   }
 
   private cleanPhone(phone: string | undefined): string {
@@ -222,12 +222,14 @@ export class TamaraService {
   }
 
   async capturePayment(params: TamaraCaptureRequest): Promise<any> {
-    const response = await fetch(`${this.baseUrl}/orders/${params.orderId}/captures`, {
+    const response = await fetch(`${this.baseUrl}/payments/capture`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify({
+        order_id: params.orderId,
         total_amount: params.totalAmount,
         shipping_info: params.shippingInfo,
+        items: params.items,
       }),
     });
 
