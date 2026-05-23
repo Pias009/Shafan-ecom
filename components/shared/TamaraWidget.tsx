@@ -4,23 +4,19 @@ import { useEffect, useRef } from "react";
 import { useLanguageStore } from "@/lib/language-store";
 
 interface TamaraWidgetProps {
-  price: number | string;
-  currency: string;
-  country?: string;
-  widgetType?: "product" | "cart" | "summary";
+  amount: number;
+  currency?: string;
 }
 
 declare global {
   interface Window {
-    tamaraWidgetConfig?: {
-      publicKey: string;
-      locale: string;
+    TamaraWidgetV2?: {
+      refresh: () => void;
     };
   }
 }
 
-export default function TamaraWidget({ price, currency }: TamaraWidgetProps) {
-  const currentPrice = Number(price);
+export default function TamaraWidget({ amount, currency = "AE" }: TamaraWidgetProps) {
   const { currentLanguage } = useLanguageStore();
   const isArabic = currentLanguage.code === "ar";
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +28,7 @@ export default function TamaraWidget({ price, currency }: TamaraWidgetProps) {
       locale: isArabic ? "ar" : "en",
     };
 
-    const scriptId = "tamara-widget-script";
+    const scriptId = "tamara-widget-script-v2";
     if (!document.getElementById(scriptId)) {
       const isSandbox =
         !process.env.NEXT_PUBLIC_TAMARA_API_URL ||
@@ -59,19 +55,24 @@ export default function TamaraWidget({ price, currency }: TamaraWidgetProps) {
       widget = document.createElement("tamara-widget");
       widget.setAttribute("type", "tamara-summary");
       widget.setAttribute("inline-type", "2");
-      widget.setAttribute("theme", "light");
       container.appendChild(widget);
     }
 
-    widget.setAttribute("amount", currentPrice.toFixed(2));
+    widget.setAttribute("amount", amount.toFixed(2));
     if (currency) {
       widget.setAttribute("currency", currency.toUpperCase());
     }
-  }, [currentPrice, currency]);
 
-  if (isNaN(currentPrice) || currentPrice <= 0) return null;
+    if (window.TamaraWidgetV2) {
+      window.TamaraWidgetV2.refresh();
+    }
+  }, [amount, currency]);
 
-  return <div ref={containerRef} className="w-full" />;
+  if (isNaN(amount) || amount <= 0) return null;
+
+  return (
+    <div className="my-4 p-3 border border-gray-200 rounded-lg bg-white">
+      <div ref={containerRef} className="min-h-[80px]" />
+    </div>
+  );
 }
-
-export { TamaraWidget };

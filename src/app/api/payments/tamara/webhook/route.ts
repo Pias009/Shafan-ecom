@@ -6,11 +6,17 @@ import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
 import crypto from "crypto";
 
+function base64urlDecode(str: string): string {
+  const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+  return Buffer.from(padded, "base64").toString("utf-8");
+}
+
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.text();
     const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
-    
+
     let token = "";
     if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
       token = authHeader.substring(7).trim();
@@ -24,8 +30,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid Signature" }, { status: 401 });
     }
 
-    const [header, jwtPayload, signature] = parts;
-    const dataToSign = `${header}.${jwtPayload}`;
+    const [headerB64, jwtPayloadB64, signatureB64] = parts;
+    const dataToSign = `${headerB64}.${jwtPayloadB64}`;
     const notificationKey = (process.env.TAMARA_NOTIFICATION_TOKEN || process.env.TAMARA_NOTIFICATION_KEY || "").trim();
 
     if (!notificationKey) {
@@ -33,12 +39,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
     }
 
+    // Decode JWT header to explicitly verify algorithm is HS256
+    let headerParsed: Record<string, any>;
+    try {
+      headerParsed = JSON.parse(base64urlDecode(headerB64));
+    } catch {
+      return NextResponse.json({ error: "Invalid JWT Header" }, { status: 401 });
+    }
+
+    if (headerParsed.alg !== "HS256") {
+      console.error(`[Tamara Webhook] Expected HS256 algorithm, got: ${headerParsed.alg}`);
+      return NextResponse.json({ error: "Invalid Algorithm" }, { status: 401 });
+    }
+
+    // HS256 = HMAC-SHA256 verification
     const calculatedSignature = crypto
       .createHmac("sha256", notificationKey)
       .update(dataToSign)
       .digest("base64url");
 
-    const sigBuffer = Buffer.from(signature);
+    const sigBuffer = Buffer.from(signatureB64);
     const calcBuffer = Buffer.from(calculatedSignature);
 
     let isValid = false;
