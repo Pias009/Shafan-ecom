@@ -13,7 +13,11 @@ export async function GET() {
           include: {
             category: true
           }
-        }
+        },
+        countryPrices: {
+          where: { country: 'AE', active: true },
+          take: 1,
+        },
       }
     });
 
@@ -35,7 +39,11 @@ export async function GET() {
         ? (product.mainImage.startsWith('http') ? product.mainImage : `${baseUrl}${product.mainImage}`)
         : '';
       const link = `${baseUrl}/products/${product.id}`;
-      const price = `${product.price || 0} ${product.currency || 'AED'}`;
+      // Use AE CountryPrice as primary price source (base price is always 0)
+      const aePrice = product.countryPrices?.[0];
+      const effectivePrice = aePrice?.price ?? product.price ?? 0;
+      const effectiveCurrency = aePrice?.currency || product.currency || 'AED';
+      const price = `${effectivePrice} ${effectiveCurrency}`;
       const availability = product.stockQuantity > 0 ? 'in stock' : 'out of stock';
       const brand = escapeXml(typeof product.brand === 'string' ? product.brand : product.brand?.name || 'Al Shanfa');
       const category = escapeXml(product.productCategories?.[0]?.category?.name || 'Skincare');

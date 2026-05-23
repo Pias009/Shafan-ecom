@@ -26,7 +26,6 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 500): P
 }
 
 export const revalidate = 3600; // ISR: Revalidate every 1 hour
-export const dynamic = 'force-static'; // Allow static optimization on Vercel
 
 export async function GET() {
   try {
@@ -56,6 +55,12 @@ export async function GET() {
             category: { select: { name: true } },
           },
         },
+        // Pull AE (AED) country price — this is where actual prices are stored
+        countryPrices: {
+          where: { country: 'AE', active: true },
+          select: { price: true, discountPrice: true, currency: true },
+          take: 1,
+        },
       },
       orderBy: { updatedAt: 'desc' },
     }));
@@ -65,12 +70,18 @@ export async function GET() {
 
     const xmlItems = products
       .map((product) => {
-        const price = Number(product.price || 0);
-        if (price <= 0) return null; // Reject products without valid price for feed quality
+        // Use CountryPrice (AE/AED) as primary price source; fall back to base price
+        const aePrice = product.countryPrices?.[0];
+        const price = Number(aePrice?.price ?? product.price ?? 0);
+        const discPrice = aePrice?.discountPrice
+          ? Number(aePrice.discountPrice)
+          : product.discountPrice
+          ? Number(product.discountPrice)
+          : null;
+        const currency = aePrice?.currency || product.currency || defaultCurrency;
 
-        const discPrice = product.discountPrice ? Number(product.discountPrice) : null;
-        const currency = product.currency || defaultCurrency;
-        
+        if (price <= 0) return null; // Skip truly unpriceable products
+
         const image = product.mainImage || (product.images && product.images[0]);
         if (!image) return null;
 

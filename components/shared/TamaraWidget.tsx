@@ -59,6 +59,10 @@ export default function TamaraWidget({ amount, currency = "AE" }: TamaraWidgetPr
     }
 
     widget.setAttribute("amount", amount.toFixed(2));
+    widget.setAttribute(
+      "config",
+      JSON.stringify({ theme: "light", badgePosition: "", showExtraContent: "", hidePayInX: false })
+    );
     if (currency) {
       widget.setAttribute("currency", currency.toUpperCase());
     }
