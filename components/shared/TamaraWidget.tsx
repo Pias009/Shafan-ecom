@@ -9,19 +9,7 @@ interface TamaraWidgetProps {
   currency?: string;
 }
 
-declare global {
-  interface Window {
-    tamaraWidgetConfig?: {
-      publicKey: string;
-      lang: string;
-    };
-    TamaraWidgetV2?: {
-      refresh: () => void;
-    };
-  }
-}
-
-export default function TamaraWidget({ amount, currency = "AE" }: TamaraWidgetProps) {
+export default function TamaraWidget({ amount }: TamaraWidgetProps) {
   const { currentLanguage } = useLanguageStore();
   const isArabic = currentLanguage.code === "ar";
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,8 +19,9 @@ export default function TamaraWidget({ amount, currency = "AE" }: TamaraWidgetPr
 
   if (typeof window !== "undefined") {
     window.tamaraWidgetConfig = {
-      publicKey,
       lang,
+      country: "AE",
+      publicKey,
     };
   }
 
@@ -45,37 +34,35 @@ export default function TamaraWidget({ amount, currency = "AE" }: TamaraWidgetPr
       widget = document.createElement("tamara-widget");
       widget.setAttribute("type", "tamara-summary");
       widget.setAttribute("inline-type", "2");
+      widget.setAttribute(
+        "config",
+        '{"theme":"light","badgePosition":"","showExtraContent":"","hidePayInX":false}'
+      );
       container.appendChild(widget);
     }
 
     widget.setAttribute("amount", amount.toFixed(2));
-    widget.setAttribute(
-      "config",
-      JSON.stringify({ theme: "light", badgePosition: "", showExtraContent: "", hidePayInX: false })
-    );
-    if (currency) {
-      widget.setAttribute("currency", currency.toUpperCase());
-    }
 
     if (window.TamaraWidgetV2 && typeof window.TamaraWidgetV2.refresh === "function") {
+      if (window.tamaraWidgetConfig) {
+        window.tamaraWidgetConfig.lang = lang;
+      }
       window.TamaraWidgetV2.refresh();
     }
-  }, [amount, currency]);
+  }, [amount, lang]);
 
   if (isNaN(amount) || amount <= 0) return null;
-
-  const scriptSrc = "https://cdn.tamara.co/widget-v2/tamara-widget.js";
 
   return (
     <div className="my-4 p-3 border border-gray-200 rounded-lg bg-white">
       <script
         dangerouslySetInnerHTML={{
-          __html: `window.tamaraWidgetConfig = { publicKey: "${publicKey}", lang: "${lang}" };`,
+          __html: `window.tamaraWidgetConfig = { lang: "${lang}", country: "AE", publicKey: "${publicKey}" };`,
         }}
       />
       <Script
         id="tamara-widget-script-v2-shared"
-        src={scriptSrc}
+        src="https://cdn-sandbox.tamara.co/widget-v2/tamara-widget.js"
         strategy="afterInteractive"
       />
       <div ref={containerRef} className="min-h-[80px]" />

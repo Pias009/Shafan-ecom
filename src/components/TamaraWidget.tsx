@@ -11,20 +11,7 @@ interface TamaraWidgetProps {
   widgetType?: "product" | "cart" | "summary";
 }
 
-declare global {
-  interface Window {
-    tamaraWidgetConfig?: {
-      publicKey: string;
-      lang: string;
-      language?: string;
-      country?: string;
-      currency?: string;
-    };
-    TamaraWidgetV2?: {
-      refresh: () => void;
-    };
-  }
-}
+
 
 export default function TamaraWidget({ price, currency, country }: TamaraWidgetProps) {
   const currentPrice = Number(price);
