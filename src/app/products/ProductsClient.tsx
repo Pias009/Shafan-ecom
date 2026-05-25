@@ -373,6 +373,7 @@ return sorted;
       category: product.categoryName,
       brand: product.brandName,
       quantity: 1,
+      sku: product.sku || undefined,
     });
     
     toast.success(`${product.name} added`);

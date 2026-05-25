@@ -18,6 +18,7 @@ function isValidImageUrl(url: any): boolean {
 interface QuickViewProduct {
   id: string;
   name: string;
+  slug?: string;
   brand?: string | { name: string };
   category?: string | { name: string };
   categories?: string[];
@@ -383,7 +384,7 @@ export function ProductQuickViewModal({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onMoreDetails(product.id)}
+                  onClick={() => onMoreDetails(product.slug || product.id)}
                   className="w-full flex items-center justify-center gap-3 px-8 py-3 rounded-2xl md:rounded-3xl bg-black text-white text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:bg-gray-800 hover:shadow-2xl active:scale-95 group"
                 >
                   <span>More Details</span>

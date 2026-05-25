@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 interface Product {
   id: string;
   name: string;
+  slug?: string;
   imageUrl: string;
   category: string;
   tags: string[];
@@ -87,7 +88,7 @@ function SearchModal({ onClose, products }: { onClose: () => void; products: Pro
             {results.map(p => (
               <a
                 key={p.id}
-                href={`/products/${p.id}`}
+                href={`/products/${p.slug || p.id}`}
                 className="group flex items-center gap-3 p-3 rounded-2xl hover:bg-white/10 transition-all border border-transparent hover:border-white/5"
               >
                 <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg border border-white/10">

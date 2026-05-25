@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { getCurrencyForCountry } from "./countries";
-import { COUNTRY_TO_CURRENCY } from "./country-detection";
+import { getCurrencyForCountry, COUNTRY_TO_CURRENCY } from "./countries";
 
 const CURRENCY_TO_COUNTRY: Record<string, string> = {
   AED: "AE",

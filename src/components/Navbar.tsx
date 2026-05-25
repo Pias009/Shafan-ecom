@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search, CheckCircle, ArrowRight } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthModal } from "./AuthModal";
@@ -61,12 +61,16 @@ export function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const items = useCartStore((state) => state.items);
   const { currentLanguage } = useLanguageStore();
   const { selectedCountry, detectedCountry, setDetectedCountry } = useCountryStore();
 
-  const t = translations[(mounted ? currentLanguage.code : "en") as keyof typeof translations];
+  const t = translations[(isClient ? currentLanguage.code : "en") as keyof typeof translations];
 
   // Country detection is now handled by GlobalInitializer
 
@@ -105,7 +109,6 @@ export function Navbar() {
   const lastScrollYRef = useRef(0);
 
   useEffect(() => {
-    setMounted(true);
     const onScroll = () => {
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 20);
@@ -289,7 +292,7 @@ export function Navbar() {
             </button>
 
             {/* Currency & Language - side by side */}
-            {mounted && (
+            {isClient && (
               <div className="flex items-center gap-2">
                 <CurrencySelector direction="down" />
                 <LanguageSelector direction="down" />
@@ -408,7 +411,7 @@ export function Navbar() {
       </header>
 
       {/* Mobile menu - Rendered via Portal for absolute overlay */}
-      {mounted && typeof document !== "undefined" && createPortal(
+      {isClient && createPortal(
         <AnimatePresence>
           {mobileOpen && (
             <motion.div

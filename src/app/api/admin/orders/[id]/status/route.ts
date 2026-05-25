@@ -32,7 +32,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const updatedOrder = await prisma.order.update({
       where: { id },
       data: { status },
-      include: { items: true, user: true }
+      include: {
+        items: {
+          include: {
+            product: { select: { slug: true } }
+          }
+        },
+        user: true
+      }
     });
 
     if (sendEmail !== false && updatedOrder.email) {
@@ -41,12 +48,19 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         ? `${shippingAddr.first_name} ${shippingAddr.last_name || ''}`
         : 'Customer';
 
+      const emailItems = updatedOrder.items.map((it: any) => ({
+        nameSnapshot: it.nameSnapshot,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        productId: it.productId,
+        productSlug: it.product?.slug || undefined,
+      }));
       await sendOrderStatusEmail(
         id,
         updatedOrder.email,
         customerName,
         status,
-        updatedOrder.items as any,
+        emailItems,
         updatedOrder.total || 0,
         updatedOrder.currency,
         shippingAddr

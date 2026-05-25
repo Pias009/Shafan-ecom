@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useEffect, Suspense, useSyncExternalStore } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import LoadingScreen from "./LoadingScreen";
 import { FloatingCartButton } from "./FloatingCartButton";
 
 interface ClientLayoutProps {
@@ -21,26 +20,19 @@ function NavigationScroll() {
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   return (
     <>
-      {/* Loading screen removed */}
       <Suspense fallback={null}>
         <NavigationScroll />
       </Suspense>
       {children}
-      {mounted && (
-        <>
-          <FloatingCartButton />
-        </>
-      )}
+      {isClient && <FloatingCartButton />}
     </>
   );
 }

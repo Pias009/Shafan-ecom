@@ -20,6 +20,7 @@ const CACHE_TTL = {
 const PRODUCT_LIST_SELECT = {
   id: true,
   name: true,
+  slug: true,
   description: true,
   shortDescription: true,
   benefits: true,

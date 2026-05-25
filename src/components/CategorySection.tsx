@@ -1,7 +1,13 @@
 "use client";
 
-import { demoCategories } from "@/lib/demo-data";
 import { useLanguageStore } from "@/lib/language-store";
+
+const demoCategories = [
+  { id: "c1", label: "Skin Care", description: "Clean, icy hydration." },
+  { id: "c2", label: "Hair Care", description: "Smooth, glass shine." },
+  { id: "c3", label: "Body Care", description: "Nourish & refresh." },
+  { id: "c4", label: "Fragrances", description: "Cool, modern notes." },
+] as const;
 import { translations } from "@/lib/translations";
 import Link from "next/link";
 import Image from "next/image";

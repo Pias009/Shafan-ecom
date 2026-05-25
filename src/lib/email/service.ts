@@ -374,7 +374,7 @@ export const sendOrderConfirmationEmail = async (
   customerName: string,
   customerEmail: string,
   orderDate: string,
-  items: Array<{ name: string; quantity: number; price: number; imageUrl?: string }>,
+  items: Array<{ name: string; quantity: number; price: number; imageUrl?: string; productId?: string; productSlug?: string }>,
   totalAmount: number,
   shippingAddress: string,
   trackingUrl?: string,
@@ -465,7 +465,7 @@ export const sendOrderStatusEmail = async (
   customerEmail: string,
   customerName: string,
   status: string,
-  items: Array<{ nameSnapshot: string; quantity: number; unitPrice: number }>,
+  items: Array<{ nameSnapshot: string; quantity: number; unitPrice: number; productId?: string; productSlug?: string }>,
   total: number,
   currency: string,
   shippingAddress?: any

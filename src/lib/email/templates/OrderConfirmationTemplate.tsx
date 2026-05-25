@@ -100,7 +100,9 @@ export const OrderConfirmationTemplate = ({
             style: 'currency',
             currency: 'USD',
           }).format(itemTotal);
-          const productUrl = `${DOMAIN}/product/${item.id}`;
+          const productUrl = item.productSlug || item.productId
+            ? `${DOMAIN}/products/${item.productSlug || item.productId}`
+            : undefined;
           
           return (
             <Row key={index} style={itemRow}>
@@ -117,7 +119,7 @@ export const OrderConfirmationTemplate = ({
               </Column>
               <Column style={itemDetailsColumn}>
                 <Text style={itemName}>
-                  <a href={productUrl} style={productLink}>{item.name}</a>
+                  {productUrl ? <a href={productUrl} style={productLink}>{item.name}</a> : item.name}
                 </Text>
                 {item.brand && <Text style={itemBrand}>{item.brand}</Text>}
                 <Text style={itemDetail}>Qty: {item.quantity}</Text>

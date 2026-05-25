@@ -83,6 +83,7 @@ export function trackViewItem(product: {
   category?: string;
   brand?: string;
   variant?: string;
+  sku?: string;
 }): void {
   pushToDataLayer({
     event: 'view_item',
@@ -91,7 +92,7 @@ export function trackViewItem(product: {
       value: product.price,
       items: [
         {
-          item_id: product.id,
+          item_id: product.sku || product.id,
           item_name: product.name,
           price: product.price,
           quantity: 1,
@@ -125,6 +126,7 @@ export function trackAddToCart(product: {
   brand?: string;
   variant?: string;
   quantity?: number;
+  sku?: string;
 }): void {
   pushToDataLayer({
     event: 'add_to_cart',
@@ -133,7 +135,7 @@ export function trackAddToCart(product: {
       value: product.price * (product.quantity || 1),
       items: [
         {
-          item_id: product.id,
+          item_id: product.sku || product.id,
           item_name: product.name,
           price: product.price,
           quantity: product.quantity || 1,
@@ -158,32 +160,6 @@ export function trackAddToCart(product: {
   }
 }
 
-export function trackRemoveFromCart(product: {
-  id: string;
-  name: string;
-  price: number;
-  currency?: string;
-  category?: string;
-  quantity?: number;
-}): void {
-  pushToDataLayer({
-    event: 'remove_from_cart',
-    ecommerce: {
-      currency: product.currency || DEFAULT_CURRENCY,
-      value: product.price * (product.quantity || 1),
-      items: [
-        {
-          item_id: product.id,
-          item_name: product.name,
-          price: product.price,
-          quantity: product.quantity || 1,
-          item_category: product.category,
-        },
-      ],
-    },
-  });
-}
-
 export function trackBeginCheckout(cart: {
   items: {
     id: string;
@@ -193,6 +169,7 @@ export function trackBeginCheckout(cart: {
     category?: string;
     brand?: string;
     variant?: string;
+    sku?: string;
   }[];
   currency?: string;
   value: number;
@@ -203,7 +180,7 @@ export function trackBeginCheckout(cart: {
       currency: cart.currency || DEFAULT_CURRENCY,
       value: cart.value,
       items: cart.items.map((item) => ({
-        item_id: item.id,
+        item_id: item.sku || item.id,
         item_name: item.name,
         price: item.price,
         quantity: item.quantity,
@@ -234,6 +211,7 @@ export function trackAddPaymentInfo(order: {
     name: string;
     price: number;
     quantity: number;
+    sku?: string;
   }[];
 }): void {
   pushToDataLayer({
@@ -243,7 +221,7 @@ export function trackAddPaymentInfo(order: {
       value: order.value,
       payment_type: order.paymentMethod,
       items: order.items.map((item) => ({
-        item_id: item.id,
+        item_id: item.sku || item.id,
         item_name: item.name,
         price: item.price,
         quantity: item.quantity,
@@ -276,6 +254,7 @@ export function trackPurchase(order: {
     category?: string;
     brand?: string;
     variant?: string;
+    sku?: string;
   }[];
 }, eventId?: string): void {
   pushToDataLayer({
@@ -288,7 +267,7 @@ export function trackPurchase(order: {
       currency: order.currency || DEFAULT_CURRENCY,
       coupon: order.coupon,
       items: order.items.map((item) => ({
-        item_id: item.id,
+        item_id: item.sku || item.id,
         item_name: item.name,
         price: item.price,
         quantity: item.quantity,
@@ -309,94 +288,4 @@ export function trackPurchase(order: {
   }, { eventId: eventId || `purchase_${order.id}` });
 }
 
-export function trackViewItemList(items: {
-  id: string;
-  name: string;
-  price: number;
-  category?: string;
-  brand?: string;
-  index?: number;
-}[], currency: string = DEFAULT_CURRENCY): void {
-  const totalValue = items.reduce((sum, item) => sum + item.price, 0);
-  pushToDataLayer({
-    event: 'view_item_list',
-    ecommerce: {
-      currency: currency,
-      value: totalValue,
-      items: items.map((item, idx) => ({
-        item_id: item.id,
-        item_name: item.name,
-        price: item.price,
-        item_category: item.category,
-        item_brand: item.brand,
-        index: item.index ?? idx + 1,
-      })),
-    },
-  });
-}
 
-export function trackSearch(query: string, resultsCount?: number): void {
-  pushToDataLayer({
-    event: 'search',
-    search_term: query,
-    search_results_count: resultsCount,
-  });
-
-  // ✅ Meta Pixel Search
-  fbEvent('Search', {
-    search_string: query,
-  });
-}
-
-// ✅ Meta Pixel: AddToWishlist
-export function trackAddToWishlist(product: {
-  id: string;
-  name: string;
-  price: number;
-  currency?: string;
-  category?: string;
-}): void {
-  pushToDataLayer({
-    event: 'add_to_wishlist',
-    ecommerce: {
-      currency: product.currency || DEFAULT_CURRENCY,
-      value: product.price,
-      items: [{
-        item_id: product.id,
-        item_name: product.name,
-        price: product.price,
-        item_category: product.category,
-      }],
-    },
-  });
-
-  fbEvent('AddToWishlist', {
-    content_ids: [product.id],
-    content_name: product.name,
-    content_type: 'product',
-    value: product.price,
-    currency: (product.currency || DEFAULT_CURRENCY).toUpperCase(),
-  });
-}
-
-// ✅ Meta Pixel: CompleteRegistration
-export function trackCompleteRegistration(method: string = 'email'): void {
-  pushToDataLayer({
-    event: 'sign_up',
-    method,
-  });
-
-  fbEvent('CompleteRegistration', {
-    content_name: method,
-    status: true,
-  });
-}
-
-// ✅ Meta Pixel: Contact
-export function trackContact(): void {
-  pushToDataLayer({
-    event: 'contact',
-  });
-
-  fbEvent('Contact');
-}

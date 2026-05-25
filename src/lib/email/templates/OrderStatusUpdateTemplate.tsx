@@ -15,7 +15,8 @@ interface OrderStatusUpdateData {
   status: string;
   message: string;
   items: Array<{ 
-    id?: string;
+    productId?: string;
+    productSlug?: string;
     nameSnapshot: string; 
     quantity: number; 
     unitPrice: number;
@@ -127,7 +128,7 @@ export const OrderStatusUpdateTemplate = ({
           <Text style={sectionTitle}>Order Items</Text>
           
           {items.map((item, index) => {
-            const productUrl = item.id ? `${DOMAIN}/product/${item.id}` : undefined;
+            const productUrl = item.productSlug || item.productId ? `${DOMAIN}/products/${item.productSlug || item.productId}` : undefined;
             
             return (
               <Row key={index} style={itemRow}>

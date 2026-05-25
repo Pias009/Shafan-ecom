@@ -39,7 +39,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         ]
       },
       include: {
-        items: true
+        items: {
+          include: {
+            product: {
+              select: { slug: true }
+            }
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -57,7 +63,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       paymentMethod: o.paymentMethodTitle,
       items: o.items.map((it: any) => ({
         name: it.nameSnapshot || it.name || 'Unknown Product',
-        id: it.productId
+        id: it.product?.slug || it.productId,
       })),
     }));
   } catch (error) {

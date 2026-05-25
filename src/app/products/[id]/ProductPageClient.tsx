@@ -77,9 +77,10 @@ export default function ProductPageClient({ product, recommendations, reviews = 
         id: product.id,
         name: product.name,
         price: displayPrice,
-        currency: 'AED', // Primary currency as requested
+        currency: 'AED',
         category: typeof product.category === 'string' ? product.category : product.category?.name,
         brand: typeof product.brand === 'string' ? product.brand : product.brand?.name,
+        sku: product.sku || undefined,
       });
     }
   }, [product?.id, displayPrice]);
@@ -110,6 +111,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
       category: typeof p.category === 'string' ? p.category : p.category?.name,
       brand: typeof p.brand === 'string' ? p.brand : p.brand?.name,
       quantity: 1,
+      sku: p.sku || undefined,
     });
 
     toast.success(`${p.name || 'Product'} added to cart`);

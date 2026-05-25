@@ -20,7 +20,3 @@ export function fbEvent(
   
   win.fbq('track', eventName, params, options?.eventId ? { eventID: options.eventId } : undefined);
 }
-
-export function generateEventId(orderId: string): string {
-  return `purchase_${orderId}_${Date.now()}`;
-}

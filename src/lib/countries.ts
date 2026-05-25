@@ -63,6 +63,15 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
   }
 ] as const;
 
+export const COUNTRY_TO_CURRENCY: Record<string, string> = {
+  AE: "AED",
+  KW: "KWD",
+  BH: "BHD",
+  SA: "SAR",
+  OM: "OMR",
+  QA: "QAR",
+};
+
 // Type-safe country codes
 export type CountryCode = typeof SUPPORTED_COUNTRIES[number]['code'];
 

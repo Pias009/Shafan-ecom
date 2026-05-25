@@ -1,47 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { SUPPORTED_COUNTRIES } from "./countries";
 
-/**
- * Default country fallback (Kuwait)
- */
-export const DEFAULT_COUNTRY = "KW";
-
+const DEFAULT_COUNTRY = "KW";
 const GULF_COUNTRIES = ["AE", "SA", "KW", "QA", "BH", "OM"];
 
-export const COUNTRY_TO_CURRENCY: Record<string, string> = {
-  AE: "AED",
-  KW: "KWD",
-  BH: "BHD",
-  SA: "SAR",
-  OM: "OMR",
-  QA: "QAR",
-};
-
-export function getCurrencyForDetectedCountry(countryCode: string): string {
-  return COUNTRY_TO_CURRENCY[countryCode.toUpperCase()] || "KWD";
-}
-
-/**
- * Detects user's country based on available methods:
- * 1. From localStorage (user selection)
- * 2. From browser language/region (if in Gulf)
- * 3. From timezone (if in Gulf)
- * 4. Default fallback (KW)
- */
-export function detectUserCountry(): string {
+function detectUserCountry(): string {
   if (typeof window === "undefined") {
     return DEFAULT_COUNTRY;
   }
 
-  // 1. Check localStorage for user-selected country
   const storedCountry = localStorage.getItem("user-country");
-  if (storedCountry && SUPPORTED_COUNTRIES.some((c: any) => c.code === storedCountry)) {
+  if (storedCountry && SUPPORTED_COUNTRIES.some((c) => c.code === storedCountry)) {
     return storedCountry;
   }
 
-  // 2. Check browser language/region
   const browserLanguage = navigator.language || "en-US";
   const regionMatch = browserLanguage.match(/-([A-Z]{2})$/);
   if (regionMatch) {
@@ -51,7 +25,6 @@ export function detectUserCountry(): string {
     }
   }
 
-  // 3. Check timezone for region hint
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (timezone.includes("Dubai") || timezone.includes("Abu Dhabi")) return "AE";
@@ -60,41 +33,17 @@ export function detectUserCountry(): string {
     if (timezone.includes("Muscat")) return "OM";
     if (timezone.includes("Doha")) return "QA";
     if (timezone.includes("Bahrain")) return "BH";
-  } catch (error) {
+  } catch {
     // Timezone detection failed
   }
 
-  // 4. Default fallback
   return DEFAULT_COUNTRY;
 }
 
-/**
- * Sets the user's country preference in localStorage
- */
-export function setUserCountry(countryCode: string): void {
-  if (typeof window === "undefined") return;
-  
-  if (SUPPORTED_COUNTRIES.some((c: any) => c.code === countryCode)) {
-    localStorage.setItem("user-country", countryCode);
-  }
-}
-
-/**
- * Gets the user's country with fallback logic
- */
-export function getUserCountry(): string {
-  return detectUserCountry();
-}
-
-/**
- * React hook for country detection
- */
 export function useUserCountry(): string {
-  const [country, setCountry] = useState(DEFAULT_COUNTRY);
-
-  useEffect(() => {
-    setCountry(detectUserCountry());
-  }, []);
-
-  return country;
+  return useSyncExternalStore(
+    () => () => {},
+    detectUserCountry,
+    () => DEFAULT_COUNTRY,
+  );
 }

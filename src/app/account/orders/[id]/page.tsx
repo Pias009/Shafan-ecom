@@ -34,7 +34,13 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
     const data = await (prisma as any).order.findUnique({
       where: { id },
       include: {
-        items: true,
+        items: {
+          include: {
+            product: {
+              select: { slug: true }
+            }
+          }
+        },
         user: true,
       }
     });
@@ -141,7 +147,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
           {order.items.map((it: any) => (
             <div key={it.id} className="glass-panel-heavy rounded-2xl p-4 border border-black/5 flex justify-between items-center gap-4">
               <div className="min-w-0">
-                <Link href={`/products/${it.productId}`} className="font-bold text-xs truncate leading-tight hover:underline">
+                <Link href={`/products/${it.product?.slug || it.productId}`} className="font-bold text-xs truncate leading-tight hover:underline">
                   {it.name}
                 </Link>
                 <div className="flex items-center gap-2 mt-1">
@@ -173,7 +179,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
                 <tr key={it.id}>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2">
-                      <Link href={`/products/${it.productId}`} className="font-bold text-sm hover:underline">
+                      <Link href={`/products/${it.product?.slug || it.productId}`} className="font-bold text-sm hover:underline">
                         {it.name}
                       </Link>
                       {it.adminAddedAt && (

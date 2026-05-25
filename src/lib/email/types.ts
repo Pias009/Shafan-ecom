@@ -73,7 +73,8 @@ export interface OrderConfirmationData {
   customerEmail: string;
   orderDate: string;
   items: Array<{
-    id?: string;
+    productId?: string;
+    productSlug?: string;
     name: string;
     quantity: number;
     price: number;

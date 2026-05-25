@@ -1,13 +1,13 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
-import { Package, ShoppingCart, Truck, Star } from "lucide-react";
+import { ShoppingCart, Truck, Star } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
@@ -20,6 +20,7 @@ interface HomeProductCardProps {
   product: {
     id: string;
     name: string;
+    slug?: string;
     brand?: string | { name: string };
     price: number;
     discountPrice?: number;
@@ -42,25 +43,20 @@ interface HomeProductCardProps {
   compact?: boolean;
 }
 
-export function HomeProductCard({
+function HomeProductCardComponent({
   product,
   onQuickView,
   onAddToCart,
   onOrderNow,
   compact = false,
 }: HomeProductCardProps) {
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
   const hasHydrated = useCountryStoreReady();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted || !hasHydrated) {
+  if (!hasHydrated) {
     return (
       <div className={`bg-white shadow-lg rounded-2xl overflow-hidden ${compact ? 'w-[140px]' : 'w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]'} mx-auto`}>
         <div className="aspect-square bg-[#F9FAFB] p-4 animate-pulse" />
@@ -127,8 +123,8 @@ export function HomeProductCard({
 
   return (
     <div 
-      onMouseEnter={() => router.prefetch(`/products/${product.id}`)}
-      onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.id}`); }}
+      onMouseEnter={() => router.prefetch(`/products/${product.slug || product.id}`)}
+      onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.slug || product.id}`); }}
       className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden ${cardWidth} mx-auto flex flex-col cursor-pointer`}>
       {/* Image Section */}
       <div className="relative overflow-hidden aspect-square w-full bg-[#F9FAFB] flex-shrink-0 p-4">
@@ -198,7 +194,7 @@ export function HomeProductCard({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/products/${product.id}`);
+                router.push(`/products/${product.slug || product.id}`);
               }}
               className={`bg-white text-black ${compact ? 'px-2.5 py-1.5' : 'px-3 sm:px-4 py-2'} rounded-full font-black ${fontSize.btn} uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-100 active:scale-95 pointer-events-auto whitespace-nowrap`}
             >
@@ -254,3 +250,12 @@ export function HomeProductCard({
     </div>
   );
 }
+
+const HomeProductCard = memo(HomeProductCardComponent, (prevProps, nextProps) => {
+  return prevProps.product.id === nextProps.product.id &&
+    prevProps.compact === nextProps.compact;
+});
+
+HomeProductCard.displayName = "HomeProductCard";
+
+export { HomeProductCard };

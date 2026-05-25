@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ShoppingBag, ShoppingCart, Truck, Flame, Star } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
@@ -21,6 +21,7 @@ interface ProductCardProps {
   product: {
     id: string;
     name: string;
+    slug?: string;
     brand?: string | { name: string };
     price: number;
     discountPrice?: number;
@@ -53,19 +54,13 @@ const ProductCardComponent = function ProductCard({
   compact = false,
   priority = false,
 }: ProductCardProps) {
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
   const hasHydrated = useCountryStoreReady();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Wait for hydration - return placeholder to match server render
-  if (!mounted || !hasHydrated) {
+  if (!hasHydrated) {
     return (
       <div className="bg-white shadow-lg rounded-2xl overflow-hidden w-full mx-auto">
         <div className="aspect-square bg-[#F9FAFB] p-4 animate-pulse" />
@@ -121,8 +116,8 @@ const ProductCardComponent = function ProductCard({
 
   return (
     <div 
-      onMouseEnter={() => router.prefetch(`/products/${product.id}`)}
-      onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.id}`); }}
+      onMouseEnter={() => router.prefetch(`/products/${product.slug || product.id}`)}
+      onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.slug || product.id}`); }}
       className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden w-full h-full flex flex-col cursor-pointer`}
       style={{ willChange: "transform" }}
     >

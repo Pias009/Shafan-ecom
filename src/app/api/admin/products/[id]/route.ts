@@ -104,7 +104,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       (parsed.data as any).features = ((parsed.data as any).features as string).split(',').map((s: string) => s.trim()).filter((s: string) => s);
     }
     const updates: any = {};
-    if (typeof parsed.data.name !== 'undefined') updates.name = parsed.data.name;
+    if (typeof parsed.data.name !== 'undefined') {
+      updates.name = parsed.data.name;
+      updates.slug = parsed.data.name
+        .toLowerCase().trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .substring(0, 100);
+    }
     if (typeof parsed.data.sku !== 'undefined') updates.sku = parsed.data.sku || null;
     if (typeof parsed.data.description !== 'undefined') updates.description = parsed.data.description;
     if (typeof parsed.data.shortDescription !== 'undefined') updates.shortDescription = parsed.data.shortDescription;

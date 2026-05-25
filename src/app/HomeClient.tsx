@@ -415,6 +415,7 @@ useEffect(() => {
       category: product.category?.name || product.category || "General",
       brand: product.brand?.name || product.brand || "Generic",
       quantity: 1,
+      sku: product.sku || undefined,
     });
     
     toast.success(`Added ${product.name} to cart`);
