@@ -3,8 +3,29 @@ import { getStoreCode } from "@/lib/server/store-utils";
 import ProductPageClient from "./ProductPageClient";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 
 export const revalidate = 60;
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const storeCode = await getStoreCode();
+  const product = await getOptimizedProduct(id, storeCode) as any;
+
+  if (!product?.name) {
+    return { title: "SHANFA — Your Caring Skin Partner" };
+  }
+
+  return {
+    title: `${product.name} | SHANFA`,
+    description: product.shortDescription || product.description || `${product.name} - Premium Skin Care`,
+    openGraph: {
+      title: product.name,
+      description: product.shortDescription || product.description || undefined,
+      images: product.mainImage ? [{ url: product.mainImage }] : undefined,
+    },
+  };
+}
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

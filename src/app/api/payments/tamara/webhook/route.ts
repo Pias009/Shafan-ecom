@@ -4,85 +4,49 @@ import { TamaraService } from "@/services/payments/tamara";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
-import crypto from "crypto";
+import jwt from "jsonwebtoken";
 
-function base64urlDecode(str: string): string {
-  const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
-  return Buffer.from(padded, "base64").toString("utf-8");
-}
+const NOTIFICATION_KEY_FALLBACK = "b6a80876-6b88-4692-8949-7f34578e3c89";
 
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.text();
     const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
-    const queryToken = request.nextUrl.searchParams.get("tamaraToken");
 
     let token = "";
     if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
       token = authHeader.substring(7).trim();
-    } else if (queryToken) {
-      token = queryToken.trim();
     } else if (authHeader) {
       token = authHeader.trim();
     }
 
-    const parts = token.split(".");
-    if (parts.length !== 3) {
-      console.error("[Tamara Webhook] JWT must have 3 parts, got:", parts.length);
-      return NextResponse.json({ error: "Invalid Signature" }, { status: 401 });
+    if (!token) {
+      console.error("[Tamara Webhook] Missing Authorization header");
+      return NextResponse.json({ error: "Missing Authorization" }, { status: 401 });
     }
 
-    const [headerB64, jwtPayloadB64, signatureB64] = parts;
-    const dataToSign = `${headerB64}.${jwtPayloadB64}`;
-    const notificationKey = (process.env.TAMARA_NOTIFICATION_TOKEN || process.env.TAMARA_NOTIFICATION_KEY || "").trim();
+    const notificationKey = (
+      process.env.TAMARA_NOTIFICATION_TOKEN ||
+      process.env.TAMARA_NOTIFICATION_KEY ||
+      NOTIFICATION_KEY_FALLBACK
+    ).trim();
 
-    if (!notificationKey) {
-      console.error("[Tamara Webhook] TAMARA_NOTIFICATION_TOKEN environment variable is not defined");
-      return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
-    }
-
-    // Decode JWT header to explicitly verify algorithm is HS256
-    let headerParsed: Record<string, any>;
+    let decoded: any;
     try {
-      headerParsed = JSON.parse(base64urlDecode(headerB64));
-    } catch {
-      return NextResponse.json({ error: "Invalid JWT Header" }, { status: 401 });
-    }
-
-    if (headerParsed.alg !== "HS256") {
-      console.error(`[Tamara Webhook] Expected HS256 algorithm, got: ${headerParsed.alg}`);
-      return NextResponse.json({ error: "Invalid Algorithm" }, { status: 401 });
-    }
-
-    // HS256 = HMAC-SHA256 verification
-    const calculatedSignature = crypto
-      .createHmac("sha256", notificationKey)
-      .update(dataToSign)
-      .digest("base64url");
-
-    const sigBuffer = Buffer.from(signatureB64);
-    const calcBuffer = Buffer.from(calculatedSignature);
-
-    let isValid = false;
-    if (sigBuffer.length === calcBuffer.length) {
-      isValid = crypto.timingSafeEqual(sigBuffer, calcBuffer);
-    }
-
-    if (!isValid) {
-      console.error("[Tamara Webhook] Invalid HS256 signature detected. Payload rejected.");
+      decoded = jwt.verify(token, notificationKey, { algorithms: ["HS256"] });
+    } catch (jwtErr: any) {
+      console.error("[Tamara Webhook] JWT verification failed:", jwtErr.message);
       return NextResponse.json({ error: "Invalid Signature" }, { status: 401 });
     }
 
-    // Parse the raw JSON payload to extract event data
-    const webhookPayload = JSON.parse(payload) as Record<string, any>;
-    console.log("[Tamara Webhook] Signature verified successfully. Payload received:", webhookPayload);
+    const webhookPayload = typeof decoded === "string" ? JSON.parse(decoded) : decoded;
+    console.log("[Tamara Webhook] Signature verified. Payload:", webhookPayload);
 
     const eventType = webhookPayload?.event_type ?? webhookPayload?.eventType;
     const orderId = webhookPayload?.order_id ?? webhookPayload?.orderId;
     const orderReferenceId = webhookPayload?.order_reference_id ?? webhookPayload?.orderReferenceId;
 
-    const baseOrderId = orderReferenceId?.includes('-') ? orderReferenceId.split('-')[0] : orderReferenceId;
+    const baseOrderId = orderReferenceId?.includes("-") ? orderReferenceId.split("-")[0] : orderReferenceId;
     const isValidObjectId = baseOrderId && /^[0-9a-fA-F]{24}$/.test(baseOrderId);
 
     const order = await prisma.order.findFirst({
@@ -94,9 +58,9 @@ export async function POST(request: NextRequest) {
       },
       include: { items: true },
     });
-    
+
     if (!order) {
-      console.warn("[Tamara Webhook] Order not found in DB for checkout ID:", orderId, "or ref:", baseOrderId);
+      console.warn("[Tamara Webhook] Order not found for checkout ID:", orderId, "ref:", baseOrderId);
       return NextResponse.json({ received: true });
     }
 
@@ -107,21 +71,21 @@ export async function POST(request: NextRequest) {
       case "order_approved":
       case "payment.approved":
         try {
-          // IDEMPOTENCY CHECK: Do not capture if already paid
           if (order.paymentStatus === PaymentStatus.PAID || order.status === OrderStatus.ORDER_CONFIRMED) {
-            console.log(`[Tamara Webhook] Order ${order.id} is already paid. Skipping capture.`);
+            console.log(`[Tamara Webhook] Order ${order.id} already paid. Skipping.`);
             paymentConfirmed = false;
             break;
           }
 
-          console.log(`[Tamara Webhook] Authorising order ${orderId}...`);
-          await tamaraService.authoriseOrder(orderId);
-          
-          console.log(`[Tamara Webhook] Capturing payment for order ${orderId}...`);
+          console.log(`[Tamara Webhook] Step 1: Authorising order ${orderId}...`);
+          const authResult = await tamaraService.authoriseOrder(orderId);
+          console.log(`[Tamara Webhook] Authorise success:`, authResult);
+
+          console.log(`[Tamara Webhook] Step 2: Capturing payment for order ${orderId}...`);
           const decimals = ["BHD", "KWD", "OMR"].includes(order.currency.toUpperCase()) ? 3 : 2;
           const formattedTotal = Number(order.total || 0).toFixed(decimals);
-          
-          const captureItems = order.items.map(item => {
+
+          const captureItems = order.items.map((item: any) => {
             const itemTotal = (Number(item.unitPrice || 0) * item.quantity).toFixed(decimals);
             return {
               name: item.nameSnapshot || "Product",
@@ -144,7 +108,7 @@ export async function POST(request: NextRequest) {
             orderId: orderId,
             totalAmount: {
               amount: formattedTotal,
-              currency: order.currency.toUpperCase() as any
+              currency: order.currency.toUpperCase() as any,
             },
             shippingInfo: {
               shipping_company: "Standard Delivery",
@@ -152,29 +116,25 @@ export async function POST(request: NextRequest) {
             },
             items: captureItems,
           });
-          console.log(`[Tamara Webhook] Successfully captured payment for order ${orderId}`);
 
-          // Update DB ONLY AFTER successful capture
+          console.log(`[Tamara Webhook] Step 3: Updating DB for order ${order.id}...`);
           await prisma.order.update({
             where: { id: order.id },
             data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: PaymentStatus.PAID },
           });
           paymentConfirmed = true;
-        } catch (authCapErr: any) {
-          console.error(`[Tamara Webhook] Failed to authorise/capture order ${orderId}:`, authCapErr);
+        } catch (pipelineErr: any) {
+          console.error(`[Tamara Webhook] Authorise/capture pipeline failed for ${orderId}:`, pipelineErr);
           paymentConfirmed = false;
         }
-        
         break;
 
       case "payment.captured":
-        // IDEMPOTENCY CHECK: Do not process if already paid
         if (order.paymentStatus === PaymentStatus.PAID || order.status === OrderStatus.ORDER_CONFIRMED) {
-          console.log(`[Tamara Webhook] Order ${order.id} already marked as paid. Skipping captured logic.`);
+          console.log(`[Tamara Webhook] Order ${order.id} already paid. Skipping.`);
           paymentConfirmed = false;
           break;
         }
-
         await prisma.order.update({
           where: { id: order.id },
           data: { status: OrderStatus.ORDER_CONFIRMED, paymentStatus: PaymentStatus.PAID },
@@ -188,7 +148,6 @@ export async function POST(request: NextRequest) {
           where: { id: order.id },
           data: { paymentStatus: PaymentStatus.CANCELLED },
         });
-        console.log("[Tamara Webhook] Tamara payment declined for order:", order.id);
         break;
 
       case "order_cancelled":
@@ -206,10 +165,9 @@ export async function POST(request: NextRequest) {
         break;
 
       default:
-        console.log("[Tamara Webhook] Unhandled Tamara webhook event:", eventType);
+        console.log("[Tamara Webhook] Unhandled event:", eventType);
     }
 
-    // Send admin notification ONLY after payment is confirmed
     if (paymentConfirmed) {
       const updatedOrder = await prisma.order.findUnique({
         where: { id: order.id },
@@ -222,7 +180,6 @@ export async function POST(request: NextRequest) {
           ? `${shippingAddress.first_name} ${shippingAddress.last_name || ""}`
           : "Customer";
 
-        // Pusher real-time notification
         await notifyNewOrder({
           id: updatedOrder.id,
           total: updatedOrder.total ?? 0,
@@ -231,7 +188,6 @@ export async function POST(request: NextRequest) {
           email: updatedOrder.email || undefined,
         }).catch((err) => console.error("Pusher notification failed:", err));
 
-        // Admin email
         if (process.env.ADMIN_EMAIL) {
           const adminItemsList = updatedOrder.items
             .map((item: any) => `${item.nameSnapshot || "Product"} x${item.quantity}`)
@@ -255,13 +211,10 @@ export async function POST(request: NextRequest) {
             `,
           }).catch(console.error);
         }
-
-        console.log(`[Tamara Payment Confirmed] Order #${updatedOrder.id} — Admin notified`);
       }
     }
 
     return NextResponse.json({ received: true });
-
   } catch (error: any) {
     console.error("[Tamara Webhook] error:", error);
     return NextResponse.json({ error: error.message }, { status: 400 });

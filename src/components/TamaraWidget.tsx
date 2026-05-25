@@ -15,7 +15,10 @@ declare global {
   interface Window {
     tamaraWidgetConfig?: {
       publicKey: string;
-      locale: string;
+      lang: string;
+      language?: string;
+      country?: string;
+      currency?: string;
     };
     TamaraWidgetV2?: {
       refresh: () => void;
@@ -23,20 +26,21 @@ declare global {
   }
 }
 
-export default function TamaraWidget({ price, currency }: TamaraWidgetProps) {
+export default function TamaraWidget({ price, currency, country }: TamaraWidgetProps) {
   const currentPrice = Number(price);
   const { currentLanguage } = useLanguageStore();
   const isArabic = currentLanguage.code === "ar";
   const containerRef = useRef<HTMLDivElement>(null);
 
   const publicKey = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "561ee41b-e351-4543-ab2d-934866b6b8af";
-  const locale = isArabic ? "ar" : "en";
+  const lang = isArabic ? "ar" : "en";
 
   // Set the configuration synchronously so the script always has it when it evaluates
   if (typeof window !== "undefined") {
     window.tamaraWidgetConfig = {
-      publicKey,
-      locale,
+      lang: lang,
+      country: "AE",
+      publicKey: "561ee41b-e351-4543-ab2d-934866b6b8af",
     };
   }
 
@@ -49,39 +53,33 @@ export default function TamaraWidget({ price, currency }: TamaraWidgetProps) {
       widget = document.createElement("tamara-widget");
       widget.setAttribute("type", "tamara-summary");
       widget.setAttribute("inline-type", "2");
-      widget.setAttribute("theme", "light");
+      widget.setAttribute(
+        "config",
+        '{"theme":"light","badgePosition":"","showExtraContent":"","hidePayInX":false}'
+      );
       container.appendChild(widget);
     }
 
     widget.setAttribute("amount", currentPrice.toFixed(2));
-    if (currency) {
-      widget.setAttribute("currency", currency.toUpperCase());
-    }
 
-    // Force a refresh of the Tamara widget whenever the amount changes
+    // Force a refresh of the Tamara widget whenever the amount or language changes
     if (window.TamaraWidgetV2 && typeof window.TamaraWidgetV2.refresh === "function") {
+      if (window.tamaraWidgetConfig) {
+        window.tamaraWidgetConfig.lang = lang;
+      }
       window.TamaraWidgetV2.refresh();
     }
-  }, [currentPrice, currency]);
+  }, [currentPrice, lang]);
 
   if (isNaN(currentPrice) || currentPrice <= 0) return null;
 
-  const isSandbox =
-    !process.env.NEXT_PUBLIC_TAMARA_API_URL ||
-    process.env.NEXT_PUBLIC_TAMARA_API_URL.includes("sandbox") ||
-    !process.env.NEXT_PUBLIC_VERCEL_ENV ||
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview" ||
-    process.env.NEXT_PUBLIC_VERCEL_ENV === "development";
-
-  const scriptSrc = isSandbox
-    ? "https://cdn-sandbox.tamara.co/widget-v2/tamara-widget.js"
-    : "https://cdn.tamara.co/widget-v2/tamara-widget.js";
+  const scriptSrc = "https://cdn-sandbox.tamara.co/widget-v2/tamara-widget.js";
 
   return (
     <>
       <script
         dangerouslySetInnerHTML={{
-          __html: `window.tamaraWidgetConfig = { publicKey: "${publicKey}", locale: "${locale}" };`,
+          __html: `window.tamaraWidgetConfig = { lang: "${lang}", country: "AE", publicKey: "561ee41b-e351-4543-ab2d-934866b6b8af" };`,
         }}
       />
       <Script
