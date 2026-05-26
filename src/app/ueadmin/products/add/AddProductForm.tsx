@@ -92,6 +92,7 @@ export function AddProductForm({
 
   const [formData, setFormData] = useState({
     name: '',
+    slug: '',
     sku: '',
     brandName: brands[0]?.name || '',
     categoryIds: [] as string[],
@@ -292,6 +293,7 @@ export function AddProductForm({
 
       const payload = {
         name: formData.name,
+        slug: formData.slug || undefined,
         sku: formData.sku || undefined,
         description: formData.description || undefined,
         benefits: formData.benefits,
@@ -380,9 +382,26 @@ export function AddProductForm({
                   required
                   name="name"
                   value={formData.name}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData(prev => ({
+                      ...prev,
+                      name: val,
+                      slug: prev.slug || val.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').substring(0, 100)
+                    }));
+                  }}
                   placeholder="e.g. Lavender Dew Serum"
                   className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">URL Slug</label>
+                <input
+                  name="slug"
+                  value={formData.slug}
+                  onChange={handleChange}
+                  placeholder="auto-generated from name"
+                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all font-mono"
                 />
               </div>
             </div>

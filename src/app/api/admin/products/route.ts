@@ -30,6 +30,7 @@ const CountryPriceSchema = z.object({
 
 const ProductCreateSchema = z.object({
   name: z.string().min(1, { message: "Product name is required" }),
+  slug: z.string().optional(),
   sku: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   shortDescription: z.string().nullable().optional(),
@@ -384,7 +385,7 @@ export async function POST(req: Request) {
 
     const dbProductData = {
       name: productData.name,
-      slug: generateSlug(productData.name),
+      slug: productData.slug || generateSlug(productData.name),
       sku: productData.sku || null,
       description: productData.description || '',
       shortDescription: productData.shortDescription || null,

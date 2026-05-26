@@ -7,6 +7,7 @@ import { clearProductCache } from '@/lib/optimized-products';
 
 const UpdateSchema = z.object({
   name: z.string().optional(),
+  slug: z.string().optional(),
   sku: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   shortDescription: z.string().nullable().optional(),
@@ -104,14 +105,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       (parsed.data as any).features = ((parsed.data as any).features as string).split(',').map((s: string) => s.trim()).filter((s: string) => s);
     }
     const updates: any = {};
-    if (typeof parsed.data.name !== 'undefined') {
+    if (typeof parsed.data.slug !== 'undefined') {
+      updates.slug = parsed.data.slug;
+    } else if (typeof parsed.data.name !== 'undefined') {
       updates.name = parsed.data.name;
-      updates.slug = parsed.data.name
-        .toLowerCase().trim()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .substring(0, 100);
+      // Only regenerate slug if product doesn't have one yet (keep existing slug stable)
+      const existing = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
+      if (!existing?.slug) {
+        updates.slug = parsed.data.name
+          .toLowerCase().trim()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .substring(0, 100);
+      }
     }
     if (typeof parsed.data.sku !== 'undefined') updates.sku = parsed.data.sku || null;
     if (typeof parsed.data.description !== 'undefined') updates.description = parsed.data.description;

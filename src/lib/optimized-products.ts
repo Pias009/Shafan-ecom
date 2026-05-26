@@ -308,20 +308,18 @@ export async function getOptimizedProduct(idOrSlug: string, storeCode?: string) 
   try {
     let product: any = null;
     
+    const productLookup = {
+      OR: [
+        { id: idOrSlug },
+        { slug: idOrSlug }
+      ]
+    };
+
     if (storeCode) {
       // Get product with store inventory first
       const inventory = await (prisma as any).storeInventory.findFirst({
         where: {
-          product: {
-            ...(idOrSlug.match(/^[0-9a-fA-F]{24}$/) ? {
-              OR: [
-                { id: idOrSlug },
-                { slug: idOrSlug }
-              ]
-            } : {
-              slug: idOrSlug
-            })
-          },
+          product: productLookup,
           store: { code: storeCode },
         },
         include: {
@@ -348,28 +346,14 @@ export async function getOptimizedProduct(idOrSlug: string, storeCode?: string) 
       } else {
         // Fallback: Try to get product directly if no store inventory
         product = await prisma.product.findFirst({
-          where: idOrSlug.match(/^[0-9a-fA-F]{24}$/) ? {
-            OR: [
-              { id: idOrSlug },
-              { slug: idOrSlug }
-            ]
-          } : {
-            slug: idOrSlug
-          },
+          where: productLookup,
           select: PRODUCT_DETAIL_SELECT,
         });
       }
     } else {
       // Get product directly
       product = await prisma.product.findFirst({
-        where: idOrSlug.match(/^[0-9a-fA-F]{24}$/) ? {
-          OR: [
-            { id: idOrSlug },
-            { slug: idOrSlug }
-          ]
-        } : {
-          slug: idOrSlug
-        },
+        where: productLookup,
         select: PRODUCT_DETAIL_SELECT,
       });
     }

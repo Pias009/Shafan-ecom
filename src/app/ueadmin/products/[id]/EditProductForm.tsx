@@ -43,6 +43,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
 
   const normalizedProduct = {
     ...initialProduct,
+    slug: initialProduct.slug || '',
     price: Number(initialProduct.price) || 0,
     discountPrice: Number(initialProduct.discountPrice) || 0,
     stockQuantity: Number(initialProduct.stockQuantity) || 0,
@@ -331,6 +332,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
       
       const payload = {
         name: product.name,
+        slug: product.slug || undefined,
         sku: product.sku || null,
         description: product.description,
         benefits: product.benefits,
@@ -407,19 +409,30 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
             </h3>
             
             <div className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Product Name</label>
-                  <input 
-                    name="name"
-                    value={product.name}
-                    onChange={handleChange}
-                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
-                  />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Product Name</label>
+                    <input 
+                      name="name"
+                      value={product.name}
+                      onChange={handleChange}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">URL Slug</label>
+                    <input 
+                      name="slug"
+                      value={product.slug || ''}
+                      onChange={handleChange}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all font-mono"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Brand</label>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Brand</label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <select
