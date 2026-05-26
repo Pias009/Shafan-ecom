@@ -234,7 +234,7 @@ export function getSecretPath(): string {
 // Matcher configuration for Next.js middleware
 export const config = {
   matcher: [
-    '/((?!api/auth|api/feed/google|_next/static|_next/image|favicon.ico|public|images|icons|fonts).*)',
+    '/((?!api/auth|api/feed/google|api/feed/meta|_next/static|_next/image|favicon.ico|public|images|icons|fonts).*)',
     '/ueadmin/:path*',
   ],
 };
