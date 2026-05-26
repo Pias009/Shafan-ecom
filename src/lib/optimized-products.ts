@@ -308,12 +308,12 @@ export async function getOptimizedProduct(idOrSlug: string, storeCode?: string) 
   try {
     let product: any = null;
     
-    const productLookup = {
-      OR: [
-        { id: idOrSlug },
-        { slug: idOrSlug }
-      ]
-    };
+    // Only use OR lookup when idOrSlug looks like a MongoDB ObjectId (24 hex chars)
+    // Otherwise only search by slug — Prisma throws Malformed ObjectID error otherwise
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(idOrSlug);
+    const productLookup = isObjectId
+      ? { OR: [{ id: idOrSlug }, { slug: idOrSlug }] }
+      : { slug: idOrSlug };
 
     if (storeCode) {
       // Get product with store inventory first
