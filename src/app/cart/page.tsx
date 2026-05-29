@@ -17,7 +17,7 @@ import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackBeginCheckout } from "@/lib/datalayer";
 import type { CartItem } from "@/lib/cart-store";
-import TabbyPromo from "@/components/TabbyPromo";
+import PaymentSelection from "@/components/checkout/PaymentSelection";
 import TamaraWidget from "@/components/TamaraWidget";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
@@ -668,15 +668,12 @@ export default function CartPage() {
                     <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-5 w-auto" />
                   }
                   title="Tabby"
-                  subtitle="Pay in 4 installments"
+                  subtitle="Split in up to 4 payments"
                 >
                   <div className="pt-2">
-                    <TabbyPromo
-                      id="TabbyAccordion"
-                      price={total}
-                      currency={getCurrencyForCountry(selectedCountry)}
-                      publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
-                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
+                    <PaymentSelection
+                      currentCurrency={getCurrencyForCountry(selectedCountry)}
+                      totalCartAmount={total}
                     />
                   </div>
                 </PaymentRow>

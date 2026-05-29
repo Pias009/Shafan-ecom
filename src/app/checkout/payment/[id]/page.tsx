@@ -304,8 +304,11 @@ function PaymentPageContent() {
         throw new Error("Invalid response from server. Please try again.");
       }
 
-      if (!res.ok || data.error) {
-        throw new Error(data.error || `Server error: ${res.status}`);
+      if (!res.ok || data.error || data.reason === "rejected") {
+        if (data.reason === "rejected") {
+          setTabbyRejected(true);
+        }
+        throw new Error(data.error || "Tabby is unable to approve this purchase.");
       }
 
       if (data.checkoutUrl) {

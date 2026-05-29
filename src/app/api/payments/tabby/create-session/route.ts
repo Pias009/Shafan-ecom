@@ -8,6 +8,24 @@ const COUNTRY_TO_REGION: Record<string, { region: TabbyRegion; currency: TabbyCu
   KW: { region: "Kuwait", currency: "KWD" },
 };
 
+const TABBY_REJECTION_ERRORS: Record<string, string> = {
+  "2-background-pre-scoring-reject":
+    "Tabby is unable to approve this purchase. Please use an alternative payment method for your order.",
+  NOT_AVAILABLE:
+    "Tabby is temporarily unavailable. Please try again later or use a different payment method.",
+  REJECTED:
+    "Tabby was unable to approve this transaction. Please contact support or try another payment method.",
+};
+
+function getTabbyErrorMessage(rejectionCode: string): string {
+  for (const [key, msg] of Object.entries(TABBY_REJECTION_ERRORS)) {
+    if (rejectionCode.includes(key) || key.includes(rejectionCode)) {
+      return msg;
+    }
+  }
+  return "Tabby is unable to approve this purchase. Please use an alternative payment method.";
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -302,33 +320,36 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log("[Tabby] Session Response status:", session.status);
+    console.log("[Tabby] Session response:", JSON.stringify({ status: session.status, paymentStatus: session.payment?.status, rejectionCode: session.rejection_reason_code, hasUrl: !!session.web_url }));
 
     const checkoutUrl =
       session.web_url ||
       session.configuration?.available_products?.installments?.[0]?.web_url;
 
-    // ── PRE-SCORING REJECTION: guard before any DB mutation ─────────────────
-    // If Tabby rejects (e.g., '2-background-pre-scoring-reject' test credentials
-    // or any live rejection), return the official error message and do NOT
-    // write tabbySessionId / tabbyPaymentId to the order — the order stays
-    // in ORDER_RECEIVED so the customer can retry with another method.
-    if (session.status === "REJECTED" || !checkoutUrl) {
-      const rejectionCode = session.rejection_reason_code || "NOT_AVAILABLE";
-      console.warn(`[Tabby] Session rejected: ${rejectionCode} for order ${orderId}`);
-      // Official Tabby user-facing error as per integration docs
+    const isRejected =
+      session.status === "REJECTED" ||
+      session.status === "EXPIRED" ||
+      session.payment?.status === "REJECTED" ||
+      !!session.rejection_reason_code ||
+      !checkoutUrl;
+
+    if (isRejected) {
+      const rejectionCode = session.rejection_reason_code || session.payment?.status || "REJECTED";
+      const userMessage = getTabbyErrorMessage(rejectionCode);
+
+      console.warn(`[Tabby] Pre-scoring rejection: ${rejectionCode} for order ${orderId}`);
+
       return NextResponse.json(
         {
           success: false,
+          reason: "rejected",
           status: session.status,
           rejection_reason_code: rejectionCode,
-          // Exact message from Tabby integration guide
-          error: "Tabby is unable to approve this purchase. Please use an alternative payment method for your order.",
+          error: userMessage,
         },
         { status: 400 }
       );
     }
-    // ────────────────────────────────────────────────────────────────────────
 
     // Only update DB after confirming the session is valid and a checkout URL exists
     await prisma.order.update({
