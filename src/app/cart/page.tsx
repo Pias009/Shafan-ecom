@@ -111,6 +111,7 @@ function CartPageContent() {
 
   const tamaraStatus = searchParams?.get("tamara_status");
   const tamaraRef = searchParams?.get("ref");
+  const canceled = searchParams?.get("canceled");
 
   useEffect(() => {
     setMounted(true);
@@ -132,6 +133,15 @@ function CartPageContent() {
       );
     }
   }, [tamaraStatus]);
+
+  useEffect(() => {
+    if (canceled === "stripe") {
+      toast.error("Payment was canceled. Please try again or choose a different payment method.", {
+        id: "stripe-canceled",
+        duration: 6000,
+      });
+    }
+  }, [canceled]);
 
   useEffect(() => {
     let isMounted = true;
@@ -434,9 +444,47 @@ function CartPageContent() {
           }),
         });
 
-        toast.success("Order created! Redirecting...", { id: "checkout" });
-        useLoadingStore.getState().setRedirecting(true, "Redirecting to secure payment...");
-        router.push(`/checkout/payment/${data.orderId}?method=${activeMethod}`);
+        if (activeMethod === "cod") {
+          toast.success("Order placed successfully!", { id: "checkout" });
+          router.push(`/checkout/success?orderId=${data.orderId}`);
+        } else if (activeMethod === "tabby") {
+          toast.loading("Connecting to Tabby...", { id: "checkout" });
+          try {
+            const tabbyRes = await fetch("/api/payments/tabby/create-session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: data.orderId }),
+            });
+            const tabbyData = await tabbyRes.json();
+            if (tabbyRes.ok && tabbyData.checkoutUrl) {
+              toast.success("Redirecting to Tabby...", { id: "checkout" });
+              useLoadingStore.getState().setRedirecting(true, "Redirecting to Tabby...");
+              window.location.href = tabbyData.checkoutUrl;
+            } else {
+              toast.error(tabbyData.error || "Tabby checkout failed", { id: "checkout" });
+              setSubmitting(false);
+            }
+          } catch (tabbyErr) {
+            console.error("Tabby error:", tabbyErr);
+            toast.error("Tabby checkout failed", { id: "checkout" });
+            setSubmitting(false);
+          }
+        } else {
+          toast.success("Redirecting to payment...", { id: "checkout" });
+          useLoadingStore.getState().setRedirecting(true, "Redirecting to secure payment...");
+          const sessionRes = await fetch("/api/payments/stripe/checkout-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: data.orderId }),
+          });
+          const sessionData = await sessionRes.json();
+          if (sessionRes.ok && sessionData.url) {
+            window.location.href = sessionData.url;
+          } else {
+            toast.error(sessionData.error || "Failed to create payment session", { id: "checkout" });
+            setSubmitting(false);
+          }
+        }
       } else if (!orderRes.ok) {
         toast.error(data?.error || `Server error (${orderRes.status})`, { id: "checkout" });
         console.error("Order failed:", orderRes.status, data);
