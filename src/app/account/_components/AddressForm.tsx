@@ -88,6 +88,7 @@ export default function AddressForm() {
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   
@@ -225,11 +226,12 @@ export default function AddressForm() {
     e.preventDefault();
     
     // Validation
+    const errors: Record<string, string> = {};
+
     if (!formData.fullName.trim()) {
-      toast.error("Please enter your full name");
-      return;
+      errors.fullName = "Please enter your full name";
     }
-    
+
     const countryCode = COUNTRY_CODES[formData.country] || "+966";
     let rawPhone = formData.phone;
     if (rawPhone.startsWith(countryCode)) {
@@ -237,25 +239,28 @@ export default function AddressForm() {
     } else if (rawPhone.startsWith(countryCode.replace("+", ""))) {
       rawPhone = rawPhone.slice(countryCode.length - 1).trim();
     }
-    
+
     const digitsOnly = rawPhone.replace(/\D/g, '');
     if (!digitsOnly || digitsOnly.length < 8 || digitsOnly.length > 10) {
-      toast.error(`Please enter a valid ${formData.country} mobile number`);
+      errors.phone = `Please enter a valid ${formData.country} mobile number (8-10 digits)`;
+    }
+
+    if (!formData.city.trim()) {
+      errors.city = "Please select your city";
+    }
+    if (!formData.address1.trim()) {
+      errors.address1 = "Please enter your street address";
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      Object.values(errors).forEach(msg => toast.error(msg));
       return;
     }
 
     // Ensure phone number starts with country code before saving
     const finalizedPhone = `${countryCode}${digitsOnly}`;
     const dataToSave = { ...formData, phone: finalizedPhone };
-
-    if (!dataToSave.city.trim()) {
-      toast.error("Please select your city");
-      return;
-    }
-    if (!formData.address1.trim()) {
-      toast.error("Please enter your street address");
-      return;
-    }
 
     setSaving(true);
     try {
@@ -343,9 +348,9 @@ export default function AddressForm() {
               <input 
                 required
                 value={formData.fullName}
-                onChange={e => setFormData({...formData, fullName: e.target.value})}
+                onChange={e => { setFormData({...formData, fullName: e.target.value}); setFieldErrors(prev => ({...prev, fullName: ''})); }}
                 placeholder="Enter your full name"
-                className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white"
+                className={`w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 ${fieldErrors.fullName ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white`}
               />
             </div>
           </div>
@@ -371,15 +376,16 @@ export default function AddressForm() {
                   const val = e.target.value.replace(/[^\d]/g, '');
                   const code = COUNTRY_CODES[formData.country] || "+966";
                   setFormData({...formData, phone: `${code} ${val}`});
+                  setFieldErrors(prev => ({...prev, phone: ''}));
                 }}
                 placeholder="5XX XXX XXXX"
                 maxLength={10}
-                className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white"
-              />
+                className={`w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 ${fieldErrors.phone ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white`}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Country - Dropdown */}
+            {/* Country - Dropdown */}
           <div className="space-y-2 relative">
             <label className="text-xs font-bold uppercase tracking-[0.2em] text-black/50 ml-1">Country *</label>
             <button
@@ -422,11 +428,12 @@ export default function AddressForm() {
                 value={formData.city}
                 onChange={e => {
                   setFormData({...formData, city: e.target.value});
+                  setFieldErrors(prev => ({...prev, city: ''}));
                   if (e.target.value.length >= 2) setShowCityDropdown(true);
                 }}
                 onFocus={() => formData.city.length >= 2 && setShowCityDropdown(true)}
                 placeholder={formData.country ? "Type to search cities" : "Select country first"}
-                className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white pr-10"
+                className={`w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 ${fieldErrors.city ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white pr-10`}
               />
               <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-black/30" />
             </div>
@@ -453,10 +460,10 @@ export default function AddressForm() {
               <input 
                 required
                 value={formData.address1}
-                onChange={e => setFormData({...formData, address1: e.target.value})}
+                onChange={e => { setFormData({...formData, address1: e.target.value}); setFieldErrors(prev => ({...prev, address1: ''})); }}
                 onFocus={() => formData.address1.length >= 3 && setAddressSuggestions(prev => [...prev])}
                 placeholder="Start typing for suggestions"
-                className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white"
+                className={`w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 ${fieldErrors.address1 ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white`}
               />
               {addressSuggestions.length > 0 && (
                 <div className="absolute z-[100] w-full mt-1 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">

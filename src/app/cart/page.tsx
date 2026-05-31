@@ -107,6 +107,7 @@ function CartPageContent() {
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showEmirateDropdown, setShowEmirateDropdown] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const tamaraStatus = searchParams?.get("tamara_status");
   const tamaraRef = searchParams?.get("ref");
@@ -273,20 +274,29 @@ function CartPageContent() {
 
   async function handleCheckout(methodOverride?: string) {
     if (submitting) return;
+
+    const errors: Record<string, string> = {};
     if (!firstName.trim() || !lastName.trim()) {
-      toast.error("Please enter your full name");
-      return;
+      errors.name = "Please enter your first and last name";
     }
     if (!streetAddress.trim()) {
-      toast.error("Please enter your street address");
-      return;
+      errors.street = "Please enter your street address (building, street, area)";
     }
     if (!city.trim()) {
-      toast.error("Please enter your city");
-      return;
+      errors.city = "Please enter your city";
     }
-    if (!phone.trim()) {
-      toast.error("Please enter your phone number");
+    const countryCode = COUNTRY_CODES[deliveryCountry] || "+971";
+    let rawPhone = phone;
+    if (rawPhone.startsWith(countryCode)) {
+      rawPhone = rawPhone.slice(countryCode.length).trim();
+    }
+    const phoneDigits = rawPhone.replace(/\D/g, '');
+    if (!phoneDigits || phoneDigits.length < 7 || phoneDigits.length > 10) {
+      errors.phone = "Please enter a valid phone number (8-10 digits)";
+    }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      Object.values(errors).forEach(msg => toast.error(msg));
       return;
     }
 
@@ -627,9 +637,9 @@ function CartPageContent() {
                   </label>
                   <input
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    onChange={(e) => { setFirstName(e.target.value); setFieldErrors(prev => ({...prev, name: ''})); }}
                     placeholder="First name"
-                    className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white cursor-text active:border-black/30"
+                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.name ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
                   />
                 </div>
 
@@ -639,9 +649,9 @@ function CartPageContent() {
                   </label>
                   <input
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    onChange={(e) => { setLastName(e.target.value); setFieldErrors(prev => ({...prev, name: ''})); }}
                     placeholder="Last name"
-                    className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white cursor-text active:border-black/30"
+                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.name ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
                   />
                 </div>
 
@@ -651,9 +661,9 @@ function CartPageContent() {
                   </label>
                   <input
                     value={streetAddress}
-                    onChange={(e) => setStreetAddress(e.target.value)}
+                    onChange={(e) => { setStreetAddress(e.target.value); setFieldErrors(prev => ({...prev, street: ''})); }}
                     placeholder="Building, street, area"
-                    className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white cursor-text active:border-black/30"
+                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.street ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
                   />
                 </div>
 
@@ -663,9 +673,9 @@ function CartPageContent() {
                   </label>
                   <input
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onChange={(e) => { setCity(e.target.value); setFieldErrors(prev => ({...prev, city: ''})); }}
                     placeholder="City"
-                    className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white cursor-text active:border-black/30"
+                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.city ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
                   />
                 </div>
 
@@ -713,10 +723,11 @@ function CartPageContent() {
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^\d]/g, "");
                         setPhone(`${COUNTRY_CODES[deliveryCountry] || "+971"} ${val}`);
+                        setFieldErrors(prev => ({...prev, phone: ''}));
                       }}
                       placeholder="5XX XXX XXXX"
                       maxLength={10}
-                      className="flex-1 rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white cursor-text active:border-black/30"
+                      className={`flex-1 rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.phone ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
                     />
                   </div>
                 </div>
