@@ -3,11 +3,11 @@
 import { useCartStore } from "@/lib/cart-store";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Circle, ChevronDown, CreditCard, Banknote, ShieldCheck, Truck, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Price } from "@/components/Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -18,7 +18,6 @@ import { useLoadingStore } from "@/lib/loading-store";
 import { trackBeginCheckout } from "@/lib/datalayer";
 import type { CartItem } from "@/lib/cart-store";
 import PaymentSelection from "@/components/checkout/PaymentSelection";
-import TamaraWidget from "@/components/TamaraWidget";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 const COUNTRY_CODES: Record<string, string> = {
@@ -62,8 +61,9 @@ const ACTIVE_COUNTRIES = Object.values(COUNTRY_CONFIG)
   .filter((c) => c.active)
   .map((c) => c.name);
 
-export default function CartPage() {
+function CartPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { currentLanguage } = useLanguageStore();
   const isArabic = currentLanguage.code === "ar";
@@ -79,6 +79,7 @@ export default function CartPage() {
     applyCoupon,
     removeCoupon,
     setHasAddress,
+    clearCart,
   } = useCartStore();
 
   const [mounted, setMounted] = useState(false);
@@ -105,10 +106,31 @@ export default function CartPage() {
   const [, setLoadingAddress] = useState(true);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showEmirateDropdown, setShowEmirateDropdown] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const tamaraStatus = searchParams?.get("tamara_status");
+  const tamaraRef = searchParams?.get("ref");
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (tamaraStatus === "success") {
+      clearCart();
+    }
+  }, [tamaraStatus, clearCart]);
+
+  useEffect(() => {
+    if (tamaraStatus === "cancel" || tamaraStatus === "failure") {
+      toast.error(
+        tamaraStatus === "cancel"
+          ? "Tamara payment was canceled. Please try again or choose a different payment method."
+          : "Tamara payment did not complete. Please try again or choose a different payment method.",
+        { id: "tamara-status", duration: 6000 }
+      );
+    }
+  }, [tamaraStatus]);
 
   useEffect(() => {
     let isMounted = true;
@@ -250,6 +272,7 @@ export default function CartPage() {
   }
 
   async function handleCheckout(methodOverride?: string) {
+    if (submitting) return;
     if (!firstName.trim() || !lastName.trim()) {
       toast.error("Please enter your full name");
       return;
@@ -266,6 +289,8 @@ export default function CartPage() {
       toast.error("Please enter your phone number");
       return;
     }
+
+    setSubmitting(true);
 
     const addr = buildAddressFromForm();
 
@@ -304,13 +329,57 @@ export default function CartPage() {
 
       const activeMethod = methodOverride || activePayment || "stripe";
 
+      // Tamara: direct checkout session instead of order creation
+      if (activeMethod === "tamara") {
+        const tamaraRes = await fetch("/api/checkout/tamara", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cartItems: items.map((i: CartItem) => {
+              const { price: itemPrice } = getDisplayPrice(i, selectedCountry);
+              return {
+                id: i.id,
+                name: i.name,
+                price: Number(itemPrice) || 0,
+                quantity: i.quantity,
+                imageUrl: i.imageUrl,
+                brand: i.brand,
+              };
+            }),
+            totalAmount: total,
+            currency: getCurrencyForCountry(selectedCountry),
+            customerDetails: {
+              firstName,
+              lastName,
+              email,
+              phone,
+              addressLine1: streetAddress,
+              city,
+              region: emirate,
+            },
+            lang: currentLanguage.code,
+          }),
+        });
+
+        const tamaraData = await tamaraRes.json();
+
+        if (tamaraRes.ok && tamaraData.checkoutUrl) {
+          toast.success("Redirecting to Tamara...", { id: "checkout" });
+          useLoadingStore.getState().setRedirecting(true, "Redirecting to Tamara...");
+          window.location.href = tamaraData.checkoutUrl;
+          return;
+        } else {
+          toast.error(tamaraData.error || "Tamara checkout failed", { id: "checkout" });
+          setSubmitting(false);
+          return;
+        }
+      }
+
       let paymentMethodData = { payment_method: "stripe", payment_method_title: "Credit Card (Stripe)" };
       if (activeMethod === "cod") {
         paymentMethodData = { payment_method: "cod", payment_method_title: "Cash on Delivery" };
       } else if (activeMethod === "tabby") {
         paymentMethodData = { payment_method: "tabby", payment_method_title: "Tabby Pay-in-4" };
-      } else if (activeMethod === "tamara") {
-        paymentMethodData = { payment_method: "tamara", payment_method_title: "Tamara Installments" };
       }
 
       const orderRes = await fetch("/api/create-order", {
@@ -370,13 +439,54 @@ export default function CartPage() {
       } else {
         toast.error(data.error || "Checkout failed", { id: "checkout" });
       }
+      setSubmitting(false);
     } catch (error) {
       console.error("Checkout error:", error);
       toast.error("Checkout failed", { id: "checkout" });
+      setSubmitting(false);
     }
   }
 
   const isEmpty = items.length === 0;
+
+  if (tamaraStatus === "success") {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50/50 flex items-center justify-center px-4">
+        <div className="w-full max-w-lg mx-auto pt-20 md:pt-28 pb-16 text-center">
+          <div className="bg-white rounded-3xl border border-black/5 shadow-sm p-8 md:p-12 space-y-6">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <h1 className="font-display text-2xl md:text-3xl font-black text-black tracking-tight">
+              Thank You for Your Order!
+            </h1>
+            <p className="text-sm text-black/50 font-medium">
+              Your order has been submitted successfully via Tamara.
+              You will receive a confirmation shortly.
+            </p>
+            {tamaraRef && (
+              <div className="bg-black/[0.03] rounded-2xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-1">
+                  Order Reference
+                </p>
+                <p className="font-mono font-bold text-lg text-black tracking-wider">
+                  {tamaraRef}
+                </p>
+              </div>
+            )}
+            <Link
+              href="/"
+              className="inline-block w-full rounded-full bg-black text-white py-4 font-body text-xs font-black tracking-[0.25em] uppercase hover:bg-black/80 transition-all hover:scale-[1.02] active:scale-[0.97] cursor-pointer"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50/50">
@@ -387,6 +497,24 @@ export default function CartPage() {
         >
           <ArrowLeft size={14} className="md:w-4 md:h-4" /> {t.cart.continueShopping}
         </Link>
+
+        {(tamaraStatus === "cancel" || tamaraStatus === "failure") && (
+          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-amber-700 text-xs font-black">!</span>
+            </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-amber-800">
+                {tamaraStatus === "cancel" ? "Payment Canceled" : "Payment Failed"}
+              </p>
+              <p className="text-xs text-amber-700 font-medium mt-1">
+                {tamaraStatus === "cancel"
+                  ? "Your Tamara payment was canceled. You can try again or choose a different payment method below."
+                  : "Your Tamara payment did not complete. Please try again or select another payment option."}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-baseline justify-between mb-6 md:mb-10">
           <div>
@@ -613,117 +741,30 @@ export default function CartPage() {
                 Payment
               </h2>
 
-              <div className="space-y-2">
-                <PaymentRow
-                  active={activePayment === "stripe"}
-                  onToggle={() => setActivePayment(activePayment === "stripe" ? null : "stripe")}
-                  icon={<CreditCard className="w-5 h-5" />}
-                  title="Credit Card"
-                  subtitle="Visa, Mastercard"
-                >
-                  <div className="space-y-3 pt-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        placeholder="Card number"
-                        readOnly
-                        value="4242 4242 4242 4242"
-                        className="col-span-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold border border-black/10 bg-black/[0.02] text-black/40 cursor-default"
-                      />
-                      <input
-                        placeholder="MM / YY"
-                        readOnly
-                        value="12 / 28"
-                        className="rounded-xl px-3.5 py-2.5 text-xs font-semibold border border-black/10 bg-black/[0.02] text-black/40 cursor-default"
-                      />
-                      <input
-                        placeholder="CVC"
-                        readOnly
-                        value="123"
-                        className="rounded-xl px-3.5 py-2.5 text-xs font-semibold border border-black/10 bg-black/[0.02] text-black/40 cursor-default"
-                      />
-                    </div>
-                    <label className="flex items-center gap-2 cursor-pointer group py-1">
-                      <input
-                        type="checkbox"
-                        checked={useBillingAddress}
-                        onChange={(e) => setUseBillingAddress(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-2 border-black/20 accent-black cursor-pointer"
-                      />
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-black/40 group-hover:text-black/60 select-none">
-                        Use shipping address as my billing address
-                      </span>
-                    </label>
-                    <div className="flex items-center gap-2 text-[9px] text-black/30 font-bold uppercase tracking-wider pt-1">
-                      <ShieldCheck className="w-3 h-3" />
-                      Secured by Stripe
-                    </div>
-                  </div>
-                </PaymentRow>
-
-                <PaymentRow
-                  active={activePayment === "tabby"}
-                  onToggle={() => setActivePayment(activePayment === "tabby" ? null : "tabby")}
-                  icon={
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-5 w-auto" />
-                  }
-                  title="Tabby"
-                  subtitle="Split in up to 4 payments"
-                >
-                  <div className="pt-2">
-                    <PaymentSelection
-                      currentCurrency={getCurrencyForCountry(selectedCountry)}
-                      totalCartAmount={total}
-                    />
-                  </div>
-                </PaymentRow>
-
-                <PaymentRow
-                  active={activePayment === "tamara"}
-                  onToggle={() => setActivePayment(activePayment === "tamara" ? null : "tamara")}
-                  icon={
-                    <div className="w-auto h-5 flex items-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={isArabic ? "/tamara-logo-gradient-ar.svg" : "/tamara-logo-gradient.svg"}
-                        alt="Tamara"
-                        className="h-4 w-auto object-contain"
-                      />
-                    </div>
-                  }
-                  title="Tamara"
-                  subtitle="Split into flexible payments"
-                >
-                  <div className="pt-2">
-                    <TamaraWidget
-                      price={total}
-                      currency={getCurrencyForCountry(selectedCountry)}
-                      country={selectedCountry}
-                      widgetType="cart"
-                    />
-                  </div>
-                </PaymentRow>
-
-                <PaymentRow
-                  active={activePayment === "cod"}
-                  onToggle={() => setActivePayment(activePayment === "cod" ? null : "cod")}
-                  icon={<Banknote className="w-5 h-5" />}
-                  title="Cash on Delivery"
-                  subtitle="Pay when you receive"
-                >
-                  <div className="pt-2 text-[10px] text-black/50 font-medium leading-relaxed px-1">
-                    Pay with cash or card when your order arrives at your doorstep.
-                  </div>
-                </PaymentRow>
-              </div>
+              <PaymentSelection
+                currentCurrency={getCurrencyForCountry(selectedCountry)}
+                totalCartAmount={total}
+                activePayment={activePayment}
+                onPaymentSelect={(method) =>
+                  setActivePayment(activePayment === method ? null : method)
+                }
+                useBillingAddress={useBillingAddress}
+                onBillingToggle={() => setUseBillingAddress(!useBillingAddress)}
+                lang={currentLanguage.code}
+              />
             </div>
 
             {!isEmpty && (
               <button
                 onClick={() => handleCheckout()}
-                className="w-full rounded-full bg-red-600 hover:bg-red-700 text-white py-5 md:py-6 font-body text-xs md:text-sm font-black tracking-[0.25em] transition-all hover:scale-[1.03] active:scale-[0.97] shadow-2xl shadow-red-600/30 flex items-center justify-center gap-3 cursor-pointer"
+                disabled={submitting}
+                className={`w-full rounded-full py-5 md:py-6 font-body text-xs md:text-sm font-black tracking-[0.25em] transition-all flex items-center justify-center gap-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:scale-100 ${
+                  submitting
+                    ? "bg-gray-400 text-white shadow-none"
+                    : "bg-red-600 hover:bg-red-700 text-white hover:scale-[1.03] active:scale-[0.97] shadow-2xl shadow-red-600/30"
+                }`}
               >
-                Place Order
+                {submitting ? "Processing..." : "Place Order"}
               </button>
             )}
           </div>
@@ -901,52 +942,11 @@ export default function CartPage() {
   );
 }
 
-function PaymentRow({
-  active,
-  onToggle,
-  icon,
-  title,
-  subtitle,
-  children,
-}: {
-  active: boolean;
-  onToggle: () => void;
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
+export default function CartPage() {
   return (
-    <div
-      className={`rounded-xl lg:rounded-2xl border-2 transition-all cursor-pointer ${
-        active
-          ? "border-black bg-white shadow-md"
-          : "border-black/5 bg-white hover:border-black/20 hover:shadow-sm"
-      }`}
-    >
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center gap-3 p-3.5 md:p-4 text-left cursor-pointer active:bg-black/[0.02]"
-      >
-        <div className="shrink-0 w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center bg-black/5 text-black/60">
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="font-bold text-xs md:text-sm text-black">{title}</div>
-          <div className="text-[9px] md:text-[10px] text-black/40 font-medium">{subtitle}</div>
-        </div>
-        <Circle
-          className={`w-4 h-4 md:w-5 md:h-5 shrink-0 transition ${
-            active ? "fill-black text-white" : "text-black/20"
-          }`}
-        />
-      </button>
-      {active && (
-        <div className="px-3.5 md:px-4 pb-4 md:pb-5 border-t border-black/5 pt-3 mt-0">
-          {children}
-        </div>
-      )}
-    </div>
+    <Suspense fallback={null}>
+      <CartPageContent />
+    </Suspense>
   );
 }
+
