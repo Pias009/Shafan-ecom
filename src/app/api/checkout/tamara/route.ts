@@ -42,9 +42,18 @@ export async function POST(request: NextRequest) {
     const countryCode = CURRENCY_TO_COUNTRY[normalisedCurrency] || "AE";
     const locale = LANG_TO_LOCALE[lang] || "en_US";
 
+    const decimals = ["KWD", "BHD", "OMR"].includes(normalisedCurrency) ? 3 : 2;
+
     const toFixed = (val: unknown): string => {
       const num = Number(val ?? 0);
-      return Number.isNaN(num) ? "0.000" : num.toFixed(3);
+      return Number.isNaN(num) ? `0.${"0".repeat(decimals)}` : num.toFixed(decimals);
+    };
+
+    const cleanPhone = (phone: string | undefined): string => {
+      if (!phone) return "";
+      let cleaned = phone.replace(/[^\d+]/g, "");
+      cleaned = cleaned.replace(/^00/, "+");
+      return cleaned;
     };
 
     const baseUrl = (
@@ -64,23 +73,25 @@ export async function POST(request: NextRequest) {
         name: item.name || "Product",
         type: "Physical",
         unit_price: {
-          amount: unitPrice.toFixed(3),
+          amount: unitPrice.toFixed(decimals),
           currency: normalisedCurrency,
         },
         quantity: qty,
         total_amount: {
-          amount: (unitPrice * qty).toFixed(3),
+          amount: (unitPrice * qty).toFixed(decimals),
           currency: normalisedCurrency,
         },
         image_url: item.imageUrl || undefined,
       };
     });
 
+    const cleanedPhone = cleanPhone(customerDetails.phone || "+971500000001");
+
     const consumer = {
       first_name: customerDetails.firstName,
       last_name: customerDetails.lastName,
       email: customerDetails.email || "customer@example.com",
-      phone_number: customerDetails.phone || "+971500000001",
+      phone_number: cleanedPhone,
     };
 
     const address = {
@@ -92,7 +103,7 @@ export async function POST(request: NextRequest) {
       region: customerDetails.region || "",
       postal_code: customerDetails.postalCode || "",
       country_code: countryCode,
-      phone_number: customerDetails.phone || "+971500000001",
+      phone_number: cleanedPhone,
     };
 
     const payload = {

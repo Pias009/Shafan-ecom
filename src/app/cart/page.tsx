@@ -68,7 +68,7 @@ function CartPageContent() {
   const { currentLanguage } = useLanguageStore();
   const isArabic = currentLanguage.code === "ar";
   const t = translations[currentLanguage.code as keyof typeof translations];
-  const { selectedCountry } = useCountryStore();
+  const { selectedCountry, setCountry: setStoreCountry } = useCountryStore();
   const {
     items,
     removeItem,
@@ -376,6 +376,10 @@ function CartPageContent() {
               addressLine1: streetAddress,
               city,
               region: emirate,
+              shippingAmount: Number(shippingFee) || 0,
+              taxAmount: Number(taxAmountLocal) || 0,
+              discountAmount: Number(discountAmount) || 0,
+              postalCode: "",
             },
             lang: currentLanguage.code,
           }),
@@ -665,7 +669,7 @@ function CartPageContent() {
                         <button
                           key={c}
                           type="button"
-                          onClick={() => { setDeliveryCountry(c); setShowCountryDropdown(false); setEmirate(""); }}
+                          onClick={() => { setDeliveryCountry(c); setStoreCountry(getCountryCode(c)); setShowCountryDropdown(false); setEmirate(""); }}
                           className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${
                             deliveryCountry === c ? "bg-black text-white hover:bg-black" : "text-black"
                           }`}
