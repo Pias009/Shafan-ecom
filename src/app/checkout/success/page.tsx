@@ -67,7 +67,7 @@ function SuccessContent() {
               name: item.product?.name || "Product",
               quantity: item.quantity,
               unitPrice: item.unitPrice,
-              gtin: item.product?.sku || undefined,
+              gtin: (item.product?.sku && /^\d{8,14}$/.test(item.product.sku)) ? item.product.sku : undefined,
             })) ?? [],
           });
         } catch {
@@ -136,7 +136,7 @@ function SuccessContent() {
           "delivery_country": orderData.deliveryCountry,
           "estimated_delivery_date": orderData.estimatedDeliveryDate,
           "products": orderData.items
-            .filter(item => item.gtin)
+            .filter(item => item.gtin && /^\d{8,14}$/.test(item.gtin))
             .map(item => ({ "gtin": item.gtin })),
         });
       });

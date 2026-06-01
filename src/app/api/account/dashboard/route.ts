@@ -21,7 +21,7 @@ export async function GET(req: Request) {
         items: {
           include: {
             product: {
-              select: { slug: true, mainImage: true, images: true }
+              select: { name: true, slug: true, mainImage: true, images: true }
             }
           }
         }
@@ -56,12 +56,19 @@ export async function GET(req: Request) {
       shippingAddress: o.shippingAddress || {},
       items: o.items.map((it: any) => ({
         id: it.id,
-        name: it.nameSnapshot || "Unknown Product",
+        name: it.nameSnapshot || (it.product as any)?.name || "Unknown Product",
+        nameSnapshot: it.nameSnapshot,
         quantity: it.quantity,
         unitPrice: it.unitPrice,
-        total: (Number(it.unitPrice) * it.quantity).toFixed(2),
-        image: it.imageSnapshot || (it.product as any)?.mainImage || (it.product as any)?.images?.[0] || null,
-        productSlug: (it.product as any)?.slug || it.productId,
+        cancelledAt: it.cancelledAt,
+        imageSnapshot: it.imageSnapshot,
+        product: it.product
+          ? {
+              slug: (it.product as any).slug,
+              mainImage: (it.product as any).mainImage,
+              images: (it.product as any).images,
+            }
+          : undefined,
       }))
     }));
 

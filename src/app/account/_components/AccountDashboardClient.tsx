@@ -1,11 +1,10 @@
 "use client";
 
 import { useCartStore } from "@/lib/cart-store";
-import { useSession } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import {
   Package, Truck, CheckCircle2, RotateCcw,
-  Loader2, ShoppingBag, CreditCard, MapPin, ExternalLink, ChevronDown
+  Loader2, ShoppingBag, ChevronDown, CreditCard, MapPin, ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 
@@ -45,8 +44,11 @@ function formatAddress(shipping: Record<string, any>): string {
   return parts.join(", ");
 }
 
+function getItemImage(item: any): string | null {
+  return item.imageSnapshot || item.product?.mainImage || item.product?.images?.[0] || null;
+}
+
 export default function AccountDashboardClient() {
-  const { data: session } = useSession();
   const { items: cartItems } = useCartStore();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +106,7 @@ export default function AccountDashboardClient() {
         ))}
       </div>
 
-      {/* Cart Summary Bar - minimal, no product list */}
+      {/* Cart Summary Bar */}
       {cartItems.length > 0 && (
         <Link
           href="/cart"
@@ -151,17 +153,15 @@ export default function AccountDashboardClient() {
             <p className="text-sm font-medium text-black/40 italic">No orders yet.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {orders.map((order: any) => {
               const isExpanded = expandedId === order.id;
-              const thumbnails = order.items.map((it: any) => it.image).filter(Boolean);
-
               return (
                 <div
                   key={order.id}
                   className="rounded-2xl border border-black/5 bg-white overflow-hidden shadow-sm transition-all"
                 >
-                  {/* Order header: total + status + date */}
+                  {/* Order header */}
                   <button
                     onClick={() => toggleExpand(order.id)}
                     className="w-full flex items-center justify-between px-5 py-4 hover:bg-black/[0.02] transition"
@@ -178,36 +178,50 @@ export default function AccountDashboardClient() {
                     </div>
                   </button>
 
-                  {/* Product rows */}
-                  <div className="border-t border-black/5">
-                    {order.items.map((item: any, i: number) => (
-                      <div key={i} className="flex items-center gap-4 px-5 py-3 border-t border-black/5 first:border-t-0">
-                        <div className="relative w-16 h-16 flex-shrink-0 bg-black/5 rounded-md overflow-hidden">
-                          {item.image ? (
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-black/20">
-                              {item.name?.substring(0, 2) || "PD"}
+                  {/* Compact clickable product cards */}
+                  <div className="border-t border-black/5 px-3 py-2 space-y-1">
+                    {order.items.map((item: any, i: number) => {
+                      const imgSrc = getItemImage(item);
+                      const isCancelled = item.cancelledAt;
+                      return (
+                        <Link
+                          key={i}
+                          href={guestEmail ? `/account/orders/${order.id}?product=${item.id}&email=${encodeURIComponent(guestEmail)}` : `/account/orders/${order.id}?product=${item.id}`}
+                          className={`flex gap-3 items-center rounded-xl px-3 py-2.5 transition ${isCancelled ? "bg-black/[0.02] opacity-60" : "bg-black/[0.02] hover:bg-black/[0.06]"}`}
+                        >
+                          <div className="relative h-10 w-10 md:h-12 md:w-12 shrink-0 overflow-hidden rounded-xl bg-white border border-black/10 shadow-sm">
+                            {imgSrc ? (
+                              <img src={imgSrc} alt={item.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-black/20">
+                                {item.name?.substring(0, 2) || "PD"}
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] md:text-xs font-bold text-black leading-tight truncate">{item.name}</div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="inline-flex items-center justify-center bg-red-500/10 text-red-600 rounded-full px-2 py-0.5 text-[7px] font-black uppercase tracking-wider">
+                                Qty {item.quantity || 1}
+                              </span>
+                              {isCancelled && (
+                                <span className="text-[7px] font-black uppercase tracking-widest text-red-400">Cancelled</span>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-medium text-black truncate">{item.name}</h4>
-                          <p className="text-xs text-black/40 font-medium">Qty: {item.quantity || 1}</p>
-                        </div>
-                        <div className="text-sm font-semibold text-black shrink-0">
-                          {formatPrice(Number(item.unitPrice), order.currency)}
-                        </div>
-                      </div>
-                    ))}
+                          </div>
+                          <div className="font-black text-xs md:text-sm text-black shrink-0">
+                            {formatPrice(Number(item.unitPrice) * (item.quantity || 1), order.currency)}
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
 
                   {/* Expanded detail */}
                   {isExpanded && (
-                    <div className="border-t border-black/5 px-4 py-5 space-y-5 bg-black/[0.015] animate-in fade-in slide-in-from-top-2 duration-200">
-
-                      {/* Payment & Summary row */}
+                    <div className="border-t border-black/5 px-5 py-5 space-y-5 bg-black/[0.015] animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="grid sm:grid-cols-2 gap-4">
+                        {/* Payment */}
                         <div className="rounded-xl border border-black/5 bg-white p-4">
                           <h4 className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-2 flex items-center gap-1.5">
                             <CreditCard className="w-3 h-3" /> Payment
@@ -277,6 +291,11 @@ export default function AccountDashboardClient() {
                               >
                                 <ExternalLink className="w-3 h-3" /> Track
                               </a>
+                            )}
+                            {!order.trackingUrl && !order.shipment?.trackingUrl && (
+                              <p className="text-[10px] text-black/30 italic font-medium mt-2">
+                                Tracking details will appear once shipped.
+                              </p>
                             )}
                           </div>
                         </div>
