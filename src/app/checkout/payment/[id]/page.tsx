@@ -796,7 +796,7 @@ function PaymentPageContent() {
                 <div className="text-[9px] font-black uppercase tracking-wider text-black/30">Shipping To</div>
                 <div className="text-[10px] md:text-xs font-bold leading-relaxed">
                   {shipping.first_name} {shipping.last_name}<br />
-                  <span className="text-black/60 font-medium">{shipping.address_1}, {shipping.city}</span>
+                   <span className="text-black/60 font-medium">{shipping.street_road || shipping.address_1}, {shipping.city_name || shipping.city}</span>
                 </div>
               </div>
             </div>

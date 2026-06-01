@@ -128,10 +128,10 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
              <h3 className="font-black uppercase tracking-widest text-xs">Delivery Address</h3>
           </div>
           <div className="px-2 text-[10px] md:text-xs font-bold text-black/60 leading-relaxed uppercase tracking-widest">
-            {shipping.address_1}<br />
-            {shipping.address_2 && <>{shipping.address_2}<br /></>}
-            {shipping.city}, {shipping.state} {shipping.postcode}<br />
-            {shipping.country}
+            {shipping.street_road || shipping.address_1 || ""}<br />
+            {(shipping.house_building || shipping.address_2) && <>{shipping.house_building || shipping.address_2}<br /></>}
+            {shipping.area_name && <>{shipping.area_name}<br /></>}
+            {shipping.city_name || shipping.city || ""}{shipping.country ? `, ${shipping.country}` : ""}
           </div>
         </section>
       </div>

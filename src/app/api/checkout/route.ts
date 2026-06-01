@@ -145,6 +145,10 @@ export async function POST(req: Request) {
           country: address.country || countryCode,
           email: session.user.email,
           phone: address.phone || "",
+          street_road: address.address1 || "",
+          house_building: address.address2 || "",
+          city_name: address.city || "",
+          area_name: (address as any).area_name || "",
         },
         shippingAddress: {
           first_name: address.fullName?.split(" ")[0] || "",
@@ -154,6 +158,10 @@ export async function POST(req: Request) {
           city: address.city || "",
           postcode: address.postalCode || "",
           country: address.country || countryCode,
+          street_road: address.address1 || "",
+          house_building: address.address2 || "",
+          city_name: address.city || "",
+          area_name: (address as any).area_name || "",
         },
         items: {
           create: orderItems

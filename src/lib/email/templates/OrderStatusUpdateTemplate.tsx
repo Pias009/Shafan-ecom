@@ -177,8 +177,9 @@ export const OrderStatusUpdateTemplate = ({
           <Text style={sectionTitle}>Shipping Address</Text>
           <Text style={addressText}>
             {shippingAddress.first_name} {shippingAddress.last_name}<br />
-            {shippingAddress.address_1}, {shippingAddress.city}<br />
-            {shippingAddress.country}
+            {shippingAddress.street_road || shippingAddress.address_1}{shippingAddress.house_building || shippingAddress.address_2 ? `, ${shippingAddress.house_building || shippingAddress.address_2}` : ""}<br />
+            {shippingAddress.area_name && <>{shippingAddress.area_name}<br /></>}
+            {shippingAddress.city_name || shippingAddress.city}, {shippingAddress.country}
           </Text>
         </Section>
       )}

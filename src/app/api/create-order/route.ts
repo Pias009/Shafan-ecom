@@ -304,9 +304,14 @@ export async function POST(req: Request) {
             email: userAddress.email,
             country: userAddress.country,
             city: userAddress.city,
-            address1: userAddress.address1,
-            address2: userAddress.address2 || "",
-            postalCode: userAddress.postalCode
+            address_1: userAddress.address1,
+            address_2: userAddress.address2 || "",
+            postalCode: userAddress.postalCode,
+            // New field names for forward compatibility
+            street_road: userAddress.address1,
+            house_building: userAddress.address2 || "",
+            city_name: userAddress.city,
+            area_name: (userAddress as any).area_name || "",
           };
           
           if (!finalBilling) finalBilling = addressJson;
@@ -318,6 +323,23 @@ export async function POST(req: Request) {
     // Ensure addresses have the normalized country code for payment gateway compatibility
     if (finalBilling) finalBilling.country = finalBilling.country || countryCode;
     if (finalShipping) finalShipping.country = finalShipping.country || countryCode;
+
+    // Normalize address field names: map new field names alongside legacy ones
+    function normalizeAddressFields(addr: Record<string, any>) {
+      if (!addr) return {};
+      return {
+        ...addr,
+        address_1: addr.street_road || addr.address_1 || addr.address1 || "",
+        address_2: addr.house_building || addr.address_2 || addr.address2 || "",
+        city: addr.city_name || addr.city || "",
+        street_road: addr.street_road || addr.address_1 || addr.address1 || "",
+        house_building: addr.house_building || addr.address_2 || addr.address2 || "",
+        city_name: addr.city_name || addr.city || "",
+        area_name: addr.area_name || "",
+      };
+    }
+    if (finalBilling) finalBilling = normalizeAddressFields(finalBilling);
+    if (finalShipping) finalShipping = normalizeAddressFields(finalShipping);
 
     if (!finalBilling || !finalShipping) {
       return NextResponse.json({ error: "Shipping address is required to place an order." }, { status: 400 });

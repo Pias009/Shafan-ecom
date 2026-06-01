@@ -18,7 +18,13 @@ export async function GET(req: Request) {
         ? { userId: session.user.id } 
         : { email: guestEmail || "" },
       include: {
-        items: true
+        items: {
+          include: {
+            product: {
+              select: { slug: true, mainImage: true, images: true }
+            }
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -26,17 +32,36 @@ export async function GET(req: Request) {
       take: 10
     });
 
-    const orders = dbOrders.map((o) => ({
+    const orders = dbOrders.map((o: any) => ({
       id: o.id,
-      status: o.status.toLowerCase(),
+      status: o.status,
       total: o.total,
       totalCents: o.total,
       currency: o.currency || 'AED',
       createdAt: o.createdAt.toISOString(),
-      items: o.items.map((it) => ({
-        name: it.nameSnapshot,
+      paymentStatus: o.paymentStatus,
+      paymentMethod: o.paymentMethodTitle,
+      shipping: o.shipping,
+      subtotal: o.subtotal,
+      discount: o.discount,
+      taxAmount: o.taxAmount,
+      taxRate: o.taxRate,
+      trackingUrl: o.trackingUrl,
+      trackingId: o.trackingId,
+      shipment: o.shipment ? {
+        courier: (o.shipment as any)?.courier,
+        trackingCode: (o.shipment as any)?.trackingCode,
+        trackingUrl: (o.shipment as any)?.trackingUrl,
+      } : null,
+      shippingAddress: o.shippingAddress || {},
+      items: o.items.map((it: any) => ({
+        id: it.id,
+        name: it.nameSnapshot || "Unknown Product",
         quantity: it.quantity,
+        unitPrice: it.unitPrice,
         total: (Number(it.unitPrice) * it.quantity).toFixed(2),
+        image: it.imageSnapshot || (it.product as any)?.mainImage || (it.product as any)?.images?.[0] || null,
+        productSlug: (it.product as any)?.slug || it.productId,
       }))
     }));
 

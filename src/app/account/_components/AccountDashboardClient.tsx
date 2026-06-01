@@ -1,64 +1,70 @@
 "use client";
 
 import { useCartStore } from "@/lib/cart-store";
-import { pushToDataLayer } from "@/lib/datalayer";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import { ShoppingBag, Package, Truck, CheckCircle2, XCircle, RotateCcw, ArrowRight, Loader2, Info } from "lucide-react";
-import Image from "next/image";
+import { useEffect, useState, useCallback } from "react";
+import {
+  Package, Truck, CheckCircle2, RotateCcw,
+  Loader2, ShoppingBag, CreditCard, MapPin, ExternalLink, ChevronDown
+} from "lucide-react";
 import Link from "next/link";
-import { Price } from "@/components/Price";
-import { useUserCountry } from "@/lib/country-detection";
-import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
-interface DashboardData {
-  orders: any[];
-  stats: {
-    pending: number;
-    shipped: number;
-    delivered: number;
-    refunded: number;
-  };
+function formatPrice(amount: number, currency?: string): string {
+  const code = currency?.toUpperCase() || "AED";
+  const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
+  return `${code} ${(Number(amount) || 0).toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+}
+
+function statusBadgeClass(status: string): string {
+  const s = status?.toUpperCase() || "";
+  if (s === "DELIVERED") return "bg-green-100 text-green-800 border-green-200";
+  if (s === "SHIPPED" || s === "IN_TRANSIT") return "bg-green-100 text-green-800 border-green-200";
+  if (s === "PROCESSING" || s === "ORDER_CONFIRMED") return "bg-blue-100 text-blue-800 border-blue-200";
+  if (s === "ORDER_RECEIVED") return "bg-amber-100 text-amber-800 border-amber-200";
+  if (s === "CANCELLED") return "bg-red-100 text-red-800 border-red-200";
+  if (s === "REFUNDED") return "bg-orange-100 text-orange-800 border-orange-200";
+  return "bg-black/5 text-black/40 border-black/5";
+}
+
+function formatAddress(shipping: Record<string, any>): string {
+  if (!shipping || Object.keys(shipping).length === 0) return "";
+  const parts: string[] = [];
+  const h = shipping.house_building || shipping.address_2 || shipping.address2;
+  const s = shipping.street_road || shipping.address_1 || shipping.address1;
+  const a = shipping.area_name;
+  const c = shipping.city_name || shipping.city;
+  const co = shipping.country;
+  if (h) parts.push(h);
+  if (s) parts.push(s);
+  if (a) parts.push(a);
+  parts.push(c || "Unknown");
+  if (co) parts.push(co);
+  return parts.join(", ");
 }
 
 export default function AccountDashboardClient() {
   const { data: session } = useSession();
-  const userCountry = useUserCountry();
   const { items: cartItems } = useCartStore();
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const [guestEmailState, setGuestEmailState] = useState<string | null>(null);
+  const [guestEmail, setGuestEmail] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    const guestEmail = localStorage.getItem('guest_email');
-    setGuestEmailState(guestEmail);
-
-    // Identification should be handled via GTM DataLayer for consistency
-    if (typeof window !== 'undefined') {
-      const emailToIdentify = session?.user?.email || guestEmail;
-      if (emailToIdentify) {
-        pushToDataLayer({
-          event: 'user_identification',
-          user_data: {
-            email: emailToIdentify,
-          }
-        });
-      }
-    }
+    const ge = localStorage.getItem("guest_email");
+    setGuestEmail(ge);
 
     async function fetchDashboard() {
       try {
         let apiUrl = "/api/account/dashboard";
-        const guestEmail = localStorage.getItem('guest_email');
-        if (guestEmail) {
-          apiUrl += `?email=${encodeURIComponent(guestEmail)}`;
-        }
+        if (ge) apiUrl += `?email=${encodeURIComponent(ge)}`;
         const res = await fetch(apiUrl);
-        if (res.ok) {
-          setData(await res.json());
-        }
+        if (res.ok) setData(await res.json());
       } catch (err) {
         console.error(err);
       } finally {
@@ -68,28 +74,29 @@ export default function AccountDashboardClient() {
     fetchDashboard();
   }, []);
 
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedId(prev => prev === id ? null : id);
+  }, []);
+
   if (!mounted) return null;
 
-  const cartTotal = cartItems.reduce((acc, item) => {
-    // Treat as cents since it comes from the DB through the store
-    const priceToUse = item.discountPrice ?? item.price ?? 0;
-    return acc + priceToUse * item.quantity;
-  }, 0);
+  const stats = data?.stats || { pending: 0, shipped: 0, delivered: 0, refunded: 0 };
+  const orders: any[] = data?.orders || [];
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      
-      {/* Stats Grid - Single Row Horizontal on Mobile */}
+
+      {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-1">
         {[
-          { label: "Pending", value: data?.stats.pending ?? 0, icon: Loader2, color: "text-yellow-600", bg: "bg-yellow-50" },
-          { label: "Shipped", value: data?.stats.shipped ?? 0, icon: Truck, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Delivered", value: data?.stats.delivered ?? 0, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
-          { label: "Refunded", value: data?.stats.refunded ?? 0, icon: RotateCcw, color: "text-red-600", bg: "bg-red-50" },
+          { label: "Pending", value: stats.pending, icon: Loader2, color: "text-yellow-600", bg: "bg-yellow-50", spin: true },
+          { label: "Shipped", value: stats.shipped, icon: Truck, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Delivered", value: stats.delivered, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50" },
+          { label: "Refunded", value: stats.refunded, icon: RotateCcw, color: "text-red-600", bg: "bg-red-50" },
         ].map((stat, i) => (
-          <div key={i} className={`glass-panel border border-black/5 rounded-lg py-2 px-0.5 flex flex-col items-center justify-center text-center shadow-sm`}>
+          <div key={i} className="glass-panel border border-black/5 rounded-lg py-2 px-0.5 flex flex-col items-center justify-center text-center shadow-sm">
             <div className={`p-1 rounded ${stat.bg}`}>
-              <stat.icon className={`w-4 h-4 ${stat.color} ${stat.label === 'Pending' ? 'animate-spin' : ''}`} />
+              <stat.icon className={`w-4 h-4 ${stat.color} ${(stat as any).spin ? "animate-spin" : ""}`} />
             </div>
             <div className="text-[9px] font-black text-black">{stat.value}</div>
             <div className="text-[5px] font-bold uppercase tracking-wider text-black/40">{stat.label}</div>
@@ -97,139 +104,210 @@ export default function AccountDashboardClient() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* Current Cart */}
-        <div className="glass-panel-heavy rounded-3xl p-8 border border-black/5 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-black flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5" /> Current Cart
-            </h3>
-            <Link href="/cart" className="text-xs font-bold text-black/40 hover:text-black transition flex items-center gap-1">
-              View All <ArrowRight className="w-3 h-3" />
-            </Link>
+      {/* Cart Summary Bar - minimal, no product list */}
+      {cartItems.length > 0 && (
+        <Link
+          href="/cart"
+          className="flex items-center justify-between gap-3 glass-panel-heavy rounded-2xl px-5 py-3 border border-black/5 shadow-sm hover:bg-black/[0.02] transition"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-black/5 rounded-xl">
+              <ShoppingBag className="w-4 h-4 text-black/40" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-black">{cartItems.length} item{cartItems.length !== 1 ? "s" : ""} in cart</div>
+              <div className="text-[10px] font-bold text-black/30 uppercase tracking-widest">Continue checkout</div>
+            </div>
           </div>
-          
-              {cartItems.length === 0 ? (
-            <div className="py-10 text-center">
-              <div className="inline-flex p-4 bg-black/5 rounded-full mb-4">
-                <ShoppingBag className="w-8 h-8 text-black/20" />
-              </div>
-              <p className="text-sm font-medium text-black/40 italic">Your cart is empty.</p>
-            </div>
-              ) : (
-                <div className="space-y-4">
-              {cartItems.slice(0, 3).map((item) => (
-                <div key={item.id} className="flex flex-wrap items-center gap-4 p-3 rounded-2xl bg-black/[0.02] border border-black/5">
-                  <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden bg-white shadow-sm border border-black/5">
-                    <Image 
-                      src={item.imageUrl ? getOptimizedUrl(item.imageUrl, 150) : "/placeholder-product.png"} 
-                      alt={item.name} 
-                      fill 
-                      className="object-cover" 
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs md:text-sm font-bold text-black line-clamp-2">{item.name}</div>
-                    <div className="text-[10px] md:text-xs text-black/40 font-bold uppercase tracking-tighter mt-0.5">{item.brand}</div>
-                  </div>
-                  <div className="text-sm font-black text-black">
-                    <Price amount={item.discountPrice ?? item.price} countryPrices={item.countryPrices} />
-                  </div>
-                </div>
-              ))}
-              {cartItems.length > 3 && (
-                <p className="text-center text-[10px] font-bold text-black/30 uppercase tracking-widest mt-2">+ {cartItems.length - 3} more items</p>
-              )}
-              <div className="mt-6 pt-6 border-t border-black/5 flex items-center justify-between">
-                <div>
-                  <div className="text-[10px] font-bold text-black/40 uppercase tracking-widest">Estimated Total</div>
-                  <div className="text-xl font-black text-black">
-                    <Price amount={cartTotal} />
-                  </div>
-                </div>
-                <Link href="/cart" className="bg-black text-white rounded-full px-6 py-2.5 text-xs font-bold shadow-lg shadow-black/20 transition hover:scale-105 active:scale-95">
-                  Checkout
-                </Link>
-              </div>
-            </div>
+          <ChevronDown className="w-4 h-4 text-black/30 -rotate-90" />
+        </Link>
+      )}
+
+      {/* Orders */}
+      <div className="glass-panel-heavy rounded-3xl p-6 md:p-8 border border-black/5 shadow-xl bg-white">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-black flex items-center gap-2">
+            <Package className="w-5 h-5" /> Orders
+          </h3>
+          {orders.length > 0 && (
+            <Link
+              href={guestEmail ? `/account/orders?email=${encodeURIComponent(guestEmail)}` : "/account/orders"}
+              className="text-xs font-bold text-black/40 hover:text-black transition flex items-center gap-1"
+            >
+              All Orders →
+            </Link>
           )}
         </div>
 
-        {/* Recent Orders */}
-        <div className="glass-panel-heavy rounded-3xl p-8 border border-black/5 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-black flex items-center gap-2">
-              <Package className="w-5 h-5" /> Recent Orders
-            </h3>
-            <Link href={guestEmailState ? `/account/orders?email=${encodeURIComponent(guestEmailState)}` : `/account/orders`} className="text-xs font-bold text-black/40 hover:text-black transition flex items-center gap-1">
-              History <ArrowRight className="w-3 h-3" />
-            </Link>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-black/20" />
           </div>
-
-          {!data || data.orders.length === 0 ? (
-            <div className="py-10 text-center">
-              <div className="inline-flex p-4 bg-black/5 rounded-full mb-4">
-                <Package className="w-8 h-8 text-black/20" />
-              </div>
-              <p className="text-sm font-medium text-black/40 italic">No orders found.</p>
+        ) : orders.length === 0 ? (
+          <div className="py-12 text-center">
+            <div className="inline-flex p-4 bg-black/5 rounded-full mb-4">
+              <Package className="w-8 h-8 text-black/20" />
             </div>
-          ) : (
-            <div className="space-y-4">
-              {data.orders.slice(0, 3).map((order) => (
-                <div key={order.id} className="p-4 rounded-2xl bg-black/[0.02] border border-black/5 group hover:bg-white transition-all shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-[10px] font-bold text-black/40 uppercase tracking-tighter">ID: #{order.id}</div>
-                    <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
-                      order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                      order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                      order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {order.status}
+            <p className="text-sm font-medium text-black/40 italic">No orders yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {orders.map((order: any) => {
+              const isExpanded = expandedId === order.id;
+              const thumbnails = order.items.map((it: any) => it.image).filter(Boolean);
+
+              return (
+                <div
+                  key={order.id}
+                  className="rounded-2xl border border-black/5 bg-white overflow-hidden shadow-sm transition-all"
+                >
+                  {/* Order header: total + status + date */}
+                  <button
+                    onClick={() => toggleExpand(order.id)}
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-black/[0.02] transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-black text-black">{formatPrice(order.total, order.currency)}</span>
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest border ${statusBadgeClass(order.status)}`}>
+                        {order.status.replace(/_/g, " ")}
+                      </span>
                     </div>
-                  </div>
-                  
-                  {/* Product List Summary */}
-                  <div className="mb-4 space-y-2">
-                    {order.items?.map((item: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <div className="p-1 bg-black/5 rounded-lg">
-                          <Package className="w-3 h-3 text-black/20" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-black/30 font-bold">{new Date(order.createdAt).toLocaleDateString()}</span>
+                      <ChevronDown className={`w-4 h-4 text-black/30 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                    </div>
+                  </button>
+
+                  {/* Product rows */}
+                  <div className="border-t border-black/5">
+                    {order.items.map((item: any, i: number) => (
+                      <div key={i} className="flex items-center gap-4 px-5 py-3 border-t border-black/5 first:border-t-0">
+                        <div className="relative w-16 h-16 flex-shrink-0 bg-black/5 rounded-md overflow-hidden">
+                          {item.image ? (
+                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-black/20">
+                              {item.name?.substring(0, 2) || "PD"}
+                            </div>
+                          )}
                         </div>
-                  <span className="text-[10px] md:text-[11px] font-bold text-black/70 line-clamp-1 flex-1">{item.name}</span>
-                        <span className="text-[10px] font-black text-black/30">×{item.quantity}</span>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-black truncate">{item.name}</h4>
+                          <p className="text-xs text-black/40 font-medium">Qty: {item.quantity || 1}</p>
+                        </div>
+                        <div className="text-sm font-semibold text-black shrink-0">
+                          {formatPrice(Number(item.unitPrice), order.currency)}
+                        </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-black/5">
-                    <div>
-                      <div className="text-lg font-black text-black">
-                        <Price amount={order.totalCents} currency={order.currency} />
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <div className="border-t border-black/5 px-4 py-5 space-y-5 bg-black/[0.015] animate-in fade-in slide-in-from-top-2 duration-200">
+
+                      {/* Payment & Summary row */}
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="rounded-xl border border-black/5 bg-white p-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-2 flex items-center gap-1.5">
+                            <CreditCard className="w-3 h-3" /> Payment
+                          </h4>
+                          <div className="space-y-1.5 text-[11px]">
+                            <div className="flex justify-between">
+                              <span className="font-bold text-black/40">Method</span>
+                              <span className="font-bold">{order.paymentMethod || "N/A"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="font-bold text-black/40">Status</span>
+                              <span className={`font-black uppercase tracking-widest text-[9px] ${order.paymentStatus === "PAID" ? "text-green-600" : "text-amber-600"}`}>
+                                {order.paymentStatus || "PENDING"}
+                              </span>
+                            </div>
+                            <div className="border-t border-black/5 pt-2 mt-2 space-y-1">
+                              <div className="flex justify-between text-[10px]">
+                                <span className="text-black/40 font-bold">Subtotal</span>
+                                <span className="font-bold">{formatPrice(order.subtotal || 0, order.currency)}</span>
+                              </div>
+                              {(order.discount ?? 0) > 0 && (
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-green-600 font-bold">Discount</span>
+                                  <span className="font-bold text-green-600">-{formatPrice(order.discount, order.currency)}</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between text-[10px]">
+                                <span className="text-black/40 font-bold">Shipping</span>
+                                <span className="font-bold">{formatPrice(order.shipping || 0, order.currency)}</span>
+                              </div>
+                              {(order.taxAmount ?? 0) > 0 && (
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-orange-600 font-bold">VAT</span>
+                                  <span className="font-bold text-orange-600">{formatPrice(order.taxAmount, order.currency)}</span>
+                                </div>
+                              )}
+                              <div className="border-t border-black/10 pt-2 flex justify-between">
+                                <span className="text-[12px] font-black">Total</span>
+                                <span className="text-[14px] font-black">{formatPrice(order.total, order.currency)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Tracking */}
+                        <div className="rounded-xl border border-black/5 bg-white p-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-2 flex items-center gap-1.5">
+                            <Truck className="w-3 h-3" /> Delivery
+                          </h4>
+                          <div className="space-y-1.5 text-[11px]">
+                            <div className="flex justify-between">
+                              <span className="font-bold text-black/40">Courier</span>
+                              <span className="font-bold">{order.shipment?.courier || "Standard"}</span>
+                            </div>
+                            {order.shipment?.trackingCode && (
+                              <div className="flex justify-between">
+                                <span className="font-bold text-black/40">Waybill</span>
+                                <span className="font-bold font-mono text-[10px]">{order.shipment.trackingCode}</span>
+                              </div>
+                            )}
+                            {(order.trackingUrl || order.shipment?.trackingUrl) && (
+                              <a
+                                href={order.trackingUrl || order.shipment?.trackingUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 mt-3 w-full px-4 py-2 rounded-full bg-black text-white text-[9px] font-black uppercase tracking-widest hover:bg-black/80 transition"
+                              >
+                                <ExternalLink className="w-3 h-3" /> Track
+                              </a>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-[10px] font-bold text-black/30 uppercase">{new Date(order.createdAt).toLocaleDateString()}</div>
+
+                      {/* Address */}
+                      {order.shippingAddress && Object.keys(order.shippingAddress).length > 0 && (
+                        <div className="rounded-xl border border-black/5 bg-white p-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-black/30 mb-2 flex items-center gap-1.5">
+                            <MapPin className="w-3 h-3" /> Delivery Address
+                          </h4>
+                          <div className="text-[11px] font-bold text-black/60 leading-relaxed">
+                            {formatAddress(order.shippingAddress)}
+                          </div>
+                        </div>
+                      )}
+
+                      <Link
+                        href={guestEmail ? `/account/orders/${order.id}?email=${encodeURIComponent(guestEmail)}` : `/account/orders/${order.id}`}
+                        className="block w-full text-center py-3 rounded-full border border-black/10 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white hover:border-black transition"
+                      >
+                        Full Receipt →
+                      </Link>
                     </div>
-                    <Link href={guestEmailState ? `/account/orders/${order.id}?email=${encodeURIComponent(guestEmailState)}` : `/account/orders/${order.id}`} className="p-2 rounded-full hover:bg-black/5 transition">
-                      <ArrowRight className="w-4 h-4 text-black/40" />
-                    </Link>
-                  </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+              );
+            })}
+          </div>
+        )}
       </div>
-
-      {/* Advisory Note */}
-      <div className="glass-panel rounded-2xl px-6 py-4 border border-blue-500/10 bg-blue-50/30 flex items-start gap-3">
-        <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-        <p className="text-xs font-medium text-blue-800 leading-relaxed">
-           Order statuses are updated automatically via courier integration. Ensure your <strong>Shipping Address</strong> is complete to avoid processing delays.
-        </p>
-      </div>
-
     </div>
   );
 }
