@@ -72,7 +72,7 @@ function HomeProductCardComponent({
   const { price: countryPrice } = getDisplayPrice(product, selectedCountry);
   const basePrice = product.discountPrice ?? product.price;
   const displayPrice = countryPrice > 0 ? countryPrice : basePrice;
-  const isNotAvailable = displayPrice <= 0;
+  const isNotAvailable = displayPrice <= 0 || (product.stockQuantity ?? 0) <= 0;
   const price = displayPrice;
   const hasDiscount = countryPrice > 0 && product.discountPrice && product.discountPrice < countryPrice;
   

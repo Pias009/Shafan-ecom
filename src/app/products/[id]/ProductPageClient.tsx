@@ -47,7 +47,8 @@ export default function ProductPageClient({ product, recommendations, reviews = 
     return getDisplayPrice(product, selectedCountry);
   }, [product, selectedCountry]);
   const displayPrice = priceInfo.price || product.price || 0;
-  const isAvailable = displayPrice > 0;
+  const isOutOfStock = (product.stockQuantity ?? 0) <= 0;
+  const isAvailable = displayPrice > 0 && !isOutOfStock;
 
   const descriptionTabs = [
     { key: 'description', label: 'Description' },
@@ -313,14 +314,22 @@ export default function ProductPageClient({ product, recommendations, reviews = 
             </h1>
 
             <div className="flex items-baseline gap-2 sm:gap-4">
-              {isAvailable ? (
+              {isOutOfStock ? (
+                <div className="flex flex-col gap-2">
+                  <Price amount={displayPrice} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-black" />
+                  <span className="text-xs sm:text-sm font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-full inline-flex items-center gap-2 w-fit border border-orange-200">
+                    <span className="w-2 h-2 rounded-full bg-orange-500" />
+                    Out of Stock
+                  </span>
+                </div>
+              ) : isAvailable ? (
                 <Price amount={displayPrice} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-black" />
               ) : (
                 <span className="text-base sm:text-xl md:text-2xl lg:text-3xl font-black text-red-500">Unavailable in this region</span>
               )}
             </div>
 
-            {isAvailable && (
+            {!isOutOfStock && isAvailable && (
               <div className="flex flex-col gap-2">
                 <TabbyPromo 
                   price={displayPrice} 
@@ -341,17 +350,18 @@ export default function ProductPageClient({ product, recommendations, reviews = 
             <div className="flex gap-2 sm:gap-3 pt-2">
               <button
                 onClick={() => addToCart()}
-                disabled={isAddingToCart}
-                className="flex-1 sm:flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 text-gray-700 text-xs sm:text-sm font-black uppercase tracking-[0.15em] hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-gray-200/50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                disabled={isAddingToCart || isOutOfStock}
+                className={`flex-1 sm:flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2 ${isOutOfStock ? 'bg-gray-100 border-2 border-gray-200 text-gray-300 cursor-not-allowed opacity-50' : 'bg-gradient-to-b from-white to-gray-100 border-2 border-gray-200 text-gray-700 hover:from-gray-50 hover:to-gray-200 hover:border-gray-300 hover:shadow-xl hover:shadow-gray-200/50 active:scale-[0.98]'}`}
               >
                 {isAddingToCart ? <Check size={16} className="text-green-500" /> : null}
-                {isAddingToCart ? 'Added' : 'Add to Cart'}
+                {isAddingToCart ? 'Added' : (isOutOfStock ? 'Out of Stock' : 'Add to Cart')}
               </button>
               <button
                 onClick={() => orderNow()}
-                className="flex-1 sm:flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-black text-white font-black uppercase tracking-[0.15em] text-xs sm:text-sm shadow-xl shadow-black/20 hover:bg-gray-800 transition-all"
+                disabled={isOutOfStock}
+                className={`flex-1 sm:flex-[2] h-12 sm:h-14 rounded-xl sm:rounded-2xl font-black uppercase tracking-[0.15em] text-xs sm:text-sm transition-all ${isOutOfStock ? 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50 shadow-none' : 'bg-black text-white shadow-xl shadow-black/20 hover:bg-gray-800'}`}
               >
-                Order Now
+                {isOutOfStock ? 'Available Soon' : 'Order Now'}
               </button>
             </div>
 

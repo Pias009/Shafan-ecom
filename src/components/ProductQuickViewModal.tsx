@@ -38,6 +38,7 @@ interface QuickViewProduct {
     currency: string;
     active?: boolean;
   }>;
+  stockQuantity?: number;
   imageUrl: string;
   images?: string[];
   details?: string;
@@ -77,8 +78,11 @@ export function ProductQuickViewModal({
   }, []);
 
   // STRICT: Compute price using selectedCountry - no fallbacks
-  const { displayPrice, originalPrice, isAvailable } = useMemo(() => {
-    if (!product) return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+  const { displayPrice, originalPrice, isAvailable, isOutOfStock } = useMemo(() => {
+    if (!product) return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: false };
+    
+    const stockQty = product.stockQuantity ?? 0;
+    const outOfStock = stockQty <= 0;
     
     // Debug logging
     console.log('QuickView selectedCountry:', selectedCountry, 'product:', product.name);
@@ -90,7 +94,7 @@ export function ProductQuickViewModal({
     // If no country prices at all, show unavailable
     if (cpArray.length === 0) {
       console.log('No country prices for:', product.name);
-      return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+      return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: outOfStock };
     }
     
     const countryUpper = selectedCountry.toUpperCase();
@@ -111,13 +115,14 @@ export function ProductQuickViewModal({
         return {
           displayPrice: priceValue,
           originalPrice: priceValue,
-          isAvailable: true
+          isAvailable: !outOfStock,
+          isOutOfStock: outOfStock
         };
       }
     }
     
     // NO FALLBACK - if no valid country price, show unavailable
-    return { displayPrice: 0, originalPrice: 0, isAvailable: false };
+    return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: outOfStock };
   }, [product, selectedCountry]);
 
   // Combine main image with gallery images, filtering out duplicates
@@ -336,7 +341,20 @@ export function ProductQuickViewModal({
                     )}
                   </div>
                   <div className="flex items-center gap-4 py-2 md:py-4 border-y border-black/5">
-                    {isAvailable ? (
+                    {isOutOfStock ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-col">
+                          <span className="text-3xl md:text-5xl font-black text-black flex items-baseline gap-2">
+                            {displayPrice.toFixed(2)}
+                            <span className="text-lg md:text-xl font-bold text-black/40 uppercase tracking-widest">{selectedCurrency}</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-xl">
+                          <span className="w-2 h-2 rounded-full bg-orange-500" />
+                          <span className="text-xs md:text-sm font-black text-orange-600 uppercase tracking-wider">Out of Stock</span>
+                        </div>
+                      </div>
+                    ) : isAvailable ? (
                       <div className="flex flex-col">
                         <span className="text-3xl md:text-5xl font-black text-black flex items-baseline gap-2">
                           {displayPrice.toFixed(2)}
@@ -367,19 +385,21 @@ export function ProductQuickViewModal({
                 <div className="flex gap-3 items-center">
                   <button
                     type="button"
+                    disabled={isOutOfStock}
                     onClick={() => onAddToCart(product)}
-                    className="w-12 h-12 md:w-auto md:h-20 md:flex-1 rounded-2xl md:rounded-3xl bg-white border-2 border-black/10 flex items-center justify-center md:px-8 text-black hover:bg-black hover:text-white transition-all shadow-xl shadow-black/5 active:scale-95 group shrink-0"
+                    className={`w-12 h-12 md:w-auto md:h-20 md:flex-1 rounded-2xl md:rounded-3xl border-2 flex items-center justify-center md:px-8 transition-all shadow-xl shadow-black/5 group shrink-0 ${isOutOfStock ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-50' : 'bg-white border-black/10 text-black hover:bg-black hover:text-white active:scale-95'}`}
                   >
                     <ShoppingBag size={20} className="md:mr-3 transition-transform group-hover:rotate-12" />
-                    <span className="hidden md:inline text-[11px] font-black uppercase tracking-[0.2em]">{t.product.addToCart}</span>
+                    <span className="hidden md:inline text-[11px] font-black uppercase tracking-[0.2em]">{isOutOfStock ? 'Out of Stock' : t.product.addToCart}</span>
                   </button>
                   <button
                     type="button"
+                    disabled={isOutOfStock}
                     onClick={() => onOrderNow(product)}
-                    className="relative flex-[2] h-12 md:h-20 rounded-2xl md:rounded-3xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xl shadow-emerald-600/20 transition-all active:scale-95 overflow-hidden group"
+                    className={`relative flex-[2] h-12 md:h-20 rounded-2xl md:rounded-3xl text-white shadow-2xl transition-all overflow-hidden group ${isOutOfStock ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 active:scale-95'}`}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    <span className="font-black text-[10px] md:text-sm lg:text-base uppercase tracking-[0.2em]">{t.product.orderNow}</span>
+                    <span className="font-black text-[10px] md:text-sm lg:text-base uppercase tracking-[0.2em]">{isOutOfStock ? 'Available Soon' : t.product.orderNow}</span>
                   </button>
                 </div>
                 <button

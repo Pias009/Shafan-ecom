@@ -11,17 +11,18 @@ const NOTIFICATION_KEY_FALLBACK = "b6a80876-6b88-4692-8949-7f34578e3c89";
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.text();
-    const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
 
     let token = "";
-    if (authHeader && authHeader.toLowerCase().startsWith("bearer ")) {
-      token = authHeader.substring(7).trim();
-    } else if (authHeader) {
-      token = authHeader.trim();
+    const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
     }
-
     if (!token) {
-      console.error("[Tamara Webhook] Missing Authorization header");
+      const { searchParams } = new URL(request.url);
+      token = searchParams.get("tamaraToken") || "";
+    }
+    if (!token) {
+      console.error("[Tamara Webhook] Missing Authorization");
       return NextResponse.json({ error: "Missing Authorization" }, { status: 401 });
     }
 

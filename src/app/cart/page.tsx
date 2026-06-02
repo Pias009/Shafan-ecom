@@ -3,7 +3,7 @@
 import { useCartStore } from "@/lib/cart-store";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus, MapPin } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -649,6 +649,20 @@ function CartPageContent() {
                   Pickup
                 </button>
               </div>
+
+              {shipMethod === "pickup" && (
+                <div className="mb-5 rounded-xl lg:rounded-2xl border-2 border-black/10 bg-blue-50/50 p-4 md:p-5">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-bold text-black mb-1">Pick-up option will be available only for UAE.</p>
+                      <p className="text-xs font-semibold text-black/60 leading-relaxed">
+                        Address: office 405, al diyafa shopping center, satwa roundabout, Dubai
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="relative">

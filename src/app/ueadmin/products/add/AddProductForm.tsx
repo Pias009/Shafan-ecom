@@ -264,11 +264,6 @@ export function AddProductForm({
       return;
     }
     
-    if (formData.stockQuantity === 0) {
-      toast.error('Stock cannot be 0. Please add stock quantity.');
-      return;
-    }
-    
     const validCountryPrices = formData.countryPrices.filter(cp => cp.price > 0);
     if (validCountryPrices.length === 0) {
       toast.error('At least one country price must be set. Product will not be visible without prices.');

@@ -311,11 +311,6 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
   };
 
   const handleSave = async () => {
-    if (product.stockQuantity === 0) {
-      toast.error('Stock cannot be 0. Please add stock quantity.');
-      return;
-    }
-    
     const validCountryPrices = (product.countryPrices || []).filter((cp: any) => Number(cp.price) > 0);
     if (validCountryPrices.length === 0) {
       toast.error('At least one country price must be set. Product will not be visible without prices.');
