@@ -349,51 +349,55 @@ function CartPageContent() {
 
       const activeMethod = methodOverride || activePayment || "stripe";
 
-      // Tamara: direct checkout session instead of order creation
+      // Tamara: create order first, then create session
       if (activeMethod === "tamara") {
-        const tamaraRes = await fetch("/api/checkout/tamara", {
+        const orderRes = await fetch("/api/create-order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            cartItems: items.map((i: CartItem) => {
-              const { price: itemPrice } = getDisplayPrice(i, selectedCountry);
-              return {
-                id: i.id,
-                name: i.name,
-                price: Number(itemPrice) || 0,
-                quantity: i.quantity,
-                imageUrl: i.imageUrl,
-                brand: i.brand,
-              };
-            }),
-            totalAmount: total,
-            currency: getCurrencyForCountry(selectedCountry),
-            customerDetails: {
-              firstName,
-              lastName,
-              email,
-              phone,
-              addressLine1: streetAddress,
-              city,
-              region: emirate,
-              shippingAmount: Number(shippingFee) || 0,
-              taxAmount: Number(taxAmountLocal) || 0,
-              discountAmount: Number(discountAmount) || 0,
-              postalCode: "",
-            },
-            lang: currentLanguage.code,
+            items: orderItems,
+            subtotal: calculatedSubtotal,
+            shippingFee: Number(shippingFee),
+            discountAmount: Number(discountAmount),
+            taxAmount: taxAmountLocal,
+            taxRate: taxRateLocal,
+            total: totalLocal,
+            ...(couponCode && { couponCode }),
+            billing: addr,
+            shipping: addr,
+            country: selectedCountry,
+            payment_method: "tamara",
+            payment_method_title: `Tamara ${getCurrencyForCountry(selectedCountry)} Installments`,
           }),
         });
 
-        const tamaraData = await tamaraRes.json();
+        const data = await orderRes.json();
 
-        if (tamaraRes.ok && tamaraData.checkoutUrl) {
-          toast.success("Redirecting to Tamara...", { id: "checkout" });
-          useLoadingStore.getState().setRedirecting(true, "Redirecting to Tamara...");
-          window.location.href = tamaraData.checkoutUrl;
-          return;
+        if (orderRes.ok && data.orderId) {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("recent_order", data.orderId);
+          }
+
+          const tamaraRes = await fetch("/api/payments/tamara/create-session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: data.orderId }),
+          });
+
+          const tamaraData = await tamaraRes.json();
+
+          if (tamaraRes.ok && tamaraData.checkoutUrl) {
+            toast.success("Redirecting to Tamara...", { id: "checkout" });
+            useLoadingStore.getState().setRedirecting(true, "Redirecting to Tamara...");
+            window.location.href = tamaraData.checkoutUrl;
+            return;
+          } else {
+            toast.error(tamaraData.error || "Tamara checkout failed", { id: "checkout" });
+            setSubmitting(false);
+            return;
+          }
         } else {
-          toast.error(tamaraData.error || "Tamara checkout failed", { id: "checkout" });
+          toast.error(data?.error || `Server error (${orderRes.status})`, { id: "checkout" });
           setSubmitting(false);
           return;
         }

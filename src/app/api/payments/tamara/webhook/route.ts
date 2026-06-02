@@ -40,8 +40,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid Signature" }, { status: 401 });
     }
 
-    const webhookPayload = typeof decoded === "string" ? JSON.parse(decoded) : decoded;
-    console.log("[Tamara Webhook] Signature verified. Payload:", webhookPayload);
+    console.log("[Tamara Webhook] Signature verified.");
+
+    const webhookPayload = JSON.parse(payload) as Record<string, any>;
+    console.log("[Tamara Webhook] Payload:", webhookPayload);
 
     const eventType = webhookPayload?.event_type ?? webhookPayload?.eventType;
     const orderId = webhookPayload?.order_id ?? webhookPayload?.orderId;
