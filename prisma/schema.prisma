@@ -195,7 +195,7 @@ model Product {
   features         String[]
   images        String[]
   mainImage     String?
-  stockQuantity Int      @default(0)
+  stockQuantity Int      @default(100)
   price         Float?
   discountPrice Float?
   active        Boolean  @default(true)

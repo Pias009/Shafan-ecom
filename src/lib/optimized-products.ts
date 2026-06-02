@@ -27,6 +27,7 @@ const PRODUCT_LIST_SELECT = {
   ingredients: true,
   howToUse: true,
   mainImage: true,
+  stockQuantity: true,
   price: true,
   discountPrice: true,
   currency: true,

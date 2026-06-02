@@ -291,6 +291,30 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
         </div>
       )}
 
+      <div className="mb-6">
+        <button
+          onClick={async () => {
+            if (!confirm('Set stock to 100 for ALL products with 0 stock?')) return;
+            const tid = toast.loading('Fixing stock...');
+            try {
+              const res = await fetch('/api/admin/products/fix-stock', { method: 'POST' });
+              const data = await res.json();
+              if (res.ok) {
+                toast.success(data.message, { id: tid });
+                window.location.reload();
+              } else {
+                toast.error(data.error || 'Failed', { id: tid });
+              }
+            } catch {
+              toast.error('Failed to fix stock', { id: tid });
+            }
+          }}
+          className="inline-flex items-center gap-2 bg-amber-500 text-white text-xs font-black uppercase tracking-widest px-6 py-3 rounded-full hover:bg-amber-600 transition shadow-lg"
+        >
+          <Package size={14} /> Fix Stock (Set 0→100)
+        </button>
+      </div>
+
       <div className="glass-panel overflow-hidden rounded-[2.5rem] border border-black/5 shadow-sm bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left">

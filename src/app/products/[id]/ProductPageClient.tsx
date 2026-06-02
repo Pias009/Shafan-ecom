@@ -47,7 +47,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
     return getDisplayPrice(product, selectedCountry);
   }, [product, selectedCountry]);
   const displayPrice = priceInfo.price || product.price || 0;
-  const isOutOfStock = (product.stockQuantity ?? 0) <= 0;
+  const isOutOfStock = typeof product.stockQuantity === 'number' && product.stockQuantity <= 0;
   const isAvailable = displayPrice > 0 && !isOutOfStock;
 
   const descriptionTabs = [

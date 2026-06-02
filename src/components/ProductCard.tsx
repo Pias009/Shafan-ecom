@@ -89,7 +89,7 @@ const ProductCardComponent = function ProductCard({
     return null;
   }
   
-  const isNotAvailable = (product.stockQuantity ?? 0) <= 0;
+  const isNotAvailable = typeof product.stockQuantity === 'number' && product.stockQuantity <= 0;
 
   // Safely get the brand name as a string
   const brandName = typeof product.brand === "string"

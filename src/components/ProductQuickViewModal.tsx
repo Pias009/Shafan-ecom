@@ -81,8 +81,7 @@ export function ProductQuickViewModal({
   const { displayPrice, originalPrice, isAvailable, isOutOfStock } = useMemo(() => {
     if (!product) return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: false };
     
-    const stockQty = product.stockQuantity ?? 0;
-    const outOfStock = stockQty <= 0;
+    const outOfStock = typeof product.stockQuantity === 'number' && product.stockQuantity <= 0;
     
     // Debug logging
     console.log('QuickView selectedCountry:', selectedCountry, 'product:', product.name);
