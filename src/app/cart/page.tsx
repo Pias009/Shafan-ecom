@@ -668,6 +668,7 @@ function CartPageContent() {
                 </div>
               )}
 
+              {shipMethod === "ship" && (
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="relative">
                   <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
@@ -763,7 +764,7 @@ function CartPageContent() {
                   </button>
                   {showEmirateDropdown && (
                     <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
-                      {regions.map((r) => (
+                      {[...regions, "Other"].map((r) => (
                         <button
                           key={r}
                           type="button"
@@ -802,6 +803,7 @@ function CartPageContent() {
                   </div>
                 </div>
               </div>
+              )}
             </div>
 
             <label className="flex items-center gap-2.5 cursor-pointer group px-1 py-1 active:opacity-70">
