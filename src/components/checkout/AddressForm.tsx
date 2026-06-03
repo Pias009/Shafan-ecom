@@ -134,6 +134,11 @@ export default function CheckoutAddressForm({
     if (!formData.area_name.trim()) errors.area_name = "Area name is required";
     if (!formData.street_road.trim()) errors.street_road = "Street or Road name is required for accurate courier delivery";
     if (!formData.country) errors.country = "Country is required";
+    if (!formData.email.trim()) {
+      errors.email = "Please enter your email address";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
 
     return errors;
   }
