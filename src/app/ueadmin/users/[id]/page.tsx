@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { ArrowLeft, Mail, User, ShoppingBag, History, Calendar, DollarSign, Package, Lock, ShieldCheck } from 'lucide-react';
+import UserAddressManager from './_components/UserAddressManager';
 
 export default async function UserDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -105,6 +106,9 @@ export default async function UserDetailsPage(props: { params: Promise<{ id: str
                     </div>
                 </div>
             </section>
+
+            {/* Address Card */}
+            <UserAddressManager userId={userData.id} />
 
             {/* Stats Card */}
             <section className="bg-black p-8 rounded-[2.5rem] border border-white/5 text-white shadow-2xl shadow-black/20 overflow-hidden relative">

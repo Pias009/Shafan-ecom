@@ -252,6 +252,12 @@ export default function AddressForm() {
       errors.address1 = "Please enter your street address";
     }
 
+    if (!formData.email.trim()) {
+      errors.email = "Please enter your email address";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       Object.values(errors).forEach(msg => toast.error(msg));
@@ -506,13 +512,14 @@ export default function AddressForm() {
 
           {/* Email */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-[0.2em] text-black/50 ml-1">Email</label>
+            <label className="text-xs font-bold uppercase tracking-[0.2em] text-black/50 ml-1">Email *</label>
             <input 
               type="email"
+              required
               value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
+              onChange={e => { setFormData({...formData, email: e.target.value}); setFieldErrors(prev => ({...prev, email: ''})); }}
               placeholder="your@email.com"
-              className="w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white"
+              className={`w-full rounded-2xl px-5 py-3.5 text-black font-semibold border-2 ${fieldErrors.email ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white`}
             />
           </div>
         </div>

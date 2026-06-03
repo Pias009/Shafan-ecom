@@ -6,7 +6,7 @@ import { z } from "zod";
 const AddressSchema = z.object({
   fullName: z.string().trim().min(1).max(100),
   phone: z.string().trim().min(5).max(20),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.string().email(),
   country: z.string().trim().min(1),
   // Support both new and legacy field names
   city: z.string().trim().optional(),

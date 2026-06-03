@@ -3,7 +3,7 @@ import { z } from "zod";
 export const addressValidationSchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required").max(100),
   phone: z.string().trim().min(5, "Phone number is required").max(20),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.string().email("Valid email is required"),
   country: z.string().trim().min(1, "Country is required"),
   city_name: z.string().trim().min(1, "City name is required"),
   area_name: z.string().trim().min(1, "Area name is required"),
@@ -46,5 +46,5 @@ export const addressFieldRequired: Record<string, boolean> = {
   street_road: true,
   house_building: false,
   postalCode: false,
-  email: false,
+  email: true,
 };
