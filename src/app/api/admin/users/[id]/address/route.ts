@@ -11,7 +11,16 @@ const AddressSchema = z.object({
   address1: z.string().trim().min(1),
   address2: z.string().trim().optional().or(z.literal("")),
   postalCode: z.string().trim().optional().or(z.literal("")),
-});
+}).transform((data) => ({
+  fullName: data.fullName,
+  phone: data.phone,
+  email: data.email,
+  country: data.country,
+  city: data.city,
+  address1: data.address1,
+  address2: data.address2 || "",
+  postalCode: data.postalCode || "",
+}));
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
