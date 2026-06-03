@@ -409,8 +409,17 @@ export default function OrderEditor({ order }: OrderEditorProps) {
                   <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Address Line 1</label>
                   <input
                     type="text"
-                    value={shippingAddress.address_1 || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, address_1: e.target.value})}
+                    value={shippingAddress.address_1 || shippingAddress.street_road || ''}
+                    onChange={(e) => setShippingAddress({...shippingAddress, address_1: e.target.value, street_road: e.target.value})}
+                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Address Line 2</label>
+                  <input
+                    type="text"
+                    value={shippingAddress.address_2 || shippingAddress.house_building || ''}
+                    onChange={(e) => setShippingAddress({...shippingAddress, address_2: e.target.value, house_building: e.target.value})}
                     className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                   />
                 </div>
@@ -418,8 +427,46 @@ export default function OrderEditor({ order }: OrderEditorProps) {
                   <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">City</label>
                   <input
                     type="text"
-                    value={shippingAddress.city || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})}
+                    value={shippingAddress.city || shippingAddress.city_name || ''}
+                    onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value, city_name: e.target.value})}
+                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Area / District</label>
+                  <input
+                    type="text"
+                    value={shippingAddress.area_name || ''}
+                    onChange={(e) => setShippingAddress({...shippingAddress, area_name: e.target.value})}
+                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">State</label>
+                    <input
+                      type="text"
+                      value={shippingAddress.state || ''}
+                      onChange={(e) => setShippingAddress({...shippingAddress, state: e.target.value})}
+                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Postcode</label>
+                    <input
+                      type="text"
+                      value={shippingAddress.postcode || shippingAddress.postalCode || ''}
+                      onChange={(e) => setShippingAddress({...shippingAddress, postcode: e.target.value, postalCode: e.target.value})}
+                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Country</label>
+                  <input
+                    type="text"
+                    value={shippingAddress.country || ''}
+                    onChange={(e) => setShippingAddress({...shippingAddress, country: e.target.value})}
                     className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                   />
                 </div>
@@ -474,8 +521,17 @@ export default function OrderEditor({ order }: OrderEditorProps) {
                   <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Address Line 1</label>
                   <input
                     type="text"
-                    value={billingAddress.address_1 || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, address_1: e.target.value})}
+                    value={billingAddress.address_1 || billingAddress.street_road || ''}
+                    onChange={(e) => setBillingAddress({...billingAddress, address_1: e.target.value, street_road: e.target.value})}
+                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Address Line 2</label>
+                  <input
+                    type="text"
+                    value={billingAddress.address_2 || billingAddress.house_building || ''}
+                    onChange={(e) => setBillingAddress({...billingAddress, address_2: e.target.value, house_building: e.target.value})}
                     className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                   />
                 </div>
@@ -483,8 +539,46 @@ export default function OrderEditor({ order }: OrderEditorProps) {
                   <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">City</label>
                   <input
                     type="text"
-                    value={billingAddress.city || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, city: e.target.value})}
+                    value={billingAddress.city || billingAddress.city_name || ''}
+                    onChange={(e) => setBillingAddress({...billingAddress, city: e.target.value, city_name: e.target.value})}
+                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Area / District</label>
+                  <input
+                    type="text"
+                    value={billingAddress.area_name || ''}
+                    onChange={(e) => setBillingAddress({...billingAddress, area_name: e.target.value})}
+                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">State</label>
+                    <input
+                      type="text"
+                      value={billingAddress.state || ''}
+                      onChange={(e) => setBillingAddress({...billingAddress, state: e.target.value})}
+                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Postcode</label>
+                    <input
+                      type="text"
+                      value={billingAddress.postcode || billingAddress.postalCode || ''}
+                      onChange={(e) => setBillingAddress({...billingAddress, postcode: e.target.value, postalCode: e.target.value})}
+                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Country</label>
+                  <input
+                    type="text"
+                    value={billingAddress.country || ''}
+                    onChange={(e) => setBillingAddress({...billingAddress, country: e.target.value})}
                     className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
                   />
                 </div>

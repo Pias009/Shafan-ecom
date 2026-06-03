@@ -238,9 +238,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               {(shipping as Record<string, string | undefined>) ? (
                 <div className="space-y-2">
                   <div className="font-bold text-slate-900">{String((shipping as Record<string, string>).first_name || '')} {String((shipping as Record<string, string>).last_name || '')}</div>
-                  <div>{String((shipping as Record<string, string>).address_1 || '')}</div>
-                  {(shipping as Record<string, string>).address_2 && <div>{String((shipping as Record<string, string>).address_2)}</div>}
-                  <div>{String((shipping as Record<string, string>).city || '')}, {String((shipping as Record<string, string>).state || '')} {String((shipping as Record<string, string>).postcode || '')}</div>
+                  <div>{String((shipping as Record<string, string>).street_road || (shipping as Record<string, string>).address_1 || '')}</div>
+                  {((shipping as Record<string, string>).house_building || (shipping as Record<string, string>).address_2) && <div>{String((shipping as Record<string, string>).house_building || (shipping as Record<string, string>).address_2)}</div>}
+                  {(shipping as Record<string, string>).area_name && <div className="text-slate-500">{String((shipping as Record<string, string>).area_name)}</div>}
+                  <div>{String((shipping as Record<string, string>).city_name || (shipping as Record<string, string>).city || '')}, {String((shipping as Record<string, string>).state || '')} {String((shipping as Record<string, string>).postcode || '')}</div>
                   <div className="font-bold text-slate-800">{String((shipping as Record<string, string>).country || '')}</div>
                   {(shipping as Record<string, string>).phone && <div className="text-slate-500">Phone: {String((shipping as Record<string, string>).phone)}</div>}
                 </div>
@@ -260,9 +261,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               {(billing as Record<string, string | undefined>) ? (
                 <div className="space-y-2">
                   <div className="font-bold text-slate-900">{String((billing as Record<string, string>).first_name || '')} {String((billing as Record<string, string>).last_name || '')}</div>
-                  <div>{String((billing as Record<string, string>).address_1 || '')}</div>
-                  {(billing as Record<string, string>).address_2 && <div>{String((billing as Record<string, string>).address_2)}</div>}
-                  <div>{String((billing as Record<string, string>).city || '')}, {String((billing as Record<string, string>).state || '')} {String((billing as Record<string, string>).postcode || '')}</div>
+                  <div>{String((billing as Record<string, string>).street_road || (billing as Record<string, string>).address_1 || '')}</div>
+                  {((billing as Record<string, string>).house_building || (billing as Record<string, string>).address_2) && <div>{String((billing as Record<string, string>).house_building || (billing as Record<string, string>).address_2)}</div>}
+                  {(billing as Record<string, string>).area_name && <div className="text-slate-500">{String((billing as Record<string, string>).area_name)}</div>}
+                  <div>{String((billing as Record<string, string>).city_name || (billing as Record<string, string>).city || '')}, {String((billing as Record<string, string>).state || '')} {String((billing as Record<string, string>).postcode || '')}</div>
                   <div className="font-bold text-slate-800">{String((billing as Record<string, string>).country || '')}</div>
                   {(billing as Record<string, string>).email && <div className="text-slate-500">Email: {String((billing as Record<string, string>).email)}</div>}
                 </div>

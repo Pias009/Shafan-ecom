@@ -85,7 +85,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       // Block editing if order is in courier process or beyond
       const existingOrder = await prisma.order.findUnique({
         where: { id },
-        select: { status: true }
+        select: { status: true, shippingAddress: true, billingAddress: true }
       });
 
       if (existingOrder) {
@@ -104,8 +104,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
 
       if (status) updateData.status = status;
-      if (shippingAddress) updateData.shippingAddress = shippingAddress;
-      if (billingAddress) updateData.billingAddress = billingAddress;
+      if (shippingAddress) {
+        const existingShipping = existingOrder?.shippingAddress || {};
+        updateData.shippingAddress = { ...existingShipping as any, ...shippingAddress as any };
+      }
+      if (billingAddress) {
+        const existingBilling = existingOrder?.billingAddress || {};
+        updateData.billingAddress = { ...existingBilling as any, ...billingAddress as any };
+      }
       if (typeof total === 'number') updateData.total = total;
       if (typeof subtotal === 'number') updateData.subtotal = subtotal;
 
