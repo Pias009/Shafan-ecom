@@ -53,6 +53,15 @@ const nextConfig: NextConfig = {
       fullUrl: false,
     },
   },
+  redirects: async () => {
+    return [
+      {
+        source: '/p/:id',
+        destination: '/products/:id',
+        permanent: true,
+      },
+    ];
+  },
   headers: async () => {
     return [
       {
