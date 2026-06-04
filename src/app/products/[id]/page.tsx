@@ -7,8 +7,13 @@ import type { Metadata } from "next";
 
 export const revalidate = 60;
 
+function normalizeProductId(raw: string): string {
+  return decodeURIComponent(raw).split('?')[0].replace(/_(AE|SA|KW|BH|OM|QA)$/i, '');
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
+  const rawId = (await params).id;
+  const id = normalizeProductId(rawId);
   const storeCode = await getStoreCode();
   const product = await getOptimizedProduct(id, storeCode) as any;
 
@@ -29,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const rawId = (await params).id;
-  const id = decodeURIComponent(rawId).split('?')[0];
+  const id = normalizeProductId(rawId);
   const storeCode = await getStoreCode();
   
   const product = await getOptimizedProduct(id, storeCode) as any;

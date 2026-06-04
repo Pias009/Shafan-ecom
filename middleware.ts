@@ -74,6 +74,15 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
+  // Check for _COUNTRY suffix in pathname (e.g., Meta URL template with {product_id} → g:id → PRODUCTID_AE)
+  const pathCountryMatch = pathname.match(/_(AE|SA|KW|BH|OM|QA)(?:\/|$)/i);
+  if (pathCountryMatch && countryToStore[pathCountryMatch[1].toUpperCase()]) {
+    const storeCode = countryToStore[pathCountryMatch[1].toUpperCase()];
+    const res = NextResponse.next();
+    res.cookies.set('store_code', storeCode, { path: '/', maxAge: 60 * 60 * 24 * 30 });
+    return res;
+  }
+
   const hasStore = req.cookies.get('store_code');
   if (hasStore) return NextResponse.next();
 
