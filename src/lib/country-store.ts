@@ -37,7 +37,7 @@ export const useCountryStore = create<CountryState>()(
         
         // Sync with store_code cookie for server-side logic
         const countryToStore: Record<string, string> = {
-          'AE': 'UAE', 'SA': 'SAUDI', 'KW': 'KUWAIT', 'BH': 'BAHRAIN', 'OM': 'OMAN', 'QA': 'QAR'
+          'AE': 'UAE', 'SA': 'SAUDI', 'KW': 'KUWAIT', 'BH': 'BAHRAIN', 'OM': 'OMAN', 'QA': 'QATAR'
         };
         const storeCode = countryToStore[upperCode] || 'UAE';
         if (typeof document !== 'undefined') {
@@ -60,7 +60,7 @@ export const useCountryStore = create<CountryState>()(
         
         // Sync with store_code cookie for server-side logic
         const countryToStore: Record<string, string> = {
-          'AE': 'UAE', 'SA': 'SAUDI', 'KW': 'KUWAIT', 'BH': 'BAHRAIN', 'OM': 'OMAN', 'QA': 'QAR'
+          'AE': 'UAE', 'SA': 'SAUDI', 'KW': 'KUWAIT', 'BH': 'BAHRAIN', 'OM': 'OMAN', 'QA': 'QATAR'
         };
         const storeCode = countryToStore[country] || 'UAE';
         if (typeof document !== 'undefined') {

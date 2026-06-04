@@ -71,6 +71,15 @@ export default function ProductPageClient({ product, recommendations, reviews = 
     ...(product.images || [])
   ].filter((img, index, self) => img && self.indexOf(img) === index) as string[];
 
+  // Sync country from ?store= query param (e.g., from Meta Catalog feed)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const storeParam = params.get('store');
+    if (storeParam) {
+      useCountryStore.getState().setCountry(storeParam.toUpperCase());
+    }
+  }, []);
+
   // ViewItem event via DataLayer
   useEffect(() => {
     if (product?.id) {
