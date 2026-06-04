@@ -28,7 +28,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const rawId = (await params).id;
+  const id = decodeURIComponent(rawId).split('?')[0];
   const storeCode = await getStoreCode();
   
   const product = await getOptimizedProduct(id, storeCode) as any;

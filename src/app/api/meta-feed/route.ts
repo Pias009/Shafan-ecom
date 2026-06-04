@@ -38,7 +38,7 @@ export async function GET() {
       const imageLink = product.mainImage 
         ? (product.mainImage.startsWith('http') ? product.mainImage : `${baseUrl}${product.mainImage}`)
         : '';
-      const link = `${baseUrl}/products/${product.slug || product.id}`;
+      const link = `${baseUrl}/products/${encodeURIComponent(product.slug || product.id)}`;
       // Use AE CountryPrice as primary price source (base price is always 0)
       const aePrice = product.countryPrices?.[0];
       const effectivePrice = aePrice?.price ?? product.price ?? 0;

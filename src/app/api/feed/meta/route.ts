@@ -77,7 +77,8 @@ export async function GET() {
     const xmlItems = products
       .flatMap((product) => {
         const image = product.mainImage || (product.images && product.images[0]) || DEFAULT_IMAGE;
-        const link = `${SITE_URL}/products/${product.slug || product.id}`;
+        const productPath = `/products/${encodeURIComponent(product.slug || product.id)}`;
+        const link = `${SITE_URL}${productPath}`;
         const brandName = product.brand?.name || 'SHANFA';
         const categoryPath = product.subCategory
           ? `${product.subCategory.category?.name || ''} > ${product.subCategory.name}`
