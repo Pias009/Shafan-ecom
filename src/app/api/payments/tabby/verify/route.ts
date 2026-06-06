@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
 import { OrderStatus } from "@prisma/client";
 import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
-
-function verifySignature(payload: string, signature: string): boolean {
-  const secret = process.env.TABBY_WEBHOOK_SECRET;
-  if (!secret || !signature) return false;
-  const expected = createHmac("sha256", secret).update(payload).digest("hex");
-  return signature === expected;
-}
 
 async function notifyPaymentConfirmed(orderId: string) {
   try {
@@ -63,88 +55,97 @@ async function notifyPaymentConfirmed(orderId: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const rawPayload = await request.text();
-  const signature = request.headers.get("x-tabby-signature") || "";
-
-  if (!verifySignature(rawPayload, signature)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const body = JSON.parse(rawPayload);
-    const eventType = body?.event?.type || body?.type;
-    const paymentStatus = body?.payload?.status || body?.status;
-    const paymentId = body?.payload?.id || body?.id;
-    const orderId = body?.metadata?.order_id || body?.payload?.order_id || body?.payload?.order?.reference_id;
+    const body = await request.json();
+    const { orderId, paymentId } = body;
 
-    const order = await prisma.order.findFirst({
-      where: {
-        OR: [
-          { tabbyPaymentId: paymentId },
-          { tabbySessionId: paymentId },
-          ...(orderId ? [{ id: orderId }] : []),
-        ],
-      },
-    });
-
-    if (!order) {
-      return NextResponse.json({ received: true });
+    if (!orderId || !paymentId) {
+      return NextResponse.json(
+        { success: false, error: "orderId and paymentId are required" },
+        { status: 400 },
+      );
     }
 
-    // Auto-capture on authorized status
-    if (eventType === "payment.authorized" || paymentStatus?.toUpperCase() === "AUTHORIZED") {
-      console.log(`[Tabby Webhook] Payment AUTHORIZED for ${order.id}. Triggering capture...`);
-      try {
-        const shippingAddr = (order.shippingAddress ?? {}) as Record<string, unknown>;
-        const countryCode = String(shippingAddr.country || "AE").toUpperCase();
-        const regionMap: Record<string, TabbyRegion> = { AE: "UAE", SA: "KSA", KW: "Kuwait" };
-        const region: TabbyRegion = regionMap[countryCode] || "UAE";
-        const tabbyService = new TabbyService(region);
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) {
+      return NextResponse.json({ success: false, error: "Order not found" }, { status: 404 });
+    }
 
-        await tabbyService.capturePayment(
-          paymentId,
-          Number(order.total || 0),
-          (order.currency || "AED") as TabbyCurrency,
-        );
+    // Check if order is already confirmed/paid
+    if (order.status === OrderStatus.ORDER_CONFIRMED || order.paymentStatus === "PAID") {
+      return NextResponse.json({ success: true, message: "Order already processed" });
+    }
 
-        await prisma.order.update({
-          where: { id: order.id },
-          data: {
-            status: OrderStatus.ORDER_CONFIRMED,
-            paymentStatus: "PAID" as any,
-          },
-        });
+    const shippingAddr = (order.shippingAddress ?? {}) as Record<string, unknown>;
+    const countryCode = String(shippingAddr.country || "AE").toUpperCase();
+    const regionMap: Record<string, TabbyRegion> = { AE: "UAE", SA: "KSA", KW: "Kuwait" };
+    const region: TabbyRegion = regionMap[countryCode] || "UAE";
+    const tabbyService = new TabbyService(region);
 
-        await notifyPaymentConfirmed(order.id);
+    // Retrieve payment status from Tabby
+    const payment = await tabbyService.getPayment(paymentId);
 
-        console.log(`[Tabby Webhook] Payment captured and order ${order.id} confirmed.`);
-      } catch (err: any) {
-        console.error(`[Tabby Webhook] Capture FAILED for ${order.id}:`, err.message);
-      }
-    } else if (paymentStatus?.toUpperCase() === "CAPTURED") {
+    if (payment.status === "AUTHORIZED") {
+      // Capture the authorized payment
+      await tabbyService.capturePayment(
+        paymentId,
+        Number(order.total || 0),
+        (order.currency || "AED") as TabbyCurrency,
+      );
+
       await prisma.order.update({
-        where: { id: order.id },
+        where: { id: orderId },
         data: {
           status: OrderStatus.ORDER_CONFIRMED,
           paymentStatus: "PAID" as any,
         },
       });
 
-      await notifyPaymentConfirmed(order.id);
-    } else if (paymentStatus?.toUpperCase() === "CLOSED") {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { paymentStatus: "PAID" as any },
+      console.log(`[Tabby Verify] Payment verified and captured for order ${orderId}`);
+
+      await notifyPaymentConfirmed(orderId);
+
+      return NextResponse.json({
+        success: true,
+        status: "CAPTURED",
+        message: "Payment verified and captured successfully",
       });
-    } else if (paymentStatus?.toUpperCase() === "REJECTED" || paymentStatus?.toUpperCase() === "FAILED") {
+    } else if (payment.status === "CAPTURED" || payment.status === "CLOSED") {
+      // Payment already captured
       await prisma.order.update({
-        where: { id: order.id },
-        data: { paymentStatus: "CANCELLED" as any },
+        where: { id: orderId },
+        data: {
+          status: OrderStatus.ORDER_CONFIRMED,
+          paymentStatus: "PAID" as any,
+        },
+      });
+
+      await notifyPaymentConfirmed(orderId);
+
+      return NextResponse.json({
+        success: true,
+        status: payment.status,
+        message: "Payment already captured",
+      });
+    } else if (payment.status === "REJECTED" || payment.status === "EXPIRED") {
+      return NextResponse.json({
+        success: false,
+        status: payment.status,
+        error: `Payment status is ${payment.status}`,
       });
     }
 
-    return NextResponse.json({ received: true });
-  } catch {
-    return NextResponse.json({ received: true });
+    return NextResponse.json({
+      success: true,
+      status: payment.status,
+      message: `Payment status: ${payment.status}`,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to verify payment";
+    console.error("[Tabby Verify] Error:", message);
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 },
+    );
   }
 }

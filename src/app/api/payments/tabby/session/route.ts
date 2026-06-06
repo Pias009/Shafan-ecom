@@ -10,11 +10,15 @@ const COUNTRY_TO_REGION: Record<string, { region: TabbyRegion; currency: TabbyCu
 
 const TABBY_REJECTION_ERRORS: Record<string, string> = {
   "2-background-pre-scoring-reject":
-    "Tabby is unable to approve this purchase. Please use an alternative payment method for your order.",
-  NOT_AVAILABLE:
-    "Tabby is temporarily unavailable. Please try again later or use a different payment method.",
+    "Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order.",
+  not_available:
+    "Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order.",
+  order_amount_too_high:
+    "This purchase is above your current spending limit with Tabby, try a smaller cart or use another payment method",
+  order_amount_too_low:
+    "The purchase amount is below the minimum amount required to use Tabby, try adding more items or use another payment method",
   REJECTED:
-    "Tabby was unable to approve this transaction. Please contact support or try another payment method.",
+    "Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order.",
 };
 
 function getTabbyErrorMessage(rejectionCode: string): string {
@@ -23,7 +27,7 @@ function getTabbyErrorMessage(rejectionCode: string): string {
       return msg;
     }
   }
-  return "Tabby is unable to approve this purchase. Please use an alternative payment method.";
+  return "Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order.";
 }
 
 export async function POST(request: NextRequest) {
@@ -92,6 +96,7 @@ export async function POST(request: NextRequest) {
       String(obj[key] ?? fallback);
 
     const formatPhone = (raw: string | undefined): string => {
+      if (process.env.NODE_ENV === "development") return "+971500000001";
       const phone = raw || "501234567";
       const digits = phone.replace(/\D/g, "");
       const clean = digits.replace(/^(971|966|965|973|974|968|0)/, "");
@@ -133,8 +138,7 @@ export async function POST(request: NextRequest) {
         const pastOrders = await prisma.order.findMany({
           where: {
             email: buyerEmail,
-            paymentStatus: "PAID",
-            status: { not: "CANCELLED" },
+            // Include orders in ANY status (paid, cancelled, etc.) per Tabby spec
             id: { not: orderId },
           },
           select: {
@@ -143,6 +147,7 @@ export async function POST(request: NextRequest) {
             total: true,
             currency: true,
             paymentMethod: true,
+            paymentStatus: true,
             status: true,
             email: true,
             shippingAddress: true,
@@ -158,7 +163,9 @@ export async function POST(request: NextRequest) {
           take: 10,
         });
 
-        loyaltyLevel = pastOrders.length;
+        loyaltyLevel = pastOrders.filter(
+          (o) => o.paymentStatus === "PAID" && (o.status === "ORDER_CONFIRMED" || o.status === "DELIVERED")
+        ).length;
 
         orderHistory = pastOrders.map((o) => {
           const addr = (o.shippingAddress ?? {}) as Record<string, unknown>;
@@ -166,8 +173,17 @@ export async function POST(request: NextRequest) {
             purchased_at: o.createdAt.toISOString(),
             amount: Number(o.total || 0).toFixed(decimals),
             currency: o.currency || currency,
-            payment_method: o.paymentMethod || "card",
-            status: o.status === "ORDER_CONFIRMED" || o.status === "DELIVERED" ? "complete" : "processing",
+            payment_method: (() => {
+              const pm = (o.paymentMethod || "card").toLowerCase();
+              if (pm === "cod") return "cod";
+              return "card";
+            })(),
+            status: (() => {
+              if (o.status === "ORDER_CONFIRMED" || o.status === "DELIVERED") return "complete";
+              if (o.status === "CANCELLED") return "canceled";
+              if (o.paymentStatus === "PAID") return "complete";
+              return "processing";
+            })(),
             buyer: {
               email: o.email || buyerEmail,
               phone: formatPhone(getStr(addr, "phone")),
@@ -301,7 +317,7 @@ export async function POST(request: NextRequest) {
       where: { id: orderId },
       data: {
         paymentMethod: "tabby",
-        paymentMethodTitle: "Tabby",
+        paymentMethodTitle: "Pay later with Tabby",
         tabbySessionId: session.id,
         tabbyPaymentId: session.payment.id,
         ...(overrideEmail ? { email: overrideEmail } : {}),

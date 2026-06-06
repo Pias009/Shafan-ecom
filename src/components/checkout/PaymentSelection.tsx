@@ -228,9 +228,14 @@ export default function PaymentSelection({
                 className="w-full h-auto object-contain"
               />
             </div>
-            <span className="flex-1 pl-4 text-left text-sm font-medium text-gray-900">
-              Tabby
-            </span>
+            <div className="flex-1 pl-4 text-left">
+              <span className="block text-sm font-medium text-gray-900">
+                Pay later with Tabby
+              </span>
+              <span className="block text-[10px] text-gray-500 font-medium mt-0.5">
+                Use any card
+              </span>
+            </div>
           </div>
           <div
             className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3 transition-colors ${

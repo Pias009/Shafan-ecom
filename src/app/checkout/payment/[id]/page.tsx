@@ -200,7 +200,7 @@ function PaymentPageContent() {
             setEditablePhone((orderData.shippingAddress as any)?.phone || "");
             setEditableEmail(orderData.email || "");
             setError(
-              "Tabby is unable to approve this purchase. Please use an alternative payment method for your order."
+              "Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order."
             );
           } else {
             setError(`Your payment via ${reason} was not completed. Please try another method.`);
@@ -274,7 +274,7 @@ function PaymentPageContent() {
         id: order.id,
         value: order.total,
         currency: order.currency?.toUpperCase(),
-        paymentMethod: 'Tabby Pay-in-4',
+        paymentMethod: 'Pay later with Tabby',
         items: (order.items || []).map((item: any) => ({
           id: item.productId,
           name: item.nameSnapshot || 'Product',
@@ -497,7 +497,7 @@ function PaymentPageContent() {
                           <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-6" />
                         </div>
                         <div className="mr-5 bg-black/10 px-3 py-1.5 rounded-full text-[10px] font-black text-black uppercase tracking-widest">
-                          {tabbyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay in 4"}
+                          {tabbyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay later with Tabby"}
                         </div>
                       </button>
                     )}
@@ -580,7 +580,8 @@ function PaymentPageContent() {
                         <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="w-8 md:w-10" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-bold text-base md:text-lg">Tabby</div>
+                        <div className="font-bold text-base md:text-lg">Pay later with Tabby</div>
+                        <div className="text-[10px] md:text-xs text-black/40 font-medium">Use any card</div>
                       </div>
                       {method === "tabby" && <CheckCircle2 className="text-[#3ECF8E]" size={18} />}
                     </div>
@@ -687,7 +688,8 @@ function PaymentPageContent() {
                     <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-10" />
                   </div>
                   <div className="space-y-2">
-                    <p className="font-bold text-lg">Tabby</p>
+                    <p className="font-bold text-lg">Pay later with Tabby</p>
+                    <p className="text-sm text-black/60 font-medium">Use any card</p>
                   </div>
                   <div className="my-4 border-t border-black/5 pt-4">
                     <TabbyCard 
@@ -710,7 +712,7 @@ function PaymentPageContent() {
                     disabled={tabbyLoading}
                     className="w-full h-14 md:h-16 rounded-full bg-[#3ECF8E] hover:bg-[#3ECF8E]/90 text-black font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-[#3ECF8E]/20 disabled:opacity-50 flex items-center justify-center gap-3"
                   >
-                    {tabbyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Pay with Tabby"}
+                    {tabbyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Payment with Tabby"}
                   </button>
                 </div>
               )}

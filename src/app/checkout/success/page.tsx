@@ -31,6 +31,7 @@ function SuccessContent() {
 
   const orderId = searchParams?.get("orderId") || searchParams?.get("order_id");
   const sessionId = searchParams?.get("session_id");
+  const tabbyPaymentId = searchParams?.get("payment_id");
   const isCOD = searchParams?.get("cod") === "true";
   const clearCart = useCartStore((state) => state.clearCart);
 
@@ -51,6 +52,30 @@ function SuccessContent() {
             router.push("/account/orders");
             return;
           }
+
+          // Verify Tabby payment status and trigger capture if needed
+          const verifyPaymentId = data.tabbyPaymentId || tabbyPaymentId;
+          if (verifyPaymentId) {
+            try {
+              const verifyRes = await fetch("/api/payments/tabby/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  orderId: data.id,
+                  paymentId: verifyPaymentId,
+                }),
+              });
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok) {
+                console.warn("Tabby verify warning:", verifyData);
+              } else {
+                console.log("Tabby verify success:", verifyData);
+              }
+            } catch (verifyErr) {
+              console.error("Tabby payment verification error:", verifyErr);
+            }
+          }
+
           const orderDate = new Date(data.createdAt);
           orderDate.setDate(orderDate.getDate() + 5);
           const estimatedDeliveryDate = orderDate.toISOString().split('T')[0];
@@ -81,7 +106,7 @@ function SuccessContent() {
     }
 
     validateOrder();
-  }, [orderId, sessionId, router]);
+  }, [orderId, sessionId, tabbyPaymentId, router]);
 
   useEffect(() => {
     if (valid) {

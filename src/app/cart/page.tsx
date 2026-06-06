@@ -407,7 +407,7 @@ function CartPageContent() {
       if (activeMethod === "cod") {
         paymentMethodData = { payment_method: "cod", payment_method_title: "Cash on Delivery" };
       } else if (activeMethod === "tabby") {
-        paymentMethodData = { payment_method: "tabby", payment_method_title: "Tabby Pay-in-4" };
+        paymentMethodData = { payment_method: "tabby", payment_method_title: "Pay later with Tabby" };
       }
 
       const orderRes = await fetch("/api/create-order", {
