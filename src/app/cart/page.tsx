@@ -29,6 +29,28 @@ const COUNTRY_CODES: Record<string, string> = {
   Oman: "+968",
 };
 
+const UAE_REGIONS = ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al-Khaimah", "Fujairah", "Al-Ain"];
+
+type FieldRequired = true | false | "optional";
+interface CountryFields {
+  houseBuilding: FieldRequired;
+  streetRoad: FieldRequired;
+  blockNo: FieldRequired;
+  zone: FieldRequired;
+  areaName: FieldRequired;
+  cityName: FieldRequired;
+  region: FieldRequired | "dropdown";
+}
+
+const COUNTRY_FIELD_CONFIG: Record<string, CountryFields> = {
+  AE: { houseBuilding: true, streetRoad: true, blockNo: false, zone: false, areaName: true, cityName: true, region: "dropdown" },
+  KW: { houseBuilding: true, streetRoad: true, blockNo: true, zone: false, areaName: true, cityName: false, region: false },
+  BH: { houseBuilding: true, streetRoad: true, blockNo: "optional", zone: false, areaName: true, cityName: true, region: false },
+  QA: { houseBuilding: true, streetRoad: true, blockNo: false, zone: "optional", areaName: true, cityName: true, region: false },
+  OM: { houseBuilding: true, streetRoad: true, blockNo: false, zone: false, areaName: true, cityName: true, region: false },
+  SA: { houseBuilding: true, streetRoad: true, blockNo: false, zone: false, areaName: true, cityName: true, region: true },
+};
+
 function getCurrencyForCountry(countryCode: string): string {
   const currencies: Record<string, string> = {
     AE: "AED", KW: "KWD", SA: "SAR", BH: "BHD", OM: "OMR", QA: "QAR",
@@ -89,13 +111,18 @@ function CartPageContent() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [houseBuilding, setHouseBuilding] = useState("");
   const [streetAddress, setStreetAddress] = useState("");
+  const [areaName, setAreaName] = useState("");
   const [city, setCity] = useState("");
-  const [emirate, setEmirate] = useState("");
+  const [blockNo, setBlockNo] = useState("");
+  const [zone, setZone] = useState("");
+  const [region, setRegion] = useState("");
   const [phone, setPhone] = useState("");
   const [deliveryCountry, setDeliveryCountry] = useState(getCountryName(selectedCountry));
   const [saveInfo, setSaveInfo] = useState(false);
   const [shipMethod, setShipMethod] = useState<"ship" | "pickup">("ship");
+  const [showRegionDropdown, setShowRegionDropdown] = useState(false);
 
   const [activePayment, setActivePayment] = useState<string | null>(null);
   const [useBillingAddress, setUseBillingAddress] = useState(true);
@@ -105,7 +132,6 @@ function CartPageContent() {
 
   const [, setLoadingAddress] = useState(true);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
-  const [showEmirateDropdown, setShowEmirateDropdown] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -165,14 +191,16 @@ function CartPageContent() {
           setFirstName(nameParts[0] || "");
           setLastName(nameParts.slice(1).join(" ") || "");
           setEmail(addr.email || "");
-          setStreetAddress(addr.address1 || "");
-          setCity(addr.city || "");
+          setHouseBuilding(addr.house_building || addr.address2 || "");
+          setStreetAddress(addr.street_road || addr.address1 || "");
+          setAreaName(addr.area_name || "");
+          setCity(addr.city_name || addr.city || "");
+          setBlockNo(addr.block_no || "");
+          setZone(addr.zone || "");
+          setRegion(addr.region || "");
           setPhone(addr.phone || "");
           const countryName = getCountryName(addr.country);
           setDeliveryCountry(countryName);
-          if (addr.region || addr.emirate) {
-            setEmirate(addr.region || addr.emirate);
-          }
           setHasAddress(true);
         }
       } catch (e) {
@@ -223,7 +251,6 @@ function CartPageContent() {
   const taxAmount = Math.round(preTaxTotal * taxRate * 100) / 100;
   const total = preTaxTotal + taxAmount;
 
-  const regions = deliveryConfig.regions || [];
 
   async function handleApplyCoupon() {
     if (!couponInput.trim()) return;
@@ -245,11 +272,17 @@ function CartPageContent() {
       phone,
       email,
       country: countryCode,
+      house_building: houseBuilding,
+      street_road: streetAddress,
+      area_name: areaName,
+      city_name: city,
       city,
       address1: streetAddress,
-      address2: emirate || "",
+      address2: houseBuilding,
+      block_no: blockNo,
+      zone,
+      region,
       postalCode: "",
-      region: emirate || "",
     };
   }
 
@@ -258,16 +291,7 @@ function CartPageContent() {
       const res = await fetch("/api/account/address", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullName: addr.fullName,
-          phone: addr.phone,
-          email: addr.email,
-          country: addr.country,
-          city: addr.city,
-          address1: addr.address1,
-          address2: addr.address2,
-          postalCode: addr.postalCode || "",
-        }),
+        body: JSON.stringify(addr),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -286,14 +310,32 @@ function CartPageContent() {
     if (submitting) return;
 
     const errors: Record<string, string> = {};
+    const cCode = getCountryCode(deliveryCountry);
+    const fConfig = COUNTRY_FIELD_CONFIG[cCode] || COUNTRY_FIELD_CONFIG["AE"];
+
     if (!firstName.trim() || !lastName.trim()) {
       errors.name = "Please enter your first and last name";
     }
-    if (!streetAddress.trim()) {
-      errors.street = "Please enter your street address (building, street, area)";
+    if (fConfig.houseBuilding === true && !houseBuilding.trim()) {
+      errors.houseBuilding = "Please enter your house / building name";
     }
-    if (!city.trim()) {
-      errors.city = "Please enter your city";
+    if (!streetAddress.trim()) {
+      errors.street = "Please enter your street / road";
+    }
+    if (fConfig.blockNo === true && !blockNo.trim()) {
+      errors.blockNo = "Please enter your block number";
+    }
+    if (fConfig.areaName !== false && !areaName.trim()) {
+      errors.areaName = fConfig.cityName === false ? "Please enter your area / city name" : "Please enter your area name";
+    }
+    if (fConfig.cityName !== false && !city.trim()) {
+      errors.city = "Please enter your city name";
+    }
+    if (fConfig.region === "dropdown" && !region.trim()) {
+      errors.region = "Please select your emirate";
+    }
+    if (fConfig.region === true && !region.trim()) {
+      errors.region = "Please enter your region";
     }
     const countryCode = COUNTRY_CODES[deliveryCountry] || "+971";
     let rawPhone = phone;
@@ -403,7 +445,7 @@ function CartPageContent() {
         }
       }
 
-      let paymentMethodData = { payment_method: "stripe", payment_method_title: "Credit Card (Stripe)" };
+      let paymentMethodData = { payment_method: "stripe", payment_method_title: "Card Payment (Stripe)" };
       if (activeMethod === "cod") {
         paymentMethodData = { payment_method: "cod", payment_method_title: "Cash on Delivery" };
       } else if (activeMethod === "tabby") {
@@ -670,13 +712,14 @@ function CartPageContent() {
 
               {shipMethod === "ship" && (
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="relative">
+                {/* Country */}
+                <div className="relative md:col-span-2">
                   <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                    Country
+                    Country *
                   </label>
                   <button
                     type="button"
-                    onClick={() => { setShowCountryDropdown(!showCountryDropdown); setShowEmirateDropdown(false); }}
+                    onClick={() => { setShowCountryDropdown(!showCountryDropdown); setShowRegionDropdown(false); }}
                     className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white flex items-center justify-between cursor-pointer active:border-black/30"
                   >
                     <span>{deliveryCountry}</span>
@@ -688,10 +731,8 @@ function CartPageContent() {
                         <button
                           key={c}
                           type="button"
-                          onClick={() => { setDeliveryCountry(c); setStoreCountry(getCountryCode(c)); setShowCountryDropdown(false); setEmirate(""); }}
-                          className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${
-                            deliveryCountry === c ? "bg-black text-white hover:bg-black" : "text-black"
-                          }`}
+                          onClick={() => { setDeliveryCountry(c); setStoreCountry(getCountryCode(c)); setShowCountryDropdown(false); setRegion(""); setBlockNo(""); setZone(""); }}
+                          className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${deliveryCountry === c ? "bg-black text-white hover:bg-black" : "text-black"}`}
                         >
                           {c}
                         </button>
@@ -700,12 +741,9 @@ function CartPageContent() {
                   )}
                 </div>
 
-                <div className="hidden md:block" />
-
+                {/* First Name */}
                 <div>
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                    First Name *
-                  </label>
+                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">First Name *</label>
                   <input
                     value={firstName}
                     onChange={(e) => { setFirstName(e.target.value); setFieldErrors(prev => ({...prev, name: ''})); }}
@@ -714,10 +752,9 @@ function CartPageContent() {
                   />
                 </div>
 
+                {/* Last Name */}
                 <div>
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                    Last Name *
-                  </label>
+                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Last Name *</label>
                   <input
                     value={lastName}
                     onChange={(e) => { setLastName(e.target.value); setFieldErrors(prev => ({...prev, name: ''})); }}
@@ -726,64 +763,129 @@ function CartPageContent() {
                   />
                 </div>
 
+                {/* House / Building Name — all countries */}
                 <div className="md:col-span-2">
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                    Street Address *
-                  </label>
+                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">House No. / Building Name *</label>
+                  <input
+                    value={houseBuilding}
+                    onChange={(e) => { setHouseBuilding(e.target.value); setFieldErrors(prev => ({...prev, houseBuilding: ''})); }}
+                    placeholder="House number or building name"
+                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.houseBuilding ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                  />
+                </div>
+
+                {/* Street / Road — all countries */}
+                <div className="md:col-span-2">
+                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Street / Road *</label>
                   <input
                     value={streetAddress}
                     onChange={(e) => { setStreetAddress(e.target.value); setFieldErrors(prev => ({...prev, street: ''})); }}
-                    placeholder="Building, street, area"
+                    placeholder="Street name or road"
                     className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.street ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
                   />
                 </div>
 
-                <div>
+                {/* Block No. — Kuwait (mandatory), Bahrain (optional) */}
+                {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.blockNo !== false) && (
+                  <div>
+                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
+                      Block No.{COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.blockNo === "optional" ? " (Optional)" : " *"}
+                    </label>
+                    <input
+                      value={blockNo}
+                      onChange={(e) => { setBlockNo(e.target.value); setFieldErrors(prev => ({...prev, blockNo: ''})); }}
+                      placeholder="Block number"
+                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.blockNo ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                    />
+                  </div>
+                )}
+
+                {/* Zone — Qatar (optional) */}
+                {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.zone !== false) && (
+                  <div>
+                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Zone (Optional)</label>
+                    <input
+                      value={zone}
+                      onChange={(e) => setZone(e.target.value)}
+                      placeholder="Zone"
+                      className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white cursor-text active:border-black/30"
+                    />
+                  </div>
+                )}
+
+                {/* Area Name — all countries. Label differs for Kuwait */}
+                <div className={COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "md:col-span-2" : ""}>
                   <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                    City *
+                    {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "Area / City Name *" : "Area Name *"}
                   </label>
                   <input
-                    value={city}
-                    onChange={(e) => { setCity(e.target.value); setFieldErrors(prev => ({...prev, city: ''})); }}
-                    placeholder="City"
-                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.city ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                    value={areaName}
+                    onChange={(e) => { setAreaName(e.target.value); setFieldErrors(prev => ({...prev, areaName: ''})); }}
+                    placeholder={COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "Area or city name" : "Area name"}
+                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.areaName ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
                   />
                 </div>
 
-                <div className="relative">
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                    {getCountryCode(deliveryCountry) === "AE" ? "Emirate" : "Region"}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => { setShowEmirateDropdown(!showEmirateDropdown); setShowCountryDropdown(false); }}
-                    className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white flex items-center justify-between cursor-pointer active:border-black/30"
-                  >
-                    <span className={emirate ? "" : "text-black/30"}>{emirate || `Select ${getCountryCode(deliveryCountry) === "AE" ? "Emirate" : "Region"}`}</span>
-                    <ChevronDown className={`w-4 h-4 text-black/30 transition shrink-0 ${showEmirateDropdown ? "rotate-180" : ""}`} />
-                  </button>
-                  {showEmirateDropdown && (
-                    <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
-                      {[...regions, "Other"].map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => { setEmirate(r); setShowEmirateDropdown(false); }}
-                          className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${
-                            emirate === r ? "bg-black text-white hover:bg-black" : "text-black"
-                          }`}
-                        >
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {/* City Name — all except Kuwait */}
+                {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName !== false) && (
+                  <div>
+                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">City Name *</label>
+                    <input
+                      value={city}
+                      onChange={(e) => { setCity(e.target.value); setFieldErrors(prev => ({...prev, city: ''})); }}
+                      placeholder="City"
+                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.city ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                    />
+                  </div>
+                )}
 
-                <div>
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                    Phone *
-                  </label>
+                {/* UAE Region — mandatory dropdown */}
+                {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.region === "dropdown" && (
+                  <div className="relative">
+                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
+                      Emirate / Region *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => { setShowRegionDropdown(!showRegionDropdown); setShowCountryDropdown(false); }}
+                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 ${fieldErrors.region ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white flex items-center justify-between cursor-pointer active:border-black/30`}
+                    >
+                      <span className={region ? "" : "text-black/30"}>{region || "Select Emirate"}</span>
+                      <ChevronDown className={`w-4 h-4 text-black/30 transition shrink-0 ${showRegionDropdown ? "rotate-180" : ""}`} />
+                    </button>
+                    {showRegionDropdown && (
+                      <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
+                        {UAE_REGIONS.map((r) => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => { setRegion(r); setShowRegionDropdown(false); setFieldErrors(prev => ({...prev, region: ''})); }}
+                            className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${region === r ? "bg-black text-white hover:bg-black" : "text-black"}`}
+                          >
+                            {r}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* SA Region — mandatory text input */}
+                {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.region === true && (
+                  <div>
+                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Region *</label>
+                    <input
+                      value={region}
+                      onChange={(e) => { setRegion(e.target.value); setFieldErrors(prev => ({...prev, region: ''})); }}
+                      placeholder="e.g. Riyadh, Jeddah, Dammam"
+                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.region ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                    />
+                  </div>
+                )}
+
+                {/* Phone */}
+                <div className="md:col-span-2">
+                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Phone *</label>
                   <div className="flex gap-2">
                     <div className="w-20 shrink-0 flex items-center justify-center rounded-xl lg:rounded-2xl bg-black/5 border-2 border-transparent text-xs font-bold text-black/60">
                       {COUNTRY_CODES[deliveryCountry] || "+971"}
@@ -834,6 +936,7 @@ function CartPageContent() {
                 useBillingAddress={useBillingAddress}
                 onBillingToggle={() => setUseBillingAddress(!useBillingAddress)}
                 lang={currentLanguage.code}
+                currentCountry={selectedCountry.toUpperCase()}
               />
             </div>
 

@@ -589,17 +589,21 @@ model DiscountUsage {
 }
 
 model Address {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String  @unique @db.ObjectId
-  fullName   String
-  phone      String
-  email      String
-  country    String
-  city       String
-  address1   String
-  address2   String?
-  postalCode String
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String  @unique @db.ObjectId
+  fullName      String
+  phone         String
+  email         String
+  country       String
+  city          String
+  address1      String
+  address2      String?
+  postalCode    String
+  area_name     String?
+  block_no      String?
+  zone          String?
+  region        String?
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {

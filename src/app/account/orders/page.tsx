@@ -29,14 +29,15 @@ function formatAddress(shipping: Record<string, any>): string {
   const parts: string[] = [];
   const h = shipping.house_building || shipping.address_2 || shipping.address2;
   const s = shipping.street_road || shipping.address_1 || shipping.address1;
-  const a = shipping.area_name;
-  const c = shipping.city_name || shipping.city;
-  const co = shipping.country;
   if (h) parts.push(h);
   if (s) parts.push(s);
-  if (a) parts.push(a);
+  if (shipping.block_no) parts.push(`Block ${shipping.block_no}`);
+  if (shipping.zone) parts.push(`Zone ${shipping.zone}`);
+  if (shipping.area_name) parts.push(shipping.area_name);
+  const c = shipping.city_name || shipping.city;
   parts.push(c || "Unknown");
-  if (co) parts.push(co);
+  if (shipping.region) parts.push(shipping.region);
+  if (shipping.country) parts.push(shipping.country);
   return parts.join(", ");
 }
 

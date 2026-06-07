@@ -360,230 +360,72 @@ export default function OrderEditor({ order }: OrderEditorProps) {
             </div>
           </section>
 
-          {/* Shipping Address */}
+          {/* Address Section */}
           <section className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-black/30 mb-6 border-b border-black/5 pb-2">
-                Shipping Address
-              </h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">First Name</label>
-                    <input
-                      type="text"
-                      value={shippingAddress.first_name || ''}
-                      onChange={(e) => setShippingAddress({...shippingAddress, first_name: e.target.value})}
-                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Last Name</label>
-                    <input
-                      type="text"
-                      value={shippingAddress.last_name || ''}
-                      onChange={(e) => setShippingAddress({...shippingAddress, last_name: e.target.value})}
-                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Email (Gmail)</label>
-                  <input
-                    type="email"
-                    value={shippingAddress.email || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, email: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Phone (Number)</label>
-                  <input
-                    type="text"
-                    value={shippingAddress.phone || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, phone: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Address Line 1</label>
-                  <input
-                    type="text"
-                    value={shippingAddress.address_1 || shippingAddress.street_road || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, address_1: e.target.value, street_road: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Address Line 2</label>
-                  <input
-                    type="text"
-                    value={shippingAddress.address_2 || shippingAddress.house_building || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, address_2: e.target.value, house_building: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">City</label>
-                  <input
-                    type="text"
-                    value={shippingAddress.city || shippingAddress.city_name || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value, city_name: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Area / District</label>
-                  <input
-                    type="text"
-                    value={shippingAddress.area_name || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, area_name: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">State</label>
-                    <input
-                      type="text"
-                      value={shippingAddress.state || ''}
-                      onChange={(e) => setShippingAddress({...shippingAddress, state: e.target.value})}
-                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Postcode</label>
-                    <input
-                      type="text"
-                      value={shippingAddress.postcode || shippingAddress.postalCode || ''}
-                      onChange={(e) => setShippingAddress({...shippingAddress, postcode: e.target.value, postalCode: e.target.value})}
-                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                    />
+            {([
+              { label: 'Shipping Address', addr: shippingAddress, setAddr: setShippingAddress },
+              { label: 'Billing Address', addr: billingAddress, setAddr: setBillingAddress },
+            ] as const).map(({ label, addr, setAddr }) => {
+              const inp = "w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none";
+              const lbl = "block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2";
+              return (
+                <div key={label}>
+                  <h3 className="text-sm font-black uppercase tracking-widest text-black/30 mb-6 border-b border-black/5 pb-2">{label}</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className={lbl}>First Name</label>
+                        <input type="text" value={addr.first_name || ''} onChange={e => setAddr({...addr, first_name: e.target.value})} className={inp} />
+                      </div>
+                      <div>
+                        <label className={lbl}>Last Name</label>
+                        <input type="text" value={addr.last_name || ''} onChange={e => setAddr({...addr, last_name: e.target.value})} className={inp} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={lbl}>Email</label>
+                      <input type="email" value={addr.email || ''} onChange={e => setAddr({...addr, email: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Phone</label>
+                      <input type="text" value={addr.phone || ''} onChange={e => setAddr({...addr, phone: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>House No. / Building Name</label>
+                      <input type="text" value={addr.house_building || addr.address_2 || ''} onChange={e => setAddr({...addr, house_building: e.target.value, address_2: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Street / Road</label>
+                      <input type="text" value={addr.street_road || addr.address_1 || ''} onChange={e => setAddr({...addr, street_road: e.target.value, address_1: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Block No. (optional)</label>
+                      <input type="text" value={addr.block_no || ''} onChange={e => setAddr({...addr, block_no: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Zone (optional)</label>
+                      <input type="text" value={addr.zone || ''} onChange={e => setAddr({...addr, zone: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Area Name</label>
+                      <input type="text" value={addr.area_name || ''} onChange={e => setAddr({...addr, area_name: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>City</label>
+                      <input type="text" value={addr.city || addr.city_name || ''} onChange={e => setAddr({...addr, city: e.target.value, city_name: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Region / Emirate</label>
+                      <input type="text" value={addr.region || ''} onChange={e => setAddr({...addr, region: e.target.value})} className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Country</label>
+                      <input type="text" value={addr.country || ''} onChange={e => setAddr({...addr, country: e.target.value})} className={inp} />
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Country</label>
-                  <input
-                    type="text"
-                    value={shippingAddress.country || ''}
-                    onChange={(e) => setShippingAddress({...shippingAddress, country: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Billing Address */}
-            <div>
-              <h3 className="text-sm font-black uppercase tracking-widest text-black/30 mb-6 border-b border-black/5 pb-2">
-                Billing Address
-              </h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">First Name</label>
-                    <input
-                      type="text"
-                      value={billingAddress.first_name || ''}
-                      onChange={(e) => setBillingAddress({...billingAddress, first_name: e.target.value})}
-                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Last Name</label>
-                    <input
-                      type="text"
-                      value={billingAddress.last_name || ''}
-                      onChange={(e) => setBillingAddress({...billingAddress, last_name: e.target.value})}
-                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Email</label>
-                  <input
-                    type="email"
-                    value={billingAddress.email || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, email: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Phone</label>
-                  <input
-                    type="text"
-                    value={billingAddress.phone || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, phone: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Address Line 1</label>
-                  <input
-                    type="text"
-                    value={billingAddress.address_1 || billingAddress.street_road || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, address_1: e.target.value, street_road: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Address Line 2</label>
-                  <input
-                    type="text"
-                    value={billingAddress.address_2 || billingAddress.house_building || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, address_2: e.target.value, house_building: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">City</label>
-                  <input
-                    type="text"
-                    value={billingAddress.city || billingAddress.city_name || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, city: e.target.value, city_name: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Area / District</label>
-                  <input
-                    type="text"
-                    value={billingAddress.area_name || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, area_name: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">State</label>
-                    <input
-                      type="text"
-                      value={billingAddress.state || ''}
-                      onChange={(e) => setBillingAddress({...billingAddress, state: e.target.value})}
-                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Postcode</label>
-                    <input
-                      type="text"
-                      value={billingAddress.postcode || billingAddress.postalCode || ''}
-                      onChange={(e) => setBillingAddress({...billingAddress, postcode: e.target.value, postalCode: e.target.value})}
-                      className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 ml-2">Country</label>
-                  <input
-                    type="text"
-                    value={billingAddress.country || ''}
-                    onChange={(e) => setBillingAddress({...billingAddress, country: e.target.value})}
-                    className="w-full bg-black/[0.03] border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-black outline-none"
-                  />
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </section>
         </div>
 

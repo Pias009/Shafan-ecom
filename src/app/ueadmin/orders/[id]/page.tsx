@@ -234,16 +234,27 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <div className="p-2 bg-black/5 rounded-xl text-slate-700"><MapPin size={18} /></div>
               <h3 className="font-black text-xs uppercase tracking-widest text-slate-900">Shipping Address</h3>
             </div>
-            <div className="text-xs font-semibold text-slate-600 leading-relaxed uppercase tracking-wider">
-              {(shipping as Record<string, string | undefined>) ? (
-                <div className="space-y-2">
-                  <div className="font-bold text-slate-900">{String((shipping as Record<string, string>).first_name || '')} {String((shipping as Record<string, string>).last_name || '')}</div>
-                  <div>{String((shipping as Record<string, string>).street_road || (shipping as Record<string, string>).address_1 || '')}</div>
-                  {((shipping as Record<string, string>).house_building || (shipping as Record<string, string>).address_2) && <div>{String((shipping as Record<string, string>).house_building || (shipping as Record<string, string>).address_2)}</div>}
-                  {(shipping as Record<string, string>).area_name && <div className="text-slate-500">{String((shipping as Record<string, string>).area_name)}</div>}
-                  <div>{String((shipping as Record<string, string>).city_name || (shipping as Record<string, string>).city || '')}, {String((shipping as Record<string, string>).state || '')} {String((shipping as Record<string, string>).postcode || '')}</div>
-                  <div className="font-bold text-slate-800">{String((shipping as Record<string, string>).country || '')}</div>
-                  {(shipping as Record<string, string>).phone && <div className="text-slate-500">Phone: {String((shipping as Record<string, string>).phone)}</div>}
+            <div className="text-xs font-semibold text-slate-600 leading-relaxed">
+              {shipping ? (
+                <div className="space-y-1.5">
+                  {((shipping as any).first_name || (shipping as any).last_name || (shipping as any).fullName) && (
+                    <div className="font-bold text-slate-900">{String((shipping as any).fullName || `${(shipping as any).first_name || ''} ${(shipping as any).last_name || ''}`.trim())}</div>
+                  )}
+                  {((shipping as any).house_building || (shipping as any).address_2) && (
+                    <div>{String((shipping as any).house_building || (shipping as any).address_2)}</div>
+                  )}
+                  {((shipping as any).street_road || (shipping as any).address_1) && (
+                    <div>{String((shipping as any).street_road || (shipping as any).address_1)}</div>
+                  )}
+                  {(shipping as any).block_no && <div>Block {String((shipping as any).block_no)}</div>}
+                  {(shipping as any).zone && <div>Zone {String((shipping as any).zone)}</div>}
+                  {(shipping as any).area_name && <div className="text-slate-500">{String((shipping as any).area_name)}</div>}
+                  {((shipping as any).city_name || (shipping as any).city) && (
+                    <div>{String((shipping as any).city_name || (shipping as any).city)}</div>
+                  )}
+                  {(shipping as any).region && <div>{String((shipping as any).region)}</div>}
+                  <div className="font-bold text-slate-800 uppercase">{String((shipping as any).country || '')}</div>
+                  {(shipping as any).phone && <div className="text-slate-500 mt-1">📞 {String((shipping as any).phone)}</div>}
                 </div>
               ) : (
                 <div className="italic text-slate-400">No shipping address</div>
@@ -257,16 +268,27 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <div className="p-2 bg-black/5 rounded-xl text-slate-700"><CreditCard size={18} /></div>
               <h3 className="font-black text-xs uppercase tracking-widest text-slate-900">Billing Address</h3>
             </div>
-            <div className="text-xs font-semibold text-slate-600 leading-relaxed uppercase tracking-wider">
-              {(billing as Record<string, string | undefined>) ? (
-                <div className="space-y-2">
-                  <div className="font-bold text-slate-900">{String((billing as Record<string, string>).first_name || '')} {String((billing as Record<string, string>).last_name || '')}</div>
-                  <div>{String((billing as Record<string, string>).street_road || (billing as Record<string, string>).address_1 || '')}</div>
-                  {((billing as Record<string, string>).house_building || (billing as Record<string, string>).address_2) && <div>{String((billing as Record<string, string>).house_building || (billing as Record<string, string>).address_2)}</div>}
-                  {(billing as Record<string, string>).area_name && <div className="text-slate-500">{String((billing as Record<string, string>).area_name)}</div>}
-                  <div>{String((billing as Record<string, string>).city_name || (billing as Record<string, string>).city || '')}, {String((billing as Record<string, string>).state || '')} {String((billing as Record<string, string>).postcode || '')}</div>
-                  <div className="font-bold text-slate-800">{String((billing as Record<string, string>).country || '')}</div>
-                  {(billing as Record<string, string>).email && <div className="text-slate-500">Email: {String((billing as Record<string, string>).email)}</div>}
+            <div className="text-xs font-semibold text-slate-600 leading-relaxed">
+              {billing ? (
+                <div className="space-y-1.5">
+                  {((billing as any).first_name || (billing as any).last_name || (billing as any).fullName) && (
+                    <div className="font-bold text-slate-900">{String((billing as any).fullName || `${(billing as any).first_name || ''} ${(billing as any).last_name || ''}`.trim())}</div>
+                  )}
+                  {((billing as any).house_building || (billing as any).address_2) && (
+                    <div>{String((billing as any).house_building || (billing as any).address_2)}</div>
+                  )}
+                  {((billing as any).street_road || (billing as any).address_1) && (
+                    <div>{String((billing as any).street_road || (billing as any).address_1)}</div>
+                  )}
+                  {(billing as any).block_no && <div>Block {String((billing as any).block_no)}</div>}
+                  {(billing as any).zone && <div>Zone {String((billing as any).zone)}</div>}
+                  {(billing as any).area_name && <div className="text-slate-500">{String((billing as any).area_name)}</div>}
+                  {((billing as any).city_name || (billing as any).city) && (
+                    <div>{String((billing as any).city_name || (billing as any).city)}</div>
+                  )}
+                  {(billing as any).region && <div>{String((billing as any).region)}</div>}
+                  <div className="font-bold text-slate-800 uppercase">{String((billing as any).country || '')}</div>
+                  {(billing as any).email && <div className="text-slate-500 mt-1">✉ {String((billing as any).email)}</div>}
                 </div>
               ) : (
                 <div className="italic text-slate-400">Same as shipping</div>

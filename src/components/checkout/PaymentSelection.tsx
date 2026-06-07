@@ -12,6 +12,7 @@ interface PaymentSelectionProps {
   useBillingAddress?: boolean;
   onBillingToggle?: () => void;
   lang: string;
+  currentCountry?: string;
 }
 
 const TAMARA_SCRIPT_SRC =
@@ -83,7 +84,9 @@ export default function PaymentSelection({
   useBillingAddress,
   onBillingToggle,
   lang,
+  currentCountry,
 }: PaymentSelectionProps) {
+  const showInstallments = currentCountry === "AE" || currentCountry === "SA";
   const tamaraSummaryRef = useRef<HTMLDivElement>(null);
   const tamaraLogoRef = useRef<HTMLDivElement>(null);
 
@@ -140,7 +143,7 @@ export default function PaymentSelection({
         onLoad={handleTamaraScriptLoad}
       />
 
-      {/* Credit Card */}
+      {/* Card Payment */}
       <div>
         <button
           type="button"
@@ -154,7 +157,7 @@ export default function PaymentSelection({
               <CreditCard className="w-5 h-5 text-gray-700" />
             </div>
             <span className="flex-1 pl-4 text-left text-sm font-medium text-gray-900">
-              Credit Card
+              Card Payment
             </span>
           </div>
           <div
@@ -211,8 +214,8 @@ export default function PaymentSelection({
         )}
       </div>
 
-      {/* Tabby */}
-      <div>
+      {/* Tabby — UAE & SA only */}
+      {showInstallments && <div>
         <button
           type="button"
           onClick={() => onPaymentSelect("tabby")}
@@ -257,10 +260,10 @@ export default function PaymentSelection({
             />
           </div>
         )}
-      </div>
+      </div>}
 
-      {/* Tamara */}
-      <div>
+      {/* Tamara — UAE & SA only */}
+      {showInstallments && <div>
         <button
           type="button"
           onClick={() => onPaymentSelect("tamara")}
@@ -299,7 +302,7 @@ export default function PaymentSelection({
             <div ref={tamaraSummaryRef} />
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Cash on Delivery */}
       <div>

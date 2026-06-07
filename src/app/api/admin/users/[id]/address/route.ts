@@ -11,6 +11,10 @@ const AddressSchema = z.object({
   address1: z.string().trim().min(1),
   address2: z.string().trim().optional().or(z.literal("")),
   postalCode: z.string().trim().optional().or(z.literal("")),
+  area_name: z.string().trim().optional().or(z.literal("")),
+  block_no: z.string().trim().optional().or(z.literal("")),
+  zone: z.string().trim().optional().or(z.literal("")),
+  region: z.string().trim().optional().or(z.literal("")),
 }).transform((data) => ({
   fullName: data.fullName,
   phone: data.phone,
@@ -20,6 +24,10 @@ const AddressSchema = z.object({
   address1: data.address1,
   address2: data.address2 || "",
   postalCode: data.postalCode || "",
+  area_name: data.area_name || "",
+  block_no: data.block_no || "",
+  zone: data.zone || "",
+  region: data.region || "",
 }));
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

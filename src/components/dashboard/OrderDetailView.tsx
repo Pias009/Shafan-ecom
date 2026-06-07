@@ -19,27 +19,30 @@ function formatPrice(amountCents: number, currency: string): string {
   })}`;
 }
 
-function formatAddress(shipping: Record<string, any>) {
-  if (!shipping || Object.keys(shipping).length === 0) {
+function formatAddress(addr: Record<string, any>) {
+  if (!addr || Object.keys(addr).length === 0) {
     return <span className="text-black/30 italic">No address recorded</span>;
   }
 
-  // Support both new and legacy field names
-  const house = shipping.house_building || shipping.address_2 || shipping.address2 || "";
-  const street = shipping.street_road || shipping.address_1 || shipping.address1 || "";
-  const area = shipping.area_name || "";
-  const city = shipping.city_name || shipping.city || "";
-  const country = shipping.country || "";
+  const house = addr.house_building || addr.address_2 || addr.address2 || "";
+  const street = addr.street_road || addr.address_1 || addr.address1 || "";
+  const blockNo = addr.block_no || "";
+  const zone = addr.zone || "";
+  const area = addr.area_name || "";
+  const city = addr.city_name || addr.city || "";
+  const region = addr.region || "";
+  const country = addr.country || "";
 
   return (
-    <div className="text-[11px] font-bold text-black/60 leading-relaxed">
-      {house && <div className="text-black/40 text-[10px]">{house}</div>}
+    <div className="text-[11px] font-bold text-black/60 leading-relaxed space-y-0.5">
+      {house && <div>{house}</div>}
       {street && <div>{street}</div>}
+      {blockNo && <div className="text-black/40">Block {blockNo}</div>}
+      {zone && <div className="text-black/40">Zone {zone}</div>}
       {area && <div className="text-black/40">{area}</div>}
-      <div>
-        {city}
-        {country && <>, {country}</>}
-      </div>
+      {city && <div>{city}</div>}
+      {region && <div>{region}</div>}
+      {country && <div className="font-black text-black/50 uppercase text-[10px]">{country}</div>}
     </div>
   );
 }
