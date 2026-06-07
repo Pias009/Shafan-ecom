@@ -80,7 +80,7 @@ function getCountryCode(name: string): string {
 }
 
 const ACTIVE_COUNTRIES = Object.values(COUNTRY_CONFIG)
-  .filter((c) => c.active)
+  .filter((c) => c.active && ["AE", "KW", "SA", "BH", "OM", "QA"].includes(c.code))
   .map((c) => c.name);
 
 function CartPageContent() {
@@ -731,7 +731,7 @@ function CartPageContent() {
                         <button
                           key={c}
                           type="button"
-                          onClick={() => { setDeliveryCountry(c); setStoreCountry(getCountryCode(c)); setShowCountryDropdown(false); setRegion(""); setBlockNo(""); setZone(""); }}
+                          onClick={() => { setDeliveryCountry(c); setStoreCountry(getCountryCode(c)); setShowCountryDropdown(false); setRegion(""); setBlockNo(""); setZone(""); setAreaName(""); setCity(""); setShowRegionDropdown(false); }}
                           className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${deliveryCountry === c ? "bg-black text-white hover:bg-black" : "text-black"}`}
                         >
                           {c}
@@ -787,7 +787,7 @@ function CartPageContent() {
 
                 {/* Block No. — Kuwait (mandatory), Bahrain (optional) */}
                 {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.blockNo !== false) && (
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
                       Block No.{COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.blockNo === "optional" ? " (Optional)" : " *"}
                     </label>
@@ -802,7 +802,7 @@ function CartPageContent() {
 
                 {/* Zone — Qatar (optional) */}
                 {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.zone !== false) && (
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Zone (Optional)</label>
                     <input
                       value={zone}
@@ -814,7 +814,7 @@ function CartPageContent() {
                 )}
 
                 {/* Area Name — all countries. Label differs for Kuwait */}
-                <div className={COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "md:col-span-2" : ""}>
+                <div className="md:col-span-2">
                   <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
                     {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "Area / City Name *" : "Area Name *"}
                   </label>
@@ -828,7 +828,7 @@ function CartPageContent() {
 
                 {/* City Name — all except Kuwait */}
                 {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName !== false) && (
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">City Name *</label>
                     <input
                       value={city}
@@ -841,7 +841,7 @@ function CartPageContent() {
 
                 {/* UAE Region — mandatory dropdown */}
                 {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.region === "dropdown" && (
-                  <div className="relative">
+                  <div className="relative md:col-span-2">
                     <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
                       Emirate / Region *
                     </label>
@@ -872,7 +872,7 @@ function CartPageContent() {
 
                 {/* SA Region — mandatory text input */}
                 {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.region === true && (
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Region *</label>
                     <input
                       value={region}
