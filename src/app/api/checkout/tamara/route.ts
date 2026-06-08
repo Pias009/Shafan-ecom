@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const tamaraApiUrl = (process.env.TAMARA_API_URL || "https://api-sandbox.tamara.co").trim();
+    const tamaraApiUrl = (process.env.TAMARA_API_URL || "https://api.tamara.co").trim();
     const accessToken = (process.env.TAMARA_ACCESS_TOKEN || "").trim();
 
     if (!accessToken) {

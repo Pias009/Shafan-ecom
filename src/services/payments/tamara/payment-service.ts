@@ -13,7 +13,7 @@ export class TamaraService {
   private notificationToken: string;
 
   constructor() {
-    this.baseUrl = (process.env.TAMARA_API_URL || "https://api-sandbox.tamara.co").trim();
+    this.baseUrl = (process.env.TAMARA_API_URL || "https://api.tamara.co").trim();
     this.accessToken = (process.env.TAMARA_ACCESS_TOKEN || "").trim();
     this.notificationToken = (process.env.TAMARA_NOTIFICATION_TOKEN || process.env.TAMARA_NOTIFICATION_KEY || "").trim();
   }

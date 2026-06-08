@@ -16,9 +16,9 @@ interface PaymentSelectionProps {
 }
 
 const TAMARA_SCRIPT_SRC =
-  "https://cdn-sandbox.tamara.co/widget-v2/tamara-widget.js";
+  "https://cdn.tamara.co/widget-v2/tamara-widget.js";
 const TAMARA_PUBLIC_KEY =
-  "561ee41b-e351-4543-ab2d-934866b6b8af";
+  process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "a5e7eb67-561b-479c-84f1-a5a44d5fce1d";
 
 function TabbySnippet({
   currentCurrency,

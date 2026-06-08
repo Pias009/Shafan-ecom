@@ -25,7 +25,7 @@ export default function TamaraCheckoutRow({
 
   const publicKey =
     process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY ||
-    "561ee41b-e351-4543-ab2d-934866b6b8af";
+    "a5e7eb67-561b-479c-84f1-a5a44d5fce1d";
   const lang = isArabic ? "ar" : "en";
 
   // Async global script loader engine
@@ -43,7 +43,7 @@ export default function TamaraCheckoutRow({
     const script = document.createElement("script");
     script.id = scriptId;
     script.src =
-      "https://cdn-sandbox.tamara.co/widget-v2/tamara-widget.js";
+      "https://cdn.tamara.co/widget-v2/tamara-widget.js";
     script.async = true;
     script.onload = () => setReady(true);
     document.body.appendChild(script);

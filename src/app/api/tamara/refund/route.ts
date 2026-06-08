@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const TAMARA_API_KEY = process.env.TAMARA_API_KEY || process.env.TAMARA_ACCESS_TOKEN;
-    const TAMARA_API_URL = process.env.TAMARA_API_URL || "https://api-sandbox.tamara.co";
+    const TAMARA_API_URL = process.env.TAMARA_API_URL || "https://api.tamara.co";
     
     // 4. Fetch official order details/log from Tamara first (Rule 5 Compliant Check)
     const getOrderUrl = `${TAMARA_API_URL}/orders/${tamaraOrderId}`;

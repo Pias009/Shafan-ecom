@@ -22,8 +22,8 @@ export default function TamaraPaymentRow({
   const logoRef = useRef<HTMLDivElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
 
-  const SCRIPT_SRC = "https://cdn-sandbox.tamara.co/widget-v2/tamara-widget.js";
-  const PUBLIC_KEY = "561ee41b-e351-4543-ab2d-934866b6b8af";
+  const SCRIPT_SRC = "https://cdn.tamara.co/widget-v2/tamara-widget.js";
+  const PUBLIC_KEY = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "a5e7eb67-561b-479c-84f1-a5a44d5fce1d";
 
   function handleScriptLoad() {
     window.tamaraWidgetConfig = {

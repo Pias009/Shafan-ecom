@@ -19,7 +19,7 @@ export default function TamaraWidget({ price, currency, country }: TamaraWidgetP
   const isArabic = currentLanguage.code === "ar";
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const publicKey = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "561ee41b-e351-4543-ab2d-934866b6b8af";
+  const publicKey = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "a5e7eb67-561b-479c-84f1-a5a44d5fce1d";
   const lang = isArabic ? "ar" : "en";
 
   // Set the configuration synchronously so the script always has it when it evaluates
@@ -27,7 +27,7 @@ export default function TamaraWidget({ price, currency, country }: TamaraWidgetP
     window.tamaraWidgetConfig = {
       lang: lang,
       country: "AE",
-      publicKey: "561ee41b-e351-4543-ab2d-934866b6b8af",
+      publicKey: "a5e7eb67-561b-479c-84f1-a5a44d5fce1d",
     };
   }
 
@@ -60,13 +60,13 @@ export default function TamaraWidget({ price, currency, country }: TamaraWidgetP
 
   if (isNaN(currentPrice) || currentPrice <= 0) return null;
 
-  const scriptSrc = "https://cdn-sandbox.tamara.co/widget-v2/tamara-widget.js";
+  const scriptSrc = "https://cdn.tamara.co/widget-v2/tamara-widget.js";
 
   return (
     <>
       <script
         dangerouslySetInnerHTML={{
-          __html: `window.tamaraWidgetConfig = { lang: "${lang}", country: "AE", publicKey: "561ee41b-e351-4543-ab2d-934866b6b8af" };`,
+          __html: `window.tamaraWidgetConfig = { lang: "${lang}", country: "AE", publicKey: "a5e7eb67-561b-479c-84f1-a5a44d5fce1d" };`,
         }}
       />
       <Script
