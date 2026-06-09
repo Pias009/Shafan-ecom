@@ -494,7 +494,7 @@ function PaymentPageContent() {
                         className="group relative flex items-center justify-between p-1 rounded-3xl bg-[#3ECF8E] hover:bg-[#3ECF8E]/90 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-[#3ECF8E]/20 overflow-hidden h-14 md:h-16"
                       >
                         <div className="flex items-center gap-3 ml-5">
-                          <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-6" />
+                          <img src="/tabby-logo.svg" alt="Tabby" className="h-6" />
                         </div>
                         <div className="mr-5 bg-black/10 px-3 py-1.5 rounded-full text-[10px] font-black text-black uppercase tracking-widest">
                           {tabbyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay later with Tabby"}
@@ -577,7 +577,7 @@ function PaymentPageContent() {
                   >
                     <div className="flex items-center gap-4">
                       <div className={`p-2.5 md:p-3 rounded-2xl flex items-center justify-center ${method === "tabby" ? "bg-[#3ECF8E] text-black" : "bg-black/5"}`}>
-                        <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="w-8 md:w-10" />
+                        <img src="/tabby-logo.svg" alt="Tabby" className="w-8 md:w-10" />
                       </div>
                       <div className="flex-1">
                         <div className="font-bold text-base md:text-lg">Pay later with Tabby</div>
@@ -685,7 +685,7 @@ function PaymentPageContent() {
               {method === "tabby" && (
                 <div className="py-8 text-center space-y-6 max-w-md mx-auto">
                   <div className="flex justify-center">
-                    <img src="https://cdn.tabby.ai/assets/logo.svg" alt="Tabby" className="h-10" />
+                    <img src="/tabby-logo.svg" alt="Tabby" className="h-10" />
                   </div>
                   <div className="space-y-2">
                     <p className="font-bold text-lg">Pay later with Tabby</p>

@@ -226,7 +226,7 @@ export default function PaymentSelection({
           <div className="flex items-center flex-1 min-w-0">
             <div className="w-12 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center p-1.5 shadow-sm shrink-0">
               <img
-                src="https://cdn.tabby.ai/assets/images/logo.svg"
+                src="/tabby-logo.svg"
                 alt="Tabby"
                 className="w-full h-auto object-contain"
               />
