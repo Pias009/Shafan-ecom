@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
 import { OrderStatus } from "@prisma/client";
 import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
 
-function verifySignature(payload: string, signature: string): boolean {
+// Tabby uses a custom header for webhook verification (not HMAC).
+// The header title is "X-Tabby-Secret" and the value must match TABBY_WEBHOOK_SECRET.
+function verifyTabbyHeader(request: NextRequest): boolean {
   const secret = process.env.TABBY_WEBHOOK_SECRET;
-  if (!secret || !signature) return false;
-  const expected = createHmac("sha256", secret).update(payload).digest("hex");
-  return signature === expected;
+  if (!secret) return true; // skip verification if not configured
+  const headerValue = request.headers.get("x-tabby-secret") || "";
+  return headerValue === secret;
 }
 
 async function notifyPaymentConfirmed(orderId: string) {
@@ -63,12 +64,12 @@ async function notifyPaymentConfirmed(orderId: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const rawPayload = await request.text();
-  const signature = request.headers.get("x-tabby-signature") || "";
-
-  if (!verifySignature(rawPayload, signature)) {
+  if (!verifyTabbyHeader(request)) {
+    console.warn("[Tabby Webhook] Header verification failed");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rawPayload = await request.text();
 
   try {
     const body = JSON.parse(rawPayload);

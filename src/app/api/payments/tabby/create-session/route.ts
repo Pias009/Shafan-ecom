@@ -33,7 +33,7 @@ function getTabbyErrorMessage(rejectionCode: string): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orderId, phone: overridePhone, email: overrideEmail } = body;
+    const { orderId, phone: overridePhone, email: overrideEmail, lang = "en" } = body;
 
     if (!orderId) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
@@ -263,6 +263,7 @@ export async function POST(request: NextRequest) {
     const session = await tabbyService.createSession({
       amount: calculatedTotal,
       currency,
+      lang: lang === "ar" ? "ar" : "en",
       orderId: order.id,
       orderReferenceId:
         process.env.NODE_ENV === "development"

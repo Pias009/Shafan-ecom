@@ -131,6 +131,7 @@ export interface TabbySessionRequest {
   orderId: string;
   orderReferenceId: string;
   description?: string;
+  lang?: string;
   buyer: TabbyBuyer;
   shippingAddress?: TabbyShippingAddress;
   items: TabbyItem[];

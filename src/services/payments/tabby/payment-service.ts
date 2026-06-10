@@ -116,7 +116,7 @@ export class TabbyService {
             ...params.metadata,
           },
         },
-        lang: "en",
+        lang: params.lang || "en",
         merchant_code: this.merchantCode,
         merchant_urls: params.merchant_urls || {
           success: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL}/checkout/success?order_id=${params.orderId}&payment=tabby`,

@@ -289,8 +289,9 @@ function PaymentPageContent() {
       const res = await fetch("/api/payments/tabby/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           orderId: id,
+          lang: isArabic ? "ar" : "en",
           ...(overrides?.phone ? { phone: overrides.phone } : {}),
           ...(overrides?.email ? { email: overrides.email } : {}),
         }),
@@ -520,12 +521,13 @@ function PaymentPageContent() {
                   
                   {/* Global Promo Widgets */}
                   <div className="bg-black/[0.02] rounded-3xl p-4 border border-black/5">
-                    <TabbyPromo 
+                    <TabbyPromo
                       id="TabbyPromoGlobal"
-                      price={order.total} 
-                      currency={order.currency?.toUpperCase() || "AED"} 
-                      publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
-                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
+                      price={order.total}
+                      currency={order.currency?.toUpperCase() || "AED"}
+                      publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
+                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
+                      lang={isArabic ? "ar" : "en"}
                     />
                     <TamaraWidget 
                       price={order.total} 
