@@ -25,9 +25,10 @@ export default function SesiIcon() {
   };
 
   return (
+    <div className="hidden md:block">
     <motion.button
       onClick={handleOpen}
-      className={`fixed top-1/2 -translate-y-1/2 right-0 z-[9998] flex flex-col items-center justify-center gap-2 w-10 py-5 rounded-l-xl shadow-2xl overflow-hidden group ${isOpen ? 'hidden' : ''}`}
+      className={`fixed top-1/2 -translate-y-1/2 right-0 z-[9998] flex-col items-center justify-center gap-2 w-10 py-5 rounded-l-xl shadow-2xl overflow-hidden group ${isOpen ? 'hidden' : 'flex'}`}
       whileHover={{ x: -4 }}
       whileTap={{ scale: 0.97 }}
       style={{
@@ -84,5 +85,6 @@ export default function SesiIcon() {
         {isOnCooldown ? "Rest" : "Sesi"}
       </span>
     </motion.button>
+    </div>
   );
 }

@@ -92,6 +92,7 @@ export function FloatingCartButton() {
   if (!mounted || isAdminRoute) return null;
 
   return (
+    <div className="hidden lg:block">
     <motion.div
       className="fixed bottom-24 right-4 sm:bottom-28 sm:right-6 z-40"
       initial={{ opacity: 0, y: 20 }}
@@ -165,5 +166,6 @@ export function FloatingCartButton() {
         )}
       </Link>
     </motion.div>
+    </div>
   );
 }
