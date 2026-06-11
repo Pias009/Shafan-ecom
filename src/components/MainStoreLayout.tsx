@@ -14,14 +14,7 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== "undefined") {
-      const hostname = window.location.hostname;
-      // Show Sesi only on localhost or Vercel preview domains
-      // It will not show on the actual production custom domain
-      if (hostname === "localhost" || hostname === "127.0.0.1" || hostname.includes("vercel.app")) {
-        setShowSesi(true);
-      }
-    }
+    setShowSesi(true);
   }, []);
 
   const isAdmin = pathname?.startsWith("/ueadmin");
