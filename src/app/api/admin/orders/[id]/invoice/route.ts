@@ -52,6 +52,10 @@ export async function POST(
       const m = rawPaymentMethod.toLowerCase();
       if (m === 'cod' || m === 'cash on delivery' || m === 'cash_on_delivery') return 'Cash on Delivery';
       if (m === 'card' || m === 'stripe' || m === 'online') return 'Credit Card (Stripe)';
+      if (m === 'tabby') return 'Tabby';
+      if (m === 'tamara') return 'Tamara';
+      if (m === 'apple_pay') return 'Apple Pay';
+      if (m === 'google_pay') return 'Google Pay';
       return rawPaymentMethod || 'N/A';
     })();
 

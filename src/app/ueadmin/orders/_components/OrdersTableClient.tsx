@@ -57,6 +57,10 @@ function getPaymentMethodDisplay(method: string | null): string {
   const m = method.toLowerCase();
   if (m === 'cod' || m === 'cash on delivery') return 'COD';
   if (m === 'card' || m === 'stripe' || m === 'online') return 'Stripe';
+  if (m === 'tabby') return 'Tabby';
+  if (m === 'tamara') return 'Tamara';
+  if (m === 'apple_pay') return 'Apple Pay';
+  if (m === 'google_pay') return 'Google Pay';
   return method;
 }
 

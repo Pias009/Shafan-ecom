@@ -17,6 +17,18 @@ function formatPrice(amount: number, currency: string): string {
   return `${code} ${(amount || 0).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 }
 
+function getPaymentMethodDisplay(method: string | null): string {
+  if (!method) return 'N/A';
+  const m = method.toLowerCase();
+  if (m === 'cod' || m === 'cash on delivery') return 'COD';
+  if (m === 'card' || m === 'stripe' || m === 'online') return 'Stripe';
+  if (m === 'tabby') return 'Tabby';
+  if (m === 'tamara') return 'Tamara';
+  if (m === 'apple_pay') return 'Apple Pay';
+  if (m === 'google_pay') return 'Google Pay';
+  return method;
+}
+
 export const dynamic = 'force-dynamic';
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -358,7 +370,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <div className="space-y-4">
               <div className="flex justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Method</span>
-                <span className="font-bold text-sm text-slate-900">{order.paymentMethodTitle || order.paymentMethod || 'N/A'}</span>
+                <span className="font-bold text-sm text-slate-900">{order.paymentMethodTitle || (order.paymentMethod ? getPaymentMethodDisplay(order.paymentMethod) : 'N/A')}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Status</span>
