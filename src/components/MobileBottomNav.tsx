@@ -102,11 +102,12 @@ export function MobileBottomNav() {
                 );
               }
 
+              const href = item.href!;
               return (
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  onTouchStart={() => router?.prefetch(item.href)}
+                  key={href}
+                  href={href}
+                  onTouchStart={() => router?.prefetch(href)}
                   className="relative group flex flex-col items-center gap-1"
                 >
                   {content}
