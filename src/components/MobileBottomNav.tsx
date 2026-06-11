@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, Search, ShoppingBag, UserRound, Sparkles } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { useEffect, useState } from "react";
@@ -21,8 +21,7 @@ export function MobileBottomNav() {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-
-  const router = typeof window !== 'undefined' ? (require('next/navigation').useRouter()) : null;
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -46,11 +45,11 @@ export function MobileBottomNav() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!mounted) return null;
-
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
   const sesiEnabled = useSesi((s) => s.enabled);
   const openSesi = useSesi((s) => s.setOpen);
+
+  if (!mounted) return null;
 
   const navItems = [
     { href: "/", icon: Home, label: t.nav.home },
