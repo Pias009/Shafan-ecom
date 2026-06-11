@@ -152,7 +152,7 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
       });
       
       if (res.ok) {
-        toast.success(currentlyOnShelf ? 'Removed from Fresh Shelf' : 'Added to Fresh Shelf');
+        toast.success(currentlyOnShelf ? 'Removed from Routine' : 'Added to Routine');
         window.location.reload();
       } else {
         toast.error('Failed to update');
@@ -333,7 +333,7 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Price</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Stock</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">Category</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Fresh</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-center">Routine</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest">Status</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
               </tr>
@@ -407,10 +407,10 @@ export function ProductsTable({ initialProducts }: { initialProducts: Product[] 
                           ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200' 
                           : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200'
                       }`}
-                      title={p.freshFromShelf ? 'Click to remove from Fresh Shelf' : 'Click to add to Fresh Shelf'}
+                      title={p.freshFromShelf ? 'Click to remove from Routine' : 'Click to add to Routine'}
                     >
                       <Package size={12} />
-                      {p.freshFromShelf ? 'On Shelf' : 'Add'}
+                      {p.freshFromShelf ? 'On' : 'Add'}
                     </button>
                   </td>
                   <td className="px-6 py-5">

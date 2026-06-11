@@ -64,7 +64,7 @@ export function FreshFromShelfTable({ initialProducts }: { initialProducts: Prod
           if (p.id === productId) return { ...p, freshFromShelf: !currentlyOnShelf };
           return p;
         }));
-        toast.success(!currentlyOnShelf ? 'Added to Fresh From Shelf' : 'Removed from Fresh From Shelf');
+        toast.success(!currentlyOnShelf ? 'Added to Routine' : 'Removed from Routine');
       } else {
         const data = await res.json();
         toast.error(data.error || 'Failed to update status');
@@ -230,7 +230,7 @@ export function FreshFromShelfTable({ initialProducts }: { initialProducts: Prod
               {activeTab === "newest" 
                 ? "No newest products" 
                 : activeTab === "shelf"
-                ? "No products on fresh shelf" 
+                ? "No routine products" 
                 : "No available products"}
             </p>
           </div>

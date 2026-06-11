@@ -7,6 +7,114 @@ function isValidImageUrl(url: any): boolean {
   return url.startsWith('/') || url.startsWith('http');
 }
 
+// In-memory cache for homepage data
+let homepageCache: { data: any; timestamp: number } | null = null;
+const HOMEPAGE_CACHE_TTL = 300_000; // 5 minutes
+
+export async function getHomePageData(storeCode?: string) {
+  if (homepageCache && Date.now() - homepageCache.timestamp < HOMEPAGE_CACHE_TTL) {
+    return homepageCache.data;
+  }
+
+  try {
+    const selectFields = {
+      id: true,
+      name: true,
+      slug: true,
+      mainImage: true,
+      stockQuantity: true,
+      averageRating: true,
+      ratingCount: true,
+      totalSales: true,
+      price: true,
+      discountPrice: true,
+      currency: true,
+      hot: true,
+      trending: true,
+      freshFromShelf: true,
+      brand: { select: { name: true } },
+      productCategories: { include: { category: { select: { name: true } } } },
+      countryPrices: { where: { active: true }, select: { country: true, price: true, currency: true } },
+    };
+
+    const mapProduct = (p: any) => {
+      const mainImage = isValidImageUrl(p.mainImage) ? p.mainImage : null;
+      const categoryNames = p.productCategories?.map((pc: any) => pc.category?.name).filter(Boolean) || [];
+      const primaryCategory = categoryNames[0] || "General";
+      const regPrice = Number(p.price) || 0;
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        mainImage,
+        imageUrl: mainImage,
+        images: [],
+        shortDescription: "",
+        stockQuantity: p.stockQuantity || 0,
+        averageRating: p.averageRating || 0,
+        ratingCount: p.ratingCount || 0,
+        totalSales: p.totalSales || 0,
+        price: regPrice,
+        priceCents: regPrice,
+        regularPrice: regPrice,
+        regularPriceCents: regPrice,
+        salePrice: p.discountPrice ? Number(p.discountPrice) : null,
+        salePriceCents: p.discountPrice ? Number(p.discountPrice) : null,
+        discountPrice: p.discountPrice ? Number(p.discountPrice) : null,
+        currency: p.currency?.toUpperCase() || 'USD',
+        hot: p.hot,
+        trending: p.trending,
+        brand: p.brand ? { name: p.brand.name } : null,
+        brandName: p.brand?.name || "Generic",
+        category: { name: primaryCategory },
+        categoryName: primaryCategory,
+        categories: categoryNames,
+        countryPrices: p.countryPrices || [],
+      };
+    };
+
+    const [allProducts, newArrivals, flashSales, trending] = await Promise.all([
+      prisma.product.findMany({
+        where: { active: true },
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+      prisma.product.findMany({
+        where: { active: true, freshFromShelf: true },
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+      prisma.product.findMany({
+        where: { active: true, hot: true },
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+      prisma.product.findMany({
+        where: { active: true, trending: true },
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+    ]);
+
+    const data = {
+      products: allProducts.map(mapProduct),
+      newArrivals: newArrivals.map(mapProduct),
+      flashSales: flashSales.map(mapProduct),
+      trending: trending.map(mapProduct),
+    };
+
+    homepageCache = { data, timestamp: Date.now() };
+    return data;
+  } catch (error) {
+    console.error("HomePage data fetch error:", error);
+    return { products: [], newArrivals: [], flashSales: [], trending: [] };
+  }
+}
+
 export async function getProducts(storeCode?: string, page: number = 1, limit: number = 50, category?: string, brand?: string, trendingOnly?: boolean) {
   const skip = (page - 1) * limit;
   

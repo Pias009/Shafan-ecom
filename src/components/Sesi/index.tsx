@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import { useSesi } from "./useSesi";
 import SesiIcon from "./SesiIcon";
 import SesiPanel from "./SesiPanel";
+import SesiVote from "./SesiVote";
 
 export default function Sesi() {
   const pathname = usePathname();
-  const { enabled, setOpen } = useSesi();
+  const { enabled, isOpen, setOpen } = useSesi();
 
   const isAdminRoute = pathname?.startsWith("/ueadmin") || pathname?.startsWith("/admin");
 
@@ -23,6 +24,11 @@ export default function Sesi() {
   return (
     <>
       <SesiIcon />
+      {isOpen && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[9999]">
+          <SesiVote />
+        </div>
+      )}
       <SesiPanel />
     </>
   );

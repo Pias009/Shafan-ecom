@@ -850,3 +850,12 @@ model TrackingLog {
   @@index([sessionId])
   @@index([userId])
 }
+
+model SesiVote {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating    String   // "Happy", "Okay", "Sad"
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([rating])
+}

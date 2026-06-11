@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
-import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock } from 'lucide-react';
+import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock, ThumbsUp } from 'lucide-react';
 import { OrderStatus } from "@prisma/client";
 import { requireAdminSession, getAccessibleStoreIds } from "@/lib/admin-session";
 
@@ -18,7 +18,8 @@ export default async function Dashboard() {
     totalProductsCount,
     totalUsersCount,
     recentOrders,
-    revenueData
+    revenueData,
+    sesiVotes
   ] = await Promise.all([
     prisma.order.count({
       where: { storeId: { in: accessibleStoreIds } }
@@ -41,10 +42,17 @@ export default async function Dashboard() {
         storeId: { in: accessibleStoreIds },
         NOT: { status: OrderStatus.CANCELLED } 
       }
-    })
+    }),
+    Promise.all([
+      prisma.sesiVote.count({ where: { rating: "Happy" } }),
+      prisma.sesiVote.count({ where: { rating: "Okay" } }),
+      prisma.sesiVote.count({ where: { rating: "Sad" } }),
+      prisma.sesiVote.count(),
+    ])
   ]);
 
   const totalRevenue = revenueData._sum.total || 0;
+  const [happyVotes, okayVotes, sadVotes, totalVotes] = sesiVotes;
   
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -67,7 +75,7 @@ export default async function Dashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="glass-panel-heavy p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-center gap-6">
           <div className="p-4 bg-black/5 rounded-2xl text-black"><ShoppingBag size={24} /></div>
           <div>
@@ -94,6 +102,16 @@ export default async function Dashboard() {
           <div>
             <div className="text-[10px] font-black uppercase tracking-widest text-black/50">Revenue</div>
             <div className="text-3xl font-black text-black">AED {totalRevenue.toLocaleString()}</div>
+          </div>
+        </div>
+        <div className="glass-panel-heavy p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-center gap-6">
+          <div className="p-4 bg-black/5 rounded-2xl text-black"><ThumbsUp size={24} /></div>
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-black/50">Sesi Feedback</div>
+            <div className="text-3xl font-black text-black">{totalVotes}</div>
+            <div className="text-[9px] font-bold text-black/50 mt-1">
+              😊 {happyVotes} &middot; 😐 {okayVotes} &middot; 😞 {sadVotes}
+            </div>
           </div>
         </div>
       </div>

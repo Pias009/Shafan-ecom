@@ -474,6 +474,15 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                 <div className="text-[6px] sm:text-[8px] font-black uppercase tracking-widest text-slate-600">Secured Payment</div>
               </div>
             </div>
+
+            {/* Trust Badge */}
+            <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+              <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
+              <div>
+                <p className="text-xs sm:text-sm font-black text-emerald-800 uppercase tracking-widest">100% Trustable & Authentic Product</p>
+                <p className="text-[9px] sm:text-[10px] font-medium text-emerald-600/70 mt-0.5">Guaranteed genuine, sourced directly from brands</p>
+              </div>
+            </div>
           </div>
         </div>
 

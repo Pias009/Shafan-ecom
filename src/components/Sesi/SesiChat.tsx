@@ -46,6 +46,7 @@ export default function SesiChat() {
   const [userInput, setUserInput] = useState("");
   const [showQuickReplies, setShowQuickReplies] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const initializingRef = useRef(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,7 +76,8 @@ export default function SesiChat() {
   }, [cooldownExpiry, clearCooldown]);
 
   useEffect(() => {
-    if (state === "PLAYFUL_FRIEND" && messages.length === 0) {
+    if (state === "PLAYFUL_FRIEND" && messages.length === 0 && !initializingRef.current) {
+      initializingRef.current = true;
       playSequentialMessages(
         [
           "Hiiiii! I'm Sesi! Your personal skin bestie! 👋✨",

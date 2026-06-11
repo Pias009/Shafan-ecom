@@ -20,6 +20,14 @@ const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
 
 const DEFAULT_CONFIG = { country: "KW", currency: "KWD", lang: "en" as const };
 
+function defer(fn: () => void) {
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(() => fn(), { timeout: 2000 });
+  } else {
+    setTimeout(fn, 100);
+  }
+}
+
 export function GlobalInitializer() {
   const { setCurrency: setLegacyCurrency } = useCurrencyStore();
   const { setLanguage } = useLanguageStore();
@@ -33,76 +41,59 @@ export function GlobalInitializer() {
     const testCountry = urlParams.get('test_country');
     const autoDetected = localStorage.getItem("country-auto-detected");
     const langStorage = localStorage.getItem("language-storage");
-    
-    // Only skip if we've already successfully auto-detected or user has manually set it
-    // BUT always proceed if we have a test_country parameter in the URL
+
     if (autoDetected && langStorage && !testCountry) {
       setInitialized(true);
       return;
     }
 
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
-    // Support testing via URL: ?test_country=AE
-    const apiUrl = testCountry ? `/api/geo?test_country=${testCountry}` : "/api/geo";
+    defer(() => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const apiUrl = testCountry ? `/api/geo?test_country=${testCountry}` : "/api/geo";
 
+      fetch(apiUrl, { signal: controller.signal })
+        .then(res => res.json())
+        .then(data => {
+          clearTimeout(timeoutId);
+          const countryCode = data?.country?.toUpperCase();
 
-    fetch(apiUrl, { signal: controller.signal })
-      .then(res => res.json())
-      .then(data => {
-        clearTimeout(timeoutId);
-        const countryCode = data?.country?.toUpperCase();
-        
-        if (countryCode && GULF_COUNTRIES.includes(countryCode)) {
-          const config = IP_MAP[countryCode];
-          if (config) {
-            setCountry(countryCode);
-            setLegacyCurrency(config.currency);
-            
-            if (!langStorage) {
-              setLanguage(config.lang);
+          if (countryCode && GULF_COUNTRIES.includes(countryCode)) {
+            const config = IP_MAP[countryCode];
+            if (config) {
+              setCountry(countryCode);
+              setLegacyCurrency(config.currency);
+              if (!langStorage) setLanguage(config.lang);
+              localStorage.setItem("country-auto-detected", "true");
             }
+          } else {
+            setCountry(DEFAULT_CONFIG.country);
+            setLegacyCurrency(DEFAULT_CONFIG.currency);
+            if (!langStorage) setLanguage(DEFAULT_CONFIG.lang);
             localStorage.setItem("country-auto-detected", "true");
           }
-        } else {
-          // If not in Gulf countries, use default (Kuwait)
+          setInitialized(true);
+        })
+        .catch(() => {
+          clearTimeout(timeoutId);
           setCountry(DEFAULT_CONFIG.country);
           setLegacyCurrency(DEFAULT_CONFIG.currency);
-          
-          if (!langStorage) {
-            setLanguage(DEFAULT_CONFIG.lang);
-          }
+          if (!langStorage) setLanguage(DEFAULT_CONFIG.lang);
           localStorage.setItem("country-auto-detected", "true");
-        }
-        setInitialized(true);
-      })
-      .catch(() => {
-        clearTimeout(timeoutId);
-        
-        // Fallback to defaults
-        setCountry(DEFAULT_CONFIG.country);
-        setLegacyCurrency(DEFAULT_CONFIG.currency);
-        
-        if (!langStorage) {
-          setLanguage(DEFAULT_CONFIG.lang);
-        }
-        localStorage.setItem("country-auto-detected", "true");
-        setInitialized(true);
-      });
-      
-    return () => clearTimeout(timeoutId);
+          setInitialized(true);
+        });
+    });
+
+    return () => {};
   }, [_hasHydrated, setCountry, setLegacyCurrency, setLanguage]);
 
-  // Global address sync
   const setHasAddress = useCartStore(state => state.setHasAddress);
   const { data: session } = useSession();
 
   useEffect(() => {
     if (!_hasHydrated) return;
 
-    async function checkAddress() {
+    defer(async () => {
       try {
         if (session) {
           const res = await fetch("/api/account/address");
@@ -117,23 +108,9 @@ export function GlobalInitializer() {
             if (data) setHasAddress(true);
           }
         }
-      } catch (e) {
-        // Silently fail, don't break the app
-      }
-    }
-    checkAddress();
+      } catch (e) {}
+    });
   }, [_hasHydrated, session, setHasAddress]);
-
-  // Load Tabby promo script globally so on-site snippets render on any page
-  useEffect(() => {
-    const scriptId = "tabby-promo-script";
-    if (document.getElementById(scriptId)) return;
-    const script = document.createElement("script");
-    script.id = scriptId;
-    script.src = "https://checkout.tabby.ai/tabby-promo.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
 
   return null;
 }

@@ -1,32 +1,26 @@
 "use client";
 
-import { useMemo, useState, useEffect, lazy, Suspense, useRef, memo } from "react";
+import { useMemo, useState, useEffect, Suspense, useRef, memo } from "react";
 import { CategorySection } from "@/components/CategorySection";
 import { Hero } from "@/components/Hero";
 import { ProductCard } from "@/components/ProductCard";
-import { HomeProductCard } from "@/components/HomeProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
-import { TrendingNowSlider } from "@/components/TrendingNowSlider";
+import { OfferBannersSection } from "@/components/OfferBannersSection";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { Loader2, Filter, X, ArrowRight, Flame, Sparkles, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Sparkles, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Price } from "@/components/Price";
-import { AnimatePresence, motion } from "framer-motion";
-import { OfferBannersSection } from "@/components/OfferBannersSection";
+import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
 import { useCountryStore } from "@/lib/country-store";
-import { SUPPORTED_COUNTRIES } from "@/lib/countries";
-import HomeBannerSlider from "@/components/HomeBannerSlider";
-import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
+import { hasValidPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackAddToCart } from "@/lib/datalayer";
-import { fbEvent } from "@/lib/fpixel";
 
 import dynamic from "next/dynamic";
 const BlogShowcase = dynamic(() => import("@/components/BlogShowcase").then(m => m.BlogShowcase), { ssr: false });
@@ -251,7 +245,6 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
   const [products, setProducts] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
-  const [banners, setBanners] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
@@ -321,22 +314,6 @@ useEffect(() => {
     }
     detectCountry();
   }, [setCurrency, setCountry]);
-
-  // Fetch active banners
-  useEffect(() => {
-    async function fetchBanners() {
-      try {
-        const response = await fetch('/api/banners');
-        if (!response.ok) throw new Error('Failed to fetch banners');
-        const data = await response.json();
-        setBanners(data);
-      } catch (error) {
-        console.error('Error fetching banners:', error);
-      }
-    }
-
-    fetchBanners();
-  }, []);
 
 
 
@@ -506,12 +483,36 @@ useEffect(() => {
   return (
     <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full bg-white/40 backdrop-blur-sm">
       {/* NoticeBoard and Navbar handled globally */}
-      <Hero />
+        <Hero />
 
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 pb-20 flex-1 overflow-x-hidden">
         
 
-        {/* Flash Sales Section - Priority #2 */}
+        {/* Routine Section - Top Priority */}
+        <section className="pt-2 md:pt-6 pb-4 md:pb-6 px-1 sm:px-4" style={{ display: mounted && filteredNewArrivals.length === 0 ? 'none' : undefined }}>
+          <div className="mb-3 md:mb-5 flex items-center justify-between">
+            <div>
+              <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
+                <Sparkles className="text-emerald-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">New</span>
+                <Sparkles className="text-green-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </div>
+<h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Routine</h2>
+               <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">Latest additions to our collection</p>
+            </div>
+            <Link
+              href="/products/new-arrivals"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
+            >
+              See All
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          
+          <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
+        </section>
+
+        {/* Flash Sales Section */}
         <section className="pt-2 md:pt-6 pb-6 md:pb-10 px-1 sm:px-4">
           <div className="mb-4 md:mb-8 flex items-center justify-between">
             <div>
@@ -534,53 +535,26 @@ useEffect(() => {
           <FlashSalesSlider products={filteredFlashSales} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
         </section>
 
-        {/* Categories - Priority #3 */}
+        {/* Categories */}
         <CategorySection
           onPick={(c) => {
             router.push(`/products?category=${encodeURIComponent(c)}`);
           }}
         />
 
-
-        {/* Offer Banners - After Flash Sales */}
+        {/* Offer Banners */}
         <div className="hidden sm:block">
           <OfferBannersSection />
         </div>
 
-        {filteredHot.length > 0 && (
+        <div style={{ display: mounted && filteredHot.length === 0 ? 'none' : undefined }}>
           <TrendingNowSlider
             products={filteredHot}
             onQuickView={(pp) => setQuickView(pp)}
             onAddToCart={(pp) => addToCart(pp)}
             onOrderNow={(pp) => orderNow(pp)}
           />
-        )}
-
-        {/* New Arrivals Section - Now after Trending Now */}
-        {filteredNewArrivals.length > 0 && (
-          <section className="pt-6 md:pt-10 pb-4 md:pb-6 px-1 sm:px-4">
-            <div className="mb-3 md:mb-5 flex items-center justify-between">
-              <div>
-                <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
-                  <Sparkles className="text-emerald-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">New</span>
-                  <Sparkles className="text-green-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </div>
-                <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Fresh From The Shelf</h2>
-                <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">Latest additions to our collection</p>
-              </div>
-              <Link
-                href="/products/new-arrivals"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
-              >
-                See All
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-            
-            <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
-          </section>
-        )}
+        </div>
 
       </main>
 
@@ -590,7 +564,9 @@ useEffect(() => {
       </Suspense>
 
       {/* Brand Slider Section - Moved above footer */}
-      <BrandMarquee />
+      <Suspense fallback={null}>
+        <BrandMarquee />
+      </Suspense>
 
       {/* Google Reviews Section */}
       <Suspense fallback={<div className="h-32" />}>

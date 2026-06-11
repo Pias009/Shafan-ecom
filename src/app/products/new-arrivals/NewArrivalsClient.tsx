@@ -101,7 +101,7 @@ export default function NewArrivalsClient({ products }: NewArrivalsClientProps) 
       <div className="min-h-screen bg-white/40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 pt-32 pb-20 text-center">
           <div className="text-6xl mb-4 opacity-30">✨</div>
-          <h1 className="text-4xl font-black text-black mb-4">Fresh From The Shelf</h1>
+          <h1 className="text-4xl font-black text-black mb-4">Routine</h1>
           <p className="text-black/50">No new products available right now. Check back soon!</p>
           <Link
             href="/"
@@ -122,8 +122,8 @@ export default function NewArrivalsClient({ products }: NewArrivalsClientProps) 
             <Sparkles className="w-5 h-5 text-emerald-600" />
             <span className="font-black text-sm uppercase tracking-widest text-emerald-600">New</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-black">Fresh From The Shelf</h1>
-          <p className="text-black/60 mt-2">Latest additions to our collection</p>
+<h1 className="text-4xl md:text-5xl font-black text-black">Routine</h1>
+           <p className="text-black/60 mt-2">Latest additions to our collection</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">

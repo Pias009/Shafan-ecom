@@ -1,28 +1,16 @@
 import HomeClient from "./HomeClient";
-import { getProducts, getNewArrivals, getFlashSales, getTrendingProducts } from "@/lib/products";
-import { getStoreCode } from "@/lib/server/store-utils";
+import { getHomePageData } from "@/lib/products";
 import { Suspense } from "react";
-import { Loader } from "@/components/Loader";
 
-export const revalidate = 3600; // Cache for 1 hour to improve performance
+export const dynamic = 'force-static';
+export const revalidate = 300; // Revalidate every 5 minutes
 
 export default async function HomePage() {
-  const storeCode = await getStoreCode();
-  
-  const [products, newArrivals, flashSales, trending] = await Promise.all([
-    getProducts(storeCode),
-    getNewArrivals(storeCode),
-    getFlashSales(storeCode),
-    getTrendingProducts(storeCode)
-  ]);
+  const data = await getHomePageData();
   
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader size="lg" />
-      </div>
-    }>
-      <HomeClient initialProducts={products} newArrivals={newArrivals} flashSales={flashSales} hot={trending} />
+    <Suspense fallback={null}>
+      <HomeClient initialProducts={data.products} newArrivals={data.newArrivals} flashSales={data.flashSales} hot={data.trending} />
     </Suspense>
   );
 }
