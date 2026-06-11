@@ -9,11 +9,9 @@ import Sesi from "./Sesi";
 
 export function MainStoreLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
   const [showSesi, setShowSesi] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     setShowSesi(true);
   }, []);
 

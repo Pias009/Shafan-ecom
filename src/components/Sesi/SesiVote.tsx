@@ -13,7 +13,7 @@ const emojis = [
 
 export default function SesiVote() {
   const { isOpen, setOpen, advanceState } = useSesi();
-  const [showVote, setShowVote] = useState(false);
+  const [timeElapsed, setTimeElapsed] = useState(false);
   const [voted, setVoted] = useState<string | null>(null);
   const [happyCount, setHappyCount] = useState(0);
 
@@ -25,14 +25,12 @@ export default function SesiVote() {
   }, []);
 
   useEffect(() => {
-    if (!isOpen) {
-      setShowVote(false);
-      setVoted(null);
-      return;
-    }
-    const timer = setTimeout(() => setShowVote(true), 5000);
+    if (!isOpen) return;
+    const timer = setTimeout(() => setTimeElapsed(true), 5000);
     return () => clearTimeout(timer);
   }, [isOpen]);
+
+  const showVote = isOpen && timeElapsed;
 
   const handleVote = async (label: string) => {
     setVoted(label);
