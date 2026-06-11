@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, ShoppingBag, UserRound } from "lucide-react";
+import { Home, Search, ShoppingBag, UserRound, Sparkles } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
+import { useSesi } from "./Sesi/useSesi";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -48,10 +49,13 @@ export function MobileBottomNav() {
   if (!mounted) return null;
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
+  const sesiEnabled = useSesi((s) => s.enabled);
+  const openSesi = useSesi((s) => s.setOpen);
 
   const navItems = [
     { href: "/", icon: Home, label: t.nav.home },
     { href: "/products", icon: Search, label: t.nav.products || "Explore" },
+    ...(sesiEnabled ? [{ icon: Sparkles, label: "Sesi", isSesi: true }] : []),
     { href: "/cart", icon: ShoppingBag, label: t.nav.cart || "Cart", isCart: true },
     { href: status === "authenticated" ? "/account" : "/account", icon: UserRound, label: t.nav.account },
   ];
@@ -68,16 +72,10 @@ export function MobileBottomNav() {
         >
           <div className="bg-white/90 backdrop-blur-xl border border-black/5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-3xl px-6 py-3 flex items-center justify-between">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = !item.isSesi && pathname === item.href;
               const Icon = item.icon;
-              
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onTouchStart={() => router?.prefetch(item.href)}
-                  className="relative group flex flex-col items-center gap-1"
-                >
+              const content = (
+                <>
                   <div className={`p-2 rounded-2xl transition-all duration-300 ${isActive ? "bg-black text-white" : "text-black/40 group-hover:bg-black/5"}`}>
                     <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                     {item.isCart && cartCount > 0 && (
@@ -89,6 +87,29 @@ export function MobileBottomNav() {
                   <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${isActive ? "text-black" : "text-black/20"}`}>
                     {item.label}
                   </span>
+                </>
+              );
+
+              if (item.isSesi) {
+                return (
+                  <button
+                    key="sesi"
+                    onClick={() => openSesi(true)}
+                    className="relative group flex flex-col items-center gap-1"
+                  >
+                    {content}
+                  </button>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onTouchStart={() => router?.prefetch(item.href)}
+                  className="relative group flex flex-col items-center gap-1"
+                >
+                  {content}
                 </Link>
               );
             })}
