@@ -12,7 +12,7 @@ export default function SesiIcon() {
   useLayoutEffect(() => {
     const check = () => setIsOnCooldown(cooldownExpiry ? cooldownExpiry > Date.now() : false);
     check();
-    const interval = setInterval(check, 1000);
+    const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
   }, [cooldownExpiry]);
 

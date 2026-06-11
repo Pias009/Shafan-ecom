@@ -11,8 +11,8 @@ export const prisma =
     datasources: {
       db: {
         url: (process.env.DATABASE_URL || '').includes('?') 
-          ? `${process.env.DATABASE_URL}&connectTimeoutMS=30000&socketTimeoutMS=45000`
-          : `${process.env.DATABASE_URL}?connectTimeoutMS=30000&socketTimeoutMS=45000`,
+          ? `${process.env.DATABASE_URL}&connectTimeoutMS=5000&socketTimeoutMS=5000`
+          : `${process.env.DATABASE_URL}?connectTimeoutMS=5000&socketTimeoutMS=5000`,
       },
     },
   });
@@ -22,7 +22,7 @@ globalForPrisma.prisma = prisma;
 
 export async function prismaWithRetry<T>(
   fn: () => Promise<T>,
-  retries = 3,
+  retries = 1,
   delay = 1000
 ): Promise<T> {
   for (let i = 0; i < retries; i++) {

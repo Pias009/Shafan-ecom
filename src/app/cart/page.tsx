@@ -3,7 +3,7 @@
 import { useCartStore } from "@/lib/cart-store";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus, MapPin } from "lucide-react";
+import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus, MapPin, Lock } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -101,6 +101,7 @@ function CartPageContent() {
     applyCoupon,
     removeCoupon,
     setHasAddress,
+    hasAddress,
     clearCart,
   } = useCartStore();
 
@@ -714,18 +715,24 @@ function CartPageContent() {
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Country */}
                 <div className="relative md:col-span-2">
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
+                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 flex items-center gap-1.5">
                     Country *
+                    {hasAddress && (
+                      <span className="text-[8px] font-bold uppercase tracking-wider text-black/20">Locked</span>
+                    )}
                   </label>
                   <button
                     type="button"
-                    onClick={() => { setShowCountryDropdown(!showCountryDropdown); setShowRegionDropdown(false); }}
-                    className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white flex items-center justify-between cursor-pointer active:border-black/30"
+                    onClick={() => { if (!hasAddress) { setShowCountryDropdown(!showCountryDropdown); setShowRegionDropdown(false); } }}
+                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 transition outline-none bg-white flex items-center justify-between ${hasAddress ? "border-black/5 text-black/40 cursor-not-allowed" : "border-black/10 focus:border-black cursor-pointer active:border-black/30"}`}
                   >
-                    <span>{deliveryCountry}</span>
-                    <ChevronDown className={`w-4 h-4 text-black/30 transition shrink-0 ${showCountryDropdown ? "rotate-180" : ""}`} />
+                    <span className="flex items-center gap-2">
+                      {hasAddress && <Lock className="w-3 h-3 text-black/20" />}
+                      {deliveryCountry}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-black/30 transition shrink-0 ${showCountryDropdown ? "rotate-180" : ""} ${hasAddress ? "opacity-20" : ""}`} />
                   </button>
-                  {showCountryDropdown && (
+                  {showCountryDropdown && !hasAddress && (
                     <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
                       {ACTIVE_COUNTRIES.map((c) => (
                         <button
@@ -973,13 +980,13 @@ function CartPageContent() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-4 max-h-[360px] md:max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
+                  <div className="space-y-4 max-h-[480px] md:max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
                     {items.map((item: CartItem, idx: number) => {
                       const { price: itemDisplayPrice } = getDisplayPrice(item, selectedCountry);
                       const itemKey = item.id || `item-${idx}`;
                       return (
-                        <div key={itemKey} className="flex gap-4 items-center group bg-black/[0.02] rounded-2xl p-3 hover:bg-black/[0.04] transition">
-                          <div className="relative h-16 w-16 md:h-20 md:w-20 shrink-0 overflow-hidden rounded-2xl bg-white border border-black/10 shadow-sm">
+                        <div key={itemKey} className="flex gap-2 sm:gap-3 items-start group bg-black/[0.02] rounded-2xl p-3 hover:bg-black/[0.04] transition">
+                          <div className="relative h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-2xl bg-white border border-black/10 shadow-sm">
                             <Image
                               src={isValidImageUrl(item.imageUrl) ? getOptimizedUrl(item.imageUrl, 150) : "/placeholder-product.png"}
                               alt={item.name || "Product"}
@@ -987,48 +994,45 @@ function CartPageContent() {
                               className="object-cover"
                             />
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs md:text-sm font-bold text-black leading-tight line-clamp-2">{item.name}</div>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <span className="inline-flex items-center justify-center bg-red-500/10 text-red-600 rounded-full px-2.5 py-0.5 text-[9px] md:text-[10px] font-black uppercase tracking-wider">
-                                Qty {item.quantity}
-                              </span>
-                              <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-black/30">{item.brand}</span>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-1 shrink-0">
-                            <div className="flex items-center gap-1 rounded-full border border-black/10 px-1 py-0.5">
+                          <div className="min-w-0 flex-1 flex flex-col gap-1 sm:gap-2">
+                            <div className="flex items-start justify-between gap-1 sm:gap-2">
+                              <div className="text-sm font-bold text-black leading-tight line-clamp-2">{item.name}</div>
                               <button
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                disabled={item.quantity <= 1}
-                                className="w-7 h-7 md:w-6 md:h-6 rounded-full text-black/40 hover:text-black hover:bg-black/5 transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:bg-black/10"
+                                onClick={() => {
+                                  removeItem(item.id);
+                                  toast.success(`Removed ${item.name}`);
+                                }}
+                                className="text-red-400 hover:text-red-600 transition p-1 hover:bg-red-50 rounded-lg -mt-1 -mr-1 cursor-pointer active:bg-red-100 shrink-0"
                               >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <span className="w-7 text-center text-[11px] font-black text-black">
-                                {item.quantity}
-                              </span>
-                              <button
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                className="w-7 h-7 md:w-6 md:h-6 rounded-full text-black/40 hover:text-black hover:bg-black/5 transition flex items-center justify-center cursor-pointer active:bg-black/10"
-                              >
-                                <Plus className="w-3 h-3" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <Price
-                              amount={Number(itemDisplayPrice) * item.quantity}
-                              className="font-black text-sm md:text-base text-black"
-                            />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-black/30">{item.brand}</span>
+                            <div className="flex items-center gap-2 sm:gap-3">
+                              <Price
+                                amount={Number(itemDisplayPrice) * item.quantity}
+                                className="font-black text-sm sm:text-base text-black text-nowrap shrink-0"
+                              />
+                              <div className="flex items-center gap-1 sm:gap-1 sm:rounded-full sm:border sm:border-black/10 sm:px-1 sm:py-0.5 shrink-0">
+                                <button
+                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                  disabled={item.quantity <= 1}
+                                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-black/40 hover:text-black hover:bg-black/5 transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer active:bg-black/10 shrink-0"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="w-5 sm:w-7 text-center text-[11px] font-black text-black shrink-0">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-black/40 hover:text-black hover:bg-black/5 transition flex items-center justify-center cursor-pointer active:bg-black/10 shrink-0"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                          <button
-                            onClick={() => {
-                              removeItem(item.id);
-                              toast.success(`Removed ${item.name}`);
-                            }}
-                            className="text-red-400 hover:text-red-600 transition p-1.5 hover:bg-red-50 rounded-lg self-start mt-1 cursor-pointer active:bg-red-100"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
                         </div>
                       );
                     })}
