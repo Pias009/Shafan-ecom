@@ -53,28 +53,12 @@ function SuccessContent() {
             return;
           }
 
-          // Verify Tabby payment status and trigger capture if needed
-          const verifyPaymentId = data.tabbyPaymentId || tabbyPaymentId;
-          if (verifyPaymentId) {
-            try {
-              const verifyRes = await fetch("/api/payments/tabby/verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  orderId: data.id,
-                  paymentId: verifyPaymentId,
-                }),
-              });
-              const verifyData = await verifyRes.json();
-              if (!verifyRes.ok) {
-                console.warn("Tabby verify warning:", verifyData);
-              } else {
-                console.log("Tabby verify success:", verifyData);
-              }
-            } catch (verifyErr) {
-              console.error("Tabby payment verification error:", verifyErr);
-            }
-          }
+          // NOTE: We intentionally do NOT capture the Tabby payment here.
+          // Per Tabby's spec, capture must be driven by a server-side signal —
+          // the registered webhook (payment.authorized) or the 20-minute
+          // Retrieve Request cron (/api/cron/tabby-verify) — never the browser
+          // success callback, which may be skipped or spoofed. This page is
+          // purely informational; the order is confirmed asynchronously.
 
           const orderDate = new Date(data.createdAt);
           orderDate.setDate(orderDate.getDate() + 5);

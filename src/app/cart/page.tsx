@@ -18,6 +18,7 @@ import { useLoadingStore } from "@/lib/loading-store";
 import { trackBeginCheckout } from "@/lib/datalayer";
 import type { CartItem } from "@/lib/cart-store";
 import PaymentSelection from "@/components/checkout/PaymentSelection";
+import TabbyPromo from "@/components/TabbyPromo";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 const COUNTRY_CODES: Record<string, string> = {
@@ -1119,6 +1120,19 @@ function CartPageContent() {
                     <span className="font-black text-xs md:text-sm uppercase tracking-widest">{t.cart.total}</span>
                     <Price amount={total} className="font-black text-xl md:text-2xl text-black" />
                   </div>
+
+                  {/* Tabby on-site messaging — shown below the cart total for supported markets */}
+                  {["AED", "SAR", "KWD"].includes(getCurrencyForCountry(selectedCountry)) && total > 0 && (
+                    <TabbyPromo
+                      id="TabbyPromoCart"
+                      source="cart"
+                      price={total}
+                      currency={getCurrencyForCountry(selectedCountry)}
+                      publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
+                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
+                      lang={currentLanguage.code === "ar" ? "ar" : "en"}
+                    />
+                  )}
                 </div>
               </div>
 

@@ -88,8 +88,8 @@ export function CustomToast({ toast: toastObj, message, onClose }: CustomToastPr
         {getIcon()}
       </div>
 
-      {/* Message */}
-      <p className={`text-xs sm:text-sm font-medium ${getTextColor()} flex-1 leading-relaxed line-clamp-2`}>
+      {/* Message — no line clamp so full messages (e.g. Tabby rejection copy) are shown in their entirety */}
+      <p className={`text-xs sm:text-sm font-medium ${getTextColor()} flex-1 leading-relaxed`}>
         {message}
       </p>
 

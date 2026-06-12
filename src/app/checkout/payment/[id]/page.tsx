@@ -184,8 +184,9 @@ function PaymentPageContent() {
           const reason = canceled || failed || rejected;
           console.log(`Order ${id} cancelled/rejected via ${reason}.`);
 
-          // Only update order status to CANCELLED for non-rejection cases
-          // Rejected orders remain ORDER_RECEIVED so the user can retry
+          // Only update order status to CANCELLED for non-Tabby cases.
+          // Tabby orders stay ORDER_RECEIVED so the customer can retry, per
+          // Tabby's checkout-flow spec (cancel/abort returns status EXPIRED).
           if (reason !== 'tabby') {
             await fetch(`/api/orders/${id}`, {
               method: 'PATCH',
@@ -201,6 +202,13 @@ function PaymentPageContent() {
             setEditableEmail(orderData.email || "");
             setError(
               "Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order."
+            );
+          } else if (canceled === 'tabby') {
+            // Customer aborted/closed the Tabby checkout. Show Tabby's approved
+            // cancellation copy and let them retry or pick another method.
+            setMethod("tabby");
+            setError(
+              "You aborted the payment. Please retry or choose another payment method."
             );
           } else {
             setError(`Your payment via ${reason} was not completed. Please try another method.`);

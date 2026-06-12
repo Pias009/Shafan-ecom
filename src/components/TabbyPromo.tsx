@@ -9,9 +9,11 @@ interface TabbyPromoProps {
   merchantCode: string;
   id?: string;
   lang?: string;
+  /** Tabby on-site messaging source — "product" for PDPs, "cart" for the cart page */
+  source?: "product" | "cart";
 }
 
-export default function TabbyPromo({ price, currency, publicKey, merchantCode, id = "TabbyPromo", lang = "en" }: TabbyPromoProps) {
+export default function TabbyPromo({ price, currency, publicKey, merchantCode, id = "TabbyPromo", lang = "en", source = "product" }: TabbyPromoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Dynamic merchant code mapping based on currency
@@ -54,7 +56,7 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode, i
           price: price.toString(),
           installmentsCount: 4,
           lang: lang,
-          source: "product",
+          source: source,
           publicKey: publicKey,
           merchantCode: resolvedMerchantCode,
         });
@@ -81,7 +83,7 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode, i
       script.onload = initPromo;
       document.body.appendChild(script);
     }
-  }, [price, currency, publicKey, resolvedMerchantCode, id]);
+  }, [price, currency, publicKey, resolvedMerchantCode, id, lang, source]);
 
   return (
     <div 

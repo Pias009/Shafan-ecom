@@ -142,8 +142,10 @@ export async function POST(request: NextRequest) {
         const pastOrders = await prisma.order.findMany({
           where: {
             email: buyerEmail,
-            // Include orders in ANY status (paid, cancelled, etc.) per Tabby spec
+            // Include orders in ANY status (paid, cancelled, etc.) per Tabby spec,
+            // but ONLY genuine prior orders — never the current transaction.
             id: { not: orderId },
+            createdAt: { lt: order.createdAt },
           },
           select: {
             id: true,
@@ -246,14 +248,20 @@ export async function POST(request: NextRequest) {
       orderHistory = [];
     }
 
-    // registered_since: use user account creation date, or order creation as fallback
+    // registered_since: send a REAL registration date only.
+    //  - Registered users  → their account creation date.
+    //  - Guest checkouts    → the date of their earliest known prior order, if any.
+    //  - Otherwise          → leave null so the field is omitted (never fabricate a date).
     if (order.user?.createdAt) {
       registeredSince = order.user.createdAt.toISOString();
+    } else if (orderHistory.length > 0) {
+      const earliest = orderHistory.reduce((min, o) =>
+        o.purchased_at < min ? o.purchased_at : min,
+        orderHistory[0].purchased_at,
+      );
+      registeredSince = earliest;
     } else {
-      // For guest users default to 1 year ago (safer pre-scoring baseline)
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      registeredSince = oneYearAgo.toISOString();
+      registeredSince = null;
     }
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -289,8 +297,8 @@ export async function POST(request: NextRequest) {
           : billingAddress?.first_name
             ? `${billingAddress.first_name} ${billingAddress.last_name || ""}`.trim()
             : "Test Customer",
-        // Tabby pre-scoring fields
-        registered_since: registeredSince,
+        // Tabby pre-scoring fields — routed into buyer_history by the service.
+        registered_since: registeredSince ?? undefined,
         loyalty_level: loyaltyLevel,
       },
       shippingAddress: {

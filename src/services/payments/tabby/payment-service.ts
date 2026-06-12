@@ -1,4 +1,4 @@
-import { TabbySession, TabbyPayment, TabbyWebhookPayload, TabbyRegion, TabbyCurrency, TabbySessionRequest } from "./types";
+import { TabbySession, TabbyPayment, TabbyWebhookPayload, TabbyRegion, TabbyCurrency, TabbySessionRequest, TabbyBuyer } from "./types";
 
 const TABBY_API_BASE_URLS: Record<TabbyRegion, string> = {
   UAE: "https://api.tabby.ai",
@@ -76,9 +76,19 @@ export class TabbyService {
       params.amount = calculatedAmount;
     }
 
-    const buyerPayload: Record<string, any> = { ...params.buyer };
-    if (params.buyer?.registered_since) buyerPayload.registered_since = params.buyer.registered_since;
-    if (typeof params.buyer?.loyalty_level === "number") buyerPayload.loyalty_level = params.buyer.loyalty_level;
+    // Per Tabby's schema, `buyer` carries only contact fields (email/phone/name/dob).
+    // Account signals like `registered_since` and `loyalty_level` belong exclusively
+    // in `buyer_history` — sending them on `buyer` duplicates/misplaces the data.
+    const { registered_since, loyalty_level, ...buyerCore } = params.buyer || ({} as TabbyBuyer);
+    const buyerPayload: Record<string, any> = { ...buyerCore };
+
+    // buyer_history must always be sent for Tabby pre-scoring — even for new
+    // customers with 0 orders. Only include a registration date when we have a
+    // genuine one (omit it rather than fabricating a placeholder).
+    const buyerHistory: Record<string, any> = {
+      loyalty_level: typeof loyalty_level === "number" ? loyalty_level : 0,
+    };
+    if (registered_since) buyerHistory.registered_since = registered_since;
 
     const response = await fetch(`${this.baseUrl}/api/v2/checkout`, {
       method: "POST",
@@ -89,13 +99,9 @@ export class TabbyService {
           currency: params.currency,
           description: params.description || `Order ${params.orderId}`,
           buyer: buyerPayload,
-          // buyer_history must always be sent for Tabby pre-scoring —
-          // even for new customers with 0 orders.
-          buyer_history: {
-            registered_since: params.buyer?.registered_since,
-            loyalty_level: params.buyer?.loyalty_level ?? 0,
-            orders_count: params.order_history?.length ?? 0,
-          },
+          buyer_history: buyerHistory,
+          // order_history must contain only PAST orders (the current order is
+          // excluded upstream when this list is built).
           order_history: params.order_history ?? [],
           shipping_address: params.shippingAddress,
           order: {

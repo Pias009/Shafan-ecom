@@ -9,6 +9,7 @@ import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
 import { formatDescription } from "@/utils/formatText";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
+import TabbyPromo from "./TabbyPromo";
 
 function isValidImageUrl(url: any): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -372,6 +373,21 @@ export function ProductQuickViewModal({
                       </div>
                     )}
                   </div>
+
+                  {/* Tabby on-site messaging — shown near the price for supported markets */}
+                  {isAvailable && !isOutOfStock && displayPrice > 0 &&
+                    ["AED", "SAR", "KWD"].includes((selectedCurrency || "").toUpperCase()) && (
+                      <TabbyPromo
+                        id="TabbyPromoQuickView"
+                        source="product"
+                        price={displayPrice}
+                        currency={selectedCurrency.toUpperCase()}
+                        publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
+                        merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
+                        lang={currentLanguage.code === "ar" ? "ar" : "en"}
+                      />
+                    )}
+
                   <div className="space-y-4">
                     <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Product Details</div>
                     <div className="prose prose-sm max-w-none text-black/70 leading-relaxed font-medium">
