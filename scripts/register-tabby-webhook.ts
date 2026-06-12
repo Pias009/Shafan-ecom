@@ -12,6 +12,8 @@
  * Required env: TABBY_API_KEY (secret key), TABBY_MERCHANT_CODE, TABBY_WEBHOOK_SECRET
  */
 
+import "dotenv/config";
+
 const API_BASE = process.env.TABBY_API_BASE || "https://api.tabby.ai";
 const SECRET_KEY = (process.env.TABBY_API_KEY || "").trim();
 const MERCHANT_CODE = (process.env.TABBY_MERCHANT_CODE || "").trim();
@@ -30,6 +32,17 @@ async function list() {
   const text = await res.text();
   console.log(`GET /api/v1/webhooks -> ${res.status}`);
   console.log(text);
+}
+
+async function remove(id: string) {
+  const res = await fetch(`${API_BASE}/api/v1/webhooks/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  const text = await res.text();
+  console.log(`DELETE /api/v1/webhooks/${id} -> ${res.status}`);
+  if (text) console.log(text);
+  if (!res.ok) process.exitCode = 1;
 }
 
 async function register(baseUrl: string) {
@@ -65,6 +78,15 @@ async function main() {
     return;
   }
 
+  if (cmd === "delete") {
+    if (!arg) {
+      console.error("Provide a webhook id, e.g. npx tsx scripts/register-tabby-webhook.ts delete <id>");
+      process.exit(1);
+    }
+    await remove(arg);
+    return;
+  }
+
   if (cmd === "register") {
     const baseUrl =
       arg ||
@@ -82,7 +104,7 @@ async function main() {
     return;
   }
 
-  console.log("Usage:\n  npx tsx scripts/register-tabby-webhook.ts list\n  npx tsx scripts/register-tabby-webhook.ts register [https://your-domain.com]");
+  console.log("Usage:\n  npx tsx scripts/register-tabby-webhook.ts list\n  npx tsx scripts/register-tabby-webhook.ts register [https://your-domain.com]\n  npx tsx scripts/register-tabby-webhook.ts delete <id>");
 }
 
 main().catch((err) => {
