@@ -1,9 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { OffersClient } from "./OffersClient";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 
 interface ProductWithDiscount {
   id: string;
@@ -133,7 +131,7 @@ export default async function OffersPage() {
   });
 
     const products = Array.from(productsMap.values());
-    
+
     // Extract coupons (discounts with codes)
     const coupons = activeDiscounts
       .filter((d: any) => d.code && d.code !== "SALE")
@@ -146,9 +144,49 @@ export default async function OffersPage() {
         endDate: d.endDate,
       }));
 
-    return <OffersClient products={products} coupons={coupons} />;
+    // Fetch flash sale products (hot = true)
+    const flashSaleProducts = await prisma.product.findMany({
+      where: { active: true, hot: true },
+      include: { brand: true, countryPrices: { where: { active: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    });
+
+    const flashProducts = flashSaleProducts.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price || 0,
+      imageUrl: p.mainImage || p.images?.[0] || "/placeholder-product.png",
+      brand: p.brand,
+      brandName: p.brand?.name,
+      averageRating: p.averageRating,
+      ratingCount: p.ratingCount,
+      stockQuantity: p.stockQuantity,
+      countryPrices: p.countryPrices,
+    }));
+
+    // Fetch active offer banners configured in admin
+    const now = new Date();
+    const offerBanners = await (prisma as any).enhancedOfferBanner.findMany({
+      where: {
+        active: true,
+        OR: [{ startDate: null }, { startDate: { lte: now } }],
+        AND: [{ OR: [{ endDate: null }, { endDate: { gte: now } }] }],
+      },
+      orderBy: [{ sortOrder: "asc" }, { priority: "desc" }],
+      take: 5,
+    });
+
+    return (
+      <OffersClient
+        products={products}
+        coupons={coupons}
+        flashProducts={flashProducts}
+        banners={offerBanners}
+      />
+    );
   } catch (error) {
     console.error("Error loading offers:", error);
-    return <OffersClient products={[]} coupons={[]} />;
+    return <OffersClient products={[]} coupons={[]} flashProducts={[]} banners={[]} />;
   }
 }

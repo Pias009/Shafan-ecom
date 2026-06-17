@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Ticket, Copy, CheckCircle, Calendar, Sparkles, ShoppingBag, Zap } from "lucide-react";
+import { ArrowLeft, Ticket, Copy, CheckCircle, Calendar, Sparkles, ShoppingBag, Zap, ArrowRight, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
@@ -21,10 +22,44 @@ interface Coupon {
   endDate?: Date;
 }
 
-export function OffersClient({ products, coupons }: { products: any[], coupons: Coupon[] }) {
+interface OfferBanner {
+  id: string;
+  imageUrl: string;
+  title: string | null;
+  subtitle: string | null;
+  offerText: string | null;
+  ctaText: string | null;
+  backgroundColor: string | null;
+  textColor: string | null;
+  link: string | null;
+  priority: number;
+  clicks: number;
+}
+
+export function OffersClient({
+  products,
+  coupons,
+  flashProducts = [],
+  banners = [],
+}: {
+  products: any[];
+  coupons: Coupon[];
+  flashProducts?: any[];
+  banners?: OfferBanner[];
+}) {
   const [quickView, setQuickView] = useState<any>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
   const { addItem, hasAddress } = useCartStore();
+
+  function scrollSlider(dir: "left" | "right") {
+    const el = sliderRef.current;
+    if (!el) return;
+    const cardWidth = el.firstElementChild
+      ? (el.firstElementChild as HTMLElement).offsetWidth + 24
+      : 280;
+    el.scrollBy({ left: dir === "right" ? cardWidth * 2 : -cardWidth * 2, behavior: "smooth" });
+  }
   const router = useRouter();
   const userCountry = useUserCountry();
 
@@ -170,10 +205,72 @@ export function OffersClient({ products, coupons }: { products: any[], coupons: 
         </div>
       </header>
 
+      {/* Offer Banners (admin configured) */}
+      {banners.length > 0 && (
+        <section className="max-w-7xl mx-auto px-6 pt-8 pb-2">
+          <div className="space-y-4">
+            {banners.map((banner) => (
+              <div
+                key={banner.id}
+                className="w-full rounded-3xl overflow-hidden flex flex-col md:flex-row border border-black/5 shadow-xl"
+              >
+                {/* Left content panel — fixed width, never shrinks */}
+                <div
+                  className="flex flex-col justify-center items-center p-6 md:p-10 w-full md:w-[280px] flex-shrink-0"
+                  style={{
+                    background: banner.backgroundColor || "linear-gradient(135deg,#f9f1e7,#fce4ec)",
+                    color: banner.textColor || "#000",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <Tag size={14} className={banner.priority === 3 ? "text-red-600" : banner.priority === 2 ? "text-orange-500" : "text-blue-500"} />
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${banner.priority === 3 ? "text-red-700" : banner.priority === 2 ? "text-orange-600" : "text-blue-600"}`}>
+                      {banner.priority === 3 ? "HOT DEAL" : banner.priority === 2 ? "FEATURED" : "OFFER"}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-black leading-tight tracking-tight text-center mb-1">
+                    {banner.offerText || banner.title || "SPECIAL OFFER"}
+                  </h3>
+                  {banner.subtitle && (
+                    <p className="text-xs md:text-sm opacity-80 text-center mt-1 italic">{banner.subtitle}</p>
+                  )}
+                  <div className="mt-5">
+                    {banner.link ? (
+                      <Link
+                        href={banner.link}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black text-white font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-lg"
+                      >
+                        {banner.ctaText || "Shop Now"} <ArrowRight size={14} />
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/10 font-black text-xs uppercase tracking-widest">
+                        {banner.ctaText || "Limited Offer"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Banner image — natural size, contained */}
+                <div className="flex-1 bg-black/5 flex items-center justify-center overflow-hidden min-h-[180px]">
+                  <Image
+                    src={banner.imageUrl}
+                    alt={banner.title || "offer banner"}
+                    width={900}
+                    height={400}
+                    className="w-full h-auto object-contain"
+                    sizes="(max-width: 768px) 100vw, 70vw"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Hero Content */}
       <section className="relative overflow-hidden pt-12 pb-20">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          
+
           {/* Coupons Section */}
           {coupons.length > 0 && (
             <div className="mb-20">
@@ -240,14 +337,90 @@ export function OffersClient({ products, coupons }: { products: any[], coupons: 
             </div>
           )}
 
-          {/* Featured Products */}
+          {/* Flash Sales Section — horizontal slider */}
+          {flashProducts.length > 0 && (
+            <div className="mb-20">
+              {/* Header row */}
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-yellow-400 rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-400/30">
+                    <Zap size={24} className="text-black fill-black" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter text-black">
+                      Flash Sales
+                    </h2>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">Hot deals — limited time only</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Prev / Next arrows */}
+                  <button
+                    onClick={() => scrollSlider("left")}
+                    className="w-10 h-10 rounded-full bg-black/5 hover:bg-black hover:text-white flex items-center justify-center transition-all active:scale-90"
+                    aria-label="Previous"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={() => scrollSlider("right")}
+                    className="w-10 h-10 rounded-full bg-black/5 hover:bg-black hover:text-white flex items-center justify-center transition-all active:scale-90"
+                    aria-label="Next"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                  <Link
+                    href="/products/flash-sales"
+                    className="flex items-center gap-2 px-6 py-3 bg-yellow-400 text-black font-black text-xs uppercase tracking-widest rounded-full hover:bg-yellow-300 transition-all shadow-md hover:scale-105 active:scale-95"
+                  >
+                    View All <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Scroll-snap slider */}
+              <div className="relative">
+                <div
+                  ref={sliderRef}
+                  className="flex flex-row gap-6 overflow-x-auto scroll-smooth pb-4 [&::-webkit-scrollbar]:hidden"
+                  style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" }}
+                >
+                  {flashProducts.map((product: any) => (
+                    <div
+                      key={product.id}
+                      className="relative flex-none w-[220px] sm:w-[240px] lg:w-[260px]"
+                      style={{ scrollSnapAlign: "start" }}
+                    >
+                      <ProductCard
+                        product={{
+                          ...product,
+                          price: product.price,
+                          imageUrl: product.imageUrl,
+                        }}
+                        onQuickView={(p) => setQuickView(p)}
+                        onAddToCart={(p) => addToCart(p)}
+                        onOrderNow={(p) => orderNow(p)}
+                      />
+                      <div className="absolute top-3 left-3 z-10 pointer-events-none">
+                        <div className="bg-yellow-400 text-black text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-md">
+                          <Zap size={10} className="fill-black" /> HOT
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Featured Discount Products */}
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600">
                 <ShoppingBag size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-black uppercase tracking-tighter text-black">Flash Sale Products</h2>
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-black">Exclusive Deals</h2>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-black/40">Limited quantity available</p>
               </div>
             </div>

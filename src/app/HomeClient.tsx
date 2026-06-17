@@ -543,9 +543,7 @@ useEffect(() => {
         />
 
         {/* Offer Banners */}
-        <div className="hidden sm:block">
-          <OfferBannersSection />
-        </div>
+        <OfferBannersSection />
 
         <div style={{ display: mounted && filteredHot.length === 0 ? 'none' : undefined }}>
           <TrendingNowSlider
