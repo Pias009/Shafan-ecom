@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Sparkles, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { RoutineSection } from "@/components/RoutineSection";
 import { useLanguageStore } from "@/lib/language-store";
@@ -242,6 +241,57 @@ const isDummyProduct = (p: any) => {
          DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
 };
 
+const DS_BG =
+  'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_195923_b0ba8ace-1d1d-4f2c-9a28-1ab84b330680.png&w=1280&q=85';
+
+function DoctorSasiSection() {
+  return (
+    <section className="my-8 md:my-14 px-1 sm:px-4">
+      <Link href="/doctor-sasi" className="block group relative overflow-hidden rounded-2xl md:rounded-3xl cursor-pointer">
+        {/* Background image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+          style={{ backgroundImage: `url('${DS_BG}')` }}
+        />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
+        {/* Soft bottom vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-end min-h-[260px] sm:min-h-[340px] md:min-h-[420px] p-6 sm:p-10 md:p-14">
+          {/* Label chip */}
+          <div className="inline-flex items-center gap-2 mb-4 w-fit">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-400 text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium">
+              Clinical Skincare
+            </span>
+          </div>
+
+          {/* Heading */}
+          <h2
+            className="text-white font-light text-3xl sm:text-5xl md:text-6xl leading-none mb-2"
+            style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', letterSpacing: '-0.02em' }}
+          >
+            Doctor Sasi
+          </h2>
+          <p className="text-white/60 text-sm sm:text-base font-light tracking-wide max-w-sm mt-2 mb-6">
+            Beneath lies your glow. Discover the clinical shield your skin has been waiting for.
+          </p>
+
+          {/* CTA */}
+          <div className="inline-flex items-center gap-3 w-fit">
+            <span className="text-white text-xs sm:text-sm tracking-[0.2em] uppercase font-medium border-b border-white/40 pb-0.5 group-hover:border-white/90 transition-colors duration-300">
+              Enter the experience
+            </span>
+            <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
+          </div>
+        </div>
+      </Link>
+    </section>
+  );
+}
+
 export default function HomeClient({ initialProducts, newArrivals = [], flashSales = [], hot: hotProducts = [], routine: routineProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
@@ -252,8 +302,6 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
   const { setCurrency } = useCurrencyStore();
   const { selectedCountry, selectedCurrency, setCountry, setDetectedCountry } = useCountryStore();
   const hasHydrated = useCountryStore((state) => state._hasHydrated);
-
-const { status } = useSession();
 
 function useDevRenderTracker() {
   const renderCount = useRef(0);
@@ -502,6 +550,9 @@ useEffect(() => {
             orderNow={orderNow}
           />
         )}
+
+        {/* Doctor Sasi Clinical Skincare Section */}
+        <DoctorSasiSection />
 
         {/* New Arrivals Section */}
         {filteredNewArrivals.length > 0 && (

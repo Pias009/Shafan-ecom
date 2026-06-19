@@ -47,10 +47,10 @@ export function FreshFromShelfTable({ initialProducts }: { initialProducts: Prod
   }, [filteredProducts]);
 
   const shelfProductsList = filteredProducts.filter((p: Product) => p.freshFromShelf === true);
-  const newestProducts = sortedByDate.slice(0, 20);
+  const newestProducts = sortedByDate;
   const availableProducts = filteredProducts.filter((p: Product) => p.freshFromShelf !== true);
 
-  const toggleFreshFromShelf = async (productId: string, currentlyOnShelf: boolean, product: any) => {
+  const toggleFreshFromShelf = async (productId: string, currentlyOnShelf: boolean) => {
     setUpdating(productId);
     try {
       const res = await fetch(`/api/admin/products/${productId}/fresh-from-shelf`, {
@@ -194,7 +194,7 @@ export function FreshFromShelfTable({ initialProducts }: { initialProducts: Prod
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
-                      onClick={() => toggleFreshFromShelf(product.id, isOnShelf, product)}
+                      onClick={() => toggleFreshFromShelf(product.id, isOnShelf)}
                       disabled={isUpdating}
                       className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest transition-all ${
                         isOnShelf

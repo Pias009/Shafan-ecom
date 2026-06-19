@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         description: p.shortDescription || p.description || "",
         price,
         imageUrl: p.mainImage || p.images[0] || "",
-        productUrl: `/product/${p.slug || p.id}`,
+        productUrl: `/products/${p.slug || p.id}`,
         skinTypes: p.productSkinTones.map((pst) => pst.skinTone.name),
         concerns: p.productSkinConcerns.map((psc) => psc.skinConcern.name),
         howToUse: p.howToUse || null,

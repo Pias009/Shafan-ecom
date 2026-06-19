@@ -16,8 +16,9 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   const isAdmin = pathname?.startsWith("/ueadmin");
+  const isDoctorSasi = pathname?.startsWith("/doctor-sasi");
 
-  if (isAdmin) {
+  if (isAdmin || isDoctorSasi) {
     return <>{children}</>;
   }
 

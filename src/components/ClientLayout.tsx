@@ -4,6 +4,7 @@ import { useEffect, Suspense, useSyncExternalStore } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FloatingCartButton } from "./FloatingCartButton";
 
+
 interface ClientLayoutProps {
   children: React.ReactNode;
 }
@@ -20,6 +21,9 @@ function NavigationScroll() {
 }
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
+  const pathname = usePathname();
+  const isDoctorSasi = pathname?.startsWith("/doctor-sasi");
+
   const isClient = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -28,11 +32,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <>
-      <Suspense fallback={null}>
-        <NavigationScroll />
-      </Suspense>
+      {!isDoctorSasi && (
+        <Suspense fallback={null}>
+          <NavigationScroll />
+        </Suspense>
+      )}
       {children}
-      {isClient && <FloatingCartButton />}
+      {isClient && !isDoctorSasi && <FloatingCartButton />}
     </>
   );
 }

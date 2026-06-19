@@ -75,7 +75,7 @@ export default async function FreshFromShelfPage() {
     .filter((p: Product) => !isDummyProduct(p))
     .filter((p: Product) => hasValidPrice(p, 'AE'));
 
-  products = filteredProducts.slice(0, 20);
+  products = filteredProducts;
 
   return (
     <div className="space-y-8">

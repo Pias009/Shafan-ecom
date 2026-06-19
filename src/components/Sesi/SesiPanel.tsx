@@ -109,7 +109,7 @@ export default function SesiPanel() {
                     ) : state === "ROUTINE_UPSELL" ? (
                       <><ClipboardList className="w-3 h-3" /> Your Routine</>
                     ) : (
-                      <><Sparkles className="w-3 h-3" /> Your glow bestie</>
+                      <><Sparkles className="w-3 h-3" /> Skincare Advisor</>
                     )}
                   </p>
                 </div>
@@ -243,7 +243,7 @@ export default function SesiPanel() {
                     <span className="text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white">v2.0</span>
                   </div>
                   <p className="text-[9px] text-gray-500 font-medium">
-                    {persona === "doctor" ? "Skin Diagnosis" : "Your glow bestie"}
+                    {persona === "doctor" ? "Skin Diagnosis" : "Skincare Advisor"}
                   </p>
                 </div>
               </div>

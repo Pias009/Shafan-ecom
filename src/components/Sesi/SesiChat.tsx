@@ -13,6 +13,20 @@ import { pickSesiGif } from "@/lib/sesi/gifs";
 
 const MAX_QUESTIONS_BEFORE_COOLDOWN = 8;
 
+const GREETING_VARIANTS = [
+  "Hey there! I'm Sesi, your skincare guide. Ready to discover what your skin needs today?",
+  "Welcome! I'm Sesi. I help people find the perfect routine for their skin. What brings you here?",
+  "Hi! I'm Sesi. Tell me about your skin — I'd love to help you find products that truly work for you.",
+  "Great to meet you! I'm Sesi. Whether you have specific concerns or just want to explore, I'm here to help.",
+];
+
+const WELCOME_QUICK_REPLIES = [
+  "Analyze my skin type",
+  "Recommend products for me",
+  "Ask a skincare question",
+  "Take a skin assessment",
+];
+
 export default function SesiChat() {
   const {
     state,
@@ -47,6 +61,7 @@ export default function SesiChat() {
   const [showQuickReplies, setShowQuickReplies] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const initializingRef = useRef(false);
+  const greetingIndex = useRef(Math.floor(Math.random() * GREETING_VARIANTS.length));
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -78,17 +93,12 @@ export default function SesiChat() {
   useEffect(() => {
     if (state === "PLAYFUL_FRIEND" && messages.length === 0 && !initializingRef.current) {
       initializingRef.current = true;
+      const greeting = GREETING_VARIANTS[greetingIndex.current % GREETING_VARIANTS.length];
+      greetingIndex.current++;
       playSequentialMessages(
-        [
-          "Hiiiii! I'm Sesi! Your personal skin bestie! 👋✨",
-          "What would you like to do today?",
-        ],
+        [greeting],
         () => {
-          setShowQuickReplies([
-            "🔍 Check my skin type",
-            "💡 Suggest products",
-            "💬 Chat with Sesi",
-          ]);
+          setShowQuickReplies(WELCOME_QUICK_REPLIES);
         }
       );
     }
@@ -106,7 +116,7 @@ export default function SesiChat() {
       if (index < texts.length) {
         addMessage(texts[index], false);
         index++;
-        setTimeout(sendNext, 1200);
+        setTimeout(sendNext, 1000);
       } else {
         setTyping(false);
         onComplete();
@@ -140,14 +150,14 @@ export default function SesiChat() {
         advanceState("PRODUCT_RECOMMENDATION");
 
         addMessage(
-          `Yay! I found ${products.length} perfect products for your ${type.toLowerCase()} skin! ✨🎁\n\nHere's your personalized routine:`,
+          `I found ${products.length} products tailored to your ${type} skin. Here's what I recommend:`,
           false,
           "product_recommendation"
         );
 
         products.forEach((product, i) => {
           addMessage(
-            `${i + 1}. ${product.name} — ${product.skinTypes.join(", ")}\n\nFor: ${product.concerns.join(", ") || "All skin types"}\nPrice: ${product.price}`,
+            `${i + 1}. ${product.name}\n${product.description || `Formulated for: ${product.skinTypes.join(", ")}`}\nPrice: ${product.price}`,
             false,
             "product_recommendation",
             product.id
@@ -159,31 +169,31 @@ export default function SesiChat() {
           .filter((h): h is string => Boolean(h))[0];
         if (howToUse) {
           addMessage(
-            `💡 How to use your products:\n\n${howToUse}\n\nShine shine shine! Your skin is going to love these! ✨💖`,
+            `How to use:\n\n${howToUse}`,
             false
           );
         } else {
           addMessage(
-            `💡 Quick routine:\n\n☀️ Morning: Cleanse → Treatment → Moisturizer → SPF\n🌙 Night: Cleanse → Treatment → Night Cream\n\nShine shine shine! ✨💖`,
+            `Quick routine guide:\n\nMorning: Cleanse → Treat → Moisturize → SPF\nNight: Cleanse → Treat → Night Cream`,
             false
           );
         }
 
         setShowQuickReplies([
-          "View product details 🔍",
-          "More suggestions 🔄",
-          "Save my routine 💾",
+          "Show me product details",
+          "Get different suggestions",
+          "Build my routine",
         ]);
     } else {
       addMessage(
-        "Hmm, I couldn't find perfect matches right now... but don't worry! Let me suggest something else! ✨",
+        "I couldn't find exact matches right now. Let me try a different approach for you.",
         false
       );
-      setShowQuickReplies(["Try different skin type 🔄", "Ask Sesi anything 💬"]);
+      setShowQuickReplies(["Try a different skin type", "Ask me anything else"]);
     }
     } catch {
       addMessage(
-        "eee! Dr. Sesi's magic lens is a bit blurry! 🩺 The shipping magic is resting. Try again in a moment! ✨",
+        "I apologize, but I'm having trouble accessing product recommendations right now. Could you try again in a moment?",
         false
       );
     } finally {
@@ -204,7 +214,7 @@ export default function SesiChat() {
       addAIHistory("user", text);
 
       addMessage(
-        "eee! Dr. Sesi has helped you a lot today! 💖 Before I go rest, let me suggest some perfect products for you! ✨🎁",
+        "You've gotten a lot of great advice today! Before I wrap up, let me suggest some products that match what we've discussed.",
         false
       );
 
@@ -214,11 +224,11 @@ export default function SesiChat() {
 
       setTimeout(() => {
         addMessage(
-          "Dr. Sesi will look after you after 24 hours! Buy one of these suggestions or check 'My Routine' and I'll be back! Bye bye! 👋💖",
+          "I'll be back tomorrow if you need more help. In the meantime, check out those suggestions or your saved routine!",
           false,
           "cooldown"
         );
-        setShowQuickReplies(["See my routine 💆‍♀️", "View products 🛍️"]);
+        setShowQuickReplies(["View my routine", "Browse suggested products"]);
         triggerCooldown();
       }, 6000);
 
@@ -263,11 +273,11 @@ export default function SesiChat() {
             triggerRoutinePivot();
             setTimeout(() => {
               addMessage(
-                "Wait! eee! 🛑 To make this work best, use this too! Shine shine shine! 💎",
+                "I've put together a routine based on what you've shared. Would you like to see it?",
                 false,
                 "routine_pivot"
               );
-              setShowQuickReplies(["Show me my routine! ✨", "Tell me more"]);
+              setShowQuickReplies(["Show me my routine", "Tell me more"]);
             }, 5000);
           }
         }, 5000);
@@ -275,16 +285,14 @@ export default function SesiChat() {
 
       if (state === "DR_SESI_DIAGNOSIS" && !showQuickReplies.length) {
         setShowQuickReplies([
-          "Yes, that's me ✅",
-          "Not really ❌",
-          "I'm not sure 🤷",
-          "Tell me more 📖",
-          "Next question ➡️",
+          "That sounds right",
+          "Not quite",
+          "Tell me more about that",
         ]);
       }
     } catch {
       addMessage(
-        "eee! Dr. Sesi's magic lens is a bit blurry! 🩺 The shipping magic is resting. Try again in a moment! ✨",
+        "I'm having a bit of trouble processing that. Could you try asking again?",
         false
       );
     } finally {
@@ -297,14 +305,14 @@ export default function SesiChat() {
       addMessage(reply, true);
       addAIHistory("user", reply);
       addMessage(
-        "No rush! I'll be here whenever you're ready to glow! 💖✨",
+        "No problem at all! I'm here whenever you're ready to explore your skincare routine.",
         false
       );
       setShowQuickReplies([]);
       return;
     }
 
-    if (reply === "🔍 Check my skin type") {
+    if (reply === "Analyze my skin type") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       advanceState("SKIN_ANALYSIS");
@@ -312,16 +320,15 @@ export default function SesiChat() {
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Great! Let's find your skin type! ✨",
-            "After washing your face and waiting 30 minutes, how does it feel?",
+            "Let's find your skin type. After washing your face and waiting about 30 minutes, how does your skin feel?",
           ],
           () => {
             setShowQuickReplies([
-              "Tight & dry 🏜️",
-              "Shiny everywhere ✨",
-              "Oily in T-zone 🌗",
-              "Comfortable 😊",
-              "Red & itchy 🤧",
+              "Tight and dry",
+              "Oily all over",
+              "Oily in T-zone, normal elsewhere",
+              "Balanced and comfortable",
+              "Red or irritated",
             ]);
           }
         );
@@ -329,43 +336,42 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "💡 Suggest products") {
+    if (reply === "Recommend products for me") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       advanceState("PRODUCT_REQUEST");
       setShowQuickReplies([]);
       setTimeout(() => {
-        addMessage("What's your skin type? ✨", false);
+        addMessage("I'd be happy to recommend products. First, what's your skin type?", false);
         setShowQuickReplies([
-          "Oily ✨",
-          "Dry 🏜️",
-          "Combination 🌗",
-          "Sensitive 🤧",
-          "Normal 😊",
-          "Not sure — help me!",
+          "Oily",
+          "Dry",
+          "Combination",
+          "Sensitive",
+          "Normal",
+          "Not sure",
         ]);
       }, 500);
       return;
     }
 
-    if (reply === "💬 Chat with Sesi") {
+    if (reply === "Ask a skincare question") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       setShowQuickReplies([]);
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Yay! Let's chat! 💖✨",
-            "Tell me about your skin — what's bothering you or what do you want to improve?",
+            "Feel free to ask me anything about skincare! What's on your mind?",
           ],
           () => {
             setShowQuickReplies([
-              "My skin is dry",
-              "I have acne 😣",
-              "Dark spots 🌑",
-              "Want glowing skin ✨",
-              "Anti-aging tips ⏳",
-              "Something else 💬",
+              "How do I deal with dry skin?",
+              "What's good for acne?",
+              "How to reduce dark spots?",
+              "Tips for glowing skin?",
+              "Anti-aging routine advice?",
+              "Something else",
             ]);
           }
         );
@@ -373,7 +379,26 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "Not sure — help me!") {
+    if (reply === "Take a skin assessment") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      advanceState("DR_SESI_DIAGNOSIS");
+      setShowQuickReplies([]);
+      setTimeout(() => {
+        addMessage("Let's do a thorough skin assessment. How would you describe your skin right now?", false);
+        setShowQuickReplies([
+          "Dry and flaky",
+          "Oily and shiny",
+          "Combination",
+          "Normal and healthy",
+          "Sensitive and reactive",
+          "I'm not sure",
+        ]);
+      }, 500);
+      return;
+    }
+
+    if (reply === "Not sure") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       advanceState("SKIN_ANALYSIS");
@@ -381,16 +406,15 @@ export default function SesiChat() {
       setTimeout(() => {
         playSequentialMessages(
           [
-            "No worries! Let's do a quick test! 🧪✨",
-            "Wash your face, wait 30 min, then tell me: how does it feel?",
+            "No worries! Let's figure it out together. After cleansing your face and waiting 30 minutes without any products, how does it feel?",
           ],
           () => {
             setShowQuickReplies([
-              "Tight & dry 🏜️",
-              "Shiny everywhere ✨",
-              "Oily in T-zone 🌗",
-              "Comfortable 😊",
-              "Red & itchy 🤧",
+              "Tight and dry",
+              "Shiny all over",
+              "Oily in T-zone only",
+              "Comfortable",
+              "Red or itchy",
             ]);
           }
         );
@@ -398,14 +422,14 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "My skin is dry") {
+    if (reply === "How do I deal with dry skin?") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       setSkinType("dry");
       setSkinConcerns(["hydration"]);
       setShowQuickReplies([]);
       setTimeout(() => {
-        addMessage("Dry skin needs lots of hydration! 💧 Let me find perfect products for you! ✨", false);
+        addMessage("Dry skin benefits from hydrating ingredients like hyaluronic acid, ceramides, and gentle cleansing. Let me find some products that would work well for you.", false);
         setTimeout(() => {
           fetchProductRecommendations("dry", ["hydration"]);
         }, 1500);
@@ -413,90 +437,90 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "I have acne 😣") {
+    if (reply === "What's good for acne?") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       setSkinConcerns(["acne"]);
       setShowQuickReplies([]);
       setTimeout(() => {
-        addMessage("Acne can be tough but we'll fix it! 💪✨ What's your skin type?", false);
+        addMessage("For acne-prone skin, ingredients like salicylic acid, niacinamide, and non-comedogenic moisturizers can help. What's your skin type?", false);
         setShowQuickReplies([
-          "Oily ✨",
-          "Dry 🏜️",
-          "Combination 🌗",
-          "Sensitive 🤧",
+          "Oily",
+          "Dry",
+          "Combination",
+          "Sensitive",
         ]);
       }, 500);
       return;
     }
 
-    if (reply === "Dark spots 🌑") {
+    if (reply === "How to reduce dark spots?") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       setSkinConcerns(["dark spot"]);
       setShowQuickReplies([]);
       setTimeout(() => {
-        addMessage("Dark spots? I know exactly what to help! ✨ What's your skin type?", false);
+        addMessage("Dark spots often respond well to vitamin C, niacinamide, and consistent sun protection. What's your skin type?", false);
         setShowQuickReplies([
-          "Oily ✨",
-          "Dry 🏜️",
-          "Combination 🌗",
-          "Sensitive 🤧",
-          "Normal 😊",
+          "Oily",
+          "Dry",
+          "Combination",
+          "Sensitive",
+          "Normal",
         ]);
       }, 500);
       return;
     }
 
-    if (reply === "Want glowing skin ✨") {
+    if (reply === "Tips for glowing skin?") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       setSkinConcerns(["brightening"]);
       setShowQuickReplies([]);
       setTimeout(() => {
-        addMessage("Glowing skin is coming your way! ✨💖 What's your skin type?", false);
+        addMessage("Glowing skin comes from a combination of good hydration, exfoliation, and the right active ingredients. What's your skin type?", false);
         setShowQuickReplies([
-          "Oily ✨",
-          "Dry 🏜️",
-          "Combination 🌗",
-          "Sensitive 🤧",
-          "Normal 😊",
+          "Oily",
+          "Dry",
+          "Combination",
+          "Sensitive",
+          "Normal",
         ]);
       }, 500);
       return;
     }
 
-    if (reply === "Anti-aging tips ⏳") {
+    if (reply === "Anti-aging routine advice?") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       setSkinConcerns(["aging"]);
       setShowQuickReplies([]);
       setTimeout(() => {
-        addMessage("Let's keep your skin young and fresh! ✨ What's your skin type?", false);
+        addMessage("A good anti-aging routine includes SPF daily, retinoids, antioxidants like vitamin C, and consistent hydration. What's your skin type?", false);
         setShowQuickReplies([
-          "Oily ✨",
-          "Dry 🏜️",
-          "Combination 🌗",
-          "Sensitive 🤧",
-          "Normal 😊",
+          "Oily",
+          "Dry",
+          "Combination",
+          "Sensitive",
+          "Normal",
         ]);
       }, 500);
       return;
     }
 
-    if (reply === "Something else 💬") {
+    if (reply === "Something else") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       setShowQuickReplies([]);
       addMessage(
-        "Tell me anything about your skin! I'm here to help! 💖✨",
+        "Tell me about your skin concern and I'll do my best to help!",
         false
       );
       return;
     }
 
     if (
-      ["Oily ✨", "Dry 🏜️", "Combination 🌗", "Sensitive 🤧", "Normal 😊"].includes(
+      ["Oily", "Dry", "Combination", "Sensitive", "Normal"].includes(
         reply
       )
     ) {
@@ -504,11 +528,11 @@ export default function SesiChat() {
       addAIHistory("user", reply);
 
       const typeMap: Record<string, string> = {
-        "Oily ✨": "oily",
-        "Dry 🏜️": "dry",
-        "Combination 🌗": "combination",
-        "Sensitive 🤧": "sensitive",
-        "Normal 😊": "normal",
+        "Oily": "oily",
+        "Dry": "dry",
+        "Combination": "combination",
+        "Sensitive": "sensitive",
+        "Normal": "normal",
       };
       const detectedType = typeMap[reply] || "normal";
       setSkinType(detectedType);
@@ -516,19 +540,19 @@ export default function SesiChat() {
       setShowQuickReplies([]);
       setTimeout(() => {
         if (skinConcerns.length > 0) {
-          addMessage(`Perfect! Let me find the best products for your ${detectedType} skin! ✨`, false);
+          addMessage(`Great. Let me find products suited for ${detectedType} skin with your concerns in mind.`, false);
           setTimeout(() => {
             fetchProductRecommendations(detectedType, skinConcerns);
           }, 1000);
         } else {
-          addMessage("Great! What are your main skin concerns? ✨", false);
+          addMessage("What are your main skin concerns? I can help with several areas.", false);
           setShowQuickReplies([
-            "Acne 😣",
-            "Dark spots 🌑",
-            "Anti-aging ⏳",
-            "Dull skin 💤",
-            "Pores 🔍",
-            "Just glow! ✨",
+            "Acne and breakouts",
+            "Dark spots and hyperpigmentation",
+            "Fine lines and aging",
+            "Dullness and uneven tone",
+            "Large pores",
+            "General glow and health",
           ]);
         }
       }, 500);
@@ -536,7 +560,7 @@ export default function SesiChat() {
     }
 
     if (
-      ["Acne 😣", "Dark spots 🌑", "Anti-aging ⏳", "Dull skin 💤", "Pores 🔍", "Just glow! ✨"].includes(
+      ["Acne and breakouts", "Dark spots and hyperpigmentation", "Fine lines and aging", "Dullness and uneven tone", "Large pores", "General glow and health"].includes(
         reply
       )
     ) {
@@ -544,19 +568,19 @@ export default function SesiChat() {
       addAIHistory("user", reply);
 
       const concernMap: Record<string, string> = {
-        "Acne 😣": "acne",
-        "Dark spots 🌑": "dark spot",
-        "Anti-aging ⏳": "aging",
-        "Dull skin 💤": "dull",
-        "Pores 🔍": "pores",
-        "Just glow! ✨": "brightening",
+        "Acne and breakouts": "acne",
+        "Dark spots and hyperpigmentation": "dark spot",
+        "Fine lines and aging": "aging",
+        "Dullness and uneven tone": "dull",
+        "Large pores": "pores",
+        "General glow and health": "brightening",
       };
       const concern = concernMap[reply] || "brightening";
       setSkinConcerns([concern]);
 
       setShowQuickReplies([]);
       setTimeout(() => {
-        addMessage("Analyzing your skin profile... 🧪✨", false);
+        addMessage("Analyzing your skin profile...", false);
         setTimeout(() => {
           fetchProductRecommendations(skinType || "normal", [concern]);
         }, 1500);
@@ -565,7 +589,7 @@ export default function SesiChat() {
     }
 
     if (
-      ["Tight & dry 🏜️", "Shiny everywhere ✨", "Oily in T-zone 🌗", "Comfortable 😊", "Red & itchy 🤧"].includes(
+      ["Tight and dry", "Oily all over", "Oily in T-zone, normal elsewhere", "Balanced and comfortable", "Red or irritated", "Tight and dry all over", "Shiny all over", "Oily in T-zone only", "Comfortable", "Red or itchy"].includes(
         reply
       )
     ) {
@@ -573,11 +597,16 @@ export default function SesiChat() {
       addAIHistory("user", reply);
 
       const testMap: Record<string, string> = {
-        "Tight & dry 🏜️": "dry",
-        "Shiny everywhere ✨": "oily",
-        "Oily in T-zone 🌗": "combination",
-        "Comfortable 😊": "normal",
-        "Red & itchy 🤧": "sensitive",
+        "Tight and dry": "dry",
+        "Tight and dry all over": "dry",
+        "Shiny all over": "oily",
+        "Oily all over": "oily",
+        "Oily in T-zone, normal elsewhere": "combination",
+        "Oily in T-zone only": "combination",
+        "Balanced and comfortable": "normal",
+        "Comfortable": "normal",
+        "Red or irritated": "sensitive",
+        "Red or itchy": "sensitive",
       };
       const detectedType = testMap[reply] || "normal";
       setSkinType(detectedType);
@@ -586,16 +615,16 @@ export default function SesiChat() {
       setTimeout(() => {
         playSequentialMessages(
           [
-            `Based on your test, you have ${detectedType} skin! 🎯`,
-            "What's your main concern?",
+            `Based on that, your skin appears to be ${detectedType} type.`,
+            "What's your primary skincare concern?",
           ],
           () => {
             setShowQuickReplies([
-              "Acne 😣",
-              "Dark spots 🌑",
-              "Anti-aging ⏳",
-              "Dull skin 💤",
-              "Just glow! ✨",
+              "Acne and breakouts",
+              "Dark spots and hyperpigmentation",
+              "Fine lines and aging",
+              "Dullness and uneven tone",
+              "General glow and health",
             ]);
           }
         );
@@ -603,21 +632,21 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "View product details 🔍") {
+    if (reply === "Show me product details") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       if (suggestedProducts.length > 0) {
         const first = suggestedProducts[0];
         addMessage(
-          `Check out ${first.name}! It's perfect for your skin. Click "View Product" to see full details and add to cart! 🛍️✨`,
+          `You can view full product details and purchase by clicking on the product cards above. ${first.name} is a great option for your needs.`,
           false
         );
       }
-      setShowQuickReplies(["Save my routine 💾", "More suggestions 🔄"]);
+      setShowQuickReplies(["Save my routine", "Get different suggestions"]);
       return;
     }
 
-    if (reply === "More suggestions 🔄") {
+    if (reply === "Get different suggestions") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       setShowQuickReplies([]);
@@ -627,14 +656,14 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "Save my routine 💾") {
+    if (reply === "Save my routine" || reply === "Build my routine") {
       addMessage(reply, true);
       addAIHistory("user", reply);
       addMessage(
-        "Your routine is saved! Follow it daily for the best glow! ✨💖\n\nMorning: Cleanse → Treat → Moisturize → SPF\nNight: Cleanse → Treat → Night Cream",
+        "Your routine has been noted. Here's a general framework:\n\nMorning: Cleanse → Treat → Moisturize → SPF\nNight: Cleanse → Treat → Night Cream\n\nTailor the products to your skin type and concerns.",
         false
       );
-      setShowQuickReplies(["Ask more questions 💬", "Done for now 👋"]);
+      setShowQuickReplies(["Ask more questions", "I'm done for now"]);
       return;
     }
 
@@ -642,28 +671,28 @@ export default function SesiChat() {
       addMessage(reply, true);
       addAIHistory("user", reply);
       addMessage(
-        "A skin test helps me understand your skin type! Just wash your face, wait 30 min, and tell me how it feels! 🌸",
+        "A skin assessment helps identify your skin type and concerns through a series of questions. It takes about 2 minutes and gives you personalized recommendations.",
         false
       );
-      setShowQuickReplies(["Let's do it! 🔍", "Suggest products 💡"]);
+      setShowQuickReplies(["Let's do the assessment", "Just suggest products"]);
       return;
     }
 
-    if (reply === "Let's do it! 🔍") {
+    if (reply === "Let's do it! 🔍" || reply === "Let's do the assessment") {
       advanceState("SKIN_ANALYSIS");
       setShowQuickReplies([]);
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Great! After washing your face, how does it feel? ✨",
+            "After washing your face, how does it feel?",
           ],
           () => {
             setShowQuickReplies([
-              "Tight & dry 🏜️",
-              "Shiny everywhere ✨",
-              "Oily in T-zone 🌗",
-              "Comfortable 😊",
-              "Red & itchy 🤧",
+              "Tight and dry",
+              "Oily all over",
+              "Oily in T-zone, normal elsewhere",
+              "Balanced and comfortable",
+              "Red or irritated",
             ]);
           }
         );
@@ -671,7 +700,7 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "Show me my routine! ✨") {
+    if (reply === "Show me my routine" || reply === "View my routine") {
       advanceState("ROUTINE_UPSELL");
       setShowQuickReplies([]);
       return;
@@ -685,15 +714,15 @@ export default function SesiChat() {
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Yay! Let's find your skin type! ✨",
+            "Let's find your skin type.",
             "How does your skin feel after washing?",
           ],
           () => {
             setShowQuickReplies([
-              "Tight & dry 🏜️",
-              "Shiny everywhere ✨",
-              "Oily in T-zone 🌗",
-              "Comfortable 😊",
+              "Tight and dry",
+              "Shiny all over",
+              "Oily in T-zone only",
+              "Comfortable and balanced",
             ]);
           }
         );
@@ -701,7 +730,7 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "View products 🛍️") {
+    if (reply === "Browse suggested products" || reply === "View products 🛍️") {
       advanceState("PRODUCT_RECOMMENDATION");
       setShowQuickReplies([]);
       setTimeout(() => {
@@ -710,21 +739,53 @@ export default function SesiChat() {
       return;
     }
 
-    if (reply === "See my routine 💆‍♀️") {
-      advanceState("ROUTINE_UPSELL");
-      setShowQuickReplies([]);
-      return;
-    }
-
     if (reply === "Buy a product 🛒") {
       markPurchased();
       addMessage(reply, true);
       addAIHistory("user", reply);
       addMessage(
-        "Yay! You made a great choice! 💖 Dr. Sesi is so happy! Your skin is going to shine shine shine! ✨🎁",
+        "Great choice! Adding products to your routine is the first step toward healthier skin.",
         false
       );
-      setShowQuickReplies(["Ask more questions 💬", "See my routine 💆‍♀️"]);
+      setShowQuickReplies(["Ask more questions", "View my routine"]);
+      return;
+    }
+
+    if (reply === "Tell me more" || reply === "Tell me more about that") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setShowQuickReplies([]);
+      const nextMode =
+        state === "DR_SESI_DIAGNOSIS" || state === "REVEAL_SHINE"
+          ? "doctor"
+          : state === "PRODUCT_RECOMMENDATION" || state === "SKIN_ANALYSIS" || state === "PRODUCT_REQUEST"
+          ? "product"
+          : "baby";
+      sendToAI("Can you tell me more about that?", nextMode);
+      return;
+    }
+
+    if (reply === "That sounds right" || reply === "Yes, that's me ✅" || reply === "That's correct") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setShowQuickReplies([]);
+      const nextMode =
+        state === "DR_SESI_DIAGNOSIS" || state === "REVEAL_SHINE"
+          ? "doctor"
+          : "baby";
+      sendToAI("Yes, that's accurate. What's the next question?", nextMode);
+      return;
+    }
+
+    if (reply === "Not quite" || reply === "Not really ❌" || reply === "I'm not sure 🤷" || reply === "I don't know 🤷") {
+      addMessage(reply, true);
+      addAIHistory("user", reply);
+      setShowQuickReplies([]);
+      const nextMode =
+        state === "DR_SESI_DIAGNOSIS" || state === "REVEAL_SHINE"
+          ? "doctor"
+          : "baby";
+      sendToAI("I'm not sure that's accurate for me. Can you help clarify?", nextMode);
       return;
     }
 
@@ -743,23 +804,23 @@ export default function SesiChat() {
     const text = userInput.trim();
     setUserInput("");
 
-    if (text.toLowerCase() === "skin test") {
+    if (text.toLowerCase() === "skin test" || text.toLowerCase() === "skin assessment") {
       addMessage(text, true);
       addAIHistory("user", text);
       advanceState("DR_SESI_DIAGNOSIS");
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Ooooh! Let's start! First: how does your skin feel?",
+            "Let's begin your skin assessment. How would you describe your skin?",
           ],
           () => {
             setShowQuickReplies([
-              "Dry 🏜️",
-              "Oily ✨",
-              "Normal 😊",
-              "Sensitive 🤧",
-              "Combination 🌗",
-              "I don't know 🤷",
+              "Dry and flaky",
+              "Oily and shiny",
+              "Combination",
+              "Normal and healthy",
+              "Sensitive and reactive",
+              "I'm not sure",
             ]);
           }
         );
@@ -779,17 +840,17 @@ export default function SesiChat() {
       setTimeout(() => {
         playSequentialMessages(
           [
-            "Yay! Let's find your perfect products! 🎁✨",
+            "I'd be happy to suggest products for you.",
             "First, what's your skin type?",
           ],
           () => {
             setShowQuickReplies([
-              "Oily ✨",
-              "Dry 🏜️",
-              "Combination 🌗",
-              "Sensitive 🤧",
-              "Normal 😊",
-              "I don't know 🤷",
+              "Oily",
+              "Dry",
+              "Combination",
+              "Sensitive",
+              "Normal",
+              "Not sure",
             ]);
           }
         );
