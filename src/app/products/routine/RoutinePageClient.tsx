@@ -1,0 +1,217 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { ProductCard } from "@/components/ProductCard";
+import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
+import { useCartStore } from "@/lib/cart-store";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useCountryStore } from "@/lib/country-store";
+import { hasValidPrice } from "@/lib/product-utils";
+import { useLoadingStore } from "@/lib/loading-store";
+import { trackAddToCart } from "@/lib/datalayer";
+import { Sparkles, ArrowRight } from "lucide-react";
+
+interface Banner {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string | null;
+  linkUrl: string | null;
+  active: boolean;
+}
+
+export default function RoutinePageClient({ products, banners = [] }: { products: any[]; banners?: Banner[] }) {
+  const router = useRouter();
+  const { addItem, hasAddress } = useCartStore();
+  const { selectedCountry } = useCountryStore();
+  const [quickView, setQuickView] = useState<any | null>(null);
+  const [activeBanner, setActiveBanner] = useState(0);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => hasValidPrice(p, selectedCountry));
+  }, [products, selectedCountry]);
+
+  const currentBanner = banners[activeBanner] ?? null;
+
+  function addToCart(product: any) {
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      brand: product.brandName || product.brand?.name,
+      category: product.categoryName,
+      price: product.price || 0,
+      discountPrice: product.salePrice || undefined,
+      imageUrl: product.mainImage || product.imageUrl,
+      countryPrices: product.countryPrices,
+    };
+    addItem(cartItem, 1);
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price || 0,
+      currency: 'AED',
+      category: product.categoryName || 'General',
+      brand: product.brandName || product.brand?.name || 'Generic',
+      quantity: 1,
+    });
+    toast.success(`Added ${product.name} to cart`);
+  }
+
+  async function orderNow(product: any) {
+    if (!hasAddress) {
+      toast.error("Please add your shipping address first!");
+      router.push(`/account/address?redirect=order&productId=${product.id}`);
+      return;
+    }
+    const tid = toast.loading("Preparing your order...");
+    try {
+      const countryPrice = product.countryPrices?.find((cp: any) =>
+        cp.country.toUpperCase() === selectedCountry.toUpperCase()
+      );
+      const unitPrice = countryPrice && Number(countryPrice.price) > 0
+        ? Number(countryPrice.price)
+        : product.price;
+
+      let billing = null;
+      try {
+        const r = await fetch("/api/account/address");
+        if (r.ok) { const d = await r.json(); if (d) { billing = d; } }
+      } catch {}
+
+      if (!billing) {
+        const g = localStorage.getItem('guest_address');
+        if (g) { try { billing = JSON.parse(g); } catch {} }
+      }
+
+      if (!billing) {
+        toast.error("Please provide your shipping address", { id: tid });
+        router.push("/account/address");
+        return;
+      }
+
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{ productId: product.id, quantity: 1, unitPrice, price: unitPrice }],
+          country: selectedCountry,
+          billing,
+          shipping: billing,
+        }),
+      });
+      const data = await res.json();
+      if (data.orderId) {
+        toast.success("Redirecting to payment...", { id: tid });
+        useLoadingStore.getState().setRedirecting(true, "Creating your order...");
+        router.push(`/checkout/payment/${data.orderId}`);
+      } else {
+        throw new Error(data.error || "Failed");
+      }
+    } catch (err: any) {
+      toast.error(err.message, { id: tid });
+      addToCart(product);
+      router.push("/cart");
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-violet-50 to-purple-50 px-4 sm:px-6 py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5 mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-violet-600">Curated</span>
+          </div>
+          <h1 className="font-display text-4xl sm:text-6xl font-black tracking-tight text-black mb-3">
+            Routine
+          </h1>
+          <p className="text-black/60 font-medium text-lg max-w-xl">
+            Your daily skincare essentials, curated by our experts.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Banner */}
+        {currentBanner && (
+          <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 to-purple-500 min-h-[120px]">
+            {currentBanner.imageUrl && (
+              <Image src={currentBanner.imageUrl} alt={currentBanner.title} fill className="object-cover opacity-25" />
+            )}
+            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-6 sm:px-8 sm:py-8">
+              <div>
+                <p className="font-black text-white text-2xl sm:text-3xl tracking-tight">{currentBanner.title}</p>
+                {currentBanner.subtitle && (
+                  <p className="text-white/80 text-sm sm:text-base mt-1 font-medium">{currentBanner.subtitle}</p>
+                )}
+              </div>
+              {currentBanner.linkUrl && (
+                <Link
+                  href={currentBanner.linkUrl}
+                  className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-violet-600 rounded-full font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-colors"
+                >
+                  Shop Now <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
+            </div>
+            {banners.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                {banners.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveBanner(i)}
+                    className={`h-1.5 rounded-full transition-all ${i === activeBanner ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Products grid */}
+        {filteredProducts.length === 0 ? (
+          <div className="py-24 text-center">
+            <div className="text-6xl mb-4 opacity-30">✨</div>
+            <p className="font-black text-xl text-black/40">No routine products yet</p>
+            <p className="text-sm text-black/30 mt-1">Check back soon</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            {filteredProducts.map((product, idx) => (
+              <ProductCard
+                key={product.id}
+                product={{
+                  ...product,
+                  imageUrl: product.imageUrl || product.mainImage,
+                  brand: product.brandName || product.brand?.name || 'Generic',
+                }}
+                onQuickView={p => setQuickView(p)}
+                onAddToCart={addToCart}
+                onOrderNow={orderNow}
+                priority={idx < 6}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <ProductQuickViewModal
+        product={quickView ? {
+          ...quickView,
+          price: quickView.price || 0,
+          imageUrl: quickView.imageUrl || quickView.mainImage,
+          brand: quickView.brandName || quickView.brand?.name || 'Generic',
+          countryPrices: quickView.countryPrices || [],
+        } : null}
+        onClose={() => setQuickView(null)}
+        onAddToCart={addToCart}
+        onOrderNow={orderNow}
+        onMoreDetails={id => { setQuickView(null); window.location.href = `/products/${id}`; }}
+      />
+    </div>
+  );
+}

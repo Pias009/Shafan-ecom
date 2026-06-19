@@ -8,7 +8,7 @@ import {
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
   Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace, Activity
+  Zap, Flame, ScanFace, Activity, Sparkles
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -126,7 +126,18 @@ export function AdminSidebar() {
                    prefetch={true}
                    className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
                 >
-                   <Package size={18} /> Routine
+                   <Package size={18} /> Fresh From Shelf
+                </Link>
+                <Link
+                   href="/ueadmin/routine"
+                   prefetch={true}
+                   className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
+                     pathname === '/ueadmin/routine'
+                       ? 'bg-violet-500 text-white shadow-xl shadow-violet-200'
+                       : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
+                   }`}
+                >
+                   <Sparkles size={18} /> Routine
                 </Link>
                 <Link
                    href="/ueadmin/trending"

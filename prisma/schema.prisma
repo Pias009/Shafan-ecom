@@ -202,6 +202,7 @@ model Product {
   hot           Boolean  @default(false)
   trending      Boolean  @default(false)
   freshFromShelf Boolean  @default(false)
+  routine       Boolean  @default(false)
   sku           String?
   currency      String   @default("AED")
   averageRating Float    @default(0)
@@ -240,8 +241,20 @@ model Product {
   @@index([createdAt])
   @@index([hot])
   @@index([trending])
+  @@index([routine])
   @@index([price])
   @@index([discountPrice])
+}
+
+model RoutineBanner {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  subtitle    String?
+  imageUrl    String?
+  linkUrl     String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model ProductCategory {

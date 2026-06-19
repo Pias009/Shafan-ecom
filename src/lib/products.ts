@@ -9,7 +9,11 @@ function isValidImageUrl(url: any): boolean {
 
 // In-memory cache for homepage data
 let homepageCache: { data: any; timestamp: number } | null = null;
-const HOMEPAGE_CACHE_TTL = 300_000; // 5 minutes
+const HOMEPAGE_CACHE_TTL = 60_000; // 1 minute
+
+export function bustHomepageCache() {
+  homepageCache = null;
+}
 
 export async function getHomePageData(storeCode?: string) {
   if (homepageCache && Date.now() - homepageCache.timestamp < HOMEPAGE_CACHE_TTL) {
@@ -32,6 +36,7 @@ export async function getHomePageData(storeCode?: string) {
       hot: true,
       trending: true,
       freshFromShelf: true,
+      routine: true,
       brand: { select: { name: true } },
       productCategories: { include: { category: { select: { name: true } } } },
       countryPrices: { where: { active: true }, select: { country: true, price: true, currency: true } },
@@ -64,6 +69,7 @@ export async function getHomePageData(storeCode?: string) {
         currency: p.currency?.toUpperCase() || 'USD',
         hot: p.hot,
         trending: p.trending,
+        routine: p.routine,
         brand: p.brand ? { name: p.brand.name } : null,
         brandName: p.brand?.name || "Generic",
         category: { name: primaryCategory },
@@ -73,7 +79,7 @@ export async function getHomePageData(storeCode?: string) {
       };
     };
 
-    const [allProducts, newArrivals, flashSales, trending] = await Promise.all([
+    const [allProducts, newArrivals, flashSales, trending, routineProducts] = await Promise.all([
       prisma.product.findMany({
         where: { active: true },
         select: selectFields,
@@ -98,6 +104,12 @@ export async function getHomePageData(storeCode?: string) {
         orderBy: { createdAt: 'desc' },
         take: 10,
       }),
+      prisma.product.findMany({
+        where: { active: true, routine: true },
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+      }),
     ]);
 
     const data = {
@@ -105,13 +117,14 @@ export async function getHomePageData(storeCode?: string) {
       newArrivals: newArrivals.map(mapProduct),
       flashSales: flashSales.map(mapProduct),
       trending: trending.map(mapProduct),
+      routine: routineProducts.map(mapProduct),
     };
 
     homepageCache = { data, timestamp: Date.now() };
     return data;
   } catch (error) {
     console.error("HomePage data fetch error:", error);
-    return { products: [], newArrivals: [], flashSales: [], trending: [] };
+    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [] };
   }
 }
 

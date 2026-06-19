@@ -74,7 +74,7 @@ return (
         >
           <Image
             src={slide.imageUrl}
-            alt={slide.title}
+            alt={slide.title || "Promotional banner"}
             fill
             className="object-cover brightness-110 contrast-100"
             priority

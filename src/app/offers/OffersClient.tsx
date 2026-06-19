@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Ticket, Copy, CheckCircle, Calendar, Sparkles, ShoppingBag, Zap, ArrowRight, Tag, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Ticket, Copy, CheckCircle, Calendar, Sparkles, ShoppingBag, Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
@@ -170,8 +170,76 @@ export function OffersClient({
     }
   }
 
+  const bannerTop = banners[0];
+  const bannerMid = banners[1];
+  const bannerEnd = banners[2];
+
+  function BannerImage({ banner }: { banner?: OfferBanner }) {
+    if (!banner) return null;
+    return (
+      <div className="relative w-full rounded-3xl overflow-hidden min-h-[180px] md:min-h-[320px] lg:min-h-[400px]">
+        <Image
+          src={banner.imageUrl}
+          alt={banner.title || "offer banner"}
+          fill
+          className="object-contain"
+          sizes="100vw"
+        />
+        {banner.link && (
+          <Link
+            href={banner.link}
+            className="absolute inset-0 z-10"
+            aria-label={banner.title || "offer banner"}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#fdfaf5]">
+      <style>{`
+        .glitch-code {
+          position: relative;
+          display: inline-block;
+        }
+        .glitch-code::before,
+        .glitch-code::after {
+          content: attr(data-text);
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+        }
+        .glitch-code::before {
+          color: #ff2770;
+          z-index: -1;
+          animation: glitch-shift 2.5s infinite linear alternate-reverse;
+        }
+        .glitch-code::after {
+          color: #00e5ff;
+          z-index: -2;
+          animation: glitch-shift 2.5s infinite linear alternate-reverse 0.3s;
+        }
+        @keyframes glitch-shift {
+          0% { transform: translate(0); }
+          10% { transform: translate(-1.5px, 1px); }
+          20% { transform: translate(1.5px, -1px); }
+          30% { transform: translate(-1px, -0.5px); }
+          40% { transform: translate(1px, 0.5px); }
+          50% { transform: translate(-0.5px, 1px); }
+          60% { transform: translate(0); }
+          100% { transform: translate(0); }
+        }
+        .group:hover .glitch-code::before {
+          animation-duration: 0.6s;
+        }
+        .group:hover .glitch-code::after {
+          animation-duration: 0.6s;
+        }
+      `}</style>
       {/* Dynamic Background Pattern */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0">
         <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
@@ -205,65 +273,9 @@ export function OffersClient({
         </div>
       </header>
 
-      {/* Offer Banners (admin configured) */}
-      {banners.length > 0 && (
+      {bannerTop && (
         <section className="max-w-7xl mx-auto px-6 pt-8 pb-2">
-          <div className="space-y-4">
-            {banners.map((banner) => (
-              <div
-                key={banner.id}
-                className="w-full rounded-3xl overflow-hidden flex flex-col md:flex-row border border-black/5 shadow-xl"
-              >
-                {/* Left content panel — fixed width, never shrinks */}
-                <div
-                  className="flex flex-col justify-center items-center p-6 md:p-10 w-full md:w-[280px] flex-shrink-0"
-                  style={{
-                    background: banner.backgroundColor || "linear-gradient(135deg,#f9f1e7,#fce4ec)",
-                    color: banner.textColor || "#000",
-                  }}
-                >
-                  <div className="flex items-center gap-1.5 mb-3">
-                    <Tag size={14} className={banner.priority === 3 ? "text-red-600" : banner.priority === 2 ? "text-orange-500" : "text-blue-500"} />
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${banner.priority === 3 ? "text-red-700" : banner.priority === 2 ? "text-orange-600" : "text-blue-600"}`}>
-                      {banner.priority === 3 ? "HOT DEAL" : banner.priority === 2 ? "FEATURED" : "OFFER"}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl md:text-3xl font-black leading-tight tracking-tight text-center mb-1">
-                    {banner.offerText || banner.title || "SPECIAL OFFER"}
-                  </h3>
-                  {banner.subtitle && (
-                    <p className="text-xs md:text-sm opacity-80 text-center mt-1 italic">{banner.subtitle}</p>
-                  )}
-                  <div className="mt-5">
-                    {banner.link ? (
-                      <Link
-                        href={banner.link}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black text-white font-black text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-lg"
-                      >
-                        {banner.ctaText || "Shop Now"} <ArrowRight size={14} />
-                      </Link>
-                    ) : (
-                      <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/10 font-black text-xs uppercase tracking-widest">
-                        {banner.ctaText || "Limited Offer"}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Banner image — natural size, contained */}
-                <div className="flex-1 bg-black/5 flex items-center justify-center overflow-hidden min-h-[180px]">
-                  <Image
-                    src={banner.imageUrl}
-                    alt={banner.title || "offer banner"}
-                    width={900}
-                    height={400}
-                    className="w-full h-auto object-contain"
-                    sizes="(max-width: 768px) 100vw, 70vw"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          <BannerImage banner={bannerTop} />
         </section>
       )}
 
@@ -284,56 +296,65 @@ export function OffersClient({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="flex flex-col gap-4">
                 {coupons.map((coupon) => (
-                  <div 
-                    key={coupon.id} 
-                    className="group relative bg-white rounded-[2.5rem] border border-black/5 p-1 hover:shadow-2xl hover:shadow-black/5 transition-all duration-500"
+                  <div
+                    key={coupon.id}
+                    className="group relative bg-white rounded-2xl border border-black/5 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-black/5"
                   >
-                    <div className="bg-black text-white rounded-[2.2rem] p-8 h-full flex flex-col justify-between overflow-hidden relative">
-                      {/* Decorative elements */}
-                      <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                      
-                      <div>
-                        <div className="flex items-center justify-between mb-6">
-                          <span className="px-4 py-1.5 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10">
-                            Verified Coupon
-                          </span>
-                          {coupon.endDate && (
-                            <div className="flex items-center gap-1.5 text-[9px] font-bold text-white/50 uppercase">
-                              <Calendar size={12} />
-                              {new Date(coupon.endDate).toLocaleDateString()}
-                            </div>
-                          )}
+                    <div className="bg-gradient-to-r from-gray-950 via-black to-gray-900 text-white px-6 py-5 flex items-center justify-between gap-4 relative">
+                      {/* Glitch background lines */}
+                      <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.3) 2px, rgba(255,255,255,0.3) 4px)' }} />
+                      <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
+
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="hidden sm:flex w-10 h-10 rounded-full bg-white/5 items-center justify-center flex-shrink-0 border border-white/10">
+                          <Ticket size={16} className="text-white/60" />
                         </div>
-                        <h3 className="text-3xl font-black tracking-tighter mb-2 leading-tight">
-                          {coupon.description}
-                        </h3>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Promo Code</span>
+                            {coupon.endDate && (
+                              <span className="flex items-center gap-1 text-[8px] font-bold text-white/30 uppercase">
+                                <Calendar size={9} /> {new Date(coupon.endDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-sm font-bold text-white/90 truncate">{coupon.description}</h3>
+                        </div>
                       </div>
 
-                      <div className="mt-8 pt-8 border-t border-white/10">
-                        <div className="flex items-center justify-between bg-white/5 rounded-2xl p-3 border border-white/5">
-                          <span className="text-xl font-black tracking-[0.2em] pl-2">{coupon.code}</span>
-                          <button
-                            onClick={() => handleCopyCode(coupon.code)}
-                            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                              copiedCode === coupon.code 
-                                ? "bg-green-500 text-white" 
-                                : "bg-white text-black hover:scale-105 active:scale-95"
-                            }`}
-                          >
-                            {copiedCode === coupon.code ? (
-                              <><CheckCircle size={14} /> Copied</>
-                            ) : (
-                              <><Copy size={14} /> Copy</>
-                            )}
-                          </button>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="relative">
+                          <span className="text-base sm:text-lg font-black tracking-[0.25em] text-white glitch-code" data-text={coupon.code}>
+                            {coupon.code}
+                          </span>
                         </div>
+                        <button
+                          onClick={() => handleCopyCode(coupon.code)}
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all whitespace-nowrap ${
+                            copiedCode === coupon.code
+                              ? "bg-green-500 text-white scale-95"
+                              : "bg-white/10 text-white hover:bg-white hover:text-black active:scale-95 border border-white/10"
+                          }`}
+                        >
+                          {copiedCode === coupon.code ? (
+                            <><CheckCircle size={12} /> Copied</>
+                          ) : (
+                            <><Copy size={12} /> Copy</>
+                          )}
+                        </button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {bannerMid && (
+            <div className="mb-20">
+              <BannerImage banner={bannerMid} />
             </div>
           )}
 
@@ -427,7 +448,7 @@ export function OffersClient({
           </div>
 
           {products.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {products.map((product) => (
                 <div key={product.id} className="relative group">
                   <ProductCard
@@ -469,6 +490,12 @@ export function OffersClient({
           )}
         </div>
       </section>
+
+      {bannerEnd && (
+        <section className="max-w-7xl mx-auto px-6 py-12">
+          <BannerImage banner={bannerEnd} />
+        </section>
+      )}
 
       {/* Premium Trust Section */}
       <section className="bg-black text-white py-24">

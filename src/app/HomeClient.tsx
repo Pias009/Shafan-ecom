@@ -14,6 +14,7 @@ import { AuthModal } from "@/components/AuthModal";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
+import { RoutineSection } from "@/components/RoutineSection";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
@@ -241,7 +242,7 @@ const isDummyProduct = (p: any) => {
          DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
 };
 
-export default function HomeClient({ initialProducts, newArrivals = [], flashSales = [], hot: hotProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[] }) {
+export default function HomeClient({ initialProducts, newArrivals = [], flashSales = [], hot: hotProducts = [], routine: routineProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[] }) {
   const [products, setProducts] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
@@ -345,6 +346,10 @@ useEffect(() => {
   const filteredHot = useMemo(() => {
     return hot.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [hot, selectedCountry, selectedCurrency]);
+
+  const filteredRoutine = useMemo(() => {
+    return routineProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
+  }, [routineProducts, selectedCountry, selectedCurrency]);
 
   // Category-specific products
   const skinCareProducts = useMemo(() => {
@@ -488,29 +493,44 @@ useEffect(() => {
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 pb-20 flex-1 overflow-x-hidden">
         
 
-        {/* Routine Section - Top Priority */}
-        <section className="pt-2 md:pt-6 pb-4 md:pb-6 px-1 sm:px-4" style={{ display: mounted && filteredNewArrivals.length === 0 ? 'none' : undefined }}>
-          <div className="mb-3 md:mb-5 flex items-center justify-between">
-            <div>
-              <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
-                <Sparkles className="text-emerald-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">New</span>
-                <Sparkles className="text-green-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+        {/* Routine Section */}
+        {filteredRoutine.length > 0 && (
+          <RoutineSection
+            products={filteredRoutine}
+            onQuickView={setQuickView}
+            addToCart={addToCart}
+            orderNow={orderNow}
+          />
+        )}
+
+        {/* New Arrivals Section */}
+        {filteredNewArrivals.length > 0 && (
+          <section className="pt-6 md:pt-10 pb-4 md:pb-6 px-1 sm:px-4">
+            <div className="mb-3 md:mb-5 flex items-center justify-between">
+              <div>
+                <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
+                  <Sparkles className="text-emerald-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">New</span>
+                  <Sparkles className="text-green-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                </div>
+                <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-emerald-700">Fresh From The Shelf</h2>
+                <div className="mt-2 h-[3px] w-full rounded-full bg-emerald-700/10 overflow-hidden">
+                  <div className="h-full bg-emerald-700 rounded-full animate-line-grow" />
+                </div>
+                <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">Latest additions to our collection</p>
               </div>
-<h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Routine</h2>
-               <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">Latest additions to our collection</p>
+              <Link
+                href="/products/new-arrivals"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
+              >
+                See All
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
-            <Link
-              href="/products/new-arrivals"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
-            >
-              See All
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-          
-          <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
-        </section>
+
+            <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
+          </section>
+        )}
 
         {/* Flash Sales Section */}
         <section className="pt-2 md:pt-6 pb-6 md:pb-10 px-1 sm:px-4">
@@ -521,7 +541,10 @@ useEffect(() => {
                 <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">Flash</span>
                 <Zap className="text-yellow-500 fill-yellow-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </div>
-              <h2 className="font-display text-2xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Flash Sales</h2>
+              <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-orange-500">Flash Sales</h2>
+              <div className="mt-2 h-[3px] w-full rounded-full bg-orange-500/10 overflow-hidden">
+                <div className="h-full bg-orange-500 rounded-full animate-line-grow" />
+              </div>
             </div>
             <Link
               href="/products/flash-sales"

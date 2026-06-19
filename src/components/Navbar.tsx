@@ -83,7 +83,7 @@ export function Navbar() {
     { href: "/products?category=Hair+Care", label: t.nav.hairCare },
     { href: "/products?category=Body+Care", label: t.nav.bodyCare },
     { href: "/products?category=Fragrances", label: t.nav.fragrances },
-    { href: "/products/new-arrivals", label: t.nav.routine },
+    { href: "/products/routine", label: "Routine" },
     { href: "/offers", label: "🎉 Offers" },
   ];
 
