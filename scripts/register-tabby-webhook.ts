@@ -47,12 +47,17 @@ async function remove(id: string) {
 
 async function register(baseUrl: string) {
   const url = `${baseUrl.replace(/\/$/, "")}/api/payments/tabby/webhook`;
+  // Derive test/live from the secret key itself: test keys contain "test"
+  // (e.g. sk_test_…), live keys do not (e.g. sk_…). This guarantees a live key
+  // registers a live (is_test:false) webhook.
+  const isTest = /test/i.test(SECRET_KEY);
   const body = {
     url,
-    is_test: process.env.NODE_ENV !== "production",
+    is_test: isTest,
     // Tabby will send this header on every webhook call; our handler validates it.
     header: { title: "X-Tabby-Secret", value: WEBHOOK_SECRET },
   };
+  console.log(`Mode: ${isTest ? "TEST" : "LIVE"} (derived from secret key)`);
 
   const res = await fetch(`${API_BASE}/api/v1/webhooks`, {
     method: "POST",
