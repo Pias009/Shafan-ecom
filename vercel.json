@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "rm -rf .next/cache && npm run build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
   "framework": "nextjs",
