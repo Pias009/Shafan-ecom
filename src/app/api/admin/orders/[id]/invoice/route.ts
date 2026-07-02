@@ -424,7 +424,7 @@ export async function POST(
         doc.rect(0, PH - 28, PW, 28).fill('#F1F5F9');
         doc.fontSize(7.5).font('Helvetica').fillColor(C_LIGHT)
            .text(
-             'Al Shanfa General Trading Co. L.L.C  ·  Dubai, UAE  ·  support@shanfaglobal.com  ·  Computer-generated — no signature required',
+             'Shanfa Global  ·  Dubai, UAE  ·  support@shanfaglobal.com  ·  Computer-generated — no signature required',
              0, footerY,
              { align: 'center', width: PW }
            );

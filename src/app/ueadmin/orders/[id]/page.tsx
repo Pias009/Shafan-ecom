@@ -79,6 +79,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const itemCount = order.items?.length || 0;
   const totalItems = order.items?.reduce((sum: number, item: Record<string, unknown>) => sum + ((item.quantity as number) || 0), 0) || 0;
 
+  const AddressField = ({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) => (
+    <div className="flex items-baseline gap-2 min-w-0">
+      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex-shrink-0 w-14">{label}:</span>
+      <span className={`text-xs font-semibold text-slate-800 break-all min-w-0 ${mono ? 'font-mono text-[10px]' : ''}`}>{value || '—'}</span>
+    </div>
+  );
+
   return (
     <div className="pb-20 px-4 md:px-0 max-w-7xl mx-auto">
       {/* Header */}
@@ -106,12 +113,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </div>
           
           {/* Quick Stats & Actions */}
-          <div className="flex flex-wrap items-center gap-3">
-            <TamaraRefundAction 
-              orderId={order.id} 
-              tamaraCheckoutId={order.tamaraCheckoutId} 
-              orderTotal={order.total} 
-              currency={order.currency} 
+          <div className="flex flex-wrap items-center gap-3 flex-shrink-0">
+            <TamaraRefundAction
+              orderId={order.id}
+              tamaraCheckoutId={order.tamaraCheckoutId}
+              orderTotal={order.total}
+              currency={order.currency}
             />
             <OrderEditor order={order} />
             <InvoiceDownload orderId={order.id} />
@@ -211,101 +218,83 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </section>
 
         {/* Customer & Shipping Grid */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Customer Info */}
-          <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-black/5 rounded-xl text-slate-700"><User size={18} /></div>
+          <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white min-w-0">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 bg-black/5 rounded-xl text-slate-700 flex-shrink-0"><User size={18} /></div>
               <h3 className="font-black text-xs uppercase tracking-widest text-slate-900">Customer</h3>
             </div>
-            <div className="space-y-4">
-              <div>
-                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Name</div>
-                <div className="font-bold text-slate-900 text-sm">{customerName}</div>
-              </div>
-              <div>
-                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Email</div>
-                <div className="font-semibold text-slate-700 text-xs truncate">{customerEmail}</div>
-              </div>
-              <div>
-                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Phone</div>
-                <div className="font-semibold text-slate-700 text-xs">{customerPhone}</div>
-              </div>
-              {order.user?.id && (
-                <div>
-                  <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">User ID</div>
-                  <div className="font-mono text-[10px] text-slate-600 truncate">{order.user.id}</div>
-                </div>
-              )}
+            <div className="space-y-3">
+              <AddressField label="Name" value={customerName} />
+              <AddressField label="Email" value={customerEmail} mono />
+              <AddressField label="Phone" value={customerPhone} />
+              {order.user?.id && <AddressField label="User ID" value={order.user.id} mono />}
             </div>
           </section>
 
           {/* Shipping Address */}
-          <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-black/5 rounded-xl text-slate-700"><MapPin size={18} /></div>
+          <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white min-w-0">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 bg-black/5 rounded-xl text-slate-700 flex-shrink-0"><MapPin size={18} /></div>
               <h3 className="font-black text-xs uppercase tracking-widest text-slate-900">Shipping Address</h3>
             </div>
-            <div className="text-xs font-semibold text-slate-600 leading-relaxed">
-              {shipping ? (
-                <div className="space-y-1.5">
-                  {((shipping as any).first_name || (shipping as any).last_name || (shipping as any).fullName) && (
-                    <div className="font-bold text-slate-900">{String((shipping as any).fullName || `${(shipping as any).first_name || ''} ${(shipping as any).last_name || ''}`.trim())}</div>
-                  )}
-                  {((shipping as any).house_building || (shipping as any).address_2) && (
-                    <div>{String((shipping as any).house_building || (shipping as any).address_2)}</div>
-                  )}
-                  {((shipping as any).street_road || (shipping as any).address_1) && (
-                    <div>{String((shipping as any).street_road || (shipping as any).address_1)}</div>
-                  )}
-                  {(shipping as any).block_no && <div>Block {String((shipping as any).block_no)}</div>}
-                  {(shipping as any).zone && <div>Zone {String((shipping as any).zone)}</div>}
-                  {(shipping as any).area_name && <div className="text-slate-500">{String((shipping as any).area_name)}</div>}
-                  {((shipping as any).city_name || (shipping as any).city) && (
-                    <div>{String((shipping as any).city_name || (shipping as any).city)}</div>
-                  )}
-                  {(shipping as any).region && <div>{String((shipping as any).region)}</div>}
-                  <div className="font-bold text-slate-800 uppercase">{String((shipping as any).country || '')}</div>
-                  {(shipping as any).phone && <div className="text-slate-500 mt-1">📞 {String((shipping as any).phone)}</div>}
-                </div>
-              ) : (
-                <div className="italic text-slate-400">No shipping address</div>
-              )}
-            </div>
+            {shipping ? (
+              <div className="space-y-3">
+                {((shipping as any).fullName || (shipping as any).first_name || (shipping as any).last_name) && (
+                  <AddressField label="Name" value={String((shipping as any).fullName || `${(shipping as any).first_name || ''} ${(shipping as any).last_name || ''}`.trim())} />
+                )}
+                {((shipping as any).house_building || (shipping as any).address_2) && (
+                  <AddressField label="Building" value={String((shipping as any).house_building || (shipping as any).address_2)} />
+                )}
+                {((shipping as any).street_road || (shipping as any).address_1) && (
+                  <AddressField label="Street" value={String((shipping as any).street_road || (shipping as any).address_1)} />
+                )}
+                {(shipping as any).block_no && <AddressField label="Block" value={String((shipping as any).block_no)} />}
+                {(shipping as any).zone && <AddressField label="Zone" value={String((shipping as any).zone)} />}
+                {(shipping as any).area_name && <AddressField label="Area" value={String((shipping as any).area_name)} />}
+                {((shipping as any).city_name || (shipping as any).city) && (
+                  <AddressField label="City" value={String((shipping as any).city_name || (shipping as any).city)} />
+                )}
+                {(shipping as any).region && <AddressField label="Region" value={String((shipping as any).region)} />}
+                {(shipping as any).country && <AddressField label="Country" value={String((shipping as any).country).toUpperCase()} />}
+                {(shipping as any).phone && <AddressField label="Phone" value={String((shipping as any).phone)} />}
+              </div>
+            ) : (
+              <p className="italic text-slate-400 text-xs">No shipping address</p>
+            )}
           </section>
 
           {/* Billing Address */}
-          <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-black/5 rounded-xl text-slate-700"><CreditCard size={18} /></div>
+          <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white min-w-0">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 bg-black/5 rounded-xl text-slate-700 flex-shrink-0"><CreditCard size={18} /></div>
               <h3 className="font-black text-xs uppercase tracking-widest text-slate-900">Billing Address</h3>
             </div>
-            <div className="text-xs font-semibold text-slate-600 leading-relaxed">
-              {billing ? (
-                <div className="space-y-1.5">
-                  {((billing as any).first_name || (billing as any).last_name || (billing as any).fullName) && (
-                    <div className="font-bold text-slate-900">{String((billing as any).fullName || `${(billing as any).first_name || ''} ${(billing as any).last_name || ''}`.trim())}</div>
-                  )}
-                  {((billing as any).house_building || (billing as any).address_2) && (
-                    <div>{String((billing as any).house_building || (billing as any).address_2)}</div>
-                  )}
-                  {((billing as any).street_road || (billing as any).address_1) && (
-                    <div>{String((billing as any).street_road || (billing as any).address_1)}</div>
-                  )}
-                  {(billing as any).block_no && <div>Block {String((billing as any).block_no)}</div>}
-                  {(billing as any).zone && <div>Zone {String((billing as any).zone)}</div>}
-                  {(billing as any).area_name && <div className="text-slate-500">{String((billing as any).area_name)}</div>}
-                  {((billing as any).city_name || (billing as any).city) && (
-                    <div>{String((billing as any).city_name || (billing as any).city)}</div>
-                  )}
-                  {(billing as any).region && <div>{String((billing as any).region)}</div>}
-                  <div className="font-bold text-slate-800 uppercase">{String((billing as any).country || '')}</div>
-                  {(billing as any).email && <div className="text-slate-500 mt-1">✉ {String((billing as any).email)}</div>}
-                </div>
-              ) : (
-                <div className="italic text-slate-400">Same as shipping</div>
-              )}
-            </div>
+            {billing ? (
+              <div className="space-y-3">
+                {((billing as any).fullName || (billing as any).first_name || (billing as any).last_name) && (
+                  <AddressField label="Name" value={String((billing as any).fullName || `${(billing as any).first_name || ''} ${(billing as any).last_name || ''}`.trim())} />
+                )}
+                {((billing as any).house_building || (billing as any).address_2) && (
+                  <AddressField label="Building" value={String((billing as any).house_building || (billing as any).address_2)} />
+                )}
+                {((billing as any).street_road || (billing as any).address_1) && (
+                  <AddressField label="Street" value={String((billing as any).street_road || (billing as any).address_1)} />
+                )}
+                {(billing as any).block_no && <AddressField label="Block" value={String((billing as any).block_no)} />}
+                {(billing as any).zone && <AddressField label="Zone" value={String((billing as any).zone)} />}
+                {(billing as any).area_name && <AddressField label="Area" value={String((billing as any).area_name)} />}
+                {((billing as any).city_name || (billing as any).city) && (
+                  <AddressField label="City" value={String((billing as any).city_name || (billing as any).city)} />
+                )}
+                {(billing as any).region && <AddressField label="Region" value={String((billing as any).region)} />}
+                {(billing as any).country && <AddressField label="Country" value={String((billing as any).country).toUpperCase()} />}
+                {(billing as any).email && <AddressField label="Email" value={String((billing as any).email)} mono />}
+              </div>
+            ) : (
+              <p className="italic text-slate-400 text-xs">Same as shipping</p>
+            )}
           </section>
         </div>
 

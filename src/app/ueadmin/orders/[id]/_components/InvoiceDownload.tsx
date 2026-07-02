@@ -80,33 +80,25 @@ export default function InvoiceDownload({ orderId }: Props) {
   };
 
   return (
-    <div className="flex gap-4">
+    <div className="flex items-center gap-2">
       <button
         onClick={handleDownload}
         disabled={loading}
-        className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-center gap-4 hover:bg-black/5 transition-colors cursor-pointer w-full text-left disabled:opacity-50"
+        title="Download Invoice PDF"
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-black/10 bg-white shadow-sm hover:bg-black/5 transition-colors disabled:opacity-50 text-slate-800"
       >
-        <div className="p-3 bg-black rounded-xl text-white">
-          <Download size={18} />
-        </div>
-        <div className="flex-1">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-900">Download Invoice</p>
-          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">PDF format</p>
-        </div>
+        <Download size={15} />
+        <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Invoice</span>
       </button>
 
       <button
         onClick={handlePrint}
         disabled={loading}
-        className="glass-panel-heavy p-6 md:p-8 rounded-[2rem] border border-black/5 bg-white shadow-sm flex items-center gap-4 hover:bg-black/5 transition-colors cursor-pointer w-full text-left disabled:opacity-50"
+        title="Print Invoice"
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors disabled:opacity-50 text-blue-700"
       >
-        <div className="p-3 bg-blue-600 rounded-xl text-white">
-          <Printer size={18} />
-        </div>
-        <div className="flex-1">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-900">Print Invoice</p>
-          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Quick print</p>
-        </div>
+        <Printer size={15} />
+        <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Print</span>
       </button>
     </div>
   );
