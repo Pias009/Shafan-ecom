@@ -87,7 +87,6 @@ export default async function RoutinesPage() {
       initialProducts={transformed} 
       category="Skin Care"
       subcategory="Routine"
-      banners={[]}
       isRoutinesPage={true}
     />
   );

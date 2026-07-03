@@ -497,8 +497,25 @@ function CartPageContent() {
         });
 
         if (activeMethod === "cod") {
+          // Confirm the COD order — without this call the order stays
+          // pending and never notifies the admin or emails the customer
+          try {
+            const codRes = await fetch("/api/payments/cod", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: data.orderId }),
+            });
+            const codData = await codRes.json();
+            if (!codRes.ok || codData.error) {
+              throw new Error(codData.error || "Failed to confirm order");
+            }
+          } catch (codErr: any) {
+            toast.error(codErr?.message || "Failed to confirm order", { id: "checkout" });
+            setSubmitting(false);
+            return;
+          }
           toast.success("Order placed successfully!", { id: "checkout" });
-          router.push(`/checkout/success?orderId=${data.orderId}`);
+          router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
         } else if (activeMethod === "tabby") {
           toast.loading("Connecting to Tabby...", { id: "checkout" });
           try {

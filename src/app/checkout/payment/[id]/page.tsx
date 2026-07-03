@@ -266,7 +266,7 @@ function PaymentPageContent() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       toast.success("Order placed successfully!");
-      router.push(`/checkout/success?orderId=${id}`);
+      router.push(`/checkout/success?orderId=${id}&cod=true`);
     } catch (err: any) {
       toast.error(err.message || "Failed to place COD order");
       setCodLoading(false);

@@ -6,33 +6,6 @@ import { prisma } from "@/lib/prisma";
 
 export const revalidate = 600;
 
-async function getBanners() {
-  try {
-    const banners = await prisma.banner.findMany({
-      where: {
-        active: true,
-        status: 'ACTIVE',
-        displayOn: { in: ['PRODUCTS', 'BOTH'] }
-      },
-      select: {
-        id: true,
-        imageUrl: true,
-        title: true,
-        description: true,
-        ctaLink: true,
-        ctaText: true,
-        position: true,
-        backgroundColor: true,
-        textColor: true,
-      },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-    });
-    return banners;
-  } catch {
-    return [];
-  }
-}
-
 function getCountryCodeFromStore(storeCode: string | null): string {
   const map: Record<string, string> = {
     'UAE': 'AE', 'KUWAIT': 'KW', 'SAUDI': 'SA', 'SA': 'SA',
@@ -66,11 +39,10 @@ export default async function ProductsPage({
   const brand = params.brand;
   const sort = params.sort;
 
-  // Parallelize products, total count, banners and all filter options
-  const [products, totalCount, banners, allCategories, allSubCategories, allBrands, allSkinTones, allSkinConcerns] = await Promise.all([
+  // Parallelize products, total count and all filter options
+  const [products, totalCount, allCategories, allSubCategories, allBrands, allSkinTones, allSkinConcerns] = await Promise.all([
     getProducts(storeCode, page, limit, category, brand, isTrending),
     isTrending ? 0 : getProductCount(storeCode),
-    getBanners(),
     prisma.category.findMany({ select: { name: true } }),
     prisma.subCategory.findMany({ select: { name: true } }),
     prisma.brand.findMany({ select: { name: true } }),
@@ -119,7 +91,6 @@ export default async function ProductsPage({
     category={category}
     brand={brand}
     sort={sort}
-    banners={banners}
     filterOptions={filterOptions}
     isTrending={isTrending}
   />;

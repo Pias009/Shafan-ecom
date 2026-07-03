@@ -260,14 +260,6 @@ function DoctorSasiSection() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-end min-h-[260px] sm:min-h-[340px] md:min-h-[420px] p-6 sm:p-10 md:p-14">
-          {/* Label chip */}
-          <div className="inline-flex items-center gap-2 mb-4 w-fit">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 text-[10px] sm:text-xs tracking-[0.25em] uppercase font-medium">
-              Clinical Skincare
-            </span>
-          </div>
-
           {/* Heading */}
           <h2
             className="text-white font-light text-3xl sm:text-5xl md:text-6xl leading-none mb-2"
