@@ -40,9 +40,41 @@ export async function POST(
     const billing  = order.billingAddress  as Record<string, unknown> | null;
     const shipping = order.shippingAddress as Record<string, unknown> | null;
 
+    // Every address field extracted separately — same field mapping the admin
+    // order page uses for its Shipping/Billing panels (new checkout field
+    // names first, legacy names as fallback).
+    const str = (v: unknown): string => (v == null ? '' : String(v).trim());
+    const addressFields = (a: Record<string, unknown> | null): [string, string][] => {
+      if (!a) return [];
+      const rows: [string, string][] = [];
+      const push = (label: string, value: string) => { if (value) rows.push([label, value]); };
+      push('Name',     str(a.fullName) || `${str(a.first_name)} ${str(a.last_name)}`.trim());
+      push('Building', str(a.house_building) || str(a.address_2));
+      push('Street',   str(a.street_road) || str(a.address_1));
+      push('Block',    str(a.block_no));
+      push('Zone',     str(a.zone));
+      push('Area',     str(a.area_name));
+      push('City',     str(a.city_name) || str(a.city));
+      push('Region',   str(a.region) || str(a.state));
+      push('Postal',   str(a.postalCode) || str(a.postcode));
+      push('Country',  str(a.country).toUpperCase());
+      push('Phone',    str(a.phone));
+      push('Email',    str(a.email));
+      return rows;
+    };
+    const nameOf = (rows: [string, string][], fallback: string) =>
+      rows.find(([l]) => l === 'Name')?.[1] || fallback;
+    const withoutName = (rows: [string, string][]) => rows.filter(([l]) => l !== 'Name');
+
+    const shipRows = addressFields(shipping);
+    // Billing falls back to shipping (order page shows "Same as shipping")
+    const billingRowsRaw = addressFields(billing);
+    const billRows = billingRowsRaw.length ? billingRowsRaw : shipRows;
+
     const customerName =
       order.user?.name ||
-      (billing?.first_name ? `${billing.first_name} ${billing.last_name || ''}`.trim() : null) ||
+      nameOf(billRows, '') ||
+      nameOf(shipRows, '') ||
       'Guest';
     const customerEmail = order.user?.email || (billing?.email as string) || '';
     const customerPhone = (billing?.phone as string) || (shipping?.phone as string) || '';
@@ -145,61 +177,44 @@ export async function POST(
 
         curY += 16;
 
+        // ── Address column renderer — every field on its own labelled line,
+        //    mirroring the admin order page's Shipping/Billing panels ──
+        const A_LBL_W = 46;
+        const A_VAL_W = INFO_W - A_LBL_W - 4;
+        const drawAddress = (
+          headerName: string,
+          rows: [string, string][],
+          x: number,
+          startY: number,
+        ): number => {
+          let y = startY;
+          doc.fontSize(10).font('Helvetica-Bold').fillColor(C_DARK)
+             .text(headerName, x, y, { width: INFO_W });
+          y += doc.heightOfString(headerName, { width: INFO_W }) + 5;
+
+          rows.forEach(([lbl, val]) => {
+            doc.fontSize(7).font('Helvetica-Bold').fillColor(C_LIGHT)
+               .text(lbl.toUpperCase(), x, y + 1, { width: A_LBL_W, characterSpacing: 0.4 });
+            doc.fontSize(8.5).font('Helvetica').fillColor(C_MID)
+               .text(val, x + A_LBL_W + 4, y, { width: A_VAL_W });
+            const valH = doc.heightOfString(val, { width: A_VAL_W });
+            y += Math.max(12, valH + 3);
+          });
+          return y;
+        };
+
         // ── Bill To ──
-        let b1Y = curY;
-        doc.fontSize(10).font('Helvetica-Bold').fillColor(C_DARK)
-           .text(customerName, col1X, b1Y, { width: INFO_W });
-        b1Y += 14;
-
-        const bAddr = [
-          billing?.address_1 as string,
-          billing?.address_2 as string,
-          billing?.city as string,
-          billing?.country as string,
-        ].filter(Boolean).join(', ');
-
-        if (bAddr) {
-          doc.fontSize(8.5).font('Helvetica').fillColor(C_MID)
-             .text(bAddr, col1X, b1Y, { width: INFO_W, lineGap: 2 });
-          b1Y += doc.heightOfString(bAddr, { width: INFO_W, lineGap: 2 }) + 3;
+        const billBody = withoutName(billRows);
+        if (customerEmail && !billBody.some(([l]) => l === 'Email')) {
+          billBody.push(['Email', customerEmail]);
         }
-        if (customerEmail) {
-          doc.fontSize(8.5).font('Helvetica').fillColor(C_MID)
-             .text(customerEmail, col1X, b1Y, { width: INFO_W });
-          b1Y += 13;
+        if (customerPhone && !billBody.some(([l]) => l === 'Phone')) {
+          billBody.push(['Phone', customerPhone]);
         }
-        if (customerPhone) {
-          doc.fontSize(8.5).font('Helvetica').fillColor(C_MID)
-             .text(`Ph: ${customerPhone}`, col1X, b1Y, { width: INFO_W });
-          b1Y += 13;
-        }
+        const b1Y = drawAddress(nameOf(billRows, customerName), billBody, col1X, curY);
 
         // ── Ship To ──
-        let b2Y = curY;
-        const shipName = [shipping?.first_name as string, shipping?.last_name as string]
-          .filter(Boolean).join(' ') || customerName;
-
-        doc.fontSize(10).font('Helvetica-Bold').fillColor(C_DARK)
-           .text(shipName, col2X, b2Y, { width: INFO_W });
-        b2Y += 14;
-
-        const sAddr = [
-          shipping?.address_1 as string,
-          shipping?.address_2 as string,
-          shipping?.city as string,
-          shipping?.country as string,
-        ].filter(Boolean).join(', ');
-
-        if (sAddr) {
-          doc.fontSize(8.5).font('Helvetica').fillColor(C_MID)
-             .text(sAddr, col2X, b2Y, { width: INFO_W, lineGap: 2 });
-          b2Y += doc.heightOfString(sAddr, { width: INFO_W, lineGap: 2 }) + 3;
-        }
-        if (shipping?.phone) {
-          doc.fontSize(8.5).font('Helvetica').fillColor(C_MID)
-             .text(`Ph: ${shipping.phone}`, col2X, b2Y, { width: INFO_W });
-          b2Y += 13;
-        }
+        const b2Y = drawAddress(nameOf(shipRows, customerName), withoutName(shipRows), col2X, curY);
 
         // ── Order Details ──
         let b3Y = curY;
