@@ -23,6 +23,15 @@ export async function middleware(req: NextRequest) {
   const isNextInternal = pathname.startsWith('/_next/')
   const isLockStatusApi = pathname === '/api/lock/status'
 
+  // CORS for all API routes — lets the mobile app (and browser-based test clients
+  // like Flutter Web) read/write the API without preflight blocking
+  if (isApi) {
+    if (req.method === 'OPTIONS') {
+      return applyCorsHeaders(new NextResponse(null, { status: 204 }), req)
+    }
+    return applyCorsHeaders(NextResponse.next(), req)
+  }
+
   if (isStaticAsset || isNextInternal || isLockStatusApi || isBot || isWebhook) return NextResponse.next()
 
   // 2. ADMIN PROTECTION
@@ -247,6 +256,22 @@ function getLockedPage(): string {
 
 export function getSecretPath(): string {
   return SECRET_PATH;
+}
+
+function applyCorsHeaders(res: NextResponse, req: NextRequest): NextResponse {
+  const origin = req.headers.get('origin')
+  if (origin) {
+    // Echo the caller's origin so cookie-based (credentialed) requests also work
+    res.headers.set('Access-Control-Allow-Origin', origin)
+    res.headers.set('Access-Control-Allow-Credentials', 'true')
+  } else {
+    res.headers.set('Access-Control-Allow-Origin', '*')
+  }
+  res.headers.set('Vary', 'Origin')
+  res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+  res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+  res.headers.set('Access-Control-Max-Age', '86400')
+  return res
 }
 
 // Matcher configuration for Next.js middleware
