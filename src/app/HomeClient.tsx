@@ -531,7 +531,9 @@ useEffect(() => {
         <Hero />
 
       <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 pb-20 flex-1 overflow-x-hidden">
-        
+
+        {/* Offer Banners */}
+        <OfferBannersSection />
 
         {/* Routine Section */}
         {filteredRoutine.length > 0 && (
@@ -607,9 +609,6 @@ useEffect(() => {
             router.push(`/products?category=${encodeURIComponent(c)}`);
           }}
         />
-
-        {/* Offer Banners */}
-        <OfferBannersSection />
 
         <div style={{ display: mounted && filteredHot.length === 0 ? 'none' : undefined }}>
           <TrendingNowSlider

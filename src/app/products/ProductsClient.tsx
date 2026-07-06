@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { ProductsSlider } from "@/components/ProductsSlider";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
@@ -240,12 +239,19 @@ export default function ProductsClient({
     return ["All", ...Array.from(set).sort()];
   }, [products, filterOptions]);
 
+  // All Products page is restricted to these categories only (client requirement).
+  const MAINTAINED_CATEGORIES = ["Skin Care", "Body Care", "Hair Care"];
+  const CATEGORY_TABS = [
+    { label: "Routine", category: "Routine" },
+    { label: "Skincare", category: "Skin Care" },
+    { label: "Body care", category: "Body Care" },
+    { label: "Hair care", category: "Hair Care" },
+  ];
+
   const categoriesList = useMemo(() => {
-    if (filterOptions?.categories) {
-      return ["All", ...[...filterOptions.categories].sort()];
-    }
-    const set = new Set(products.map(p => p.categoryName).filter(Boolean));
-    return ["All", ...Array.from(set).sort()];
+    const available = filterOptions?.categories || Array.from(new Set(products.map(p => p.categoryName).filter(Boolean)));
+    const maintained = MAINTAINED_CATEGORIES.filter(c => available.includes(c));
+    return ["All", ...maintained];
   }, [products, filterOptions]);
 
   const subCategories = useMemo(() => {
@@ -307,7 +313,8 @@ export default function ProductsClient({
         (p.subCategoryName || '').toLowerCase().includes(searchInput.toLowerCase());
       const matchesBrand = brand === "All" || brand === t.product.all || (p.brandName || '').toLowerCase() === brand.toLowerCase();
       const matchesPrice = price <= maxPrice;
-      const matchesCategory = selectedCategory === "All" || selectedCategory === t.product.all || 
+      const matchesCategory = selectedCategory === "All" || selectedCategory === t.product.all ||
+        (selectedCategory === "Routine" && p.routine) ||
         (p.categories && p.categories.some((c: string) => c.toLowerCase() === selectedCategory.toLowerCase())) ||
         (p.categoryName && p.categoryName.toLowerCase() === selectedCategory.toLowerCase());
       const matchesSubCategory = selectedSubCategory === 'All' || (p.subCategoryName && p.subCategoryName.toLowerCase() === selectedSubCategory.toLowerCase());
@@ -468,9 +475,26 @@ return sorted;
           </div>
         )}
         
-        <ProductsSlider />
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-12">
+          {CATEGORY_TABS.map((tab) => (
+            <button
+              key={tab.label}
+              onClick={() => {
+                setSelectedCategory(tab.category);
+                setSelectedSubCategory("All");
+              }}
+              className={`px-5 py-2.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
+                selectedCategory === tab.category
+                  ? "bg-black text-white"
+                  : "glass-panel text-black hover:bg-black hover:text-white"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        <div className="flex justify-center mt-12 mb-8">
+        <div className="flex justify-center mt-6 mb-8">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
@@ -612,72 +636,85 @@ return sorted;
         </AnimatePresence>
 
           <div className="mt-12 md:mt-20 space-y-12 md:space-y-24">
-            {categoriesList.filter(cat => cat !== "All" && cat !== t.product.all).map((cat) => {
-              const productsInCat = filtered.filter(p =>
-                (p.categoryName && p.categoryName.toLowerCase() === cat.toLowerCase()) ||
-                (p.categories && Array.isArray(p.categories) && p.categories.some((c: string) => c.toLowerCase() === cat.toLowerCase()))
-              );
-              if (productsInCat.length === 0) return null;
-              
-              const isExpanded = expandedCategories.has(cat);
-              const displayProducts = isExpanded ? productsInCat : productsInCat.slice(0, 15);
-              const hasMore = productsInCat.length > 15;
+            {(() => {
+              const routineProducts = filtered.filter(p => p.routine);
+              const isRoutineOnly = selectedCategory === "Routine";
+              const sections = isRoutineOnly
+                ? [{ label: "Routine", products: routineProducts }]
+                : [
+                    ...(routineProducts.length > 0 ? [{ label: "Routine", products: routineProducts }] : []),
+                    ...categoriesList.filter(cat => cat !== "All" && cat !== t.product.all).map(cat => ({
+                      label: cat,
+                      products: filtered.filter(p =>
+                        (p.categoryName && p.categoryName.toLowerCase() === cat.toLowerCase()) ||
+                        (p.categories && Array.isArray(p.categories) && p.categories.some((c: string) => c.toLowerCase() === cat.toLowerCase()))
+                      ),
+                    })),
+                  ];
 
-              return (
-                <section key={cat}>
-                  <div className="flex items-center justify-between gap-3 md:gap-6 mb-6 md:mb-10 border-b border-black/5 pb-4 md:pb-6">
-                    <div className="flex items-center gap-3 md:gap-6">
-                      <h2 className="font-display text-2xl md:text-5xl font-bold text-black">{cat}</h2>
-                      <div className="h-[1px] flex-1 bg-black/10 hidden md:block" />
-                      <span suppressHydrationWarning className="font-body text-[9px] md:text-sm font-bold text-black/40 tracking-widest uppercase hidden md:inline">
-                        {productsInCat.length} {t.product.items}
-                      </span>
-                    </div>
-                    
-                    {hasMore && (
-                      <button
-                        onClick={() => {
-                          setExpandedCategories(prev => {
-                            const next = new Set(prev);
-                            if (next.has(cat)) {
-                              next.delete(cat);
-                            } else {
-                              next.add(cat);
-                            }
-                            return next;
-                          });
-                        }}
-                        className="text-xs md:text-sm font-bold text-black/60 hover:text-black underline underline-offset-2 transition-colors"
-                      >
-                        {isExpanded ? 'Show Less' : 'See All'}
-                      </button>
-                    )}
-                  </div>
+              return sections.map(({ label, products: productsInCat }) => {
+                if (productsInCat.length === 0) return null;
 
-                  <div className="grid gap-x-3 md:gap-x-8 gap-y-6 md:gap-y-12 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                    {displayProducts.map((product, idx) => (
-                      <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 30 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: idx % 4 * 0.1 }}
-                        viewport={{ once: true }}
-                      >
-                        <ProductCard
-                          product={product}
-                          priority={idx < 8}
-                          onQuickView={(p) => {
-                            setQuickView(p);
+                const isExpanded = expandedCategories.has(label);
+                const displayProducts = isExpanded ? productsInCat : productsInCat.slice(0, 15);
+                const hasMore = productsInCat.length > 15;
+
+                return (
+                  <section key={label}>
+                    <div className="flex items-center justify-between gap-3 md:gap-6 mb-6 md:mb-10 border-b border-black/5 pb-4 md:pb-6">
+                      <div className="flex items-center gap-3 md:gap-6">
+                        <h2 className="font-display text-2xl md:text-5xl font-bold text-black">{label}</h2>
+                        <div className="h-[1px] flex-1 bg-black/10 hidden md:block" />
+                        <span suppressHydrationWarning className="font-body text-[9px] md:text-sm font-bold text-black/40 tracking-widest uppercase hidden md:inline">
+                          {productsInCat.length} {t.product.items}
+                        </span>
+                      </div>
+
+                      {hasMore && (
+                        <button
+                          onClick={() => {
+                            setExpandedCategories(prev => {
+                              const next = new Set(prev);
+                              if (next.has(label)) {
+                                next.delete(label);
+                              } else {
+                                next.add(label);
+                              }
+                              return next;
+                            });
                           }}
-                          onAddToCart={(p) => addToCart(p)}
-                          onOrderNow={(p) => orderNow(p)}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
+                          className="text-xs md:text-sm font-bold text-black/60 hover:text-black underline underline-offset-2 transition-colors"
+                        >
+                          {isExpanded ? 'Show Less' : 'See All'}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid gap-x-3 md:gap-x-8 gap-y-6 md:gap-y-12 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                      {displayProducts.map((product, idx) => (
+                        <motion.div
+                          key={product.id}
+                          initial={{ opacity: 0, y: 30 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: idx % 4 * 0.1 }}
+                          viewport={{ once: true }}
+                        >
+                          <ProductCard
+                            product={product}
+                            priority={idx < 8}
+                            onQuickView={(p) => {
+                              setQuickView(p);
+                            }}
+                            onAddToCart={(p) => addToCart(p)}
+                            onOrderNow={(p) => orderNow(p)}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              });
+            })()}
           </div>
 
         {filtered.length === 0 && (

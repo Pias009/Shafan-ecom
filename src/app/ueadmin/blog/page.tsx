@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Plus, Trash2, Edit2, Check, X, Eye, EyeOff, BookOpen, Upload, Link as LinkIcon } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { BlogRichTextEditor } from "@/components/BlogRichTextEditor";
 
 interface BlogPost {
   id: string;
@@ -220,9 +221,12 @@ export default function AdminBlogPage() {
 
           {/* Content */}
           <div>
-            <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Content * <span className="normal-case font-normal text-black/30">(HTML supported, or plain text)</span></label>
-            <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })}
-              rows={10} className="w-full border border-black/10 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-black/20 resize-y" placeholder="Write your post content here..." />
+            <label className="block text-xs font-bold text-black/50 mb-1 uppercase tracking-widest">Content *</label>
+            <BlogRichTextEditor
+              value={form.content}
+              onChange={(html) => setForm({ ...form, content: html })}
+              placeholder="Write your post content here..."
+            />
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-black/5">

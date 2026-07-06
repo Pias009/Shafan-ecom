@@ -169,16 +169,17 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
           active: true,
           hot: true,
           trending: true,
+          routine: true,
           brand: { select: { name: true } },
-          productCategories: { 
-            include: { 
-              category: { select: { id: true, name: true } } 
-            } 
+          productCategories: {
+            include: {
+              category: { select: { id: true, name: true } }
+            }
           },
-          productSkinTones: { 
-            include: { 
-              skinTone: { select: { name: true, hexColor: true } } 
-            } 
+          productSkinTones: {
+            include: {
+              skinTone: { select: { name: true, hexColor: true } }
+            }
           },
           productSkinConcerns: {
             include: {
@@ -237,6 +238,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
         active: p.active,
         hot: p.hot,
         trending: p.trending,
+        routine: p.routine,
         imageUrl: mainImage,
         brand: p.brand ? { name: p.brand.name } : null,
         brandName: p.brand?.name || "Generic",

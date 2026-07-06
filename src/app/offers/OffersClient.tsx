@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Ticket, Copy, CheckCircle, Calendar, Sparkles, ShoppingBag, Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
@@ -34,6 +35,106 @@ interface OfferBanner {
   link: string | null;
   priority: number;
   clicks: number;
+}
+
+function OfferBannerSlider({ banners }: { banners: OfferBanner[] }) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
+
+  if (banners.length === 0) return null;
+  const banner = banners[index];
+
+  const Slide = (
+    <div className="relative w-full min-h-[180px] sm:min-h-[280px] md:min-h-[360px] rounded-3xl overflow-hidden">
+      <Image
+        src={banner.imageUrl}
+        alt={banner.title || "offer banner"}
+        fill
+        className="object-contain"
+        sizes="100vw"
+        priority
+      />
+      {(banner.title || banner.subtitle || banner.offerText || banner.ctaText) && (
+        <div
+          className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-16"
+          style={{ color: banner.textColor || "#000" }}
+        >
+          {banner.offerText && (
+            <span className="text-xs sm:text-sm font-black uppercase tracking-widest mb-2 opacity-80">{banner.offerText}</span>
+          )}
+          {banner.title && (
+            <h2 className="font-display text-2xl sm:text-4xl md:text-6xl font-bold leading-tight max-w-xl">{banner.title}</h2>
+          )}
+          {banner.subtitle && (
+            <p className="text-sm sm:text-lg mt-2 sm:mt-4 max-w-lg font-medium opacity-80">{banner.subtitle}</p>
+          )}
+          {banner.ctaText && (
+            <span className="inline-flex items-center gap-2 mt-6 w-fit px-6 py-3 bg-black text-white rounded-full font-black text-xs uppercase tracking-widest">
+              {banner.ctaText} <ArrowRight size={14} />
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="relative w-full rounded-3xl overflow-hidden" style={{ backgroundColor: banner.backgroundColor || undefined }}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={banner.id}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+        >
+          {banner.link ? (
+            <Link href={banner.link} aria-label={banner.title || "offer banner"} className="block">
+              {Slide}
+            </Link>
+          ) : (
+            Slide
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {banners.length > 1 && (
+        <>
+          <button
+            onClick={() => setIndex((i) => (i - 1 + banners.length) % banners.length)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-lg"
+            aria-label="Previous banner"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={() => setIndex((i) => (i + 1) % banners.length)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-all shadow-lg"
+            aria-label="Next banner"
+          >
+            <ChevronRight size={18} />
+          </button>
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIndex(i)}
+                className={`h-1.5 rounded-full transition-all ${i === index ? "bg-white w-4" : "bg-white/50 w-1.5"}`}
+                aria-label={`Go to banner ${i + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function OffersClient({
@@ -170,31 +271,6 @@ export function OffersClient({
     }
   }
 
-  const bannerTop = banners[0];
-  const bannerMid = banners[1];
-  const bannerEnd = banners[2];
-
-  function BannerImage({ banner }: { banner?: OfferBanner }) {
-    if (!banner) return null;
-    return (
-      <div className="relative w-full rounded-3xl overflow-hidden min-h-[180px] md:min-h-[320px] lg:min-h-[400px]">
-        <Image
-          src={banner.imageUrl}
-          alt={banner.title || "offer banner"}
-          fill
-          className="object-contain"
-          sizes="100vw"
-        />
-        {banner.link && (
-          <Link
-            href={banner.link}
-            className="absolute inset-0 z-10"
-            aria-label={banner.title || "offer banner"}
-          />
-        )}
-      </div>
-    );
-  }
 
   return (
     <main className="min-h-screen bg-[#fdfaf5]">
@@ -273,9 +349,9 @@ export function OffersClient({
         </div>
       </header>
 
-      {bannerTop && (
+      {banners.length > 0 && (
         <section className="max-w-7xl mx-auto px-6 pt-8 pb-2">
-          <BannerImage banner={bannerTop} />
+          <OfferBannerSlider banners={banners} />
         </section>
       )}
 
@@ -349,12 +425,6 @@ export function OffersClient({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {bannerMid && (
-            <div className="mb-20">
-              <BannerImage banner={bannerMid} />
             </div>
           )}
 
@@ -490,12 +560,6 @@ export function OffersClient({
           )}
         </div>
       </section>
-
-      {bannerEnd && (
-        <section className="max-w-7xl mx-auto px-6 py-12">
-          <BannerImage banner={bannerEnd} />
-        </section>
-      )}
 
       {/* Premium Trust Section */}
       <section className="bg-black text-white py-24">

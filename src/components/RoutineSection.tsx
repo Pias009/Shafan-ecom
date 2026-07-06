@@ -53,7 +53,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
           </p>
         </div>
         <Link
-          href="/products/routine"
+          href="/products?category=Routine"
           className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
         >
           See All
@@ -137,7 +137,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
 
         <div className="flex justify-center mt-4 sm:hidden">
           <Link
-            href="/products/routine"
+            href="/products?category=Routine"
             className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest"
           >
             See All Routine

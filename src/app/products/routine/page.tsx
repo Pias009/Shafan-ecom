@@ -36,19 +36,7 @@ async function getRoutineProducts() {
   }));
 }
 
-async function getActiveBanners() {
-  try {
-    const banners = await (prisma as any).routineBanner.findMany({
-      where: { active: true },
-      orderBy: { createdAt: 'desc' },
-    });
-    return banners;
-  } catch {
-    return [];
-  }
-}
-
 export default async function RoutinePage() {
-  const [products, banners] = await Promise.all([getRoutineProducts(), getActiveBanners()]);
-  return <RoutinePageClient products={products} banners={banners} />;
+  const products = await getRoutineProducts();
+  return <RoutinePageClient products={products} />;
 }

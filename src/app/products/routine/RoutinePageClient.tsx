@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
@@ -12,29 +10,17 @@ import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackAddToCart } from "@/lib/datalayer";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
-interface Banner {
-  id: string;
-  title: string;
-  subtitle: string | null;
-  imageUrl: string | null;
-  linkUrl: string | null;
-  active: boolean;
-}
-
-export default function RoutinePageClient({ products, banners = [] }: { products: any[]; banners?: Banner[] }) {
+export default function RoutinePageClient({ products }: { products: any[] }) {
   const router = useRouter();
   const { addItem, hasAddress } = useCartStore();
   const { selectedCountry } = useCountryStore();
   const [quickView, setQuickView] = useState<any | null>(null);
-  const [activeBanner, setActiveBanner] = useState(0);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => hasValidPrice(p, selectedCountry));
   }, [products, selectedCountry]);
-
-  const currentBanner = banners[activeBanner] ?? null;
 
   function addToCart(product: any) {
     const cartItem = {
@@ -136,41 +122,6 @@ export default function RoutinePageClient({ products, banners = [] }: { products
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Banner */}
-        {currentBanner && (
-          <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 to-purple-500 min-h-[120px]">
-            {currentBanner.imageUrl && (
-              <Image src={currentBanner.imageUrl} alt={currentBanner.title} fill className="object-cover opacity-25" />
-            )}
-            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-6 sm:px-8 sm:py-8">
-              <div>
-                <p className="font-black text-white text-2xl sm:text-3xl tracking-tight">{currentBanner.title}</p>
-                {currentBanner.subtitle && (
-                  <p className="text-white/80 text-sm sm:text-base mt-1 font-medium">{currentBanner.subtitle}</p>
-                )}
-              </div>
-              {currentBanner.linkUrl && (
-                <Link
-                  href={currentBanner.linkUrl}
-                  className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-violet-600 rounded-full font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-colors"
-                >
-                  Shop Now <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              )}
-            </div>
-            {banners.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                {banners.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveBanner(i)}
-                    className={`h-1.5 rounded-full transition-all ${i === activeBanner ? 'bg-white w-4' : 'bg-white/40 w-1.5'}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Products grid */}
         {filteredProducts.length === 0 ? (

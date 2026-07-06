@@ -3,7 +3,7 @@
 import { motion, useMotionValue, useSpring, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, Brain, MessageCircleQuestion, ArrowRight, ShoppingBag, Zap, ShieldCheck, Globe } from "lucide-react";
+import { Sparkles, ArrowRight, ShoppingBag, Zap, ShieldCheck, Globe } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 
@@ -278,39 +278,6 @@ export function Hero() {
       <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-emerald-50/30 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-t from-purple-50/20 to-transparent pointer-events-none" />
 
-      {/* Feature Section - The "AI & Expertise" Layer - Smaller on mobile */}
-      <div className="max-w-7xl w-full mx-auto mt-10 md:mt-32 px-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="grid grid-cols-3 gap-2 md:gap-6"
-        >
-          <FeatureCard 
-            icon={Brain} 
-            title="AI Skin Analysis" 
-            desc="Upload a photo for a professional-grade skin analysis in seconds." 
-            color="emerald" 
-            delay={0.1}
-          />
-          <FeatureCard 
-            icon={Sparkles} 
-            title="Skin Type Quiz" 
-            desc="Discover your unique profile and get personalized product matches." 
-            color="purple" 
-            delay={0.2}
-          />
-          <FeatureCard 
-            icon={MessageCircleQuestion} 
-            title="Ask Our Experts" 
-            desc="Get 1-on-1 guidance from certified dermatologists and estheticians." 
-            color="amber" 
-            delay={0.3}
-          />
-        </motion.div>
-      </div>
-
       {/* Bottom Marquee - Slim & Scroll-reactive on mobile */}
       <MarqueeSection />
     </section>
@@ -322,6 +289,14 @@ function MarqueeSection() {
   const xMove = useTransform(scrollYProgress, [0, 1], [0, -500]);
   const xMoveReverse = useTransform(scrollYProgress, [0, 1], [-500, 0]);
 
+  const trustPoints = [
+    "100% Authentic Products",
+    "Delivery Across GCC",
+    "Secure Payment",
+    "Dubai Self Pickup",
+    "WhatsApp Support",
+  ];
+
   return (
     <div className="w-full mt-10 md:mt-32 py-2 md:py-10 border-y border-black/5 bg-white/30 backdrop-blur-sm overflow-hidden">
       {/* Mobile: Scroll-reactive - Single Slim Line */}
@@ -331,13 +306,19 @@ function MarqueeSection() {
             <div key={i} className="flex items-center gap-4">
               <span className="text-[12px] font-display font-black uppercase tracking-tighter text-black/10">SHANFA GLOBAL • PREMIUM CARE • AI DRIVEN</span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
+              {trustPoints.map((point) => (
+                <span key={point} className="flex items-center gap-4">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700">{point}</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
+                </span>
+              ))}
             </div>
           ))}
         </motion.div>
       </div>
 
       {/* Desktop: Auto-playing Marquee */}
-      <div className="hidden md:flex whitespace-nowrap animate-marquee">
+      <div className="hidden md:flex items-center whitespace-nowrap animate-marquee">
         {[...Array(10)].map((_, i) => (
           <div key={i} className="flex items-center gap-10 mx-10">
             <span className="text-2xl md:text-4xl font-display font-black uppercase tracking-tighter text-black/10">SHANFA GLOBAL</span>
@@ -346,6 +327,12 @@ function MarqueeSection() {
             <span className="w-2 h-2 rounded-full bg-purple-500" />
             <span className="text-2xl md:text-4xl font-display font-black uppercase tracking-tighter text-black/10">AI DRIVEN</span>
             <span className="w-2 h-2 rounded-full bg-amber-500" />
+            {trustPoints.map((point, idx) => (
+              <span key={point} className="flex items-center gap-10">
+                <span className="text-base md:text-lg font-black uppercase tracking-wide text-emerald-700">{point}</span>
+                <span className={`w-2 h-2 rounded-full ${["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-sky-500", "bg-rose-500"][idx % 5]}`} />
+              </span>
+            ))}
           </div>
         ))}
       </div>
@@ -353,36 +340,3 @@ function MarqueeSection() {
   );
 }
 
-function FeatureCard({ icon: Icon, title, desc, color, delay }: { icon: any, title: string, desc: string, color: "emerald" | "purple" | "amber", delay: number }) {
-  const colorMap = {
-    emerald: "from-emerald-500 to-teal-600 bg-emerald-50 text-emerald-600",
-    purple: "from-purple-500 to-violet-600 bg-purple-50 text-purple-600",
-    amber: "from-amber-500 to-orange-600 bg-amber-50 text-amber-600"
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -10 }}
-      className="group relative p-3 md:p-8 rounded-[1rem] md:rounded-[2rem] glass-panel-heavy border border-white/80 shadow-sm hover:shadow-2xl hover:shadow-black/5 transition-all cursor-pointer overflow-hidden"
-      onClick={() => toast.success("Feature Coming Soon!")}
-    >
-      {/* Decorative Gradient Blob */}
-      <div className={`absolute -top-12 -right-12 w-32 h-32 bg-gradient-to-br ${colorMap[color].split(' ').slice(0, 2).join(' ')} opacity-0 group-hover:opacity-10 blur-2xl transition-opacity`} />
-      
-      <div className={`w-8 h-8 md:w-14 md:h-14 rounded-lg md:rounded-2xl flex items-center justify-center mb-2 md:mb-6 shadow-lg transition-transform group-hover:scale-110 group-hover:rotate-3 ${colorMap[color].split(' ').slice(0, 2).join(' ')} text-white`}>
-        <Icon className="w-4 h-4 md:w-7 md:h-7" strokeWidth={2.5} />
-      </div>
-      
-      <h3 className="text-[9px] md:text-xl font-display font-black text-black mb-1 md:mb-3 group-hover:text-emerald-600 transition-colors uppercase tracking-tight line-clamp-1">{title}</h3>
-      <p className="hidden md:block text-black/50 font-medium leading-relaxed">{desc}</p>
-      
-      <div className="hidden md:flex mt-6 items-center gap-2 text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">
-        Launch Tool <ArrowRight size={14} />
-      </div>
-    </motion.div>
-  );
-}
