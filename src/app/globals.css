@@ -323,7 +323,7 @@ body::before {
   .animate-marquee {
     display: flex;
     width: max-content;
-    animation: marquee 40s linear infinite;
+    animation: marquee 70s linear infinite;
   }
 
   .animate-marquee:hover {

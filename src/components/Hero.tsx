@@ -289,7 +289,10 @@ function MarqueeSection() {
   const xMove = useTransform(scrollYProgress, [0, 1], [0, -500]);
   const xMoveReverse = useTransform(scrollYProgress, [0, 1], [-500, 0]);
 
-  const trustPoints = [
+  const marqueeItems = [
+    "SHANFA GLOBAL",
+    "PREMIUM CARE",
+    "AI DRIVEN",
     "100% Authentic Products",
     "Delivery Across GCC",
     "Secure Payment",
@@ -301,14 +304,12 @@ function MarqueeSection() {
     <div className="w-full mt-10 md:mt-32 py-2 md:py-10 border-y border-black/5 bg-white/30 backdrop-blur-sm overflow-hidden">
       {/* Mobile: Scroll-reactive - Single Slim Line */}
       <div className="md:hidden flex overflow-hidden">
-        <motion.div style={{ x: xMove }} className="flex whitespace-nowrap gap-8 will-change-transform">
+        <motion.div style={{ x: xMove }} className="flex whitespace-nowrap gap-4 will-change-transform">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="flex items-center gap-4">
-              <span className="text-[12px] font-display font-black uppercase tracking-tighter text-black/10">SHANFA GLOBAL • PREMIUM CARE • AI DRIVEN</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
-              {trustPoints.map((point) => (
-                <span key={point} className="flex items-center gap-4">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700">{point}</span>
+              {marqueeItems.map((item) => (
+                <span key={item} className="flex items-center gap-4">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700">{item}</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
                 </span>
               ))}
@@ -319,18 +320,12 @@ function MarqueeSection() {
 
       {/* Desktop: Auto-playing Marquee */}
       <div className="hidden md:flex items-center whitespace-nowrap animate-marquee">
-        {[...Array(10)].map((_, i) => (
+        {[...Array(6)].map((_, i) => (
           <div key={i} className="flex items-center gap-10 mx-10">
-            <span className="text-2xl md:text-4xl font-display font-black uppercase tracking-tighter text-black/10">SHANFA GLOBAL</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-2xl md:text-4xl font-display font-black uppercase tracking-tighter text-black/10">PREMIUM CARE</span>
-            <span className="w-2 h-2 rounded-full bg-purple-500" />
-            <span className="text-2xl md:text-4xl font-display font-black uppercase tracking-tighter text-black/10">AI DRIVEN</span>
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            {trustPoints.map((point, idx) => (
-              <span key={point} className="flex items-center gap-10">
-                <span className="text-base md:text-lg font-black uppercase tracking-wide text-emerald-700">{point}</span>
-                <span className={`w-2 h-2 rounded-full ${["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-sky-500", "bg-rose-500"][idx % 5]}`} />
+            {marqueeItems.map((item, idx) => (
+              <span key={item} className="flex items-center gap-10">
+                <span className="text-lg md:text-xl font-black uppercase tracking-wide text-emerald-700">{item}</span>
+                <span className={`w-2 h-2 rounded-full ${["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-sky-500", "bg-rose-500", "bg-teal-500", "bg-fuchsia-500", "bg-orange-500"][idx % 8]}`} />
               </span>
             ))}
           </div>
