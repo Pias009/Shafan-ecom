@@ -6,6 +6,7 @@ import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/email";
 import { notifyNewOrder } from "@/lib/pusher";
+import { cookies } from "next/headers";
 
 // Delivery fee configuration by country (Using global config)
 const DELIVERY_CONFIG = COUNTRY_CONFIG;
@@ -244,6 +245,9 @@ export async function POST(req: Request) {
   try {
     const session = await getServerAuthSession();
     const body = await req.json();
+    
+    const cookieStore = await cookies();
+    const referralSource = cookieStore.get('referral_source')?.value || null;
     
     console.log(JSON.stringify(body, null, 2));
     
@@ -583,6 +587,7 @@ export async function POST(req: Request) {
         totalWeight,
         ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: effectiveDiscount } : {}),
         ...(orderStoreId ? { storeId: orderStoreId } : {}),
+        referralSource,
         items: {
           create: orderItemsData
         },

@@ -9,6 +9,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { sendAdminLoginAlertEmail } from "@/lib/email/service";
 
+
 // User site auth config - cookie only for user paths
 export const userAuthOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -122,6 +123,21 @@ export const userAuthOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account && user.id) {
+        const existing = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { signupProvider: true },
+        });
+        if (existing && !existing.signupProvider) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { signupProvider: account.provider },
+          });
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;

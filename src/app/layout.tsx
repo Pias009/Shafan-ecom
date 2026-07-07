@@ -13,6 +13,7 @@ import { GTMProvider } from "@/components/GTMProvider";
 import { GAProvider } from "@/components/GAProvider";
 import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import ContentProtection from "@/components/ContentProtection";
+import ReferralTracker from "@/components/ReferralTracker";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -76,6 +77,7 @@ export default function RootLayout({
           <SpeedInsights />
           <Analytics />
           <ContentProtection />
+          <ReferralTracker />
         </Providers>
       </body>
     </html>

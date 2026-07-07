@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 import { notifyNewOrder } from "@/lib/pusher";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
+import { cookies } from "next/headers";
 
 // Helper function to determine courier based on shipping address
 function determineCourier(shippingAddress: any): string {
@@ -36,6 +37,9 @@ export async function POST(req: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const cookieStore = await cookies();
+  const referralSource = cookieStore.get('referral_source')?.value || null;
 
   try {
     const { items, country: requestCountry } = await req.json();
@@ -166,6 +170,7 @@ export async function POST(req: Request) {
         items: {
           create: orderItems
         },
+        referralSource,
       },
       include: {
         items: true,

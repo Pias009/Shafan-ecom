@@ -104,6 +104,9 @@ model User {
   // Activity tracking
   lastActivityAt DateTime?
   
+  // Signup source tracking
+  signupProvider String? // "google", "facebook", "email"
+  
   accounts       Account[]
   sessions       Session[]
   orders         Order[]
@@ -374,6 +377,7 @@ model Order {
   appliedDiscount       Discount?       @relation(fields: [discountId], references: [id])
   discountAmount        Float? // Amount saved from discount
   couponCode            String? // Coupon code used
+  referralSource        String? // "direct", "google", "facebook", "instagram", "whatsapp", etc.
   items                 OrderItem[]
   totalWeight           Float?          @default(0)
   trackingId            String?
@@ -409,6 +413,7 @@ model Order {
   @@index([createdAt])
   @@index([userId])
   @@index([total])
+  @@index([referralSource])
 }
 
 model OrderItem {

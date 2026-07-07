@@ -35,6 +35,7 @@ export async function POST(req: Request) {
         email: parsed.data.email,
         passwordHash,
         country: parsed.data.country,
+        signupProvider: "email",
         role: "USER",
       },
     });

@@ -57,6 +57,12 @@ export function AdminSidebar() {
       show: true 
     },
     { 
+      label: "Analytics", 
+      href: "/ueadmin/analytics", 
+      icon: Activity, 
+      show: true 
+    },
+    { 
       label: "Face Login", 
       href: "/ueadmin/super/face", 
       icon: ScanFace, 

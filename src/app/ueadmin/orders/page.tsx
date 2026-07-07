@@ -26,6 +26,8 @@ interface BillingAddress {
 interface User {
   name: string | null;
   email: string | null;
+  signupProvider: string | null;
+  accounts?: { provider: string }[];
 }
 
 interface Store {
@@ -55,6 +57,7 @@ interface Order {
   store: Store | null;
   items: OrderItem[];
   shipment: { courier: string; trackingCode: string; trackingUrl: string } | null;
+  referralSource: string | null;
 }
 
 export const dynamic = 'force-dynamic';
@@ -100,7 +103,13 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
   const dbOrders = await prisma.order.findMany({
     where,
     include: {
-      user: true,
+      user: {
+        include: {
+          accounts: {
+            select: { provider: true }
+          }
+        }
+      },
       store: { select: { code: true, name: true } },
       items: true,
       shipment: true
