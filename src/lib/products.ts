@@ -142,15 +142,17 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
               name: brand
             }
           }),
-          ...(category && {
-            productCategories: {
-              some: {
-                category: {
-                  name: { equals: category, mode: 'insensitive' }
+          ...(category?.toLowerCase() === 'routine'
+            ? { routine: true }
+            : category && {
+                productCategories: {
+                  some: {
+                    category: {
+                      name: { equals: category, mode: 'insensitive' }
+                    }
+                  }
                 }
-              }
-            }
-          })
+              })
         },
         select: {
           id: true,
