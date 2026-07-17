@@ -169,11 +169,11 @@ function HomeProductCardComponent({
           </div>
         </div>
 
-        {/* Hover Background */}
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
+        {/* Hover Background (desktop only) */}
+        <div className="hidden md:block absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
 
-        {/* Cart Overlay - Shows on Hover */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col items-center justify-center">
+        {/* Cart Overlay - Shows on Hover (desktop only) */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none hidden md:flex flex-col items-center justify-center">
           <div className={`${compact ? 'mb-2' : 'mb-4'} ${compact ? 'text-sm sm:text-base' : 'text-lg sm:text-xl'} font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 ${compact ? 'translate-y-2' : 'translate-y-4'} group-hover:translate-y-0`}>
             <Price amount={price} showSymbolSmall countryPrices={product.countryPrices} />
           </div>

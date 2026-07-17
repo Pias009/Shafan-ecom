@@ -148,11 +148,11 @@ const ProductCardComponent = function ProductCard({
           
         </div>
 
-        {/* Hover Background */}
-        <div className="h-bg absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
+        {/* Hover Background (desktop only) */}
+        <div className="hidden md:block h-bg absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
 
-        {/* Cart Overlay - Shows on Hover */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex flex-col items-center justify-center">
+        {/* Cart Overlay - Shows on Hover (desktop only) */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none hidden md:flex flex-col items-center justify-center">
           {/* Price - Shows on Hover */}
           <div className="mb-3 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 text-center">
             <span className="text-[0.65em] font-bold uppercase tracking-wider text-white block mb-1">{brandName}</span>
