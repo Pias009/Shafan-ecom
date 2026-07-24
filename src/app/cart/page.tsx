@@ -91,7 +91,7 @@ function CartPageContent() {
   const { currentLanguage } = useLanguageStore();
   const isArabic = currentLanguage.code === "ar";
   const t = translations[currentLanguage.code as keyof typeof translations];
-  const { selectedCountry, setCountry: setStoreCountry } = useCountryStore();
+  const { selectedCountry } = useCountryStore();
   const {
     items,
     removeItem,
@@ -133,7 +133,6 @@ function CartPageContent() {
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
   const [, setLoadingAddress] = useState(true);
-  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -417,15 +416,11 @@ function CartPageContent() {
 
         const data = await orderRes.json();
 
-        if (orderRes.ok && data.orderId) {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("recent_order", data.orderId);
-          }
-
+        if (orderRes.ok && data.pendingCheckoutId) {
           const tamaraRes = await fetch("/api/payments/tamara/create-session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: data.orderId }),
+            body: JSON.stringify({ orderId: data.pendingCheckoutId }),
           });
 
           const tamaraData = await tamaraRes.json();
@@ -475,11 +470,7 @@ function CartPageContent() {
 
       const data = await orderRes.json();
 
-      if (orderRes.ok && data.orderId) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("recent_order", data.orderId);
-        }
-
+      if (orderRes.ok && data.pendingCheckoutId) {
         trackBeginCheckout({
           value: totalLocal,
           currency: getCurrencyForCountry(selectedCountry),
@@ -497,32 +488,38 @@ function CartPageContent() {
         });
 
         if (activeMethod === "cod") {
-          // Confirm the COD order — without this call the order stays
-          // pending and never notifies the admin or emails the customer
+          // Confirm the COD order — this is the moment the real Order is
+          // created (promoted from the PendingCheckout); without this call
+          // no order is ever created, and the admin is never notified.
+          let confirmedOrderId: string | null = null;
           try {
             const codRes = await fetch("/api/payments/cod", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: data.orderId }),
+              body: JSON.stringify({ orderId: data.pendingCheckoutId }),
             });
             const codData = await codRes.json();
             if (!codRes.ok || codData.error) {
               throw new Error(codData.error || "Failed to confirm order");
             }
+            confirmedOrderId = codData.orderId;
           } catch (codErr: any) {
             toast.error(codErr?.message || "Failed to confirm order", { id: "checkout" });
             setSubmitting(false);
             return;
           }
+          if (typeof window !== "undefined" && confirmedOrderId) {
+            localStorage.setItem("recent_order", confirmedOrderId);
+          }
           toast.success("Order placed successfully!", { id: "checkout" });
-          router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
+          router.push(`/checkout/success?orderId=${confirmedOrderId}&cod=true`);
         } else if (activeMethod === "tabby") {
           toast.loading("Connecting to Tabby...", { id: "checkout" });
           try {
             const tabbyRes = await fetch("/api/payments/tabby/create-session", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: data.orderId }),
+              body: JSON.stringify({ orderId: data.pendingCheckoutId }),
             });
             const tabbyData = await tabbyRes.json();
             if (tabbyRes.ok && tabbyData.checkoutUrl) {
@@ -544,7 +541,7 @@ function CartPageContent() {
           const sessionRes = await fetch("/api/payments/stripe/checkout-session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: data.orderId }),
+            body: JSON.stringify({ orderId: data.pendingCheckoutId }),
           });
           const sessionData = await sessionRes.json();
           if (sessionRes.ok && sessionData.url) {
@@ -731,39 +728,18 @@ function CartPageContent() {
 
               {shipMethod === "ship" && (
               <div className="grid gap-4 md:grid-cols-2">
-                {/* Country */}
+                {/* Country — locked to the geo-detected store; not user-changeable */}
                 <div className="relative md:col-span-2">
                   <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 flex items-center gap-1.5">
                     Country *
-                    {hasAddress && (
-                      <span className="text-[8px] font-bold uppercase tracking-wider text-black/20">Locked</span>
-                    )}
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-black/20">Locked</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => { if (!hasAddress) { setShowCountryDropdown(!showCountryDropdown); setShowRegionDropdown(false); } }}
-                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 transition outline-none bg-white flex items-center justify-between ${hasAddress ? "border-black/5 text-black/40 cursor-not-allowed" : "border-black/10 focus:border-black cursor-pointer active:border-black/30"}`}
-                  >
+                  <div className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 border-black/5 text-black/40 bg-white flex items-center justify-between cursor-not-allowed">
                     <span className="flex items-center gap-2">
-                      {hasAddress && <Lock className="w-3 h-3 text-black/20" />}
+                      <Lock className="w-3 h-3 text-black/20" />
                       {deliveryCountry}
                     </span>
-                    <ChevronDown className={`w-4 h-4 text-black/30 transition shrink-0 ${showCountryDropdown ? "rotate-180" : ""} ${hasAddress ? "opacity-20" : ""}`} />
-                  </button>
-                  {showCountryDropdown && !hasAddress && (
-                    <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
-                      {ACTIVE_COUNTRIES.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          onClick={() => { setDeliveryCountry(c); setStoreCountry(getCountryCode(c)); setShowCountryDropdown(false); setRegion(""); setBlockNo(""); setZone(""); setAreaName(""); setCity(""); setShowRegionDropdown(false); }}
-                          className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${deliveryCountry === c ? "bg-black text-white hover:bg-black" : "text-black"}`}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* First Name */}
@@ -872,7 +848,7 @@ function CartPageContent() {
                     </label>
                     <button
                       type="button"
-                      onClick={() => { setShowRegionDropdown(!showRegionDropdown); setShowCountryDropdown(false); }}
+                      onClick={() => { setShowRegionDropdown(!showRegionDropdown); }}
                       className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 ${fieldErrors.region ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white flex items-center justify-between cursor-pointer active:border-black/30`}
                     >
                       <span className={region ? "" : "text-black/30"}>{region || "Select Emirate"}</span>

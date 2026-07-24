@@ -3,6 +3,7 @@ import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/ta
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
+import { promoteToOrder, expirePendingCheckout } from "@/services/checkout/pending-checkout";
 
 /**
  * Shared Tabby payment-processing helper.
@@ -136,6 +137,78 @@ export async function captureAuthorizedTabbyOrder(
   }
 
   if (status === "REJECTED" || status === "EXPIRED") {
+    return { ok: false, reason: "not_payable", status };
+  }
+
+  // PENDING / NEW — nothing to do yet; a later webhook or cron pass will retry.
+  return { ok: false, reason: "pending", status };
+}
+
+function regionForPendingCheckout(pc: { shippingAddress: unknown; currency: string | null }): TabbyRegion {
+  return regionForOrder(pc as { shippingAddress: unknown; currency: string | null });
+}
+
+/**
+ * Same as {@link captureAuthorizedTabbyOrder}, but for a PendingCheckout that
+ * has not yet been promoted to a real Order. On AUTHORIZED/CAPTURED/CLOSED,
+ * promotes the PendingCheckout into a real, PAID Order. On REJECTED/EXPIRED,
+ * marks the PendingCheckout EXPIRED — no Order is ever created for a payment
+ * that never went through.
+ */
+export async function capturePendingTabbyCheckout(
+  pendingCheckoutId: string,
+  opts?: { paymentId?: string; knownStatus?: string },
+): Promise<CaptureResult> {
+  const pc = await (prisma as any).pendingCheckout.findUnique({ where: { id: pendingCheckoutId } });
+  if (!pc) return { ok: false, reason: "order_not_found" };
+
+  if (pc.status === "CONSUMED" && pc.consumedOrderId) {
+    return { ok: true, alreadyCaptured: true };
+  }
+  if (pc.status === "EXPIRED") {
+    return { ok: false, reason: "not_payable", status: "EXPIRED" };
+  }
+
+  const paymentId = opts?.paymentId || pc.tabbyPaymentId;
+  if (!paymentId) return { ok: false, reason: "no_payment_id" };
+
+  const region = regionForPendingCheckout(pc);
+  const service = new TabbyService(region);
+  const currency = (pc.currency || "AED") as TabbyCurrency;
+
+  let status = opts?.knownStatus?.toUpperCase();
+  if (!status) {
+    const payment = await service.getPayment(paymentId);
+    status = payment.status?.toUpperCase();
+  }
+
+  if (status === "AUTHORIZED") {
+    await service.capturePayment(paymentId, Number(pc.total || 0), currency);
+    const { order } = await promoteToOrder(pendingCheckoutId, {
+      paymentStatus: PaymentStatus.PAID,
+      status: OrderStatus.ORDER_CONFIRMED,
+      paymentMethod: "tabby",
+      paymentMethodTitle: "Pay later with Tabby",
+      tabbyPaymentId: paymentId,
+    });
+    await notifyPaymentConfirmed(order.id);
+    return { ok: true, captured: true, status: "CAPTURED" };
+  }
+
+  if (status === "CAPTURED" || status === "CLOSED") {
+    const { order } = await promoteToOrder(pendingCheckoutId, {
+      paymentStatus: PaymentStatus.PAID,
+      status: OrderStatus.ORDER_CONFIRMED,
+      paymentMethod: "tabby",
+      paymentMethodTitle: "Pay later with Tabby",
+      tabbyPaymentId: paymentId,
+    });
+    await notifyPaymentConfirmed(order.id);
+    return { ok: true, captured: true, status };
+  }
+
+  if (status === "REJECTED" || status === "EXPIRED") {
+    await expirePendingCheckout(pendingCheckoutId);
     return { ok: false, reason: "not_payable", status };
   }
 

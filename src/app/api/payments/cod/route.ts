@@ -5,6 +5,7 @@ import { createAramexShipment } from "@/lib/shipping/aramex";
 import { sendEmail } from "@/lib/email";
 import { notifyNewOrder } from "@/lib/pusher";
 import { revalidatePath } from "next/cache";
+import { promoteToOrder } from "@/services/checkout/pending-checkout";
 
 function generateTrackingCode(): string {
   const prefix = "GL";
@@ -15,35 +16,39 @@ function generateTrackingCode(): string {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { orderId } = body;
+    const { orderId: pendingCheckoutId } = body;
 
-    if (!orderId) {
+    if (!pendingCheckoutId) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: { items: true }
+    const pendingCheckout = await (prisma as any).pendingCheckout.findUnique({
+      where: { id: pendingCheckoutId },
     });
 
-    if (!order) {
+    if (!pendingCheckout) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.paymentMethod && order.paymentMethod !== "cod" && order.paymentMethod !== "stripe") {
-      return NextResponse.json({ error: "Order already has a payment method" }, { status: 400 });
-    }
-
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        paymentMethod: "cod",
-        paymentMethodTitle: "Cash on Delivery",
-        paymentStatus: PaymentStatus.PENDING,
-        status: OrderStatus.ORDER_RECEIVED,
-      },
-      include: { items: true, shipment: true }
+    // This is the moment a COD order becomes real: promote the snapshot into
+    // an Order (paymentStatus intentionally stays PENDING — cash on delivery).
+    const { order: promotedOrder } = await promoteToOrder(pendingCheckoutId, {
+      paymentStatus: PaymentStatus.PENDING,
+      status: OrderStatus.ORDER_RECEIVED,
+      paymentMethod: "cod",
+      paymentMethodTitle: "Cash on Delivery",
     });
+
+    const orderId = promotedOrder.id;
+
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, shipment: true },
+    });
+
+    if (!updatedOrder) {
+      return NextResponse.json({ error: "Failed to load promoted order" }, { status: 500 });
+    }
 
     // Create shipment for COD order
     let trackingCode = generateTrackingCode();
@@ -75,29 +80,24 @@ export async function POST(req: Request) {
         }
       }
 
+      // promoteToOrder() already created a placeholder GLOBAL_COURIER shipment
+      // for this order — upsert here to upgrade it to Aramex when available,
+      // rather than creating a second Shipment row (orderId is @unique).
       try {
         if (aramexResult?.Shipments?.[0]?.ID) {
           const awbCode = aramexResult.Shipments[0].ID;
           trackingCode = awbCode;
           trackingUrl = `https://www.aramex.com/track/${awbCode}`;
-          await prisma.shipment.create({
-            data: {
-              orderId: orderId,
-              courier: "ARAMEX",
-              trackingCode: awbCode,
-              trackingUrl,
-              status: "Pending"
-            }
+          await prisma.shipment.upsert({
+            where: { orderId },
+            update: { courier: "ARAMEX", trackingCode: awbCode, trackingUrl, status: "Pending" },
+            create: { orderId, courier: "ARAMEX", trackingCode: awbCode, trackingUrl, status: "Pending" },
           });
         } else {
-          await prisma.shipment.create({
-            data: {
-              orderId: orderId,
-              courier: "GLOBAL_COURIER",
-              trackingCode,
-              trackingUrl,
-              status: "Pending"
-            }
+          await prisma.shipment.upsert({
+            where: { orderId },
+            update: { courier: "GLOBAL_COURIER", trackingCode, trackingUrl, status: "Pending" },
+            create: { orderId, courier: "GLOBAL_COURIER", trackingCode, trackingUrl, status: "Pending" },
           });
         }
       } catch (shipmentError) {

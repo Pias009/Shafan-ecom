@@ -6,6 +6,7 @@ import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 import { notifyNewOrder } from "@/lib/pusher";
 import { createAramexShipment } from "@/lib/shipping/aramex";
+import { promoteToOrder } from "@/services/checkout/pending-checkout";
 
 function generateTrackingCode(): string {
   const prefix = "GL";
@@ -30,11 +31,31 @@ export async function POST(req: Request) {
   try {
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object as any;
-      const orderId = paymentIntent.metadata?.orderId;
+      // Legacy shape: metadata.orderId points at an Order created up-front
+      // (pre-cutover in-flight checkouts). New shape: metadata.pendingCheckoutId
+      // points at a PendingCheckout that must be promoted to a real Order now.
+      const legacyOrderId = paymentIntent.metadata?.orderId;
+      const pendingCheckoutId = paymentIntent.metadata?.pendingCheckoutId;
 
-      if (!orderId) {
-        console.warn("[Stripe Webhook] payment_intent.succeeded missing orderId in metadata");
+      if (!legacyOrderId && !pendingCheckoutId) {
+        console.warn("[Stripe Webhook] payment_intent.succeeded missing orderId/pendingCheckoutId in metadata");
         return NextResponse.json({ received: true });
+      }
+
+      let orderId: string;
+
+      if (pendingCheckoutId) {
+        console.log(`[Stripe Webhook] Payment succeeded for pending checkout ${pendingCheckoutId}`);
+        const { order } = await promoteToOrder(pendingCheckoutId, {
+          paymentStatus: PaymentStatus.PAID,
+          status: OrderStatus.ORDER_CONFIRMED,
+          paymentMethod: "stripe",
+          paymentMethodTitle: "Card Payment (Stripe)",
+          stripePaymentIntentId: paymentIntent.id,
+        });
+        orderId = order.id;
+      } else {
+        orderId = legacyOrderId;
       }
 
       console.log(`[Stripe Webhook] Payment succeeded for order ${orderId}`);
@@ -49,23 +70,27 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
       }
 
-      // Idempotency guard — skip if already marked PAID
-      if (existingOrder.paymentStatus === PaymentStatus.PAID) {
+      // Idempotency guard — skip if already marked PAID (covers the legacy
+      // Order-update path; the PendingCheckout path is already idempotent
+      // via promoteToOrder's atomic claim).
+      if (legacyOrderId && existingOrder.paymentStatus === PaymentStatus.PAID) {
         console.log(`[Stripe Webhook] Order ${orderId} already PAID — skipping duplicate event`);
         return NextResponse.json({ received: true });
       }
 
-      const updatedOrder = await prisma.order.update({
-        where: { id: orderId },
-        data: {
-          status: OrderStatus.ORDER_CONFIRMED,
-          paymentStatus: PaymentStatus.PAID,
-          paymentMethod: "stripe",
-          paymentMethodTitle: "Card Payment (Stripe)",
-          stripePaymentIntentId: paymentIntent.id,
-        },
-        include: { user: true, items: true },
-      });
+      const updatedOrder = legacyOrderId
+        ? await prisma.order.update({
+            where: { id: orderId },
+            data: {
+              status: OrderStatus.ORDER_CONFIRMED,
+              paymentStatus: PaymentStatus.PAID,
+              paymentMethod: "stripe",
+              paymentMethodTitle: "Card Payment (Stripe)",
+              stripePaymentIntentId: paymentIntent.id,
+            },
+            include: { user: true, items: true },
+          })
+        : existingOrder;
 
       console.log(`[Stripe Webhook] Order ${orderId} updated to PAID`);
 

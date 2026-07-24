@@ -8,7 +8,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthModal } from "./AuthModal";
 import { UserDropdown } from "./UserDropdown";
-import { CurrencySelector } from "./CurrencySelector";
 import { LanguageSelector } from "./LanguageSelector";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
@@ -292,10 +291,9 @@ export function Navbar() {
               <Search size={22} />
             </button>
 
-            {/* Currency & Language - side by side */}
+            {/* Language */}
             {isClient && (
               <div className="flex items-center gap-2">
-                <CurrencySelector direction="down" />
                 <LanguageSelector direction="down" />
               </div>
             )}
@@ -346,12 +344,8 @@ export function Navbar() {
                 )}
                 
                 <div className="space-y-1">
-                  {/* Currency & Language - horizontal row */}
+                  {/* Language */}
                   <div className="flex flex-row gap-2 px-2 py-1">
-                    <div className="flex-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-black/30 block mb-1">Currency</span>
-                      <CurrencySelector direction="down" />
-                    </div>
                     <div className="flex-1">
                       <span className="text-[10px] font-black uppercase tracking-widest text-black/30 block mb-1">Language</span>
                       <LanguageSelector direction="down" />
@@ -546,7 +540,6 @@ export function Navbar() {
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <LanguageSelector align="left" direction="up" />
-                      <CurrencySelector align="left" direction="up" />
                     </div>
                     {status === "authenticated" && (
                       <button 

@@ -10,22 +10,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({
+    const pendingCheckout = await (prisma as any).pendingCheckout.findUnique({
       where: { id: orderId },
     });
 
-    if (!order) {
+    if (!pendingCheckout) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const totalAmount = order.total || 0;
+    const totalAmount = pendingCheckout.total || 0;
     if (totalAmount <= 0) {
       return NextResponse.json({ error: "Order total must be greater than 0" }, { status: 400 });
     }
 
     const stripe = getStripe();
-    const currency = order.currency?.toLowerCase() || "aed";
-    const code = order.currency?.toUpperCase() || "AED";
+    const currency = pendingCheckout.currency?.toLowerCase() || "aed";
+    const code = pendingCheckout.currency?.toUpperCase() || "AED";
     const isThreeDecimal = ["KWD", "BHD", "OMR"].includes(code);
     const multiplier = isThreeDecimal ? 1000 : 100;
     let amount = Math.round(totalAmount * multiplier);
@@ -48,8 +48,8 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      metadata: { orderId: order.id },
-      success_url: `${baseUrl}/checkout/success?order_id=${order.id}`,
+      metadata: { pendingCheckoutId: pendingCheckout.id },
+      success_url: `${baseUrl}/checkout/success?pcid=${pendingCheckout.id}`,
       cancel_url: `${baseUrl}/cart?canceled=stripe`,
     });
 

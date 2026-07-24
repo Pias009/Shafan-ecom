@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
+import type { PendingCheckoutItemSnapshot } from "@/services/checkout/pending-checkout";
 
 const COUNTRY_TO_REGION: Record<string, { region: TabbyRegion; currency: TabbyCurrency }> = {
   AE: { region: "UAE", currency: "AED" },
@@ -39,33 +40,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({
+    const pendingCheckout = await (prisma as any).pendingCheckout.findUnique({
       where: { id: orderId },
-      include: {
-        items: {
-          include: {
-            product: {
-              include: {
-                productCategories: {
-                  include: {
-                    category: true
-                  }
-                }
-              }
-            }
-          },
-        },
-        user: true,
-      },
     });
 
-    if (!order) {
+    if (!pendingCheckout) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.status !== "ORDER_RECEIVED") {
+    if (pendingCheckout.status !== "OPEN") {
       return NextResponse.json({ error: "Order is not pending payment" }, { status: 400 });
     }
+
+    // Shape a minimal "order"-like object so the rest of this route (which
+    // predates PendingCheckout) can keep reading `order.*` unchanged.
+    const order = {
+      id: pendingCheckout.id,
+      email: pendingCheckout.email,
+      currency: pendingCheckout.currency,
+      total: pendingCheckout.total,
+      shipping: pendingCheckout.shipping,
+      taxAmount: pendingCheckout.taxAmount,
+      discount: pendingCheckout.discount,
+      billingAddress: pendingCheckout.billingAddress,
+      shippingAddress: pendingCheckout.shippingAddress,
+      createdAt: pendingCheckout.createdAt,
+      items: ((pendingCheckout.items as unknown as PendingCheckoutItemSnapshot[]) || []).map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        nameSnapshot: item.nameSnapshot,
+        imageSnapshot: item.imageSnapshot,
+        categoryNameSnapshot: item.categoryNameSnapshot,
+      })),
+      user: pendingCheckout.userId
+        ? await prisma.user.findUnique({ where: { id: pendingCheckout.userId }, select: { email: true, createdAt: true } })
+        : null,
+    };
 
     let countryCode = (order.shippingAddress as any)?.country?.toUpperCase() || "AE";
 
@@ -279,7 +290,7 @@ export async function POST(request: NextRequest) {
           : order.id,
       description: `Order #${order.id.substring(0, 8)}`,
       merchant_urls: {
-        success: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/success?order_id=${order.id}&payment=tabby`,
+        success: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/success?pcid=${order.id}&payment=tabby`,
         cancel: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/payment/${order.id}?status=cancel&orderId=${order.id}&canceled=tabby`,
         failure: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/payment/${order.id}?status=reject&orderId=${order.id}&rejected=tabby`,
       },
@@ -309,12 +320,7 @@ export async function POST(request: NextRequest) {
       items: order.items.map((item) => {
         const qty = item.quantity || 1;
         const up = Number(item.unitPrice || 0);
-        // Resolve real category from product relation
-        const rawCategory =
-          (item.product as any)?.productCategories?.[0]?.category?.name ||
-          (item.product as any)?.categoryName ||
-          "General";
-        const category = typeof rawCategory === "string" ? rawCategory : "General";
+        const category = item.categoryNameSnapshot || "General";
 
         return {
           title: item.nameSnapshot,
@@ -330,7 +336,7 @@ export async function POST(request: NextRequest) {
       shippingAmount: Number(order.shipping || 0),
       discountAmount: Number(order.discount || 0),
       metadata: {
-        order_id: order.id,
+        pending_checkout_id: order.id,
       },
     });
 
@@ -366,7 +372,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only update DB after confirming the session is valid and a checkout URL exists
-    await prisma.order.update({
+    await (prisma as any).pendingCheckout.update({
       where: { id: orderId },
       data: {
         paymentMethod: "tabby",

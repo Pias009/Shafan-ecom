@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createPaymentIntent } from "@/services/payments/stripe/payment-service";
 import { prisma } from "@/lib/prisma";
-import { OrderStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -11,25 +10,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    // Fetch order from Prisma
-    const order = await prisma.order.findUnique({
+    // Fetch the pending checkout snapshot — no real Order exists yet.
+    const pendingCheckout = await (prisma as any).pendingCheckout.findUnique({
       where: { id: orderId }
     });
 
-    if (!order) {
+    if (!pendingCheckout) {
       return NextResponse.json({ error: "Order not found in database" }, { status: 404 });
     }
 
-    if (order.status !== OrderStatus.ORDER_RECEIVED) {
+    if (pendingCheckout.status !== "OPEN") {
       return NextResponse.json({ error: "Order is already paid or cancelled" }, { status: 400 });
     }
 
-    const totalAmount = order.total || 0;
+    const totalAmount = pendingCheckout.total || 0;
     if (totalAmount <= 0) {
       return NextResponse.json({ error: "Order total must be greater than 0" }, { status: 400 });
     }
 
-    const orderCurrency = order.currency || "usd";
+    const orderCurrency = pendingCheckout.currency || "usd";
     const code = orderCurrency.toUpperCase();
     const isThreeDecimal = ["KWD", "BHD", "OMR"].includes(code);
     const multiplier = isThreeDecimal ? 1000 : 100;
@@ -37,12 +36,17 @@ export async function POST(req: Request) {
     if (isThreeDecimal) {
       amount = Math.round(amount / 10) * 10;
     }
-    const billing = (order.billingAddress as any) || {};
+    const billing = (pendingCheckout.billingAddress as any) || {};
     const customerEmail = billing.email;
 
     const paymentIntent = await createPaymentIntent(amount, orderId.toString(), customerEmail, orderCurrency);
 
-    return NextResponse.json({ 
+    await (prisma as any).pendingCheckout.update({
+      where: { id: orderId },
+      data: { stripePaymentIntentId: paymentIntent.id },
+    });
+
+    return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
       id: paymentIntent.id
     });

@@ -432,6 +432,45 @@ model OrderItem {
   product        Product  @relation(fields: [productId], references: [id])
 }
 
+model PendingCheckout {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  storeId            String?   @db.ObjectId
+  userId             String?   @db.ObjectId
+  email              String?
+  currency           String
+  subtotal           Float
+  shipping           Float     @default(0)
+  discount           Float     @default(0)
+  taxRate            Float     @default(0)
+  taxAmount          Float     @default(0)
+  total              Float
+  paymentMethod      String?
+  paymentMethodTitle String?
+  billingAddress     Json
+  shippingAddress    Json
+  items              Json // snapshot: [{productId, quantity, unitPrice, nameSnapshot, imageSnapshot, categoryNameSnapshot, weightSnapshot, weightUnitSnapshot}]
+  totalWeight        Float?    @default(0)
+  discountId         String?   @db.ObjectId
+  discountAmount     Float?
+  couponCode         String?
+  referralSource     String?
+  stripePaymentIntentId String?
+  tabbySessionId     String?
+  tabbyPaymentId     String?
+  tamaraCheckoutId   String?
+  status             String    @default("OPEN") // OPEN | CONSUMED | EXPIRED
+  consumedOrderId    String?   @db.ObjectId
+  expiresAt          DateTime
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([status])
+  @@index([stripePaymentIntentId])
+  @@index([tabbySessionId])
+  @@index([tabbyPaymentId])
+  @@index([tamaraCheckoutId])
+}
+
 model CourierService {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String

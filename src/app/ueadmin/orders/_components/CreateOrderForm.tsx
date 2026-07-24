@@ -234,7 +234,11 @@ export function CreateOrderForm() {
         total: finalTotal,
         shippingFee: Number(shippingFee),
         discountAmount: discountAmount,
-        couponCode: discountInfo?.code || null
+        couponCode: discountInfo?.code || null,
+        // Admin-created orders (e.g. phone orders) are real orders immediately —
+        // they don't go through a payment webhook, so they must bypass the
+        // PendingCheckout indirection used by customer-facing checkout.
+        isAdminCreated: true
       };
 
       const res = await fetch('/api/create-order', {

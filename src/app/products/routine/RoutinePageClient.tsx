@@ -89,10 +89,10 @@ export default function RoutinePageClient({ products }: { products: any[] }) {
         }),
       });
       const data = await res.json();
-      if (data.orderId) {
+      if (data.pendingCheckoutId) {
         toast.success("Redirecting to payment...", { id: tid });
         useLoadingStore.getState().setRedirecting(true, "Creating your order...");
-        router.push(`/checkout/payment/${data.orderId}`);
+        router.push(`/checkout/payment/${data.pendingCheckoutId}`);
       } else {
         throw new Error(data.error || "Failed");
       }

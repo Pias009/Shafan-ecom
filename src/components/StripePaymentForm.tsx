@@ -56,7 +56,9 @@ export default function StripePaymentForm({ orderId, order }: { orderId: string;
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/checkout/success?order_id=${orderId}`,
+          // orderId is a pendingCheckoutId here until the Stripe webhook
+          // promotes it — the success page polls by pcid until that happens.
+          return_url: `${window.location.origin}/checkout/success?pcid=${orderId}`,
         },
       });
 

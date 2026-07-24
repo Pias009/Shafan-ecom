@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { captureAuthorizedTabbyOrder } from "@/services/payments/tabby";
+import { captureAuthorizedTabbyOrder, capturePendingTabbyCheckout } from "@/services/payments/tabby";
+import { expirePendingCheckout } from "@/services/checkout/pending-checkout";
 
 // Tabby uses a custom header for webhook verification (not HMAC).
 // The header title is "X-Tabby-Secret" and the value must match TABBY_WEBHOOK_SECRET.
@@ -24,8 +25,44 @@ export async function POST(request: NextRequest) {
     const eventType = body?.event?.type || body?.type;
     const paymentStatus = body?.payload?.status || body?.status;
     const paymentId = body?.payload?.id || body?.id;
-    const orderId = body?.metadata?.order_id || body?.payload?.order_id || body?.payload?.order?.reference_id;
+    const orderId =
+      body?.metadata?.pending_checkout_id ||
+      body?.metadata?.order_id ||
+      body?.payload?.order_id ||
+      body?.payload?.order?.reference_id;
 
+    // Webhook payloads use lowercase statuses (e.g. "authorized"); normalise.
+    const normalizedStatus = (paymentStatus || "").toUpperCase();
+
+    // Prefer the new PendingCheckout path (order not yet created).
+    const pendingCheckout = await (prisma as any).pendingCheckout.findFirst({
+      where: {
+        OR: [
+          { tabbyPaymentId: paymentId },
+          { tabbySessionId: paymentId },
+          ...(orderId ? [{ id: orderId }] : []),
+        ],
+      },
+    });
+
+    if (pendingCheckout) {
+      if (eventType === "payment.authorized" || normalizedStatus === "AUTHORIZED") {
+        console.log(`[Tabby Webhook] Payment AUTHORIZED for pending checkout ${pendingCheckout.id}. Verifying + capturing...`);
+        const result = await capturePendingTabbyCheckout(pendingCheckout.id, { paymentId });
+        if (!result.ok) {
+          console.error(`[Tabby Webhook] Capture not completed for ${pendingCheckout.id}:`, result.reason);
+        }
+      } else if (normalizedStatus === "CAPTURED" || normalizedStatus === "CLOSED") {
+        await capturePendingTabbyCheckout(pendingCheckout.id, { paymentId, knownStatus: normalizedStatus });
+      } else if (normalizedStatus === "REJECTED" || normalizedStatus === "FAILED" || normalizedStatus === "EXPIRED") {
+        await expirePendingCheckout(pendingCheckout.id);
+      }
+
+      return NextResponse.json({ received: true });
+    }
+
+    // Fall back to a legacy/already-promoted Order (idempotent replay, or an
+    // in-flight checkout from before this cutover).
     const order = await prisma.order.findFirst({
       where: {
         OR: [
@@ -39,9 +76,6 @@ export async function POST(request: NextRequest) {
     if (!order) {
       return NextResponse.json({ received: true });
     }
-
-    // Webhook payloads use lowercase statuses (e.g. "authorized"); normalise.
-    const normalizedStatus = (paymentStatus || "").toUpperCase();
 
     // Capture is performed server-side via the shared helper — never from the
     // browser success callback. The helper is idempotent and re-verifies status.

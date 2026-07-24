@@ -258,9 +258,9 @@ export function OffersClient({
         }),
       });
       const data = await res.json();
-      if (data.orderId) {
+      if (data.pendingCheckoutId) {
         toast.success("Order initiated!", { id: tid });
-        router.push(`/checkout/payment/${data.orderId}`);
+        router.push(`/checkout/payment/${data.pendingCheckoutId}`);
       } else {
         throw new Error(data.error || "Order creation failed");
       }

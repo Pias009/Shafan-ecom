@@ -79,7 +79,9 @@ function PaymentRequestButtonWrapper({
       stripe.confirmPayment({
         clientSecret,
         confirmParams: {
-          return_url: `${window.location.origin}/checkout/success?order_id=${orderId}`,
+          // orderId here is the route's `id` param, which is a pendingCheckoutId
+          // until the Stripe webhook promotes it — success page polls by pcid.
+          return_url: `${window.location.origin}/checkout/success?pcid=${orderId}`,
         },
       }).then(({ error }: any) => {
         if (error) {
@@ -170,8 +172,16 @@ function PaymentPageContent() {
   useEffect(() => {
     async function fetchOrderAndStripe() {
       try {
+        let orderData: any;
+        let isPendingCheckout = false;
         const orderRes = await fetch(`/api/orders/${id}`);
-        const orderData = await orderRes.json();
+        if (orderRes.status === 404) {
+          const pcRes = await fetch(`/api/pending-checkout/${id}`);
+          orderData = await pcRes.json();
+          isPendingCheckout = true;
+        } else {
+          orderData = await orderRes.json();
+        }
         if (orderData.error) throw new Error(orderData.error);
         setOrder(orderData);
 
@@ -188,7 +198,8 @@ function PaymentPageContent() {
           // Tabby orders stay ORDER_RECEIVED so the customer can retry, per
           // Tabby's checkout-flow spec (cancel/abort returns status EXPIRED).
           if (reason !== 'tabby') {
-            await fetch(`/api/orders/${id}`, {
+            const cancelUrl = isPendingCheckout ? `/api/pending-checkout/${id}` : `/api/orders/${id}`;
+            await fetch(cancelUrl, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ status: 'CANCELLED' })
@@ -266,7 +277,9 @@ function PaymentPageContent() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       toast.success("Order placed successfully!");
-      router.push(`/checkout/success?orderId=${id}&cod=true`);
+      // COD promotion happens synchronously in /api/payments/cod, so the
+      // response already carries the real, newly-created Order id.
+      router.push(`/checkout/success?orderId=${data.orderId}&cod=true`);
     } catch (err: any) {
       toast.error(err.message || "Failed to place COD order");
       setCodLoading(false);

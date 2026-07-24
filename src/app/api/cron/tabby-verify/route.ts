@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { captureAuthorizedTabbyOrder } from "@/services/payments/tabby";
+import { captureAuthorizedTabbyOrder, capturePendingTabbyCheckout } from "@/services/payments/tabby";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -24,6 +24,19 @@ export async function GET(request: Request) {
   // not so far that we keep polling long-dead sessions.
   const since = new Date(Date.now() - 6 * 60 * 60 * 1000); // 6 hours
 
+  // New path — PendingCheckouts not yet promoted to a real Order.
+  const pendingCheckouts = await (prisma as any).pendingCheckout.findMany({
+    where: {
+      paymentMethod: "tabby",
+      tabbyPaymentId: { not: null },
+      status: "OPEN",
+      createdAt: { gte: since },
+    },
+    select: { id: true, tabbyPaymentId: true },
+    take: 100,
+  });
+
+  // Legacy path — Orders created up-front before this cutover, still PENDING.
   const pendingOrders = await prisma.order.findMany({
     where: {
       paymentMethod: "tabby",
@@ -38,6 +51,22 @@ export async function GET(request: Request) {
 
   const results: Array<{ orderId: string; status: string }> = [];
   let captured = 0;
+
+  for (const pc of pendingCheckouts) {
+    try {
+      const result = await capturePendingTabbyCheckout(pc.id, {
+        paymentId: pc.tabbyPaymentId || undefined,
+      });
+      if (result.ok && result.captured) captured += 1;
+      results.push({
+        orderId: pc.id,
+        status: result.ok ? result.status || "ok" : result.reason,
+      });
+    } catch (err) {
+      console.error(`[Tabby Cron] Failed to process pending checkout ${pc.id}:`, err);
+      results.push({ orderId: pc.id, status: "error" });
+    }
+  }
 
   for (const order of pendingOrders) {
     try {
@@ -57,7 +86,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     success: true,
-    scanned: pendingOrders.length,
+    scanned: pendingCheckouts.length + pendingOrders.length,
     captured,
     results,
   });

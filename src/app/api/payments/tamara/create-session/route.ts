@@ -25,18 +25,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
     }
 
-    const order = await prisma.order.findUnique({
+    const pendingCheckout = await (prisma as any).pendingCheckout.findUnique({
       where: { id: orderId },
-      include: { items: true },
     });
 
-    if (!order) {
+    if (!pendingCheckout) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.status !== "ORDER_RECEIVED" && order.paymentStatus === "PAID") {
+    if (pendingCheckout.status !== "OPEN") {
       return NextResponse.json({ error: "Order is already processed" }, { status: 400 });
     }
+
+    // Shape a minimal "order"-like object so the rest of this route (which
+    // predates PendingCheckout) can keep reading `order.*` unchanged.
+    const order = {
+      id: pendingCheckout.id,
+      email: pendingCheckout.email,
+      currency: pendingCheckout.currency,
+      total: pendingCheckout.total,
+      shipping: pendingCheckout.shipping,
+      taxAmount: pendingCheckout.taxAmount,
+      discount: pendingCheckout.discount,
+      billingAddress: pendingCheckout.billingAddress,
+      shippingAddress: pendingCheckout.shippingAddress,
+      items: (pendingCheckout.items as any[]) || [],
+    };
 
     let countryCode = (order.shippingAddress as any)?.country?.toUpperCase() || "AE";
     
@@ -177,14 +191,14 @@ export async function POST(request: NextRequest) {
         name: "Order Discount"
       } : undefined,
       merchantUrls: {
-        success: `${baseUrl}/checkout/success?order_id=${order.id}&payment=tamara`,
+        success: `${baseUrl}/checkout/success?pcid=${order.id}&payment=tamara`,
         cancel: `${baseUrl}/checkout/payment/${order.id}?canceled=tamara`,
         failure: `${baseUrl}/checkout/payment/${order.id}?failed=tamara`,
         notification: `${baseUrl}/api/payments/tamara/webhook`,
       },
     });
 
-    await prisma.order.update({
+    await (prisma as any).pendingCheckout.update({
       where: { id: orderId },
       data: {
         paymentMethod: "tamara",

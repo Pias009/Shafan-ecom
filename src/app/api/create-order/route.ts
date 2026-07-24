@@ -3,25 +3,11 @@ import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
-import { revalidatePath } from "next/cache";
-import { sendEmail } from "@/lib/email";
-import { notifyNewOrder } from "@/lib/pusher";
 import { cookies } from "next/headers";
+import { createPendingCheckout } from "@/services/checkout/pending-checkout";
 
 // Delivery fee configuration by country (Using global config)
 const DELIVERY_CONFIG = COUNTRY_CONFIG;
-
-// Helper function to determine courier based on shipping address
-function determineCourier(shippingAddress: any): string {
-  return "GLOBAL_COURIER";
-}
-
-// Helper function to generate tracking code
-function generateTrackingCode(): string {
-  const prefix = "GL";
-  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-  return `${prefix}-${random}-${Date.now().toString().slice(-6)}`;
-}
 
 // Helper to get currency for country
 function getCurrencyForCountry(country: string): string {
@@ -251,20 +237,21 @@ export async function POST(req: Request) {
     
     console.log(JSON.stringify(body, null, 2));
     
-    const { 
-      items, 
-      billing, 
-      shipping, 
-      payment_method, 
-      payment_method_title, 
+    const {
+      items,
+      billing,
+      shipping,
+      payment_method,
+      payment_method_title,
       payment_status,
-      couponCode, 
-      storeCode, 
-      country, 
-      total: clientTotal, 
-      subtotal: clientSubtotal, 
-      shippingFee: clientShippingFee, 
-      discountAmount: clientDiscount 
+      couponCode,
+      storeCode,
+      country,
+      total: clientTotal,
+      subtotal: clientSubtotal,
+      shippingFee: clientShippingFee,
+      discountAmount: clientDiscount,
+      isAdminCreated,
     } = body;
 
     // Allow guest orders
@@ -377,6 +364,11 @@ export async function POST(req: Request) {
               include: {
                 store: true
               }
+            },
+            productCategories: {
+              include: {
+                category: true
+              }
             }
           }
         });
@@ -391,6 +383,11 @@ export async function POST(req: Request) {
             storeInventories: {
               include: {
                 store: true
+              }
+            },
+            productCategories: {
+              include: {
+                category: true
               }
             }
           }
@@ -457,12 +454,18 @@ export async function POST(req: Request) {
         }
       }
 
+      const rawCategory =
+        (product as any)?.productCategories?.[0]?.category?.name ||
+        (product as any)?.categoryName ||
+        "General";
+
       orderItemsData.push({
         productId: product.id || "unknown",
         quantity: itemQuantity,
         unitPrice: unitPrice,
         nameSnapshot: product?.name || "Unknown Product",
         imageSnapshot: product?.mainImage || null,
+        categoryNameSnapshot: typeof rawCategory === "string" ? rawCategory : "General",
         weightSnapshot: product.weight || 0,
         weightUnitSnapshot: product.weightUnit || 'kg',
       });
@@ -508,7 +511,8 @@ export async function POST(req: Request) {
     // Apply discount from coupon code (wrapped in try-catch to prevent crashes)
     let discount = 0;
     let couponCodeApplied = null;
-    
+    let discountIdApplied: string | null = null;
+
     if (couponCode) {
       try {
         const discountResult = await applyDiscount(
@@ -520,6 +524,7 @@ export async function POST(req: Request) {
         );
         discount = discountResult.discount || 0;
         couponCodeApplied = couponCode;
+        discountIdApplied = discountResult.discountCodeUsed || null;
         console.log(`Coupon applied: ${couponCode} -> discount: ${discount}`);
       } catch (discountError: any) {
         console.error("Discount application failed, proceeding without discount:", discountError?.message);
@@ -552,95 +557,120 @@ export async function POST(req: Request) {
       throw new Error("Invalid order total calculated. Please check your cart items.");
     }
 
-    // Determine courier based on shipping address
-    const courier = determineCourier(shipping);
-    const trackingCode = generateTrackingCode();
+    // Admin-created orders (e.g. phone/manual orders placed from /ueadmin)
+    // are real orders immediately — there is no payment webhook that will
+    // ever promote them, so they must bypass the PendingCheckout indirection
+    // used by customer-facing checkout. Gated to admins only.
+    if (isAdminCreated && isUserAdmin) {
+      const order = await prisma.order.create({
+        data: {
+          userId: session?.user?.id || null,
+          email: session?.user?.email || billing?.email || null,
+          status: OrderStatus.ORDER_RECEIVED,
+          paymentStatus: (payment_status as PaymentStatus) || PaymentStatus.PENDING,
+          currency: currency.toLowerCase(),
+          subtotal: finalSubtotal,
+          shipping: effectiveShipping,
+          discount: effectiveDiscount,
+          taxRate: countryTaxRate,
+          taxAmount: taxAmount,
+          total: finalTotal,
+          billingAddress: finalBilling || {},
+          shippingAddress: finalShipping || {},
+          paymentMethod: payment_method || null,
+          paymentMethodTitle: payment_method_title || "Pending Selection",
+          totalWeight,
+          ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: effectiveDiscount } : {}),
+          ...(orderStoreId ? { storeId: orderStoreId } : {}),
+          referralSource,
+          items: {
+            create: orderItemsData.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              nameSnapshot: item.nameSnapshot,
+              imageSnapshot: item.imageSnapshot,
+              weightSnapshot: item.weightSnapshot,
+              weightUnitSnapshot: item.weightUnitSnapshot,
+            })),
+          },
+        },
+        include: { items: true },
+      });
 
-    // Create the order in Prisma AFTER payment confirmation
-    // For COD: order is created immediately (paymentStatus PENDING)
-    // For Stripe/Tabby/Tamara: order is created in webhook AFTER payment success
-    // Create the order in Prisma
-    // For COD: paymentStatus is PENDING
-    // For Stripe/Tabby/Tamara: paymentStatus is PENDING until webhook confirms success
-    
-    const isCOD = payment_method?.toLowerCase() === 'cod';
-    let order = null;
-    let shipment = null;
-    
-    order = await prisma.order.create({
-      data: {
-        userId: session?.user?.id || null,
-        email: session?.user?.email || billing?.email || null,
-        status: OrderStatus.ORDER_RECEIVED,
-        paymentStatus: "PENDING" as any,
-        currency: currency.toLowerCase(),
+      const trackingCode = `GL-${Math.random().toString(36).substring(2, 10).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+      const shipment = await prisma.shipment.create({
+        data: {
+          orderId: order.id,
+          courier: "GLOBAL_COURIER",
+          trackingCode,
+          trackingUrl: `https://global-courier.com/track/${trackingCode}`,
+          status: "Created",
+        },
+      });
+
+      for (const item of orderItemsData) {
+        const product = await prisma.product.findUnique({ where: { id: item.productId } });
+        if (product && product.stockQuantity !== null) {
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: { stockQuantity: Math.max(0, product.stockQuantity - item.quantity) },
+          });
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        orderId: order.id,
         subtotal: finalSubtotal,
         shipping: effectiveShipping,
-        discount: effectiveDiscount,
-        taxRate: countryTaxRate,
-        taxAmount: taxAmount,
-        total: finalTotal,
-        billingAddress: finalBilling || {},
-        shippingAddress: finalShipping || {},
-        paymentMethod: payment_method || null,
-        paymentMethodTitle: payment_method_title || "Pending Selection",
-        totalWeight,
-        ...(couponCodeApplied ? { couponCode: couponCodeApplied, discountAmount: effectiveDiscount } : {}),
-        ...(orderStoreId ? { storeId: orderStoreId } : {}),
-        referralSource,
-        items: {
-          create: orderItemsData
-        },
-      },
-      include: {
-        items: true,
-      }
-    });
-
-    if (!order) {
-      return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
-    }
-
-    // Create shipment record
-    shipment = await (prisma as any).shipment.create({
-      data: {
-        orderId: order.id,
-        courier,
-        trackingCode,
-        trackingUrl: `https://global-courier.com/track/${trackingCode}`,
-        status: "Created"
-      }
-    });
-
-    // Decrement stock for each ordered item
-    for (const orderItem of orderItemsData) {
-      const product = await prisma.product.findUnique({
-        where: { id: orderItem.productId }
+        total: order.total,
+        currency: order.currency,
+        status: order.status,
+        freeDelivery,
+        courier: shipment.courier,
+        trackingCode: shipment.trackingCode,
+        paymentMethod: payment_method,
       });
-      if (product && product.stockQuantity !== null) {
-        await prisma.product.update({
-          where: { id: orderItem.productId },
-          data: {
-            stockQuantity: Math.max(0, product.stockQuantity - orderItem.quantity)
-          }
-        });
-      }
     }
 
-    // Admin email notification for COD is now handled in /api/payments/cod 
-    // to ensure it only sends AFTER the user confirms on the payment page.
+    // No Order is created here. A lightweight PendingCheckout snapshot is
+    // stored instead — the real Order (with Shipment + stock decrement) is
+    // only created once a payment webhook confirms payment (Stripe/Tabby/
+    // Tamara) or the user explicitly confirms Cash on Delivery
+    // (see src/services/checkout/pending-checkout.ts::promoteToOrder).
+    const pendingCheckout = await createPendingCheckout({
+      userId: session?.user?.id || null,
+      email: session?.user?.email || billing?.email || null,
+      storeId: orderStoreId,
+      currency: currency.toLowerCase(),
+      subtotal: finalSubtotal,
+      shipping: effectiveShipping,
+      discount: effectiveDiscount,
+      taxRate: countryTaxRate,
+      taxAmount: taxAmount,
+      total: finalTotal,
+      totalWeight,
+      paymentMethod: payment_method || null,
+      paymentMethodTitle: payment_method_title || "Pending Selection",
+      billingAddress: finalBilling || {},
+      shippingAddress: finalShipping || {},
+      items: orderItemsData,
+      discountId: discountIdApplied,
+      discountAmount: couponCodeApplied ? effectiveDiscount : null,
+      couponCode: couponCodeApplied,
+      referralSource,
+    });
 
     return NextResponse.json({
       success: true,
-      orderId: order.id,
+      pendingCheckoutId: pendingCheckout.id,
       subtotal: finalSubtotal,
       shipping: effectiveShipping,
-      total: order.total,
-      currency: order.currency,
-      status: order.status,
+      total: pendingCheckout.total,
+      currency: pendingCheckout.currency,
+      status: "ORDER_RECEIVED",
       freeDelivery,
-      courier: shipment?.courier,
-      trackingCode: shipment?.trackingCode,
       paymentMethod: payment_method
     });
   } catch (error: any) {

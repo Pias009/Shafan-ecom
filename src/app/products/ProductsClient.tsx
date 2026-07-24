@@ -447,9 +447,9 @@ return sorted;
         }),
       });
       const data = await res.json();
-      if (data.orderId) {
+      if (data.pendingCheckoutId) {
         toast.success("Redirecting...", { id: tid });
-        router.push(`/checkout/payment/${data.orderId}`);
+        router.push(`/checkout/payment/${data.pendingCheckoutId}`);
       } else {
         throw new Error(data.error || "Failed");
       }

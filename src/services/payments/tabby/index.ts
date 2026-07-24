@@ -1,3 +1,3 @@
 export { TabbyService, tabbyService } from "./payment-service";
-export { captureAuthorizedTabbyOrder } from "./process";
+export { captureAuthorizedTabbyOrder, capturePendingTabbyCheckout } from "./process";
 export * from "./types";

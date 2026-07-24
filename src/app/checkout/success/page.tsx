@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
-import { CheckCircle2, Package, Home, Heart, Sparkles, Gift, ArrowRight, Loader2, Clock } from "lucide-react";
+import { CheckCircle2, Package, Home, Heart, Sparkles, Gift, ArrowRight, Loader2, Clock, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/Loader";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +13,7 @@ import Script from "next/script";
 
 const CONFETTI_COLORS = ["#f472b6", "#a78bfa", "#34d399", "#fbbf24", "#60a5fa", "#fb7185"];
 
-type PaymentState = "verifying" | "confirmed" | "timeout";
+type PaymentState = "verifying" | "confirmed" | "timeout" | "expired";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -35,7 +35,10 @@ function SuccessContent() {
   } | null>(null);
   const purchaseFiredRef = useRef(false);
 
-  const orderId = searchParams?.get("orderId") || searchParams?.get("order_id");
+  const [orderId, setOrderId] = useState<string | null>(
+    searchParams?.get("orderId") || searchParams?.get("order_id") || null
+  );
+  const pendingCheckoutId = searchParams?.get("pcid");
   const sessionId = searchParams?.get("session_id");
   const tabbyPaymentId = searchParams?.get("payment_id");
   const isCOD = searchParams?.get("cod") === "true";
@@ -56,9 +59,43 @@ function SuccessContent() {
     []
   );
 
+  function applyOrderData(data: any) {
+    const orderDate = new Date(data.createdAt);
+    orderDate.setDate(orderDate.getDate() + 5);
+    const estimatedDeliveryDate = orderDate.toISOString().split('T')[0];
+
+    setOrderData({
+      id: data.id,
+      email: data.email || "",
+      total: data.total,
+      currency: data.currency ?? "AED",
+      deliveryCountry: data.shippingAddress?.country || "KW",
+      estimatedDeliveryDate,
+      items: data.items?.map((item: any) => ({
+        productId: item.productId,
+        name: item.product?.name || "Product",
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        gtin: (item.product?.sku && /^\d{8,14}$/.test(item.product.sku)) ? item.product.sku : undefined,
+      })) ?? [],
+    });
+
+    // Celebrate ONLY when the payment is actually complete:
+    // - COD: order was confirmed via /api/payments/cod before landing here
+    // - Online: server (webhook) has marked the order PAID
+    const codOrder = isCOD || data.paymentMethod === "cod";
+    setIsCodOrder(codOrder);
+    if (codOrder || data.paymentStatus === "PAID") {
+      setPaymentState("confirmed");
+      setShowCelebration(true);
+    } else {
+      setPaymentState("verifying");
+    }
+  }
+
   useEffect(() => {
     async function validateOrder() {
-      if (!orderId && !sessionId) {
+      if (!orderId && !pendingCheckoutId && !sessionId) {
         router.push("/account/orders");
         return;
       }
@@ -78,42 +115,16 @@ function SuccessContent() {
           // Retrieve Request cron (/api/cron/tabby-verify) — never the browser
           // success callback, which may be skipped or spoofed. This page only
           // POLLS the order until the server confirms the payment.
-
-          const orderDate = new Date(data.createdAt);
-          orderDate.setDate(orderDate.getDate() + 5);
-          const estimatedDeliveryDate = orderDate.toISOString().split('T')[0];
-
-          setOrderData({
-            id: data.id,
-            email: data.email || "",
-            total: data.total,
-            currency: data.currency ?? "AED",
-            deliveryCountry: data.shippingAddress?.country || "KW",
-            estimatedDeliveryDate,
-            items: data.items?.map((item: any) => ({
-              productId: item.productId,
-              name: item.product?.name || "Product",
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              gtin: (item.product?.sku && /^\d{8,14}$/.test(item.product.sku)) ? item.product.sku : undefined,
-            })) ?? [],
-          });
-
-          // Celebrate ONLY when the payment is actually complete:
-          // - COD: order was confirmed via /api/payments/cod before landing here
-          // - Online: server (webhook) has marked the order PAID
-          const codOrder = isCOD || data.paymentMethod === "cod";
-          setIsCodOrder(codOrder);
-          if (codOrder || data.paymentStatus === "PAID") {
-            setPaymentState("confirmed");
-            setShowCelebration(true);
-          } else {
-            setPaymentState("verifying");
-          }
+          applyOrderData(data);
         } catch {
           router.push("/account/orders");
           return;
         }
+      } else if (pendingCheckoutId) {
+        // Redirect-back from Stripe/Tabby/Tamara before their webhook has
+        // necessarily landed yet — no real Order may exist. Poll by pcid
+        // (see the dedicated effect below) rather than fetching /api/orders.
+        setPaymentState("verifying");
       } else {
         // Legacy Stripe session_id-only redirect — no order to poll
         setPaymentState("confirmed");
@@ -125,7 +136,7 @@ function SuccessContent() {
     }
 
     validateOrder();
-  }, [orderId, sessionId, tabbyPaymentId, isCOD, router]);
+  }, [orderId, pendingCheckoutId, sessionId, tabbyPaymentId, isCOD, router]);
 
   // Poll the order until the payment webhook marks it PAID
   useEffect(() => {
@@ -165,6 +176,50 @@ function SuccessContent() {
       clearInterval(interval);
     };
   }, [valid, paymentState, orderId]);
+
+  // Poll the PendingCheckout until a webhook promotes it to a real Order
+  // (Stripe/Tabby/Tamara redirect-back before the webhook has necessarily
+  // landed). Once CONSUMED, switch over to the real order id and render it.
+  useEffect(() => {
+    if (!valid || paymentState !== "verifying" || orderId || !pendingCheckoutId) return;
+
+    let attempts = 0;
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/pending-checkout/${pendingCheckoutId}/status`);
+        const data = await res.json();
+        if (cancelled) return;
+
+        if (data.status === "CONSUMED" && data.order) {
+          clearInterval(interval);
+          setOrderId(data.order.id);
+          applyOrderData(data.order);
+          return;
+        }
+        if (data.status === "EXPIRED") {
+          clearInterval(interval);
+          setPaymentState("expired");
+          return;
+        }
+        if (attempts >= 30) {
+          clearInterval(interval);
+          setPaymentState("timeout");
+        }
+      } catch {
+        if (attempts >= 30) {
+          clearInterval(interval);
+          setPaymentState("timeout");
+        }
+      }
+    }, 3000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [valid, paymentState, orderId, pendingCheckoutId]);
 
   // Clear the cart only once the payment is genuinely confirmed,
   // so a failed/abandoned payment lets the user retry from the cart.
@@ -308,6 +363,42 @@ function SuccessContent() {
             >
               <Package className="w-4 h-4" />
               View My Orders
+            </Link>
+            <Link
+              href="/"
+              className="flex-1 flex items-center justify-center gap-2 glass-panel border border-black/10 rounded-full px-6 py-4 text-xs font-bold transition hover:bg-black/5"
+            >
+              <Home className="w-4 h-4" />
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Payment definitively did not complete — no order was ever created.
+  if (paymentState === "expired") {
+    return (
+      <div className="pt-24 md:pt-32 pb-20 px-4 md:px-6 max-w-lg mx-auto flex flex-col items-center text-center min-h-[70vh] justify-center">
+        <div className="glass-panel-heavy rounded-[2rem] p-8 md:p-12 border border-black/5 shadow-2xl bg-white w-full">
+          <div className="inline-flex p-5 bg-red-50 rounded-full mb-6 ring-8 ring-red-50/60">
+            <XCircle className="w-12 h-12 text-red-500" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black text-black mb-3 tracking-tight">
+            Payment Not Completed
+          </h1>
+          <p className="text-sm text-black/50 font-medium mb-6">
+            Your payment could not be completed, so no order was placed. Nothing was
+            charged. Please try again or choose a different payment method.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Link
+              href="/cart"
+              className="flex-1 flex items-center justify-center gap-2 bg-black text-white rounded-full px-6 py-4 text-xs font-bold uppercase tracking-widest shadow-xl shadow-black/20 transition hover:scale-[1.02] active:scale-95"
+            >
+              <Package className="w-4 h-4" />
+              Return to Cart
             </Link>
             <Link
               href="/"
