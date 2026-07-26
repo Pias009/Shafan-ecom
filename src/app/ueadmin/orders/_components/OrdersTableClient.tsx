@@ -231,7 +231,7 @@ function getDateGroup(dateStr: string): string {
   
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Dubai' });
 }
 
 export default function OrdersTableClient({ dbOrders, status, storeAccess }: { dbOrders: any[], status: string, storeAccess: any }) {
@@ -368,7 +368,7 @@ export default function OrdersTableClient({ dbOrders, status, storeAccess }: { d
                       const billing = o.billingAddress;
                       const customer = o.user?.name || (billing ? `${billing.first_name || ''} ${billing.last_name || ''}`.trim() : 'Guest');
                       const email = o.user?.email || billing?.email || 'No email';
-                      const date = new Date(o.createdAt).toLocaleDateString();
+                      const date = new Date(o.createdAt).toLocaleDateString(undefined, { timeZone: 'Asia/Dubai' });
                       const paymentMethodDisplay = getPaymentMethodDisplay(o.paymentMethod);
                       const storeCode = o.store?.code || 'N/A';
                       const storeName = o.store?.name || 'Unknown Store';

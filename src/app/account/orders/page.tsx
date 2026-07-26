@@ -167,7 +167,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-[11px] text-black/40 font-bold">
-                      <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                      <span>{new Date(order.createdAt).toLocaleDateString(undefined, { timeZone: 'Asia/Dubai' })}</span>
                       <span className="w-1 h-1 bg-black/10 rounded-full" />
                       <span>{order.items.length} item{order.items.length !== 1 ? "s" : ""}</span>
                     </div>

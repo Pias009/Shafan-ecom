@@ -6,6 +6,7 @@ import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { MobileBottomNav } from "./MobileBottomNav";
 import Sesi from "./Sesi";
+import SesiOnboarding from "./SesiOnboarding";
 
 export function MainStoreLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -31,6 +32,7 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
       <Footer />
       <MobileBottomNav />
       {showSesi && <Sesi />}
+      {showSesi && <SesiOnboarding />}
     </div>
   );
 }

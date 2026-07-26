@@ -106,7 +106,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
             <OrderStatusBadge orderId={order.id} initialStatus={order.status} />
           </div>
           <p className="text-[10px] md:text-xs font-bold text-black/30 uppercase tracking-widest">
-            {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date(order.createdAt).toLocaleDateString(undefined, { timeZone: 'Asia/Dubai' })} at {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dubai' })}
           </p>
           <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-3">
             <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest border ${

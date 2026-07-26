@@ -98,7 +98,7 @@ export async function POST(
     };
 
     const orderDate = new Date(order.createdAt).toLocaleDateString('en-GB', {
-      year: 'numeric', month: 'long', day: '2-digit',
+      year: 'numeric', month: 'long', day: '2-digit', timeZone: 'Asia/Dubai',
     });
 
     const subtotal     = order.subtotal     || 0;
@@ -144,7 +144,7 @@ export async function POST(
 
         // Company name & info (white on dark)
         doc.fontSize(13).font('Helvetica-Bold').fillColor('#FFFFFF')
-           .text('Al Shanfa General Trading Co. L.L.C', ML, 22);
+           .text('Al Shanfa General Trading Co. L.L.C (Shanfa Global)', ML, 22);
         doc.fontSize(8.5).font('Helvetica').fillColor('#94A3B8')
            .text('Dubai, United Arab Emirates  ·  TRN: 104177488400003', ML, 40);
 

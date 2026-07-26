@@ -108,7 +108,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </span>
             </div>
             <p className="text-slate-500 text-xs font-medium mt-2 flex items-center gap-2">
-              <Clock size={14} /> Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              <Clock size={14} /> Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dubai' })}
             </p>
           </div>
           
@@ -403,7 +403,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               </div>
               <div className="flex justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Last Updated</span>
-                <span className="font-bold text-xs text-slate-700">{new Date(order.updatedAt).toLocaleString()}</span>
+                <span className="font-bold text-xs text-slate-700">{new Date(order.updatedAt).toLocaleString(undefined, { timeZone: 'Asia/Dubai' })}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Order ID</span>
