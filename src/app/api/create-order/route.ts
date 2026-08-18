@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerAuthSession } from "@/lib/auth";
+import { getServerAuthSession, getAdminAuthSession } from "@/lib/auth";
+import { getAdminSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
@@ -229,7 +230,20 @@ async function applyDiscount(
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerAuthSession();
+    const userSession = await getServerAuthSession();
+    const adminSessionCookie = await getAdminSession();
+    const adminAuthSession = await getAdminAuthSession();
+
+    const isUserAdmin = 
+      userSession?.user?.role === 'ADMIN' || 
+      userSession?.user?.role === 'SUPERADMIN' ||
+      adminSessionCookie?.role === 'ADMIN' ||
+      adminSessionCookie?.role === 'SUPERADMIN' ||
+      adminAuthSession?.user?.role === 'ADMIN' ||
+      adminAuthSession?.user?.role === 'SUPERADMIN';
+
+    const session = userSession || (adminSessionCookie || adminAuthSession?.user ? { user: adminSessionCookie || adminAuthSession?.user } : null);
+
     const body = await req.json();
     
     const cookieStore = await cookies();
@@ -494,7 +508,6 @@ export async function POST(req: Request) {
     let { fee: shippingFee, freeDelivery } = calculateDeliveryFee(countryCode, subtotal);
     
     // Check if minimum order requirement is met (Skip for Admins to allow manual order flexibility)
-    const isUserAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
     const deliveryConfig = (DELIVERY_CONFIG as any)[countryCode.toUpperCase()];
     
     if (!isUserAdmin && deliveryConfig && subtotal < deliveryConfig.minOrder) {
@@ -562,10 +575,22 @@ export async function POST(req: Request) {
     // ever promote them, so they must bypass the PendingCheckout indirection
     // used by customer-facing checkout. Gated to admins only.
     if (isAdminCreated && isUserAdmin) {
+      const customerEmail = billing?.email || shipping?.email || null;
+      let targetUserId: string | null = null;
+      if (customerEmail) {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: customerEmail },
+          select: { id: true }
+        });
+        if (existingUser) {
+          targetUserId = existingUser.id;
+        }
+      }
+
       const order = await prisma.order.create({
         data: {
-          userId: session?.user?.id || null,
-          email: session?.user?.email || billing?.email || null,
+          userId: targetUserId,
+          email: customerEmail || session?.user?.email || null,
           status: OrderStatus.ORDER_RECEIVED,
           paymentStatus: (payment_status as PaymentStatus) || PaymentStatus.PENDING,
           currency: currency.toLowerCase(),

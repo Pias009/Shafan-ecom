@@ -32,11 +32,26 @@ export async function createPaymentIntent(amount: number, orderId: string, custo
 }
 
 export async function verifyStripeWebhook(body: string, signature: string) {
-  const stripe = getStripe();
+  // Check config before touching the Stripe client, and tag config errors
+  // distinctly from real signature failures. Without this, a missing env var
+  // here looks IDENTICAL to a bad signature from Stripe's side (both surfaced
+  // as a generic 400 "Invalid signature") — making a config mistake
+  // indistinguishable from an actual attack/misconfiguration in Stripe's
+  // Dashboard webhook logs, the only place most people check first.
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
   if (!endpointSecret) {
-    throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
+    const err = new Error("STRIPE_WEBHOOK_SECRET is not configured");
+    (err as any).isConfigError = true;
+    throw err;
+  }
+
+  let stripe;
+  try {
+    stripe = getStripe();
+  } catch (error: any) {
+    const err = new Error(`Stripe client unavailable: ${error.message}`);
+    (err as any).isConfigError = true;
+    throw err;
   }
 
   try {

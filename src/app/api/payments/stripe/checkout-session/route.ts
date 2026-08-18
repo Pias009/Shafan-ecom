@@ -49,6 +49,14 @@ export async function POST(req: Request) {
         },
       ],
       metadata: { pendingCheckoutId: pendingCheckout.id },
+      // Session-level metadata is NOT copied onto the underlying PaymentIntent
+      // by Stripe automatically — the webhook listens for payment_intent.succeeded
+      // and reads metadata off the PaymentIntent, so it must be set here too via
+      // payment_intent_data, or a real payment leaves no PendingCheckout->Order
+      // promotion trail at all (customer charged, no order ever created).
+      payment_intent_data: {
+        metadata: { pendingCheckoutId: pendingCheckout.id },
+      },
       success_url: `${baseUrl}/checkout/success?pcid=${pendingCheckout.id}`,
       cancel_url: `${baseUrl}/cart?canceled=stripe`,
     });

@@ -249,8 +249,12 @@ export function CreateOrderForm() {
 
       if (res.ok) {
         const data = await res.json();
-        toast.success("Order created successfully!");
-        router.push(`/ueadmin/orders/${data.orderId}`);
+        if (data.orderId) {
+          toast.success("Order created successfully!");
+          router.push(`/ueadmin/orders/${data.orderId}`);
+        } else {
+          toast.error("Order creation returned no Order ID.");
+        }
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to create order");
