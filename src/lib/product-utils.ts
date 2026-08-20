@@ -1,3 +1,6 @@
+import { getCurrencyForCountry } from './countries';
+import { convertCurrency } from './currency-rates';
+
 // Client-safe utility for checking product validity
 export function hasValidPrice(product: any, userCountry?: string): boolean {
   if (!product) return false;
@@ -29,7 +32,8 @@ export function hasValidPrice(product: any, userCountry?: string): boolean {
 }
 
 export function getDisplayPrice(product: any, userCountry?: string): { price: number; currency: string; hasDiscount: boolean; discountPrice: number; originalPrice: number } {
-  const countryCode = (userCountry || '').toUpperCase();
+  const countryCode = (userCountry || 'KW').toUpperCase();
+  const targetCurrency = getCurrencyForCountry(countryCode);
   
   if (product?.countryPrices && product.countryPrices.length > 0) {
     const countryPrice = product.countryPrices.find((cp: any) =>
@@ -44,30 +48,36 @@ export function getDisplayPrice(product: any, userCountry?: string): { price: nu
       return {
         price: effectivePrice || 0,
         originalPrice: Number(countryPrice.price) || 0,
-        currency: countryPrice.currency || 'USD',
+        currency: countryPrice.currency || targetCurrency,
         hasDiscount,
         discountPrice: Number(discountPriceVal) || 0
       };
     }
   }
   
-  // Fallback to base price
+  // Fallback to base price with automatic currency conversion
   if (product?.price && Number(product.price) > 0) {
+    const baseCurrency = product.currency || 'AED';
     const discountPriceVal = product.discountPrice;
     const hasDiscount = !!(discountPriceVal && Number(discountPriceVal) > 0 && Number(discountPriceVal) < Number(product.price));
     
-    const effectivePrice = hasDiscount ? Number(discountPriceVal) : Number(product.price);
+    const rawEffectivePrice = hasDiscount ? Number(discountPriceVal) : Number(product.price);
+    const rawOriginalPrice = Number(product.price);
+
+    const convertedPrice = convertCurrency(rawEffectivePrice, baseCurrency, targetCurrency);
+    const convertedOriginal = convertCurrency(rawOriginalPrice, baseCurrency, targetCurrency);
+    const convertedDiscount = hasDiscount ? convertCurrency(Number(discountPriceVal), baseCurrency, targetCurrency) : 0;
 
     return {
-      price: effectivePrice || 0,
-      originalPrice: Number(product.price) || 0,
-      currency: product.currency || 'USD',
+      price: convertedPrice || 0,
+      originalPrice: convertedOriginal || 0,
+      currency: targetCurrency,
       hasDiscount,
-      discountPrice: Number(discountPriceVal) || 0
+      discountPrice: convertedDiscount || 0
     };
   }
   
-  return { price: 0, originalPrice: 0, currency: 'USD', hasDiscount: false, discountPrice: 0 };
+  return { price: 0, originalPrice: 0, currency: targetCurrency, hasDiscount: false, discountPrice: 0 };
 }
 
 // Helper to get correct divisor for raw price units (cents vs fils)

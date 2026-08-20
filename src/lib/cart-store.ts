@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useCountryStore } from "./country-store";
+import { getDisplayPrice } from "./product-utils";
 
 export interface ProductSummary {
   id: string;
@@ -38,15 +39,8 @@ interface CartState {
 }
 
 const getPriceForCountry = (product: ProductSummary, countryCode: string): number => {
-  if (product.countryPrices && product.countryPrices.length > 0) {
-    const countryPrice = product.countryPrices.find(
-      (cp) => cp.country.toUpperCase() === countryCode.toUpperCase()
-    );
-    if (countryPrice && countryPrice.price > 0) {
-      return countryPrice.price;
-    }
-  }
-  return 0;
+  const { price } = getDisplayPrice(product, countryCode);
+  return price;
 };
 
 export const useCartStore = create<CartState>()(

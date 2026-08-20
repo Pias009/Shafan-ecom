@@ -43,13 +43,21 @@ export const useCountryStore = create<CountryState>()(
         if (typeof document !== 'undefined') {
           document.cookie = `store_code=${storeCode}; path=/; max-age=${60 * 60 * 24 * 30}`;
           localStorage.setItem("country-auto-detected", "true");
+          localStorage.setItem("user-country", upperCode);
         }
-
 
         set({ 
           selectedCountry: upperCode, 
           selectedCurrency: currency 
         });
+
+        try {
+          const { useCurrencyStore } = require("./currency-store");
+          const legacyStore = useCurrencyStore.getState();
+          if (legacyStore && legacyStore.currentCurrency?.code !== currency) {
+            legacyStore.setCurrency(currency);
+          }
+        } catch {}
       },
       setCurrency: (currencyCode: string) => {
         const upperCurrency = currencyCode.toUpperCase();
@@ -66,13 +74,21 @@ export const useCountryStore = create<CountryState>()(
         if (typeof document !== 'undefined') {
           document.cookie = `store_code=${storeCode}; path=/; max-age=${60 * 60 * 24 * 30}`;
           localStorage.setItem("country-auto-detected", "true");
+          localStorage.setItem("user-country", country);
         }
-
 
         set({ 
           selectedCountry: country, 
           selectedCurrency: upperCurrency 
         });
+
+        try {
+          const { useCurrencyStore } = require("./currency-store");
+          const legacyStore = useCurrencyStore.getState();
+          if (legacyStore && legacyStore.currentCurrency?.code !== upperCurrency) {
+            legacyStore.setCurrency(upperCurrency);
+          }
+        } catch {}
       },
       setDetectedCountry: (countryCode: string) => {
         set({ detectedCountry: countryCode.toUpperCase() });

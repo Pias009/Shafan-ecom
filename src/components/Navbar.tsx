@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AuthModal } from "./AuthModal";
 import { UserDropdown } from "./UserDropdown";
 import { LanguageSelector } from "./LanguageSelector";
+import { CountrySelector } from "./CountrySelector";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -291,9 +292,10 @@ export function Navbar() {
               <Search size={22} />
             </button>
 
-            {/* Language */}
+            {/* Country & Language */}
             {isClient && (
               <div className="flex items-center gap-2">
+                <CountrySelector direction="down" />
                 <LanguageSelector direction="down" />
               </div>
             )}
@@ -539,6 +541,7 @@ export function Navbar() {
                 <div className="mt-auto bg-white/60 backdrop-blur-xl border-t border-black/5 p-6 pb-20">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <CountrySelector align="left" direction="up" compact />
                       <LanguageSelector align="left" direction="up" />
                     </div>
                     {status === "authenticated" && (

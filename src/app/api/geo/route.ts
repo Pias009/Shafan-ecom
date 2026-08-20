@@ -9,8 +9,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ country: testCountry.toUpperCase() });
   }
 
-  // Try to get country from Vercel headers
-  const country = req.headers.get('x-vercel-ip-country') || 'KW';
+  // Try to get country from Vercel / Cloudflare / Proxy headers
+  const country =
+    req.headers.get('x-vercel-ip-country') ||
+    req.headers.get('cf-ipcountry') ||
+    req.headers.get('x-country-code') ||
+    req.headers.get('x-real-ip-country') ||
+    'KW';
   
   // Return the country code
   return NextResponse.json({ country: country.toUpperCase() });

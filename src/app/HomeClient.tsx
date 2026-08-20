@@ -307,54 +307,9 @@ function useDevRenderTracker() {
 
 useDevRenderTracker();
 
-useEffect(() => {
-  setMounted(true);
-
-    async function detectCountry() {
-      try {
-        const getCookie = (name: string) => {
-          if (typeof document === 'undefined') return null;
-          const value = `; ${document.cookie}`;
-          const parts = value.split(`; ${name}=`);
-          if (parts.length === 2) return parts.pop()?.split(';').shift();
-          return null;
-        };
-
-        const storeCode = getCookie('store_code');
-        const cached = localStorage.getItem("user-country");
-
-        const countryToStore: Record<string, string> = {
-          'AE': 'UAE', 'SA': 'SAUDI', 'KW': 'KUWAIT', 'BH': 'BAHRAIN', 'OM': 'OMAN', 'QA': 'QATAR',
-        };
-
-        const countryToCurrency: Record<string, string> = {
-          'AE': 'AED', 'KW': 'KWD', 'SA': 'SAR', 'BH': 'BHD', 'OM': 'OMR', 'QA': 'QAR',
-        };
-
-        let country = cached;
-        if (storeCode) {
-          const storeToCountry: Record<string, string> = {
-            'UAE': 'AE', 'SAUDI': 'SA', 'KUWAIT': 'KW', 'BAHRAIN': 'BH', 'OMAN': 'OM', 'QATAR': 'QA',
-          };
-          country = storeToCountry[storeCode.toUpperCase()] || country;
-        }
-
-        if (country && countryToCurrency[country]) {
-          setCountry(country);
-          setCurrency(countryToCurrency[country]);
-          localStorage.setItem("user-country", country);
-          return;
-        }
-
-        setCountry("KW");
-        setCurrency("KWD");
-
-      } catch (err) {
-        console.debug("Geo sync skipped", err);
-      }
-    }
-    detectCountry();
-  }, [setCurrency, setCountry]);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
 
 

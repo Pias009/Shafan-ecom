@@ -214,6 +214,15 @@ function CartPageContent() {
     return () => { isMounted = false; };
   }, [session, setHasAddress]);
 
+  // Auto-switch store & currency to match delivery country currency for payment & COD
+  useEffect(() => {
+    const targetCode = getCountryCode(deliveryCountry);
+    if (targetCode && selectedCountry !== targetCode) {
+      useCountryStore.getState().setCountry(targetCode);
+      useCartStore.getState().refreshPrices().catch(() => {});
+    }
+  }, [deliveryCountry, selectedCountry]);
+
   useEffect(() => {
     if (items.length > 0) {
       const total = items.reduce((acc, item) => {
@@ -230,7 +239,7 @@ function CartPageContent() {
           category: i.category,
         })),
         value: total,
-        currency: "AED",
+        currency: getCurrencyForCountry(selectedCountry),
       });
     }
   }, [items, selectedCountry]);

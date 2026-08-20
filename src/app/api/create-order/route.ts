@@ -6,6 +6,7 @@ import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { cookies } from "next/headers";
 import { createPendingCheckout } from "@/services/checkout/pending-checkout";
+import { convertCurrency } from "@/lib/currency-rates";
 
 // Delivery fee configuration by country (Using global config)
 const DELIVERY_CONFIG = COUNTRY_CONFIG;
@@ -93,18 +94,22 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
     return { price: Number(countryPrice.price), source: 'country_price' };
   }
   
-  // Finally use base product price
+  // Finally use base product price (converted if source currency differs)
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    select: { price: true, discountPrice: true, weight: true, weightUnit: true }
+    select: { price: true, discountPrice: true, currency: true, weight: true, weightUnit: true } as any
   });
   
   if (product) {
-    // Correct fallback logic: if discountPrice is set and valid, use it as the sale price
     const basePrice = (product.discountPrice && Number(product.discountPrice) > 0 && Number(product.discountPrice) < Number(product.price))
       ? Number(product.discountPrice)
       : Number(product.price);
-    return { price: basePrice, source: 'base_price' };
+    
+    const baseCurrency = (product as any).currency || 'AED';
+    const targetCurrency = getCurrencyForCountry(countryCode);
+    const converted = convertCurrency(basePrice, baseCurrency, targetCurrency);
+    
+    return { price: converted, source: 'base_price_converted' };
   }
   
   return { price: 0, source: 'none' };
