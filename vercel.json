@@ -70,7 +70,12 @@
     {
       "path": "/api/cron/tabby-verify",
       "schedule": "*/20 * * * *"
+    },
+    {
+      "path": "/api/cron/tamara-verify",
+      "schedule": "*/20 * * * *"
     }
+
   ],
   "git": {
     "deploymentEnabled": {

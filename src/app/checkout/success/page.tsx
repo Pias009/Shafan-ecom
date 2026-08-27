@@ -203,6 +203,16 @@ function SuccessContent() {
           setPaymentState("expired");
           return;
         }
+        if ((attempts === 1 || attempts === 3) && data.status === "OPEN") {
+          const paymentParam = searchParams?.get("payment");
+          if (paymentParam === "tamara" || !paymentParam) {
+            fetch("/api/payments/tamara/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ pendingCheckoutId }),
+            }).catch(() => {});
+          }
+        }
         if (attempts >= 30) {
           clearInterval(interval);
           setPaymentState("timeout");

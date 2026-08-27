@@ -103,7 +103,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
       }
 
+      const { status, paymentStatus, shippingAddress, billingAddress, total, subtotal, items, deletedItemIds } = body;
+
       if (status) updateData.status = status;
+      if (paymentStatus) updateData.paymentStatus = paymentStatus;
       if (shippingAddress) {
         const existingShipping = existingOrder?.shippingAddress || {};
         updateData.shippingAddress = { ...existingShipping as any, ...shippingAddress as any };
@@ -182,11 +185,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         });
 
         // 2. Capture (triggers funds transfer)
+        const curr = (order.currency ?? "AED").toUpperCase();
+        const decimals = ["BHD", "KWD", "OMR"].includes(curr) ? 3 : 2;
+        const formattedAmount = (order.total ?? 0).toFixed(decimals);
+
         await tamaraService.capturePayment({
           orderId: order.tamaraCheckoutId,
           totalAmount: {
-            amount: (order.total ?? 0).toString(),
-            currency: (order.currency ?? "AED").toUpperCase() as TamaraCurrency
+            amount: formattedAmount,
+            currency: curr as TamaraCurrency
           },
           shippingInfo: {
             shipping_company: "Naqel",
