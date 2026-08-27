@@ -44,7 +44,7 @@ export default function ContentProtection() {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("dragstart", handleDragStart);
     };
-  }, []);
+  }, [pathname]);
 
   return null;
 }

@@ -75,6 +75,24 @@ input, textarea {
   user-select: text;
 }
 
+/* Enable full text selection, right-click, context menu, and inspection in Admin Panel */
+.admin-scope,
+.admin-scope *,
+[data-admin-panel],
+[data-admin-panel] * {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+}
+
+.admin-scope img,
+[data-admin-panel] img {
+  pointer-events: auto !important;
+  -webkit-user-drag: auto !important;
+  user-drag: auto !important;
+}
+
 body::before {
   content: "";
   position: fixed;

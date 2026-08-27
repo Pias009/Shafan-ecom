@@ -13,10 +13,10 @@ export function UeAdminLayoutContent({ children }: { children: React.ReactNode }
                      pathname?.startsWith("/ueadmin/unauthorized");
 
   if (isAuthPage) {
-  return (
-    <AdminGuard>
-      <OrderAlertListener />
-      <div className="min-h-screen flex bg-[#FAF9F6] selection:bg-black selection:text-white">
+    return (
+      <AdminGuard>
+        <OrderAlertListener />
+        <div className="admin-scope min-h-screen flex bg-[#FAF9F6] selection:bg-black selection:text-white select-text" data-admin-panel="true">
           <main className="flex-1 w-full min-h-screen flex flex-col">
             {children}
           </main>
@@ -28,7 +28,7 @@ export function UeAdminLayoutContent({ children }: { children: React.ReactNode }
   return (
     <AdminGuard>
       <OrderAlertListener />
-      <div className="min-h-screen flex bg-[#FAF9F6] selection:bg-black selection:text-white">
+      <div className="admin-scope min-h-screen flex bg-[#FAF9F6] selection:bg-black selection:text-white select-text" data-admin-panel="true">
         <div className="fixed inset-y-0 left-0 hidden lg:block">
            <AdminSidebar />
         </div>
