@@ -320,7 +320,12 @@ model Brand {
 model Category {
   id                String             @id @default(auto()) @map("_id") @db.ObjectId
   name              String             @unique
+  slug              String?
   description       String?
+  image             String?
+  link              String?
+  sortOrder         Int                @default(0)
+  active            Boolean            @default(true)
   categoryDiscounts CategoryDiscount[]
   subCategories     SubCategory[]
   products          ProductCategory[]

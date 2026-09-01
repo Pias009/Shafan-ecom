@@ -59,7 +59,7 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, image, link, slug, sortOrder, active } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -92,11 +92,26 @@ export async function PUT(
       );
     }
 
+    const formattedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+
     const updatedCategory = await prisma.category.update({
       where: { id },
       data: {
         name,
+        slug: formattedSlug,
         description,
+        image: image !== undefined ? image : existingCategory.image,
+        link: link !== undefined ? link : existingCategory.link,
+        sortOrder: typeof sortOrder === "number" ? sortOrder : existingCategory.sortOrder,
+        active: typeof active === "boolean" ? active : existingCategory.active,
+      },
+      include: {
+        subCategories: true,
+        _count: {
+          select: {
+            products: true,
+          },
+        },
       },
     });
 
