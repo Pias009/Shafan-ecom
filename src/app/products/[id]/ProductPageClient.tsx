@@ -394,23 +394,6 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                 )}
               </div>
 
-              {!isOutOfStock && isAvailable && (
-                <div className="space-y-1.5 p-2 sm:p-3 bg-white/50 backdrop-blur-md rounded-2xl border border-white/70 shadow-sm overflow-hidden text-xs">
-                  <TabbyPromo 
-                    price={displayPrice} 
-                    currency={priceInfo.currency?.toUpperCase() || 'AED'} 
-                    publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
-                    merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
-                  />
-                  <TamaraWidget 
-                    price={displayPrice} 
-                    currency={priceInfo.currency?.toUpperCase() || 'AED'} 
-                    country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(selectedCountry.toUpperCase()) ? selectedCountry : "AE"}
-                    widgetType="product"
-                  />
-                </div>
-              )}
-
               {/* Quantity Counter & Action Buttons */}
               <div className="space-y-2.5 pt-1">
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -450,20 +433,41 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                   </button>
                 </div>
 
-                {/* Buy Now Desktop Button */}
+                {/* Buy Now Desktop Button (Clean Text, Logo Removed) */}
                 <button
                   onClick={() => orderNow()}
                   disabled={isOutOfStock}
-                  className={`w-full h-11 sm:h-13 rounded-2xl font-black uppercase tracking-wider text-xs sm:text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 ${
+                  className={`w-full h-11 sm:h-13 rounded-2xl font-black uppercase tracking-wider text-xs sm:text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center ${
                     isOutOfStock
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-50 shadow-none'
                       : 'bg-[#0c433a] hover:bg-[#072a24] text-white shadow-[#0c433a]/20'
                   }`}
                 >
-                  <Zap size={16} className="fill-white" />
                   {isOutOfStock ? 'Available Soon' : 'Buy Now'}
                 </button>
               </div>
+
+              {/* Separate Slim Tabby & Tamara Widgets placed AFTER Buy Now button */}
+              {!isOutOfStock && isAvailable && (
+                <div className="space-y-2 pt-1">
+                  <div className="px-3 py-1.5 bg-white/60 backdrop-blur-md rounded-xl border border-white/80 shadow-xs overflow-hidden">
+                    <TabbyPromo 
+                      price={displayPrice} 
+                      currency={priceInfo.currency?.toUpperCase() || 'AED'} 
+                      publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""} 
+                      merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"} 
+                    />
+                  </div>
+                  <div className="px-3 py-1.5 bg-white/60 backdrop-blur-md rounded-xl border border-white/80 shadow-xs overflow-hidden">
+                    <TamaraWidget 
+                      price={displayPrice} 
+                      currency={priceInfo.currency?.toUpperCase() || 'AED'} 
+                      country={["AE", "SA", "KW", "BH", "QA", "OM"].includes(selectedCountry.toUpperCase()) ? selectedCountry : "AE"}
+                      widgetType="product"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Accordion / Description Tabs */}
               {availableTabs.length > 0 && (
@@ -817,9 +821,8 @@ export default function ProductPageClient({ product, recommendations, reviews = 
             <button
               onClick={() => orderNow()}
               disabled={isOutOfStock}
-              className="flex-1 h-11 rounded-xl bg-white text-[#042b24] text-xs font-black uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-1 shadow-lg"
+              className="flex-1 h-11 rounded-xl bg-white text-[#042b24] text-xs font-black uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center shadow-lg"
             >
-              <Zap size={14} className="fill-[#042b24]" />
               Buy Now
             </button>
           </div>
