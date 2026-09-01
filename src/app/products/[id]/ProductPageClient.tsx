@@ -36,6 +36,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
   const userCountry = useUserCountry();
   const { selectedCountry } = useCountryStore();
 
+  const [mounted, setMounted] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [showDescription, setShowDescription] = useState<string>('description');
@@ -43,6 +44,10 @@ export default function ProductPageClient({ product, recommendations, reviews = 
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Price calculation using getDisplayPrice
   const priceInfo = useMemo(() => {
@@ -222,8 +227,8 @@ export default function ProductPageClient({ product, recommendations, reviews = 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#96dacc] via-[#82cdbe] to-[#96dacc] text-[#042b24]">
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-28 pb-28 sm:pb-28">
+    <div suppressHydrationWarning className="min-h-screen bg-gradient-to-b from-[#96dacc] via-[#82cdbe] to-[#96dacc] text-[#042b24]">
+      <main suppressHydrationWarning className="max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-28 pb-28 sm:pb-28">
         
         {/* Main Product Showcase Card */}
         <div className="bg-white/60 backdrop-blur-3xl rounded-[2rem] sm:rounded-[3rem] border border-white/60 shadow-2xl shadow-[#0c433a]/10 p-4 sm:p-8 lg:p-12 mb-12 sm:mb-20">
@@ -742,30 +747,32 @@ export default function ProductPageClient({ product, recommendations, reviews = 
       </main>
 
       {/* Sticky Mobile Quick-Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0c433a]/95 backdrop-blur-xl border-t border-white/20 p-3 flex items-center justify-between gap-3 md:hidden shadow-2xl">
-        <div>
-          <div className="text-[9px] font-bold text-white/60 uppercase tracking-widest">Price</div>
-          <Price amount={displayPrice * quantity} className="text-lg font-black text-white" />
+      {mounted && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0c433a]/95 backdrop-blur-xl border-t border-white/20 p-3 flex items-center justify-between gap-3 md:hidden shadow-2xl">
+          <div>
+            <div className="text-[9px] font-bold text-white/60 uppercase tracking-widest">Price</div>
+            <Price amount={displayPrice * quantity} className="text-lg font-black text-white" />
+          </div>
+          <div className="flex items-center gap-2 flex-1 max-w-[240px]">
+            <button
+              onClick={() => addToCart()}
+              disabled={isAddingToCart || isOutOfStock}
+              className="flex-1 h-11 rounded-xl bg-white/10 text-white text-xs font-black uppercase tracking-wider border border-white/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+            >
+              {isAddingToCart ? <Check size={14} className="text-emerald-400" /> : <ShoppingBag size={14} />}
+              {isAddingToCart ? 'Added' : 'Cart'}
+            </button>
+            <button
+              onClick={() => orderNow()}
+              disabled={isOutOfStock}
+              className="flex-1 h-11 rounded-xl bg-white text-[#042b24] text-xs font-black uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-1 shadow-lg"
+            >
+              <Zap size={14} className="fill-[#042b24]" />
+              Buy Now
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 flex-1 max-w-[240px]">
-          <button
-            onClick={() => addToCart()}
-            disabled={isAddingToCart || isOutOfStock}
-            className="flex-1 h-11 rounded-xl bg-white/10 text-white text-xs font-black uppercase tracking-wider border border-white/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
-          >
-            {isAddingToCart ? <Check size={14} className="text-emerald-400" /> : <ShoppingBag size={14} />}
-            {isAddingToCart ? 'Added' : 'Cart'}
-          </button>
-          <button
-            onClick={() => orderNow()}
-            disabled={isOutOfStock}
-            className="flex-1 h-11 rounded-xl bg-white text-[#042b24] text-xs font-black uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-1 shadow-lg"
-          >
-            <Zap size={14} className="fill-[#042b24]" />
-            Buy Now
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Lightbox */}
       <AnimatePresence>
