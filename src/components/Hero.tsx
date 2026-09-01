@@ -30,8 +30,8 @@ export function Hero() {
         {/* Single 8K Full Cover Studio Background Image */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <Image
-            src="/images/hero-glowerive-fullcover.png"
-            alt="SHANFA GLOBAL 8K Botanical Skincare Model"
+            src="/images/hero-banner-2to1-ratio.png"
+            alt="SHANFA GLOBAL Flash Sale Luxury Banner"
             fill
             className="object-cover object-[85%_center] sm:object-[88%_center] lg:object-right"
             priority
@@ -123,79 +123,52 @@ export function Hero() {
 
       </div>
 
-      {/* Floating 4-Column Feature Trust Bar with Animated Running Train Border */}
-      <div className="relative z-20 max-w-[1440px] mx-auto px-3 sm:px-6 pb-6 -mt-8 sm:-mt-12">
+      {/* Floating 4-Column Feature Trust Bar */}
+      <div className="relative z-20 max-w-[1440px] mx-auto px-4 sm:px-6 pb-4 sm:pb-8 -mt-6 sm:-mt-10">
         <motion.div
-          initial={{ opacity: 0, y: 25 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
           suppressHydrationWarning
-          className="relative bg-[#edf7f3]/95 backdrop-blur-xl border border-[#c5e1d7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-[0_20px_40px_rgba(12,67,58,0.12)] hover:shadow-[0_25px_50px_rgba(12,67,58,0.18)] transition-all duration-500 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-[#0c3a32] overflow-hidden"
+          className="relative bg-white/95 backdrop-blur-2xl border border-white/80 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-[0_15px_35px_rgba(4,43,36,0.08)] grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 divide-y md:divide-y-0 md:divide-x divide-black/5 text-[#042b24]"
         >
-          {/* Animated Running Train Light Beam Border */}
-          <div className="absolute inset-0 pointer-events-none rounded-2xl sm:rounded-3xl overflow-hidden z-20">
-            <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-              <rect
-                x="1.5"
-                y="1.5"
-                width="calc(100% - 3px)"
-                height="calc(100% - 3px)"
-                rx="22"
-                fill="none"
-                stroke="url(#train-light-beam)"
-                strokeWidth="3.5"
-                strokeDasharray="220 700"
-                className="animate-train-run"
-              />
-              <defs>
-                <linearGradient id="train-light-beam" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#0c433a" stopOpacity="0.1" />
-                  <stop offset="35%" stopColor="#0c433a" stopOpacity="0.9" />
-                  <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-                  <stop offset="65%" stopColor="#2dd4bf" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#0c433a" stopOpacity="0.1" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-
-          <div className="flex items-center gap-3.5 p-1 group relative z-10">
-            <div className="w-11 h-11 rounded-full bg-[#dcf0e7] text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b8dfd0] shadow-sm group-hover:scale-110 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <Leaf size={22} />
+          <div className="flex items-center gap-3.5 p-2 sm:p-3 group">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Leaf size={20} />
             </div>
             <div>
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#0c3a32] leading-tight">Natural Ingredients</h4>
-              <p className="text-[11px] text-[#52736b] mt-0.5 font-medium">Safe & Effective</p>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Natural Ingredients</h4>
+              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Safe & Effective</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5 p-1 group relative z-10">
-            <div className="w-11 h-11 rounded-full bg-[#dcf0e7] text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b8dfd0] shadow-sm group-hover:scale-110 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <Droplets size={22} />
+          <div className="flex items-center gap-3.5 p-2 sm:p-3 md:pl-6 group">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Droplets size={20} />
             </div>
             <div>
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#0c3a32] leading-tight">Dermatologist Tested</h4>
-              <p className="text-[11px] text-[#52736b] mt-0.5 font-medium">For All Skin Types</p>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Dermatologist Tested</h4>
+              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">For All Skin Types</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5 p-1 group relative z-10">
-            <div className="w-11 h-11 rounded-full bg-[#dcf0e7] text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b8dfd0] shadow-sm group-hover:scale-110 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <FlaskConical size={22} />
+          <div className="flex items-center gap-3.5 p-2 sm:p-3 md:pl-6 group">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <FlaskConical size={20} />
             </div>
             <div>
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#0c3a32] leading-tight">Paraben & Sulfate Free</h4>
-              <p className="text-[11px] text-[#52736b] mt-0.5 font-medium">Clean & Gentle</p>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Paraben & Sulfate Free</h4>
+              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Clean & Gentle</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5 p-1 group relative z-10">
-            <div className="w-11 h-11 rounded-full bg-[#dcf0e7] text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b8dfd0] shadow-sm group-hover:scale-110 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+          <div className="flex items-center gap-3.5 p-2 sm:p-3 md:pl-6 group">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
               <BunnyIcon className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#0c3a32] leading-tight">Cruelty Free</h4>
-              <p className="text-[11px] text-[#52736b] mt-0.5 font-medium">Never Tested on Animals</p>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Cruelty Free</h4>
+              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Never Tested on Animals</p>
             </div>
           </div>
         </motion.div>

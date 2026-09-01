@@ -20,9 +20,10 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: [
+        { sortOrder: "asc" },
+        { name: "asc" },
+      ],
     });
 
     return NextResponse.json(categories);
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, image, link, slug, sortOrder, active } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -65,10 +66,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const formattedSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+
     const category = await prisma.category.create({
       data: {
         name,
+        slug: formattedSlug,
         description,
+        image: image || null,
+        link: link || null,
+        sortOrder: typeof sortOrder === "number" ? sortOrder : 0,
+        active: typeof active === "boolean" ? active : true,
+      },
+      include: {
+        subCategories: true,
+        _count: {
+          select: {
+            products: true,
+          },
+        },
       },
     });
 
