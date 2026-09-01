@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Leaf, Droplets, FlaskConical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface SliderBanner {
@@ -16,6 +16,20 @@ interface SliderBanner {
   link?: string | null;
   backgroundColor?: string | null;
   textColor?: string | null;
+}
+
+// Custom Bunny Icon SVG for Cruelty Free feature matching reference screenshot
+function BunnyIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
+      <path d="M9 10a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
+      <path d="M15 10a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
+      <path d="M9.5 15a3.5 3.5 0 0 0 5 0" />
+      <path d="M7 3L5.5 8" />
+      <path d="M17 3l1.5 5" />
+    </svg>
+  );
 }
 
 // Static fallback banner (shown when no admin banners exist)
@@ -104,12 +118,12 @@ export function HeroSlider() {
 
   return (
     <section
-      className="relative w-full overflow-hidden bg-[#96dacc]"
+      className="relative w-full overflow-hidden bg-[#72ccbd] pb-4 sm:pb-6"
       onMouseEnter={pause}
       onMouseLeave={resume}
       suppressHydrationWarning
     >
-      <div className="relative w-full aspect-video sm:aspect-auto sm:min-h-[500px] md:min-h-[620px] lg:min-h-[720px]">
+      <div className="relative w-full min-h-[480px] sm:min-h-[580px] lg:min-h-[680px] flex items-center">
         {/* Slides */}
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
@@ -127,13 +141,13 @@ export function HeroSlider() {
               src={slide.imageUrl}
               alt={slide.title || "SHANFA GLOBAL"}
               fill
-              className="object-contain sm:object-cover object-center sm:object-[88%_center] lg:object-right"
+              className="object-cover object-[85%_center] sm:object-[88%_center] lg:object-right"
               priority={current === 0}
               sizes="100vw"
             />
 
-            {/* Gradient overlay from the bottom to ensure text readability without hiding the image */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#96dacc] via-[#96dacc]/40 via-10% to-transparent to-25% pointer-events-none" />
+            {/* Soft text backdrop gradient matching sky fresh color */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#72ccbd] via-[#72ccbd]/85 via-45% to-transparent w-full md:w-[65%] lg:w-[55%] pointer-events-none" />
 
             {/* Optional custom bg color tint */}
             {slide.backgroundColor && (
@@ -144,16 +158,16 @@ export function HeroSlider() {
             )}
 
             {/* Decorative water droplet SVGs */}
-            <svg className="absolute top-24 left-1/3 w-7 h-7 text-white/20 animate-pulse pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="hidden sm:block absolute top-24 left-1/3 w-7 h-7 text-white/20 animate-pulse pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
             </svg>
-            <svg className="absolute bottom-16 left-1/4 w-5 h-5 text-white/25 animate-bounce pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="hidden sm:block absolute bottom-28 left-1/4 w-5 h-5 text-white/25 animate-bounce pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
             </svg>
           </motion.div>
         </AnimatePresence>
 
-        {/* Text Content overlay — separate from image AnimatePresence so it animates in */}
+        {/* Text Content overlay */}
         <AnimatePresence initial={false} mode="wait">
           <motion.div
             key={`content-${slide.id}`}
@@ -161,32 +175,41 @@ export function HeroSlider() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.55, ease: "easeOut", delay: 0.1 }}
-            className="relative z-10 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 pt-16 sm:pt-36 lg:pt-40 pb-8 sm:pb-24 flex flex-col items-start"
+            className="relative z-10 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 pt-20 sm:pt-32 lg:pt-36 pb-20 sm:pb-28 flex flex-col items-start"
             style={{ color: slide.textColor || undefined }}
           >
             <div className="max-w-xl space-y-4 sm:space-y-6 text-left">
               {/* Offer tag */}
               {slide.offerText && (
-                <span className="inline-block text-[11px] sm:text-xs font-black uppercase tracking-[0.25em] text-white bg-white/15 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/30 shadow-sm">
-                  {slide.offerText}
+                <span className="inline-block text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-white bg-white/15 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/30 shadow-sm">
+                  ✨ {slide.offerText}
                 </span>
               )}
 
               {/* Headline */}
               {slide.title && (
-                <h1 className="font-serif text-3xl sm:text-5xl lg:text-[4.25rem] font-normal leading-[1.06] tracking-tight text-white drop-shadow-md whitespace-pre-line">
+                <h1 className="font-serif text-3xl sm:text-5xl lg:text-7xl font-normal leading-[1.08] tracking-tight text-white drop-shadow-md whitespace-pre-line">
                   {slide.title}
                 </h1>
               )}
 
               {/* Subtitle */}
               {slide.subtitle && (
-                <p className="text-xs sm:text-base text-white/92 font-medium leading-relaxed max-w-md drop-shadow-sm">
+                <p className="text-xs sm:text-base text-white/95 font-medium leading-relaxed max-w-md drop-shadow-sm whitespace-pre-line">
                   {slide.subtitle}
                 </p>
               )}
 
-
+              {/* Shop Now CTA */}
+              <div className="pt-2">
+                <Link
+                  href={slide.link || "/products"}
+                  className="inline-flex items-center justify-center gap-2 bg-[#0c433a] hover:bg-[#072a24] text-white px-7 sm:px-9 py-3 sm:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_25px_rgba(12,67,58,0.4)] hover:shadow-[0_15px_35px_rgba(12,67,58,0.6)] hover:-translate-y-1 active:translate-y-0 transform-gpu group border border-emerald-500/30"
+                >
+                  <span>{slide.ctaText || "SHOP NOW"}</span>
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
           </motion.div>
         </AnimatePresence>
@@ -213,7 +236,7 @@ export function HeroSlider() {
 
         {/* Dot indicators (Hidden on mobile as requested) */}
         {total > 1 && (
-          <div className="hidden sm:flex absolute bottom-6 left-1/2 -translate-x-1/2 z-20 items-center gap-2">
+          <div className="hidden sm:flex absolute bottom-20 left-1/2 -translate-x-1/2 z-20 items-center gap-2">
             {activeBanners.map((_, i) => (
               <button
                 key={i}
@@ -229,6 +252,61 @@ export function HeroSlider() {
           </div>
         )}
       </div>
+
+      {/* Floating 4-Column Feature Trust Card Bar (The White Section at Bottom of Hero) */}
+      <div className="relative z-30 max-w-[1440px] mx-auto px-3 sm:px-6 -mt-8 sm:-mt-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white/95 sm:bg-white backdrop-blur-2xl border border-white/90 rounded-2xl sm:rounded-[2.5rem] p-3.5 sm:p-5 shadow-[0_15px_40px_rgba(4,43,36,0.1)] grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 divide-y md:divide-y-0 md:divide-x divide-black/5 text-[#042b24]"
+        >
+          {/* Feature 1 */}
+          <div className="flex items-center gap-3 sm:gap-3.5 p-2 sm:p-3 group">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Leaf size={18} className="sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Natural Ingredients</h4>
+              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Safe & Effective</p>
+            </div>
+          </div>
+
+          {/* Feature 2 */}
+          <div className="flex items-center gap-3 sm:gap-3.5 p-2 sm:p-3 md:pl-6 group">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Droplets size={18} className="sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Dermatologist Tested</h4>
+              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">For All Skin Types</p>
+            </div>
+          </div>
+
+          {/* Feature 3 */}
+          <div className="flex items-center gap-3 sm:gap-3.5 p-2 sm:p-3 md:pl-6 group">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <FlaskConical size={18} className="sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Paraben & Sulfate Free</h4>
+              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Clean & Gentle</p>
+            </div>
+          </div>
+
+          {/* Feature 4 */}
+          <div className="flex items-center gap-3 sm:gap-3.5 p-2 sm:p-3 md:pl-6 group">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <BunnyIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Cruelty Free</h4>
+              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Never Tested on Animals</p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
     </section>
   );
 }
