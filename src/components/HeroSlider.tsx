@@ -242,55 +242,79 @@ export function HeroSlider() {
         )}
       </div>
 
-      {/* Floating 4-Column Feature Trust Bar - Slim Single-Line Layout */}
-      <div className="relative z-30 max-w-[1440px] mx-auto px-2 sm:px-6 -mt-5 sm:-mt-8">
+      {/* Floating 4-Column Feature Trust Bar */}
+      <div className="relative z-30 max-w-[1440px] mx-auto px-2 sm:px-6 -mt-5 sm:-mt-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white/95 sm:bg-white backdrop-blur-2xl border border-white/90 rounded-full px-2 py-2 sm:px-6 sm:py-3 shadow-[0_10px_30px_rgba(4,43,36,0.08)] grid grid-cols-4 gap-1 sm:gap-3 divide-x divide-black/5 text-[#042b24] items-center"
+          className="bg-white/95 sm:bg-white backdrop-blur-2xl border border-white/90 rounded-full sm:rounded-[2rem] px-2 py-2 sm:px-6 sm:py-4 shadow-[0_12px_35px_rgba(4,43,36,0.08)] grid grid-cols-4 gap-1 sm:gap-4 divide-x divide-black/5 text-[#042b24] items-center"
         >
           {/* Feature 1 */}
-          <div className="flex items-center gap-1 sm:gap-2 px-0.5 sm:px-2 justify-center sm:justify-start group min-w-0">
-            <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <Leaf size={11} className="sm:w-3.5 sm:h-3.5" />
+          <div className="flex items-center gap-1 sm:gap-3.5 px-0.5 sm:px-3 justify-center sm:justify-start group min-w-0">
+            <div className="w-5 h-5 sm:w-10 sm:h-10 lg:w-11 lg:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Leaf size={11} className="sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0 truncate">
-              <h4 className="font-serif font-bold text-[7.5px] sm:text-[10px] lg:text-xs text-[#042b24] leading-none truncate">Natural</h4>
-              <p className="hidden sm:block text-[8px] sm:text-[9.5px] text-[#042b24]/60 mt-0.5 font-medium truncate">100% Organic</p>
+              <h4 className="font-serif font-bold text-[7.5px] sm:text-xs lg:text-sm text-[#042b24] leading-tight truncate">
+                <span className="sm:hidden">Natural</span>
+                <span className="hidden sm:inline">Natural Ingredients</span>
+              </h4>
+              <p className="text-[7.5px] sm:text-[11px] text-[#042b24]/60 mt-0.5 font-medium truncate">
+                <span className="sm:hidden">100% Organic</span>
+                <span className="hidden sm:inline">Safe & Effective</span>
+              </p>
             </div>
           </div>
 
           {/* Feature 2 */}
-          <div className="flex items-center gap-1 sm:gap-2 px-0.5 sm:px-2 justify-center sm:justify-start group min-w-0">
-            <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <Droplets size={11} className="sm:w-3.5 sm:h-3.5" />
+          <div className="flex items-center gap-1 sm:gap-3.5 px-0.5 sm:px-3 justify-center sm:justify-start group min-w-0">
+            <div className="w-5 h-5 sm:w-10 sm:h-10 lg:w-11 lg:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Droplets size={11} className="sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0 truncate">
-              <h4 className="font-serif font-bold text-[7.5px] sm:text-[10px] lg:text-xs text-[#042b24] leading-none truncate">Derm Tested</h4>
-              <p className="hidden sm:block text-[8px] sm:text-[9.5px] text-[#042b24]/60 mt-0.5 font-medium truncate">All Skin Types</p>
+              <h4 className="font-serif font-bold text-[7.5px] sm:text-xs lg:text-sm text-[#042b24] leading-tight truncate">
+                <span className="sm:hidden">Derm Tested</span>
+                <span className="hidden sm:inline">Dermatologist Tested</span>
+              </h4>
+              <p className="text-[7.5px] sm:text-[11px] text-[#042b24]/60 mt-0.5 font-medium truncate">
+                <span className="sm:hidden">All Skin Types</span>
+                <span className="hidden sm:inline">For All Skin Types</span>
+              </p>
             </div>
           </div>
 
           {/* Feature 3 */}
-          <div className="flex items-center gap-1 sm:gap-2 px-0.5 sm:px-2 justify-center sm:justify-start group min-w-0">
-            <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <FlaskConical size={11} className="sm:w-3.5 sm:h-3.5" />
+          <div className="flex items-center gap-1 sm:gap-3.5 px-0.5 sm:px-3 justify-center sm:justify-start group min-w-0">
+            <div className="w-5 h-5 sm:w-10 sm:h-10 lg:w-11 lg:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <FlaskConical size={11} className="sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0 truncate">
-              <h4 className="font-serif font-bold text-[7.5px] sm:text-[10px] lg:text-xs text-[#042b24] leading-none truncate">Clean & Pure</h4>
-              <p className="hidden sm:block text-[8px] sm:text-[9.5px] text-[#042b24]/60 mt-0.5 font-medium truncate">Paraben Free</p>
+              <h4 className="font-serif font-bold text-[7.5px] sm:text-xs lg:text-sm text-[#042b24] leading-tight truncate">
+                <span className="sm:hidden">Clean & Pure</span>
+                <span className="hidden sm:inline">Paraben & Sulfate Free</span>
+              </h4>
+              <p className="text-[7.5px] sm:text-[11px] text-[#042b24]/60 mt-0.5 font-medium truncate">
+                <span className="sm:hidden">Paraben Free</span>
+                <span className="hidden sm:inline">Clean & Gentle</span>
+              </p>
             </div>
           </div>
 
           {/* Feature 4 */}
-          <div className="flex items-center gap-1 sm:gap-2 px-0.5 sm:px-2 justify-center sm:justify-start group min-w-0">
-            <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <BunnyIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <div className="flex items-center gap-1 sm:gap-3.5 px-0.5 sm:px-3 justify-center sm:justify-start group min-w-0">
+            <div className="w-5 h-5 sm:w-10 sm:h-10 lg:w-11 lg:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <BunnyIcon className="w-3 h-3 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0 truncate">
-              <h4 className="font-serif font-bold text-[7.5px] sm:text-[10px] lg:text-xs text-[#042b24] leading-none truncate">Cruelty Free</h4>
-              <p className="hidden sm:block text-[8px] sm:text-[9.5px] text-[#042b24]/60 mt-0.5 font-medium truncate">100% Vegan</p>
+              <h4 className="font-serif font-bold text-[7.5px] sm:text-xs lg:text-sm text-[#042b24] leading-tight truncate">
+                <span className="sm:hidden">Cruelty Free</span>
+                <span className="hidden sm:inline">Cruelty Free</span>
+              </h4>
+              <p className="text-[7.5px] sm:text-[11px] text-[#042b24]/60 mt-0.5 font-medium truncate">
+                <span className="sm:hidden">100% Vegan</span>
+                <span className="hidden sm:inline">Never Tested on Animals</span>
+              </p>
             </div>
           </div>
         </motion.div>
