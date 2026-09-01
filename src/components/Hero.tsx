@@ -30,10 +30,10 @@ export function Hero() {
         {/* Single 8K Full Cover Studio Background Image */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <Image
-            src="/images/hero-full-cover-widescreen.png"
-            alt="SHANFA GLOBAL Sky-Fresh Skincare Full Banner"
+            src="/images/hero-banner-nanobanana-1.png"
+            alt="SHANFA GLOBAL Sky-Fresh Luxury Model Banner"
             fill
-            className="object-cover object-[82%_center] sm:object-[85%_center] lg:object-right"
+            className="object-cover object-[85%_center] sm:object-[88%_center] lg:object-right"
             priority
           />
           {/* Gentle text backdrop gradient matching sky fresh #72ccbd color */}
