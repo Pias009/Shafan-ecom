@@ -242,55 +242,55 @@ export function HeroSlider() {
         )}
       </div>
 
-      {/* Floating 4-Column Feature Trust Card Bar (The White Section at Bottom of Hero) */}
-      <div className="relative z-30 max-w-[1440px] mx-auto px-3 sm:px-6 -mt-8 sm:-mt-12">
+      {/* Floating 4-Column Feature Trust Bar - Slim Single-Line Layout */}
+      <div className="relative z-30 max-w-[1440px] mx-auto px-2 sm:px-6 -mt-5 sm:-mt-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white/95 sm:bg-white backdrop-blur-2xl border border-white/90 rounded-2xl sm:rounded-[2.5rem] p-3.5 sm:p-5 shadow-[0_15px_40px_rgba(4,43,36,0.1)] grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 divide-y md:divide-y-0 md:divide-x divide-black/5 text-[#042b24]"
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="bg-white/95 sm:bg-white backdrop-blur-2xl border border-white/90 rounded-full px-2 py-2 sm:px-6 sm:py-3 shadow-[0_10px_30px_rgba(4,43,36,0.08)] grid grid-cols-4 gap-1 sm:gap-3 divide-x divide-black/5 text-[#042b24] items-center"
         >
           {/* Feature 1 */}
-          <div className="flex items-center gap-3 sm:gap-3.5 p-2 sm:p-3 group">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <Leaf size={18} className="sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-1.5 sm:gap-3 px-1 sm:px-3 justify-center sm:justify-start group min-w-0">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Leaf size={13} className="sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Natural Ingredients</h4>
-              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Safe & Effective</p>
+            <div className="min-w-0 truncate">
+              <h4 className="font-serif font-bold text-[8.5px] sm:text-xs text-[#042b24] leading-tight truncate">Natural Ingredients</h4>
+              <p className="hidden md:block text-[10px] sm:text-[11px] text-[#042b24]/60 mt-0.5 font-medium truncate">Safe & Effective</p>
             </div>
           </div>
 
           {/* Feature 2 */}
-          <div className="flex items-center gap-3 sm:gap-3.5 p-2 sm:p-3 md:pl-6 group">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <Droplets size={18} className="sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-1.5 sm:gap-3 px-1 sm:px-3 justify-center sm:justify-start group min-w-0">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Droplets size={13} className="sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Dermatologist Tested</h4>
-              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">For All Skin Types</p>
+            <div className="min-w-0 truncate">
+              <h4 className="font-serif font-bold text-[8.5px] sm:text-xs text-[#042b24] leading-tight truncate">Dermatologist Tested</h4>
+              <p className="hidden md:block text-[10px] sm:text-[11px] text-[#042b24]/60 mt-0.5 font-medium truncate">For All Skin Types</p>
             </div>
           </div>
 
           {/* Feature 3 */}
-          <div className="flex items-center gap-3 sm:gap-3.5 p-2 sm:p-3 md:pl-6 group">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <FlaskConical size={18} className="sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-1.5 sm:gap-3 px-1 sm:px-3 justify-center sm:justify-start group min-w-0">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <FlaskConical size={13} className="sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Paraben & Sulfate Free</h4>
-              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Clean & Gentle</p>
+            <div className="min-w-0 truncate">
+              <h4 className="font-serif font-bold text-[8.5px] sm:text-xs text-[#042b24] leading-tight truncate">Paraben & Sulfate Free</h4>
+              <p className="hidden md:block text-[10px] sm:text-[11px] text-[#042b24]/60 mt-0.5 font-medium truncate">Clean & Gentle</p>
             </div>
           </div>
 
           {/* Feature 4 */}
-          <div className="flex items-center gap-3 sm:gap-3.5 p-2 sm:p-3 md:pl-6 group">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
-              <BunnyIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="flex items-center gap-1.5 sm:gap-3 px-1 sm:px-3 justify-center sm:justify-start group min-w-0">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#72ccbd]/20 text-[#0c433a] flex items-center justify-center shrink-0 border border-[#72ccbd]/30 shadow-2xs group-hover:scale-105 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <BunnyIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#042b24] leading-tight">Cruelty Free</h4>
-              <p className="text-[10px] sm:text-xs text-[#042b24]/60 mt-0.5 font-medium">Never Tested on Animals</p>
+            <div className="min-w-0 truncate">
+              <h4 className="font-serif font-bold text-[8.5px] sm:text-xs text-[#042b24] leading-tight truncate">Cruelty Free</h4>
+              <p className="hidden md:block text-[10px] sm:text-[11px] text-[#042b24]/60 mt-0.5 font-medium truncate">Never Tested on Animals</p>
             </div>
           </div>
         </motion.div>
