@@ -123,7 +123,7 @@ export function HeroSlider() {
       onMouseLeave={resume}
       suppressHydrationWarning
     >
-      <div className="relative w-full aspect-[1.85/1] sm:aspect-auto sm:min-h-[560px] md:min-h-[620px] lg:min-h-[700px] flex items-center">
+      <div className="relative w-full aspect-[1.85/1] sm:aspect-auto sm:min-h-[640px] md:min-h-[720px] lg:min-h-[780px] xl:min-h-[840px] flex items-center">
         {/* Slides */}
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
@@ -175,7 +175,7 @@ export function HeroSlider() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.55, ease: "easeOut", delay: 0.1 }}
-            className="relative z-10 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-32 lg:pt-36 pb-8 sm:pb-28 flex flex-col items-start"
+            className="relative z-10 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-36 md:pt-40 lg:pt-44 pb-8 sm:pb-32 lg:pb-36 flex flex-col items-start"
             style={{ color: slide.textColor || undefined }}
           >
             <div className="max-w-xl space-y-4 sm:space-y-6 text-left">
