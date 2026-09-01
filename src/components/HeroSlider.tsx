@@ -123,7 +123,7 @@ export function HeroSlider() {
       onMouseLeave={resume}
       suppressHydrationWarning
     >
-      <div className="relative w-full min-h-[480px] sm:min-h-[580px] lg:min-h-[680px] flex items-center">
+      <div className="relative w-full aspect-[1.85/1] sm:aspect-auto sm:min-h-[560px] md:min-h-[620px] lg:min-h-[700px] flex items-center">
         {/* Slides */}
         <AnimatePresence initial={false} custom={direction} mode="wait">
           <motion.div
@@ -136,18 +136,18 @@ export function HeroSlider() {
             transition={{ duration: 0.65, ease: [0.77, 0, 0.175, 1] }}
             className="absolute inset-0 w-full h-full"
           >
-            {/* Background image */}
+            {/* Background image - 100% full view fit on mobile & desktop */}
             <Image
               src={slide.imageUrl}
               alt={slide.title || "SHANFA GLOBAL"}
               fill
-              className="object-cover object-[85%_center] sm:object-[88%_center] lg:object-right"
+              className="object-contain sm:object-cover object-center sm:object-[88%_center] lg:object-right"
               priority={current === 0}
               sizes="100vw"
             />
 
             {/* Clean presentation with no heavy left side blur overlay */}
-            <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-[#72ccbd]/30 to-transparent pointer-events-none" />
+            <div className="absolute bottom-0 inset-x-0 h-12 sm:h-20 bg-gradient-to-t from-[#72ccbd]/30 to-transparent pointer-events-none" />
 
             {/* Optional custom bg color tint */}
             {slide.backgroundColor && (
@@ -175,7 +175,7 @@ export function HeroSlider() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: 0.55, ease: "easeOut", delay: 0.1 }}
-            className="relative z-10 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 pt-20 sm:pt-32 lg:pt-36 pb-20 sm:pb-28 flex flex-col items-start"
+            className="relative z-10 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 pt-8 sm:pt-32 lg:pt-36 pb-8 sm:pb-28 flex flex-col items-start"
             style={{ color: slide.textColor || undefined }}
           >
             <div className="max-w-xl space-y-4 sm:space-y-6 text-left">
