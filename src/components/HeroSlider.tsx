@@ -146,8 +146,8 @@ export function HeroSlider() {
               sizes="100vw"
             />
 
-            {/* Soft text backdrop gradient matching sky fresh color */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#72ccbd] via-[#72ccbd]/85 via-45% to-transparent w-full md:w-[65%] lg:w-[55%] pointer-events-none" />
+            {/* Clean presentation with no heavy left side blur overlay */}
+            <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-[#72ccbd]/30 to-transparent pointer-events-none" />
 
             {/* Optional custom bg color tint */}
             {slide.backgroundColor && (
@@ -199,17 +199,6 @@ export function HeroSlider() {
                   {slide.subtitle}
                 </p>
               )}
-
-              {/* Shop Now CTA */}
-              <div className="pt-2">
-                <Link
-                  href={slide.link || "/products"}
-                  className="inline-flex items-center justify-center gap-2 bg-[#0c433a] hover:bg-[#072a24] text-white px-7 sm:px-9 py-3 sm:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_25px_rgba(12,67,58,0.4)] hover:shadow-[0_15px_35px_rgba(12,67,58,0.6)] hover:-translate-y-1 active:translate-y-0 transform-gpu group border border-emerald-500/30"
-                >
-                  <span>{slide.ctaText || "SHOP NOW"}</span>
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
             </div>
           </motion.div>
         </AnimatePresence>
