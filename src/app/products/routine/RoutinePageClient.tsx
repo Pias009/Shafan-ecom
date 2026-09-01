@@ -104,31 +104,31 @@ export default function RoutinePageClient({ products }: { products: any[] }) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-transparent text-white">
       {/* Hero */}
-      <div className="bg-gradient-to-br from-violet-50 to-purple-50 px-4 sm:px-6 py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto">
+      <div className="px-4 sm:px-6 py-12 sm:py-16">
+        <div className="max-w-[1536px] mx-auto">
           <div className="inline-flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5 mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-violet-500" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-violet-600">Curated</span>
+            <Sparkles className="w-3.5 h-3.5 text-[#0c433a]" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#0c433a]">Curated</span>
           </div>
-          <h1 className="font-display text-4xl sm:text-6xl font-black tracking-tight text-black mb-3">
+          <h1 className="font-serif text-4xl sm:text-6xl font-medium tracking-tight text-white mb-3">
             Routine
           </h1>
-          <p className="text-black/60 font-medium text-lg max-w-xl">
+          <p className="text-white/80 font-medium text-lg max-w-xl">
             Your daily skincare essentials, curated by our experts.
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 py-8">
 
         {/* Products grid */}
         {filteredProducts.length === 0 ? (
           <div className="py-24 text-center">
             <div className="text-6xl mb-4 opacity-30">✨</div>
-            <p className="font-black text-xl text-black/40">No routine products yet</p>
-            <p className="text-sm text-black/30 mt-1">Check back soon</p>
+            <p className="font-black text-xl text-white/60">No routine products yet</p>
+            <p className="text-sm text-white/40 mt-1">Check back soon</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">

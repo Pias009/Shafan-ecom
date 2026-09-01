@@ -461,8 +461,8 @@ return sorted;
   }
 
   return (
-    <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black">
-      <div className="max-w-7xl mx-auto px-6 pt-32 pb-20">
+    <div className="min-h-screen bg-transparent text-white selection:bg-[#0c433a] selection:text-white">
+      <div className="max-w-[1536px] mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
         {isTrending && (
           <div className="mb-8">
             <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-3 w-fit">
@@ -470,8 +470,8 @@ return sorted;
               <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-black/60">Trending Now</span>
               <Flame className="text-red-500 fill-red-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl text-black font-black tracking-tight">Most Loved Products</h1>
-            <p className="text-black/60 mt-2 text-sm sm:text-lg max-w-xl">Discover our customers' absolute favorites that everyone's raving about.</p>
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-white font-normal tracking-tight drop-shadow-sm">Most Loved Products</h1>
+            <p className="text-white/90 mt-2 text-sm sm:text-lg max-w-xl font-medium">Discover our customers' absolute favorites that everyone's raving about.</p>
           </div>
         )}
         
@@ -483,10 +483,10 @@ return sorted;
                 setSelectedCategory(tab.category);
                 setSelectedSubCategory("All");
               }}
-              className={`px-5 py-2.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
+              className={`px-6 py-2.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border ${
                 selectedCategory === tab.category
-                  ? "bg-black text-white"
-                  : "glass-panel text-black hover:bg-black hover:text-white"
+                  ? "bg-[#0c433a] text-white border-[#0c433a]"
+                  : "bg-white/20 text-white hover:bg-white hover:text-[#0c433a] border-white/40"
               }`}
             >
               {tab.label}
@@ -497,8 +497,8 @@ return sorted;
         <div className="flex justify-center mt-6 mb-8">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 ${
-              showFilters ? "bg-black text-white" : "glass-panel text-black hover:bg-black hover:text-white"
+            className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md border active:scale-95 ${
+              showFilters ? "bg-[#0c433a] text-white border-[#0c433a]" : "bg-white/20 text-white border-white/40 hover:bg-white hover:text-[#0c433a]"
             }`}
           >
             {showFilters ? <X size={14} /> : <Filter size={14} />}
@@ -514,9 +514,9 @@ return sorted;
               exit={{ opacity: 0, y: -20, height: 0 }}
               className="overflow-hidden mb-12"
             >
-              <div className="glass-panel rounded-[2rem] p-3 md:p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2 md:gap-4 items-stretch shadow-lg border border-black/5">
+              <div className="bg-[#e2f0ea]/90 backdrop-blur-xl rounded-[2rem] p-4 md:p-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-4 items-stretch shadow-xl border border-[#c5e1d7]">
                 <div className="col-span-2 md:col-span-3 lg:col-span-1">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
                     {t.product.search}
                   </label>
                   <input
@@ -524,25 +524,25 @@ return sorted;
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder={t.product.search + "…"}
-                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-5 text-black font-body text-xs md:text-sm focus:ring-2 focus:ring-black outline-none placeholder:text-black/20"
+                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-4 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none placeholder:text-[#0c3a32]/30"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
                     {t.product.brand}
                   </label>
                   <select
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {brands.map(b => <option key={b} value={b}>{b === "All" ? t.product.all : b}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
                     Category
                   </label>
                   <select
@@ -551,59 +551,59 @@ return sorted;
                       setSelectedCategory(e.target.value);
                       setSelectedSubCategory('All');
                     }}
-                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {categoriesList.map((c: string) => <option key={c} value={c}>{c === "All" ? t.product.all : c}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
                     Subcategory
                   </label>
                   <select
                     value={selectedSubCategory}
                     onChange={(e) => setSelectedSubCategory(e.target.value)}
-                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {subCategories.map(sc => <option key={sc} value={sc}>{sc}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
                     Skin Tone
                   </label>
                   <select
                     value={selectedSkinTone}
                     onChange={(e) => setSelectedSkinTone(e.target.value)}
-                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {skinTones.map(st => <option key={st} value={st}>{st}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
                     Skin Concern
                   </label>
                   <select
                     value={selectedSkinConcern}
                     onChange={(e) => setSelectedSkinConcern(e.target.value)}
-                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {skinConcernsList.map(sc => <option key={sc} value={sc}>{sc}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
                     Sort By
                   </label>
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="h-10 md:h-12 w-full bg-white/50 border-none rounded-2xl px-3 text-black font-body text-xs focus:ring-2 focus:ring-black outline-none cursor-pointer appearance-none"
+                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     <option value="newest">Newest First</option>
                     <option value="sale">On Sale</option>
@@ -614,11 +614,11 @@ return sorted;
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/30 mb-1.5 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
                     Max Price
                   </label>
-                  <div className="h-10 md:h-12 flex items-center px-2 bg-white/50 rounded-2xl">
-                    <Price amount={maxPrice} className="text-[10px] font-black mr-2" />
+                  <div className="h-10 md:h-11 flex items-center px-3 bg-white rounded-xl shadow-sm">
+                    <Price amount={maxPrice} className="text-[11px] font-black mr-3 text-[#0c3a32]" />
                     <input
                       type="range"
                       min="0"
@@ -661,11 +661,11 @@ return sorted;
 
                 return (
                   <section key={label}>
-                    <div className="flex items-center justify-between gap-3 md:gap-6 mb-6 md:mb-10 border-b border-black/5 pb-4 md:pb-6">
+                    <div className="flex items-center justify-between gap-3 md:gap-6 mb-6 md:mb-10 border-b border-white/30 pb-4 md:pb-6">
                       <div className="flex items-center gap-3 md:gap-6">
-                        <h2 className="font-display text-2xl md:text-5xl font-bold text-black">{label}</h2>
-                        <div className="h-[1px] flex-1 bg-black/10 hidden md:block" />
-                        <span suppressHydrationWarning className="font-body text-[9px] md:text-sm font-bold text-black/40 tracking-widest uppercase hidden md:inline">
+                        <h2 className="font-serif text-3xl md:text-5xl font-medium tracking-tight text-white uppercase drop-shadow-sm">{label}</h2>
+                        <div className="h-px flex-1 bg-white/30 hidden md:block" />
+                        <span suppressHydrationWarning className="font-body text-[9px] md:text-xs font-black text-white/70 tracking-[0.2em] uppercase hidden md:inline">
                           {productsInCat.length} {t.product.items}
                         </span>
                       </div>
@@ -683,7 +683,7 @@ return sorted;
                               return next;
                             });
                           }}
-                          className="text-xs md:text-sm font-bold text-black/60 hover:text-black underline underline-offset-2 transition-colors"
+                          className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/80 hover:text-white underline underline-offset-4 transition-colors"
                         >
                           {isExpanded ? 'Show Less' : 'See All'}
                         </button>
@@ -722,11 +722,11 @@ return sorted;
             {isRoutines ? (
               <>
                 <div className="text-6xl mb-6 opacity-30">✨</div>
-                <p className="font-display text-3xl text-black">Curated Routines Coming Soon</p>
-                <p className="text-black/50 mt-2">We're curating the best skincare routines for you</p>
+                <p className="font-serif text-3xl md:text-4xl text-white font-medium tracking-tight drop-shadow-sm">Curated Routines Coming Soon</p>
+                <p className="text-white/80 mt-2 font-medium">We're curating the best skincare routines for you</p>
                 <button 
                     onClick={() => window.location.href = '/products'} 
-                    className="mt-8 text-black underline font-bold underline-offset-4"
+                    className="mt-6 text-white underline font-bold underline-offset-4 text-sm tracking-wider uppercase"
                 >
                     Browse all products
                 </button>
@@ -734,8 +734,8 @@ return sorted;
             ) : (
               <>
                 <div className="text-6xl mb-6 opacity-30">🔍</div>
-                <p className="font-display text-3xl text-black">{t.product.noProducts}</p>
-                <p className="text-black/50 mt-2">{t.product.tryAdjusting}</p>
+                <p className="font-serif text-3xl md:text-4xl text-white font-medium tracking-tight drop-shadow-sm">{t.product.noProducts}</p>
+                <p className="text-white/80 mt-2 font-medium">{t.product.tryAdjusting}</p>
                 <button 
                     onClick={() => { 
                       setSearchInput(""); 
@@ -745,7 +745,7 @@ return sorted;
                       setSelectedSkinTone('All');
                       setMaxPrice(100000); 
                     }} 
-                    className="mt-8 text-black underline font-bold underline-offset-4"
+                    className="mt-6 text-white underline font-bold underline-offset-4 text-sm tracking-wider uppercase"
                 >
                     {t.product.resetFilters}
                 </button>

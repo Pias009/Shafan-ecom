@@ -21,6 +21,11 @@ interface ProductWithDiscount {
 }
 
 export default async function OffersPage() {
+  let products: ProductWithDiscount[] = [];
+  let coupons: any[] = [];
+  let flashProducts: any[] = [];
+  let offerBanners: any[] = [];
+
   try {
     // Fetch products that have a manually set discountPrice
     const manualOfferProducts = await prisma.product.findMany({
@@ -100,40 +105,40 @@ export default async function OffersPage() {
       discount.productDiscounts.forEach((pd: any) => {
         const product = pd.product;
         const basePrice = product.price || product.priceCents || 0;
-          let discountedPrice = basePrice;
+        let discountedPrice = basePrice;
 
-          if (discount.discountType === "PERCENTAGE") {
-            discountedPrice = Math.round(basePrice * (1 - discount.value / 100));
-          } else if (discount.discountType === "FIXED_AMOUNT") {
-            discountedPrice = Math.max(0, basePrice - discount.value);
-          }
+        if (discount.discountType === "PERCENTAGE") {
+          discountedPrice = Math.round(basePrice * (1 - discount.value / 100));
+        } else if (discount.discountType === "FIXED_AMOUNT") {
+          discountedPrice = Math.max(0, basePrice - discount.value);
+        }
 
-          productsMap.set(product.id, {
-            id: product.id,
-            name: product.name,
-            brand: product.brand,
-            price: basePrice,
-            imageUrl: product.images?.[0] || "/placeholder-product.png",
-            hot: product.hot,
-            averageRating: product.averageRating,
-            ratingCount: product.ratingCount,
-            stockQuantity: product.stockQuantity,
-            countryPrices: product.countryPrices,
-            discountPrice: discountedPrice,
-            discountPercentage:
-              discount.discountType === "PERCENTAGE"
-                ? discount.value
-                : Math.round(((basePrice - discountedPrice) / basePrice) * 100),
-            discountCode: discount.code,
-            freeDelivery: discount.discountType === "FREE_SHIPPING",
+        productsMap.set(product.id, {
+          id: product.id,
+          name: product.name,
+          brand: product.brand,
+          price: basePrice,
+          imageUrl: product.images?.[0] || "/placeholder-product.png",
+          hot: product.hot,
+          averageRating: product.averageRating,
+          ratingCount: product.ratingCount,
+          stockQuantity: product.stockQuantity,
+          countryPrices: product.countryPrices,
+          discountPrice: discountedPrice,
+          discountPercentage:
+            discount.discountType === "PERCENTAGE"
+              ? discount.value
+              : Math.round(((basePrice - discountedPrice) / basePrice) * 100),
+          discountCode: discount.code,
+          freeDelivery: discount.discountType === "FREE_SHIPPING",
+        });
       });
     });
-  });
 
-    const products = Array.from(productsMap.values());
+    products = Array.from(productsMap.values());
 
     // Extract coupons (discounts with codes)
-    const coupons = activeDiscounts
+    coupons = activeDiscounts
       .filter((d: any) => d.code && d.code !== "SALE")
       .map((d: any) => ({
         id: d.id,
@@ -152,7 +157,7 @@ export default async function OffersPage() {
       take: 8,
     });
 
-    const flashProducts = flashSaleProducts.map((p: any) => ({
+    flashProducts = flashSaleProducts.map((p: any) => ({
       id: p.id,
       name: p.name,
       price: p.price || 0,
@@ -167,7 +172,7 @@ export default async function OffersPage() {
 
     // Fetch active offer banners configured in admin
     const now = new Date();
-    const offerBanners = await (prisma as any).enhancedOfferBanner.findMany({
+    offerBanners = await (prisma as any).enhancedOfferBanner.findMany({
       where: {
         active: true,
         OR: [{ startDate: null }, { startDate: { lte: now } }],
@@ -176,17 +181,16 @@ export default async function OffersPage() {
       orderBy: [{ sortOrder: "asc" }, { priority: "desc" }],
       take: 5,
     });
-
-    return (
-      <OffersClient
-        products={products}
-        coupons={coupons}
-        flashProducts={flashProducts}
-        banners={offerBanners}
-      />
-    );
   } catch (error) {
     console.error("Error loading offers:", error);
-    return <OffersClient products={[]} coupons={[]} flashProducts={[]} banners={[]} />;
   }
+
+  return (
+    <OffersClient
+      products={products}
+      coupons={coupons}
+      flashProducts={flashProducts}
+      banners={offerBanners}
+    />
+  );
 }

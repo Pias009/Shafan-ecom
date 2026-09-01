@@ -77,14 +77,12 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/", label: t.nav.home },
-    { href: "/products", label: t.nav.products },
-    { href: "/brands", label: t.nav.brands },
-    { href: "/products?category=Skin+Care", label: t.nav.skinCare },
-    { href: "/products?category=Hair+Care", label: t.nav.hairCare },
-    { href: "/products?category=Body+Care", label: t.nav.bodyCare },
-    { href: "/products?category=Fragrances", label: t.nav.fragrances },
+    { href: "/products", label: "PRODUCTS" },
+    { href: "#", label: "CATEGORIES" },
     { href: "/products/routine", label: "ROUTINE" },
-    { href: "/offers", label: "🎉 Offers" },
+    { href: "/offers", label: "🎉 OFFERS" },
+    { href: "/about", label: "ABOUT US" },
+    { href: "/blog", label: "BLOG" },
   ];
 
   const [visible, setVisible] = useState(true);
@@ -174,7 +172,6 @@ export function Navbar() {
   const userLabel = useMemo(() => {
     const u = session?.user;
     if (!u) return null;
-    // Hide user session if they have admin role (treat as not logged in on user site)
     if (u.role === "ADMIN" || u.role === "SUPERADMIN") return null;
     return u.name?.trim() || u.email?.trim() || t.nav.account;
   }, [session?.user, t.nav.account]);
@@ -191,12 +188,12 @@ export function Navbar() {
   
   return (
     <>
-<header
-        className={`fixed top-0 left-0 right-0 z-40 transition-[transform,background-color,backdrop-filter] duration-300 glass-nav ${
-          scrolled ? "shadow-md" : "lg:shadow-none shadow-sm"
+      <header
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+          scrolled ? "bg-[#50aba1]/95 backdrop-blur-md shadow-md text-white" : "bg-[#50aba1]/90 backdrop-blur-md text-white border-b border-white/10"
         } ${
           mobileOpen
-            ? "translate-y-0 !fixed top-0 bg-white z-[100000]"
+            ? "translate-y-0 !fixed top-0 bg-white text-[#0c3a32] z-[100000]"
             : visible
             ? "translate-y-0"
             : "-translate-y-full"
@@ -213,198 +210,159 @@ export function Navbar() {
           } : {})
         }}
       >
-      <div className="max-w-[1920px] mx-auto py-2 flex items-center justify-center px-0">
-        {/* Mobile layout: Logo centered */}
-        <div className="flex items-center justify-between w-full lg:hidden px-6 py-1">
-          {/* Left: Menu button */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 text-black hover:bg-black/5 rounded-full transition-colors"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-          
-          {/* Logo centered */}
-          <div className="flex-shrink-0 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <Logo />
-          </div>
-          
-          {/* Right: Actions */}
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="p-2 text-black hover:bg-black/5 rounded-full transition-colors"
-              aria-label="Search"
-            >
-              <Search size={20} />
-            </button>
+        {/* Top Announcement Bar matching Reference UI */}
+        <div className="bg-[#083029] text-white/95 text-[10.5px] sm:text-[11px] py-1.5 px-4 hidden md:block border-b border-emerald-900/40">
+          <div className="max-w-[1536px] mx-auto flex items-center justify-between font-medium">
+            <div className="flex items-center gap-2">
+              <span>🚚 Free Shipping on Orders Over $50</span>
+            </div>
+            <div className="flex items-center gap-4 text-white/80 text-[10.5px]">
+              <Link href="/account/orders" className="hover:text-white transition-colors">Track Order</Link>
+              <span className="text-white/30">|</span>
+              <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+              <span className="text-white/30">|</span>
+              <Link href="/stores" className="hover:text-white transition-colors">Store Locator</Link>
+              <span className="text-white/30">|</span>
+              <Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link>
+            </div>
           </div>
         </div>
 
-        {/* Desktop layout - centered */}
-        <div className="hidden lg:flex items-center justify-between w-full px-8">
-          <div className="flex-shrink-0">
-            <Logo />
+        <div className="max-w-[1536px] mx-auto py-2.5 flex items-center justify-between px-4 sm:px-6">
+          
+          {/* Mobile layout */}
+          <div className="flex items-center justify-between w-full lg:hidden py-1">
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X size={22} className="text-[#0c3a32]" /> : <Menu size={22} />}
+            </button>
+            
+            {/* Logo centered */}
+            <div className="flex-shrink-0">
+              <Logo light={!mobileOpen} />
+            </div>
+            
+            {/* Right: Actions */}
+            <div className="flex items-center gap-1 text-white">
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                aria-label="Search"
+              >
+                <Search size={20} />
+              </button>
+            </div>
           </div>
 
-          {/* Navigation - centered */}
-          <div className="flex-1 flex justify-center px-4">
-            <div className="glass-panel rounded-full px-8 py-3">
-              <div className="flex items-center gap-2">
-                {navLinks.map((link) => {
-                const isOffers = link.href === "/offers";
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    prefetch={true}
-                    onMouseEnter={() => router.prefetch(link.href)}
-                    className={`px-3 py-2 text-sm font-body font-bold tracking-wide transition-all duration-300 rounded-full relative overflow-hidden group whitespace-nowrap hover:scale-105 hover:bg-emerald-50 ${safePathname === link.href ? "text-emerald-700 bg-emerald-100" : "text-black/70 hover:text-emerald-700"} ${isOffers ? "animate-pulse" : ""}`}
-                  >
-                      {isOffers && (
-                        <>
-                          <span className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 animate-shimmer bg-[length:200%_100%] group-hover:bg-[length:400%_100%] transition-all duration-1000"></span>
-                          <Sparkles className="inline-block w-3 h-3 mr-1.5 animate-spin-slow" />
-                        </>
-                      )}
-                      {link.label}
-                      {isOffers && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-                      )}
+          {/* Desktop layout matching Reference UI */}
+          <div className="hidden lg:flex items-center justify-between w-full">
+            <div className="flex-shrink-0">
+              <Logo light={true} />
+            </div>
+
+            {/* Navigation - Centered */}
+            <div className="flex-1 flex justify-center px-4">
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-6 py-1.5 shadow-sm">
+                <div className="flex items-center gap-1">
+                  {navLinks.map((link) => {
+                    const isOffers = link.href === "/offers";
+                    const isActive = safePathname === link.href;
+                    
+                    if (link.label === "CATEGORIES") {
+                      return (
+                        <div className="relative group px-0.5" key="categories">
+                          <button className="px-3.5 py-1.5 text-xs font-black tracking-widest uppercase transition-all duration-300 rounded-full flex items-center gap-1 text-white/90 hover:text-white hover:bg-white/20">
+                            CATEGORIES
+                          </button>
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300">
+                            <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-2 w-48 flex flex-col">
+                              <Link href="/products?category=Skin+Care" className="px-4 py-2.5 text-xs font-bold text-[#0c433a]/70 hover:text-[#0c433a] hover:bg-black/5 rounded-xl transition-colors">Skin Care</Link>
+                              <Link href="/products?category=Body+Care" className="px-4 py-2.5 text-xs font-bold text-[#0c433a]/70 hover:text-[#0c433a] hover:bg-black/5 rounded-xl transition-colors">Body Care</Link>
+                              <Link href="/products?category=Hair+Care" className="px-4 py-2.5 text-xs font-bold text-[#0c433a]/70 hover:text-[#0c433a] hover:bg-black/5 rounded-xl transition-colors">Hair Care</Link>
+                              <div className="border-t border-black/5 my-1" />
+                              <Link href="/products" className="px-4 py-2.5 text-xs font-black text-[#0c433a] hover:bg-black/5 rounded-xl transition-colors">All Categories</Link>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        prefetch={true}
+                        onMouseEnter={() => router.prefetch(link.href)}
+                        className={`px-3.5 py-1.5 text-xs font-black tracking-widest uppercase transition-all duration-300 rounded-full relative overflow-hidden whitespace-nowrap ${
+                          isActive 
+                            ? "text-[#0c433a] bg-white shadow-sm font-black" 
+                            : "text-white/90 hover:text-white hover:bg-white/20"
+                        } ${isOffers ? "animate-pulse" : ""}`}
+                      >
+                        {isOffers && (
+                          <Sparkles className="inline-block w-3 h-3 mr-1 text-amber-300 animate-spin-slow" />
+                        )}
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Actions: Search & Consolidated Menu */}
+            <div className="relative flex items-center gap-2">
+              {/* Search Button */}
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="p-2 rounded-full text-white hover:bg-white/15 transition"
+                aria-label="Search"
+              >
+                <Search size={20} />
+              </button>
+
+              {/* Consolidated Menu */}
+              <div className="relative group">
+                <button
+                  type="button"
+                  className="p-2 rounded-full text-white hover:bg-white/15 transition flex items-center gap-1.5"
+                  aria-label="Menu"
+                >
+                  <UserRound size={20} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-[#0c433a] font-black text-[9px] flex items-center justify-center shadow-md">
+                      {cartCount}
+                    </span>
+                  )}
+                </button>
+                <div className="absolute top-full right-0 pt-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300">
+                  <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-3 w-56 flex flex-col gap-1 text-[#0c433a]">
+                    <Link href="/cart" className="flex items-center justify-between px-3 py-2.5 text-xs font-bold hover:bg-black/5 rounded-xl transition-colors">
+                      <div className="flex items-center gap-2"><ShoppingBag size={16} /> My Cart</div>
+                      {cartCount > 0 && <span className="bg-[#0c433a] text-white px-2 py-0.5 rounded-full text-[10px]">{cartCount}</span>}
                     </Link>
-                  );
-                })}
+                    <button onClick={onUserButtonClick} className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold hover:bg-black/5 rounded-xl text-left w-full transition-colors">
+                      <UserRound size={16} /> {userLabel || "Account"}
+                    </button>
+                    <div className="border-t border-black/5 my-2" />
+                    {isClient && (
+                      <div className="flex flex-col gap-3 px-3 py-1">
+                        <CountrySelector direction="down" />
+                        <LanguageSelector direction="down" />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* User + Actions dropdown */}
-          <div className="relative flex items-center gap-2">
-            {/* Search Button */}
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="inline-flex h-16 items-center justify-center rounded-full px-3 text-black transition hover:bg-black/5"
-              aria-label="Search"
-            >
-              <Search size={22} />
-            </button>
-
-            {/* Country & Language */}
-            {isClient && (
-              <div className="flex items-center gap-2">
-                <CountrySelector direction="down" />
-                <LanguageSelector direction="down" />
-              </div>
-            )}
-            
-            {/* User Button - SEPARATE */}
-            {status === "authenticated" ? (
-              <button
-                type="button"
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="user-dropdown-container inline-flex h-16 items-center gap-2 rounded-full px-2 text-lg font-semibold text-black transition hover:bg-black/5"
-                aria-label="Open user menu"
-              >
-                <div className="relative flex items-center">
-                  <UserRound size={24} />
-                </div>
-                <span className="uppercase tracking-wide">{userLabel}</span>
-              </button>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Link 
-                  href="/account"
-                  className="flex items-center justify-center w-10 h-10 text-black hover:bg-black/5 rounded-full transition-colors"
-                  aria-label="Dashboard"
-                >
-                  <UserRound size={24} />
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setAuthOpen(true)}
-                  className="text-[10px] font-black uppercase tracking-widest text-black/60 hover:text-black transition-colors"
-                >
-                  Signup
-                </button>
-              </div>
-            )}
-            
-            {/* Dropdown with User options, Currency, Language, Cart */}
-            {userMenuOpen && (
-              <div className="user-dropdown-container absolute right-0 top-full mt-2 w-60 glass-panel-heavy rounded-2xl p-3 border border-black/5 shadow-xl z-50">
-                {/* User Section - only when logged in */}
-                {status === "authenticated" && (
-                  <div className="pb-2 mb-2 border-b border-black/5">
-                    <div className="px-2 py-1">
-                      <div className="text-sm font-bold text-black">{session?.user?.name}</div>
-                      <div className="text-xs text-black/50">{session?.user?.email}</div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="space-y-1">
-                  {/* Language */}
-                  <div className="flex flex-row gap-2 px-2 py-1">
-                    <div className="flex-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-black/30 block mb-1">Language</span>
-                      <LanguageSelector direction="down" />
-                    </div>
-                  </div>
-                  
-                  {/* User links - only when logged in */}
-                  {status === "authenticated" && (
-                    <>
-                      <div className="my-1 h-px bg-black/5" />
-                      <button type="button" onClick={() => { setUserMenuOpen(false); window.location.href = "/account"; }} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg w-full">
-                        Dashboard
-                      </button>
-                      <button type="button" onClick={() => { setUserMenuOpen(false); window.location.href = "/account/orders"; }} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg w-full">
-                        Orders
-                      </button>
-                      <button type="button" onClick={() => { setUserMenuOpen(false); window.location.href = "/account/profile"; }} className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg w-full">
-                        Profile
-                      </button>
-                    </>
-                  )}
-                  
-                  <div className="my-1 h-px bg-black/5" />
-                  
-                  {/* Cart */}
-                  <Link href="/cart" onClick={() => setUserMenuOpen(false)} className="flex items-center justify-between px-2 py-2 text-sm font-semibold text-black/70 hover:bg-black/5 rounded-lg">
-                    <span className="flex items-center gap-2">
-                      <ShoppingBag size={16} />
-                      Cart
-                    </span>
-                    {cartCount > 0 && (
-                      <span className="w-5 h-5 rounded-full bg-black text-white text-xs flex items-center justify-center font-bold">
-                        {cartCount}
-                      </span>
-                    )}
-                  </Link>
-
-                  {/* Sign Out - only when logged in */}
-                  {status === "authenticated" && (
-                    <button 
-                      type="button"
-                      onClick={async () => { 
-                        setUserMenuOpen(false); 
-                        await signOut({ callbackUrl: "/" });
-                      }} 
-                      className="flex items-center gap-2 px-2 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg w-full cursor-pointer"
-                    >
-                      Sign Out
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
-      </div>
-
       </header>
 
       {/* Mobile menu - Rendered via Portal for absolute overlay */}
@@ -484,6 +442,20 @@ export function Navbar() {
                     <div className="flex flex-col gap-1">
                       {navLinks.map((link, idx) => {
                         const isOffers = link.href === "/offers";
+                        
+                        if (link.label === "CATEGORIES") {
+                          return (
+                            <div key="mobile-cats" className="py-2 pl-4">
+                              <span className="text-2xl font-black tracking-tighter text-black">Categories</span>
+                              <div className="flex flex-col gap-2 mt-3 pl-4 border-l-2 border-black/10">
+                                <Link href="/products?category=Skin+Care" onClick={() => setMobileOpen(false)} className="text-lg font-bold text-black/60">Skin Care</Link>
+                                <Link href="/products?category=Body+Care" onClick={() => setMobileOpen(false)} className="text-lg font-bold text-black/60">Body Care</Link>
+                                <Link href="/products?category=Hair+Care" onClick={() => setMobileOpen(false)} className="text-lg font-bold text-black/60">Hair Care</Link>
+                              </div>
+                            </div>
+                          );
+                        }
+
                         return (
                           <Link
                             key={link.href}

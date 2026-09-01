@@ -2,15 +2,14 @@
 
 import { useMemo, useState, useEffect, Suspense, useRef, memo } from "react";
 import { CategorySection } from "@/components/CategorySection";
-import { Hero } from "@/components/Hero";
+import { HeroSlider } from "@/components/HeroSlider";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { OfferBannersSection } from "@/components/OfferBannersSection";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Sparkles, Zap, ChevronLeft, ChevronRight } from "lucide-react";
-import { AuthModal } from "@/components/AuthModal";
+import { ArrowRight, Sparkles, Zap, ChevronLeft, ChevronRight, ShieldCheck, Flame, Truck, Shield, RefreshCw, Headset } from "lucide-react";
 import Link from "next/link";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { RoutineSection } from "@/components/RoutineSection";
@@ -42,7 +41,6 @@ const ProductCardItem = memo(function ProductCardItem({
 }) {
   const transformed = useMemo(() => {
     const basePrice = product.price || product.priceCents || 0;
-    // Skip if no valid price - let ProductCard filter it out
     return {
       id: product.id,
       name: product.name,
@@ -68,24 +66,12 @@ const ProductCardItem = memo(function ProductCardItem({
 });
 
 function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { products: any[]; onQuickView: (p: any) => void; addToCart: (p: any) => void; orderNow: (p: any) => void }) {
-  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
+      const scrollAmount = direction === 'left' ? -320 : 320;
       scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      setTimeout(checkScroll, 300);
     }
   };
 
@@ -94,26 +80,25 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
       {/* Left Scroll Button - Desktop Only */}
       <button
         onClick={() => scroll('left')}
-        className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+        className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
       >
-        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+        <ChevronLeft className="w-6 h-6" />
       </button>
 
       {/* Right Scroll Button - Desktop Only */}
       <button
         onClick={() => scroll('right')}
-        className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+        className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
       >
-        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+        <ChevronRight className="w-6 h-6" />
       </button>
 
       <div 
         ref={scrollRef}
-        onScroll={checkScroll}
-        className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4"
+        className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-1 sm:px-2 gap-3 sm:gap-4 md:gap-5"
       >
         {products.map((product, idx) => (
-          <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
+          <div key={product.id} className="flex-shrink-0 snap-start w-[160px] sm:w-[200px] md:w-[240px] lg:w-[270px]">
             <ProductCardItem
               product={product}
               onQuickView={onQuickView}
@@ -129,9 +114,9 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
       <div className="flex justify-center mt-4 sm:hidden">
         <Link
           href="/products/flash-sales"
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest"
+          className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#0c433a] text-white text-xs font-black uppercase tracking-widest shadow-md active:scale-95"
         >
-          See All Flash Sales
+          <span>All Flash Sales</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -140,52 +125,37 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
 }
 
 function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { products: any[]; onQuickView: (p: any) => void; addToCart: (p: any) => void; orderNow: (p: any) => void }) {
-  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
+      const scrollAmount = direction === 'left' ? -320 : 320;
       scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      setTimeout(checkScroll, 300);
     }
   };
 
   return (
     <div className="py-2 sm:py-3 relative">
-      {/* Left Scroll Button - Desktop Only */}
       <button
         onClick={() => scroll('left')}
-        className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+        className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
       >
-        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+        <ChevronLeft className="w-6 h-6" />
       </button>
 
-      {/* Right Scroll Button - Desktop Only */}
       <button
         onClick={() => scroll('right')}
-        className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+        className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
       >
-        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+        <ChevronRight className="w-6 h-6" />
       </button>
 
       <div 
         ref={scrollRef}
-        onScroll={checkScroll}
-        className="flex overflow-x-auto pb-3 md:pb-4 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4"
+        className="flex overflow-x-auto pb-3 md:pb-5 scrollbar-hide snap-x snap-mandatory px-1 sm:px-2 gap-3 sm:gap-4 md:gap-5"
       >
         {products.map((product, idx) => (
-          <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
+          <div key={product.id} className="flex-shrink-0 snap-start w-[160px] sm:w-[200px] md:w-[240px] lg:w-[270px]">
             <ProductCardItem
               product={product}
               onQuickView={onQuickView}
@@ -197,13 +167,12 @@ function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { pro
         ))}
       </div>
       
-      {/* Mobile See All button */}
       <div className="flex justify-center mt-4 sm:hidden">
         <Link
           href="/products/new-arrivals"
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest"
+          className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#0c433a] text-white text-xs font-black uppercase tracking-widest shadow-md active:scale-95"
         >
-          See All New Arrivals
+          <span>All New Arrivals</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -241,103 +210,30 @@ const isDummyProduct = (p: any) => {
          DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
 };
 
-const DS_BG =
-  'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_195923_b0ba8ace-1d1d-4f2c-9a28-1ab84b330680.png&w=1280&q=85';
 
-function DoctorSasiSection() {
-  return (
-    <section className="my-8 md:my-14 px-1 sm:px-4">
-      <Link href="/doctor-sasi" className="block group relative overflow-hidden rounded-2xl md:rounded-3xl cursor-pointer">
-        {/* Background image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
-          style={{ backgroundImage: `url('${DS_BG}')` }}
-        />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
-        {/* Soft bottom vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-end min-h-[260px] sm:min-h-[340px] md:min-h-[420px] p-6 sm:p-10 md:p-14">
-          {/* Heading */}
-          <h2
-            className="text-white font-light text-3xl sm:text-5xl md:text-6xl leading-none mb-2"
-            style={{ fontFamily: "'Playfair Display', serif", fontStyle: 'italic', letterSpacing: '-0.02em' }}
-          >
-            Doctor Sasi
-          </h2>
-          <p className="text-white/60 text-sm sm:text-base font-light tracking-wide max-w-sm mt-2 mb-6">
-            Beneath lies your glow. Discover the clinical shield your skin has been waiting for.
-          </p>
-
-          {/* CTA */}
-          <div className="inline-flex items-center gap-3 w-fit">
-            <span className="text-white text-xs sm:text-sm tracking-[0.2em] uppercase font-medium border-b border-white/40 pb-0.5 group-hover:border-white/90 transition-colors duration-300">
-              Enter the experience
-            </span>
-            <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
-          </div>
-        </div>
-      </Link>
-    </section>
-  );
-}
 
 export default function HomeClient({ initialProducts, newArrivals = [], flashSales = [], hot: hotProducts = [], routine: routineProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[] }) {
-  const [products, setProducts] = useState<any[]>(initialProducts || []);
+  const [products] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
-  const [authOpen, setAuthOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
-  const { setCurrency } = useCurrencyStore();
-  const { selectedCountry, selectedCurrency, setCountry, setDetectedCountry } = useCountryStore();
-  const hasHydrated = useCountryStore((state) => state._hasHydrated);
-
-function useDevRenderTracker() {
-  const renderCount = useRef(0);
-  useEffect(() => {
-    renderCount.current += 1;
-    if (renderCount.current > 3 && process.env.NODE_ENV === 'development') {
-      console.warn('[DevOnly] Excessive re-renders:', renderCount.current);
-    }
-  }, []);
-}
-
-useDevRenderTracker();
+  const { selectedCountry, selectedCurrency } = useCountryStore();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-
-
-
-  const brands = useMemo(() => {
-    const set = new Set(products.map((p) => p.brand?.name).filter(Boolean));
-    return ["All", ...Array.from(set).sort()];
-  }, [products]);
-
-  const categories = useMemo(() => {
-    const set = new Set(products.map((p) => p.category?.name).filter(Boolean));
-    return ["All", ...Array.from(set).sort()];
-  }, [products]);
-
-
   const hot = useMemo(() => hotProducts.length > 0 ? hotProducts : products.filter((p) => p.hot), [products, hotProducts]);
 
-  // Filter newArrivals based on country support and remove dummy products
   const filteredNewArrivals = useMemo(() => {
     return newArrivals.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [newArrivals, selectedCountry, selectedCurrency]);
 
-  // Filter flash sales based on country support and remove dummy products
   const filteredFlashSales = useMemo(() => {
     return flashSales.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [flashSales, selectedCountry, selectedCurrency]);
 
-  // Filter hot products based on country support and remove dummy products
   const filteredHot = useMemo(() => {
     return hot.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [hot, selectedCountry, selectedCurrency]);
@@ -345,31 +241,6 @@ useDevRenderTracker();
   const filteredRoutine = useMemo(() => {
     return routineProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [routineProducts, selectedCountry, selectedCurrency]);
-
-  // Category-specific products
-  const skinCareProducts = useMemo(() => {
-    return products.filter((p) => 
-      hasValidPrice(p, selectedCountry) && 
-      !isDummyProduct(p) && 
-      p.categoryName === "Skin Care"
-    ).slice(0, 10);
-  }, [products, selectedCountry, selectedCurrency]);
-
-  const hairCareProducts = useMemo(() => {
-    return products.filter((p) => 
-      hasValidPrice(p, selectedCountry) && 
-      !isDummyProduct(p) && 
-      p.categoryName === "Hair Care"
-    ).slice(0, 10);
-  }, [products, selectedCountry, selectedCurrency]);
-
-  const bodyCareProducts = useMemo(() => {
-    return products.filter((p) => 
-      hasValidPrice(p, selectedCountry) && 
-      !isDummyProduct(p) && 
-      p.categoryName === "Body Care"
-    ).slice(0, 10);
-  }, [products, selectedCountry, selectedCurrency]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -407,7 +278,6 @@ useDevRenderTracker();
 
     const tid = toast.loading("Preparing your order...");
     try {
-      // Calculate unit price matching cart calculation
       const countryPrice = product.countryPrices?.find((cp: any) =>
         cp.country.toUpperCase() === selectedCountry.toUpperCase()
       );
@@ -471,7 +341,6 @@ useDevRenderTracker();
       }
     } catch (err: any) {
       toast.error(err.message, { id: tid });
-      // Fallback to cart if something goes wrong
       addToCart(product);
       router.push("/cart");
     }
@@ -481,13 +350,50 @@ useDevRenderTracker();
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   return (
-    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full bg-white/40 backdrop-blur-sm">
-      {/* NoticeBoard and Navbar handled globally */}
-        <Hero />
+    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full bg-[#72ccbd] text-white selection:bg-[#0c433a] selection:text-white" suppressHydrationWarning>
+      
+      {/* Background Soft Illumination */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2),transparent_70%)]" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_70%)]" />
+      </div>
 
-      <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 pb-20 flex-1 overflow-x-hidden">
+      <HeroSlider />
 
-        {/* Offer Banners */}
+      <main className="mx-auto max-w-[1536px] w-full px-2 sm:px-4 lg:px-6 pb-20 flex-1 overflow-x-hidden z-10">
+
+        {/* Categories Section - Shop By Category */}
+        <CategorySection
+          onPick={(c) => {
+            router.push(`/products?category=${encodeURIComponent(c)}`);
+          }}
+        />
+
+        {/* Featured Products Section matching Reference Screenshot */}
+        {filteredNewArrivals.length > 0 && (
+          <section className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-2">
+            <div className="mb-4 md:mb-8 flex items-center justify-between border-b border-white/30 pb-4">
+              <div className="inline-flex items-center gap-3">
+                <span className="h-px w-6 bg-white/50" />
+                <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white uppercase drop-shadow-md">
+                  FEATURED PRODUCTS
+                </h2>
+                <span className="h-px w-6 bg-white/50 hidden sm:inline-block" />
+              </div>
+              <Link
+                href="/products/new-arrivals"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/40 bg-white/15 hover:bg-white hover:text-[#0c433a] transition-all text-xs font-black uppercase tracking-wider text-white shadow-sm"
+              >
+                <span>VIEW ALL</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
+          </section>
+        )}
+
+        {/* Offer Banners - Special Offer 20% Off */}
         <OfferBannersSection />
 
         {/* Routine Section */}
@@ -500,70 +406,28 @@ useDevRenderTracker();
           />
         )}
 
-        {/* Doctor Sasi Clinical Skincare Section */}
-        <DoctorSasiSection />
 
-        {/* New Arrivals Section */}
-        {filteredNewArrivals.length > 0 && (
-          <section className="pt-6 md:pt-10 pb-4 md:pb-6 px-1 sm:px-4">
-            <div className="mb-3 md:mb-5 flex items-center justify-between">
-              <div>
-                <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
-                  <Sparkles className="text-emerald-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">New</span>
-                  <Sparkles className="text-green-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </div>
-                <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-emerald-700">Fresh From The Shelf</h2>
-                <div className="mt-2 h-[3px] w-full rounded-full bg-emerald-700/10 overflow-hidden">
-                  <div className="h-full bg-emerald-700 rounded-full animate-line-grow" />
-                </div>
-                <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">Latest additions to our collection</p>
-              </div>
-              <Link
-                href="/products/new-arrivals"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
-              >
-                See All
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
-          </section>
-        )}
 
         {/* Flash Sales Section */}
-        <section className="pt-2 md:pt-6 pb-6 md:pb-10 px-1 sm:px-4">
-          <div className="mb-4 md:mb-8 flex items-center justify-between">
-            <div>
-              <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
-                <Zap className="text-yellow-500 fill-yellow-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">Flash</span>
-                <Zap className="text-yellow-500 fill-yellow-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              </div>
-              <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-orange-500">Flash Sales</h2>
-              <div className="mt-2 h-[3px] w-full rounded-full bg-orange-500/10 overflow-hidden">
-                <div className="h-full bg-orange-500 rounded-full animate-line-grow" />
-              </div>
+        <section className="pt-6 md:pt-10 pb-8 md:pb-12 px-1 sm:px-2">
+          <div className="mb-4 md:mb-8 flex items-center justify-between border-b border-white/30 pb-4">
+            <div className="inline-flex items-center gap-3">
+              <span className="h-px w-6 bg-white/50" />
+              <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white uppercase drop-shadow-md">
+                FLASH SALES
+              </h2>
             </div>
             <Link
               href="/products/flash-sales"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/40 bg-white/15 hover:bg-white hover:text-[#0c433a] transition-all text-xs font-black uppercase tracking-wider text-white shadow-sm"
             >
-              See All
-              <ArrowRight className="w-4 h-4" />
+              <span>SEE ALL DEALS</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           <FlashSalesSlider products={filteredFlashSales} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
         </section>
-
-        {/* Categories */}
-        <CategorySection
-          onPick={(c) => {
-            router.push(`/products?category=${encodeURIComponent(c)}`);
-          }}
-        />
 
         <div style={{ display: mounted && filteredHot.length === 0 ? 'none' : undefined }}>
           <TrendingNowSlider
@@ -581,7 +445,7 @@ useDevRenderTracker();
         <BlogShowcase />
       </Suspense>
 
-      {/* Brand Slider Section - Moved above footer */}
+      {/* Brand Slider Section */}
       <Suspense fallback={null}>
         <BrandMarquee />
       </Suspense>
@@ -591,6 +455,51 @@ useDevRenderTracker();
         <GoogleReviewsSection />
       </Suspense>
 
+      {/* Footer Trust Features Bar matching bottom row of Screenshot */}
+      <section className="bg-[#5ebbaf]/95 backdrop-blur-md border-t border-white/30 py-6 sm:py-8 px-2 sm:px-6 mt-12 text-white">
+        <div className="max-w-[1536px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center md:text-left">
+          <div className="flex items-center gap-3.5 justify-center md:justify-start">
+            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
+              <Truck size={20} />
+            </div>
+            <div>
+              <h5 className="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">FREE SHIPPING</h5>
+              <p className="text-[11px] text-white/85 font-medium">On orders over $50</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3.5 justify-center md:justify-start">
+            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
+              <Shield size={20} />
+            </div>
+            <div>
+              <h5 className="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">SECURE PAYMENT</h5>
+              <p className="text-[11px] text-white/85 font-medium">100% safe & secure</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3.5 justify-center md:justify-start">
+            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
+              <RefreshCw size={20} />
+            </div>
+            <div>
+              <h5 className="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">EASY RETURNS</h5>
+              <p className="text-[11px] text-white/85 font-medium">30 days return policy</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3.5 justify-center md:justify-start">
+            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
+              <Headset size={20} />
+            </div>
+            <div>
+              <h5 className="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">CUSTOMER SUPPORT</h5>
+              <p className="text-[11px] text-white/85 font-medium">We're here to help</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <ProductQuickViewModal
         product={quickView ? {
           ...quickView,
@@ -598,16 +507,12 @@ useDevRenderTracker();
           imageUrl: quickView.imageUrl || quickView.mainImage,
           brand: quickView.brandName || quickView.brand?.name || "Generic",
           countryPrices: quickView.countryPrices || [],
-          hot: quickView.hot,
-          trending: quickView.trending
         } : null}
         onClose={() => setQuickView(null)}
-        onAddToCart={(p) => addToCart(p)}
-        onOrderNow={(p) => orderNow(p)}
-        onMoreDetails={(productId) => { setQuickView(null); window.location.href = `/products/${productId}`; }}
+        onAddToCart={addToCart}
+        onOrderNow={orderNow}
+        onMoreDetails={(productId: string) => router.push(`/products/${productId}`)}
       />
-
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }

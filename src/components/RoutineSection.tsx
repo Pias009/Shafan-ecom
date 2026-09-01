@@ -37,24 +37,21 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
   return (
     <section className="pt-6 md:pt-10 pb-4 md:pb-6 px-1 sm:px-4">
       {/* Section header */}
-      <div className="mb-3 md:mb-5 flex items-center justify-between">
+      <div className="mb-3 md:mb-5 flex items-center justify-between border-b border-white/30 pb-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit">
-            <Sparkles className="text-violet-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-black/60">Routine</span>
-            <Sparkles className="text-violet-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <div className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit border border-white/30 shadow-sm">
+            <Sparkles className="text-white w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-white">Routine Essentials</span>
+            <Sparkles className="text-white w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </div>
-          <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-violet-600">Routine</h2>
-          <div className="mt-2 h-[3px] w-full rounded-full bg-violet-600/10 overflow-hidden">
-            <div className="h-full bg-violet-600 rounded-full animate-line-grow" />
-          </div>
-          <p className="font-body text-black/70 mt-1 text-sm sm:text-lg max-w-xl font-medium">
+          <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight text-white uppercase drop-shadow-sm">Routine</h2>
+          <p className="font-body text-white/90 mt-1 text-sm sm:text-base max-w-xl font-medium">
             Your daily skincare essentials
           </p>
         </div>
         <Link
           href="/products/routine"
-          className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-colors"
+          className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-white/40 bg-white/15 text-white text-xs font-black uppercase tracking-widest hover:bg-white hover:text-[#0c433a] transition-all shadow-sm"
         >
           See All
           <ArrowRight className="w-4 h-4" />

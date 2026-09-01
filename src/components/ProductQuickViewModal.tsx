@@ -1,4 +1,4 @@
-import { X, ChevronLeft, ChevronRight, Maximize2, ShoppingBag, ArrowRight, Flame } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ShoppingCart, Zap, ArrowRight, Flame, Star, Check, Package } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -11,9 +11,9 @@ import { formatDescription } from "@/utils/formatText";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 import TabbyPromo from "./TabbyPromo";
 
-function isValidImageUrl(url: any): boolean {
-  if (!url || typeof url !== 'string') return false;
-  return url.startsWith('/') || url.startsWith('http');
+function isValidImageUrl(url: unknown): boolean {
+  if (!url || typeof url !== "string") return false;
+  return url.startsWith("/") || url.startsWith("http");
 }
 
 interface QuickViewProduct {
@@ -33,12 +33,7 @@ interface QuickViewProduct {
   salePriceCents?: number;
   regularPrice?: number;
   salePrice?: number;
-  countryPrices?: Array<{
-    country: string;
-    price: number;
-    currency: string;
-    active?: boolean;
-  }>;
+  countryPrices?: Array<{ country: string; price: number; currency: string; active?: boolean }>;
   stockQuantity?: number;
   imageUrl: string;
   images?: string[];
@@ -62,101 +57,44 @@ export function ProductQuickViewModal({
 }: {
   product: QuickViewProduct | null;
   onClose: () => void;
-  onAddToCart: (product: any) => void;
-  onOrderNow: (product: any) => void;
+  onAddToCart: (product: unknown) => void;
+  onOrderNow: (product: unknown) => void;
   onMoreDetails: (productId: string) => void;
 }) {
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry, selectedCurrency } = useCountryStore();
-  
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isEnlarged, setIsEnlarged] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { setCurrentImageIndex(0); setAddedToCart(false); }, [product?.id]);
 
-  // STRICT: Compute price using selectedCountry - no fallbacks
   const { displayPrice, originalPrice, isAvailable, isOutOfStock } = useMemo(() => {
     if (!product) return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: false };
-    
-    const outOfStock = typeof product.stockQuantity === 'number' && product.stockQuantity <= 0;
-    
-    // Debug logging
-    console.log('QuickView selectedCountry:', selectedCountry, 'product:', product.name);
-    
-    // Ensure countryPrices is an array
+    const outOfStock = typeof product.stockQuantity === "number" && product.stockQuantity <= 0;
     const cpArray = Array.isArray(product.countryPrices) ? product.countryPrices : [];
-    console.log('QuickView countryPrices:', cpArray);
-    
-    // If no country prices at all, show unavailable
-    if (cpArray.length === 0) {
-      console.log('No country prices for:', product.name);
-      return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: outOfStock };
-    }
-    
+    if (cpArray.length === 0) return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: outOfStock };
     const countryUpper = selectedCountry.toUpperCase();
-    
-    // Find matching country price - simpler logic
     const countryPrice = cpArray.find((cp: any) => {
-      if (!cp) return false;
-      const cpCountry = (cp.country?.toUpperCase() || '').trim();
-      const cpPriceValue = Number(cp.price) || 0;
-      return cpCountry === countryUpper && cpPriceValue > 0;
+      const cpCountry = (cp.country?.toUpperCase() || "").trim();
+      return cpCountry === countryUpper && Number(cp.price) > 0;
     });
-    
-    console.log('Found countryPrice:', countryPrice);
-    
     if (countryPrice) {
       const priceValue = Number(countryPrice.price) || 0;
-      if (priceValue > 0) {
-        return {
-          displayPrice: priceValue,
-          originalPrice: priceValue,
-          isAvailable: !outOfStock,
-          isOutOfStock: outOfStock
-        };
-      }
+      if (priceValue > 0) return { displayPrice: priceValue, originalPrice: priceValue, isAvailable: !outOfStock, isOutOfStock: outOfStock };
     }
-    
-    // NO FALLBACK - if no valid country price, show unavailable
     return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: outOfStock };
   }, [product, selectedCountry]);
 
-  // Combine main image with gallery images, filtering out duplicates
-  const { allImages, brandName, categoryName, categories, subCategoryName, skinTones, skinConcerns } = useMemo(() => {
-    if (!product) {
-      return {
-        allImages: [] as string[],
-        brandName: "SHANFA GLOBAL",
-        categoryName: "General",
-        categories: [] as string[],
-        subCategoryName: undefined as string | undefined,
-        skinTones: [] as any[],
-        skinConcerns: [] as string[],
-      };
-    }
-
-    const imgs = [
-      product.imageUrl,
-      (product as any).mainImage,
-      ...(product.images || [])
-    ].filter((img, index, self) => img && self.indexOf(img) === index) as string[];
-
-    const bName = typeof product.brand === "string" 
-      ? product.brand 
-      : product.brand?.name || "SHANFA GLOBAL";
-
-    const cName = typeof product.category === "string" 
-      ? product.category 
-      : product.category?.name || "General";
-
+  const { allImages, brandName, categories, subCategoryName, skinTones, skinConcerns } = useMemo(() => {
+    if (!product) return { allImages: [] as string[], brandName: "SHANFA GLOBAL", categories: [] as string[], subCategoryName: undefined as string | undefined, skinTones: [] as { name: string; hexColor?: string }[], skinConcerns: [] as string[] };
+    const imgs = [product.imageUrl, (product as any).mainImage, ...(product.images || [])].filter((img, i, s) => img && s.indexOf(img) === i) as string[];
+    const bName = typeof product.brand === "string" ? product.brand : product.brand?.name || "SHANFA GLOBAL";
     return {
       allImages: imgs,
       brandName: bName,
-      categoryName: cName,
       categories: product.categories || [],
       subCategoryName: product.subCategory?.name,
       skinTones: product.skinTones || [],
@@ -164,16 +102,21 @@ export function ProductQuickViewModal({
     };
   }, [product]);
 
-  // Auto-slide effect
+  // Auto-slide
   useEffect(() => {
-    if (!product || allImages.length <= 1 || isEnlarged) return;
-    
-    const timer = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
-    }, 6000);
+    if (!product || allImages.length <= 1) return;
+    const t = setInterval(() => setCurrentImageIndex((p) => (p + 1) % allImages.length), 6000);
+    return () => clearInterval(t);
+  }, [product, allImages.length]);
 
-    return () => clearInterval(timer);
-  }, [product, allImages.length, isEnlarged]);
+  const discountPct = displayPrice < originalPrice && originalPrice > 0
+    ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
+
+  const handleAddToCart = () => {
+    onAddToCart(product);
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
 
   if (!mounted) return null;
 
@@ -181,146 +124,181 @@ export function ProductQuickViewModal({
     <AnimatePresence>
       {product && (
         <motion.div
-          className="fixed inset-0 z-[999] flex items-center justify-center"
+          className="fixed inset-0 z-[999] flex items-end md:items-center justify-center p-0 md:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           role="dialog"
           aria-modal="true"
         >
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-md cursor-pointer" 
-            onClick={onClose} 
-          />
+          {/* Backdrop */}
           <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative mx-auto w-full md:w-[95%] max-w-5xl h-[80vh] md:h-auto md:min-h-[500px] rounded-t-[2.5rem] md:rounded-[2.5rem] bg-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] flex flex-col md:flex-row items-stretch pointer-events-auto overflow-hidden mt-auto md:mt-0"
+            className="fixed inset-0 bg-black/65 backdrop-blur-lg cursor-pointer"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
+
+          {/* Modal */}
+          <motion.div
+            initial={{ y: 80, opacity: 0, scale: 0.97 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 60, opacity: 0, scale: 0.97 }}
+            transition={{ type: "spring", damping: 28, stiffness: 220 }}
+            className="relative w-full md:max-w-[900px] max-h-[92vh] md:max-h-[88vh] rounded-t-[2.5rem] md:rounded-[2.5rem] bg-white overflow-hidden flex flex-col md:flex-row shadow-[0_40px_80px_-20px_rgba(0,0,0,0.45)] pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="md:w-[48%] h-[40vh] md:h-full relative bg-white flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-black/5 shrink-0 overflow-hidden">
-              <div 
-                className="relative w-full h-[40vh] md:h-full min-h-[300px] md:min-h-[500px] p-4 md:p-8 overflow-hidden group cursor-zoom-in flex flex-col" 
-                onClick={() => setIsEnlarged(true)}
-              >
-                <div className="relative w-full flex-1 min-h-[250px] md:min-h-[400px] flex items-center justify-center">
-                  <Image
-                    src={isValidImageUrl(allImages[currentImageIndex]) ? getOptimizedUrl(allImages[currentImageIndex], 800) : "/placeholder-product.png"}
-                    alt={product.name}
-                    fill
-                    className="object-contain"
-                    priority={true}
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                </div>
-                {allImages.length > 1 && (
-                  <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity z-30">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(p => (p - 1 + allImages.length) % allImages.length); }}
-                      className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all text-black border border-black/5"
-                    >
-                      <ChevronLeft size={24} />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(p => (p + 1) % allImages.length); }}
-                      className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-md shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all text-black border border-black/5"
-                    >
-                      <ChevronRight size={24} />
-                    </button>
-                  </div>
-                )}
-                <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
-                  {(product.hot || product.trending) && (
-                    <motion.span 
-                      initial={{ x: -10, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      className="bg-red-600 text-white text-[8px] px-2 py-0.5 font-black uppercase tracking-widest rounded shadow-xl flex items-center gap-1 border border-white/20"
-                    >
-                      <Flame size={10} className="fill-white" />
-                      Trending
-                    </motion.span>
-                  )}
-                </div>
-                <div className="absolute top-6 right-6 flex flex-col gap-2 z-20">
-                  {displayPrice < originalPrice && originalPrice > 0 && (
-                    <motion.div 
-                      initial={{ x: 10, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      className="bg-rose-600 text-white rounded-2xl px-4 py-2.5 shadow-2xl flex flex-col items-center justify-center border border-white/20"
-                    >
-                      <span className="text-sm font-black leading-none">
-                        -{Math.round(((originalPrice - displayPrice) / originalPrice) * 100)}%
-                      </span>
-                      <span className="text-[9px] font-bold leading-tight uppercase tracking-tighter opacity-80 mt-1">OFFER</span>
-                    </motion.div>
-                  )}
-                </div>
-                <div className="absolute bottom-6 right-6 p-3 bg-black/10 backdrop-blur-md rounded-full text-black/50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity border border-black/5">
-                  <Maximize2 size={20} />
-                </div>
+            {/* ── LEFT: Image Gallery ───────────────────────────── */}
+            <div className="relative md:w-[44%] bg-gradient-to-br from-[#edf9f5] to-[#d4f0e6] flex-shrink-0 overflow-hidden">
+              {/* Ambient glow */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.7)_0%,transparent_70%)] pointer-events-none z-10" />
 
-                {/* Thumbnails - Floating Overlay */}
-                {allImages.length > 1 && (
-                  <div className="absolute inset-x-0 bottom-4 flex gap-2 md:gap-3 overflow-x-auto pb-2 scrollbar-hide px-4 w-full justify-center z-40 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    {allImages.map((img, idx) => (
-                      <button
-                        key={idx}
-                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); }}
-                        className={`relative w-10 h-10 md:w-14 md:h-14 rounded-xl overflow-hidden flex-shrink-0 transition-all border-2 ${
-                          currentImageIndex === idx ? "border-black scale-105 shadow-xl bg-white" : "border-white/50 bg-white/80 backdrop-blur-sm opacity-60 hover:opacity-100"
-                        }`}
-                      >
-                        <Image 
-                          src={isValidImageUrl(img) ? getOptimizedUrl(img, 100) : "/placeholder-product.png"} 
-                          alt="Thumb" 
-                          fill 
-                          className="object-cover p-1"
-                          sizes="100px"
-                        />
-                      </button>
-                    ))}
-                  </div>
+              {/* Badges */}
+              <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+                {(product.hot || product.trending) && (
+                  <motion.span
+                    initial={{ x: -12, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
+                    className="inline-flex items-center gap-1.5 bg-[#0c433a] text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg"
+                  >
+                    <Flame size={9} className="fill-amber-400 text-amber-400" /> BEST SELLER
+                  </motion.span>
+                )}
+                {discountPct > 0 && (
+                  <motion.span
+                    initial={{ x: -12, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.08 }}
+                    className="inline-flex items-center gap-1 bg-rose-500 text-white text-[9px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-lg"
+                  >
+                    -{discountPct}% OFF
+                  </motion.span>
                 )}
               </div>
-            </div>
-            <div className="md:w-[55%] p-4 md:p-8 flex flex-col justify-start bg-white relative overflow-hidden">
+
+              {/* Close button (mobile top-right) */}
               <button
-                type="button"
                 onClick={onClose}
-                className="absolute top-6 right-6 md:top-8 md:right-8 inline-flex h-12 w-12 items-center justify-center rounded-full bg-black/5 text-black hover:bg-black hover:text-white transition-all z-50 group active:scale-90"
+                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-white/60 text-[#0c3a32] hover:bg-[#0c433a] hover:text-white transition-all flex items-center justify-center shadow-md md:hidden"
               >
-                <X className="h-6 w-6 transition-transform group-hover:rotate-90" />
+                <X size={16} />
               </button>
-              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar text-left">
-                <div className="space-y-3 md:space-y-6">
-                  <div>
-                    <div className="text-[9px] md:text-[11px] font-black uppercase tracking-[0.4em] text-emerald-600 mb-2 md:mb-3">{brandName}</div>
-                    <h2 className="text-lg md:text-2xl lg:text-3xl font-black tracking-tight text-black leading-tight italic decoration-emerald-500/30 underline-offset-8">
-                      {product.name}
-                    </h2>
-                    <div className="mt-4 md:mt-6 flex flex-wrap gap-2 sm:gap-3">
-                      {categories.map((cat, idx) => (
-                        <span key={idx} className="px-4 py-1.5 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-black/10">
-                          {cat}
-                        </span>
-                      ))}
-                      {subCategoryName && (
-                        <span className="px-4 py-1.5 bg-gray-100 text-black/60 text-[10px] font-black uppercase tracking-widest rounded-full border border-black/5">
-                          {subCategoryName}
-                        </span>
-                      )}
-                    </div>
+
+              {/* Main image */}
+              <div className="relative w-full h-[280px] md:h-full min-h-[360px] flex items-center justify-center p-6 md:p-8 group">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentImageIndex}
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.02 }}
+                    transition={{ duration: 0.35 }}
+                    className="relative w-full h-full"
+                  >
+                    <Image
+                      src={isValidImageUrl(allImages[currentImageIndex]) ? getOptimizedUrl(allImages[currentImageIndex], 800) : "/placeholder-product.png"}
+                      alt={product.name}
+                      fill
+                      className="object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.12)]"
+                      priority
+                      sizes="(max-width: 768px) 100vw, 44vw"
+                    />
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Prev/Next */}
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((p) => (p - 1 + allImages.length) % allImages.length); }}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 border border-[#c5e1d7] text-[#0c433a] flex items-center justify-center shadow-lg hover:bg-[#0c433a] hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCurrentImageIndex((p) => (p + 1) % allImages.length); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 border border-[#c5e1d7] text-[#0c433a] flex items-center justify-center shadow-lg hover:bg-[#0c433a] hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Thumbnail strip */}
+              {allImages.length > 1 && (
+                <div className="absolute bottom-4 inset-x-0 flex justify-center gap-2 px-4 z-20">
+                  {allImages.slice(0, 5).map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={`relative w-10 h-10 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${currentImageIndex === idx ? "border-[#0c433a] scale-110 shadow-lg" : "border-white/60 opacity-60 hover:opacity-90 hover:scale-105"} bg-white`}
+                    >
+                      <Image src={isValidImageUrl(img) ? getOptimizedUrl(img, 100) : "/placeholder-product.png"} alt="" fill className="object-contain p-1" sizes="44px" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Dot indicator */}
+              {allImages.length > 1 && (
+                <div className="absolute bottom-[4.5rem] inset-x-0 flex justify-center gap-1.5 z-20">
+                  {allImages.slice(0, 5).map((_, idx) => (
+                    <span key={idx} className={`rounded-full transition-all ${currentImageIndex === idx ? "w-4 h-1.5 bg-[#0c433a]" : "w-1.5 h-1.5 bg-[#0c433a]/30"}`} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* ── RIGHT: Info ──────────────────────────────────── */}
+            <div className="flex flex-col flex-1 min-h-0 bg-white">
+              {/* Close — desktop */}
+              <button
+                onClick={onClose}
+                className="absolute top-5 right-5 z-30 w-9 h-9 rounded-full bg-[#f0f9f5] border border-[#c5e1d7] text-[#0c3a32] hover:bg-[#0c433a] hover:text-white transition-all flex items-center justify-center shadow-sm hidden md:flex"
+              >
+                <X size={15} />
+              </button>
+
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto px-5 md:px-7 pt-6 pb-4 space-y-4 custom-scrollbar">
+
+                {/* Brand */}
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#72ccbd]">{brandName}</p>
+
+                {/* Name */}
+                <h2 className="font-serif text-xl md:text-2xl font-semibold text-[#0c3a32] leading-tight">
+                  {product.name}
+                </h2>
+
+                {/* Stars */}
+                <div className="flex items-center gap-2">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => <Star key={i} size={12} className="text-amber-400 fill-amber-400" />)}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <span className="text-xs font-semibold text-[#52736b]">4.9 (245 reviews)</span>
+                </div>
+
+                {/* Category tags */}
+                {(categories.length > 0 || subCategoryName) && (
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((cat, i) => (
+                      <span key={i} className="px-3 py-1 bg-[#0c433a] text-white text-[9px] font-black uppercase tracking-widest rounded-full">{cat}</span>
+                    ))}
+                    {subCategoryName && (
+                      <span className="px-3 py-1 bg-[#edf9f5] text-[#0c3a32] text-[9px] font-black uppercase tracking-widest rounded-full border border-[#c5e1d7]">{subCategoryName}</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Skin tones / Concerns */}
+                {(skinTones.length > 0 || skinConcerns.length > 0) && (
+                  <div className="grid grid-cols-2 gap-3 p-3.5 bg-[#f4fbf8] rounded-2xl border border-[#e0f0e8]">
                     {skinTones.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Skin Tones</div>
-                        <div className="flex flex-wrap gap-2">
-                          {skinTones.map((tone, idx) => (
-                            <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/5 text-black text-[9px] font-bold uppercase tracking-widest rounded-full">
-                              {tone.hexColor && <span className="w-3 h-3 rounded-full border border-black/10" style={{ backgroundColor: tone.hexColor }} />}
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#52736b] mb-1.5">Skin Tones</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {skinTones.map((tone, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white text-[#0c3a32] text-[8px] font-bold uppercase tracking-wide rounded-full border border-[#c5e1d7]">
+                              {tone.hexColor && <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: tone.hexColor }} />}
                               {tone.name}
                             </span>
                           ))}
@@ -328,147 +306,120 @@ export function ProductQuickViewModal({
                       </div>
                     )}
                     {skinConcerns.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Skin Concerns</div>
-                        <div className="flex flex-wrap gap-2">
-                          {skinConcerns.map((concern, idx) => (
-                            <span key={idx} className="px-3 py-1 bg-red-50 text-red-600 text-[9px] font-bold uppercase tracking-widest rounded-full border border-red-100">
-                              {concern}
-                            </span>
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-[#52736b] mb-1.5">Skin Concerns</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {skinConcerns.map((concern, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[8px] font-bold uppercase tracking-wide rounded-full border border-rose-100">{concern}</span>
                           ))}
                         </div>
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 py-2 md:py-4 border-y border-black/5">
-                    {isOutOfStock ? (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-col">
-                          <span className="text-3xl md:text-5xl font-black text-black flex items-baseline gap-2">
-                            {displayPrice.toFixed(2)}
-                            <span className="text-lg md:text-xl font-bold text-black/40 uppercase tracking-widest">{selectedCurrency}</span>
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-xl">
-                          <span className="w-2 h-2 rounded-full bg-orange-500" />
-                          <span className="text-xs md:text-sm font-black text-orange-600 uppercase tracking-wider">Out of Stock</span>
-                        </div>
-                      </div>
-                    ) : isAvailable ? (
-                      <div className="flex flex-col">
-                        <span className="text-3xl md:text-5xl font-black text-black flex items-baseline gap-2">
-                          {displayPrice.toFixed(2)}
-                          <span className="text-lg md:text-xl font-bold text-black/40 uppercase tracking-widest">{selectedCurrency}</span>
-                        </span>
-                        {displayPrice < originalPrice && (
-                          <span className="text-sm md:text-lg font-bold text-red-500/60 line-through">
-                            {originalPrice.toFixed(2)} {selectedCurrency}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-xl">
-                        <span className="w-2 h-2 rounded-full bg-red-500" />
-                        <span className="text-xs md:text-sm font-black text-red-600 uppercase tracking-wider">Unavailable in this region</span>
-                      </div>
-                    )}
-                  </div>
+                )}
 
-                  {/* Tabby on-site messaging — shown near the price for supported markets */}
-                  {isAvailable && !isOutOfStock && displayPrice > 0 &&
-                    ["AED", "SAR", "KWD"].includes((selectedCurrency || "").toUpperCase()) && (
-                      <TabbyPromo
-                        id="TabbyPromoQuickView"
-                        source="product"
-                        price={displayPrice}
-                        currency={selectedCurrency.toUpperCase()}
-                        publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
-                        merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
-                        lang={currentLanguage.code === "ar" ? "ar" : "en"}
-                      />
-                    )}
+                {/* Price block */}
+                <div className="py-3.5 border-y border-[#e5f3ee]">
+                  {isOutOfStock ? (
+                    <div className="space-y-2">
+                      <p className="text-3xl font-black text-[#0c3a32]">
+                        {displayPrice.toFixed(2)} <span className="text-sm font-bold text-[#52736b]">{selectedCurrency}</span>
+                      </p>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 text-xs font-black uppercase tracking-wider rounded-full border border-orange-200">
+                        <Package size={12} /> Out of Stock
+                      </span>
+                    </div>
+                  ) : isAvailable ? (
+                    <div className="flex items-end gap-3">
+                      <p className="text-3xl md:text-4xl font-black text-[#0c3a32] leading-none">
+                        {displayPrice.toFixed(2)} <span className="text-base font-bold text-[#52736b]">{selectedCurrency}</span>
+                      </p>
+                      {discountPct > 0 && (
+                        <p className="text-sm font-bold text-[#82a49b] line-through mb-0.5">
+                          {originalPrice.toFixed(2)} {selectedCurrency}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-black uppercase tracking-wider rounded-full border border-red-100">
+                      Unavailable in this region
+                    </span>
+                  )}
+                </div>
 
-                  <div className="space-y-4">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-black/20">Product Details</div>
-                    <div className="prose prose-sm max-w-none text-black/70 leading-relaxed font-medium">
-                      {(product.description || product.details) && formatDescription(product.description || product.details)}
+                {/* Tabby promo */}
+                {isAvailable && !isOutOfStock && displayPrice > 0 && ["AED", "SAR", "KWD"].includes((selectedCurrency || "").toUpperCase()) && (
+                  <TabbyPromo
+                    id="TabbyPromoQuickView"
+                    source="product"
+                    price={displayPrice}
+                    currency={selectedCurrency.toUpperCase()}
+                    publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
+                    merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
+                    lang={currentLanguage.code === "ar" ? "ar" : "en"}
+                  />
+                )}
+
+                {/* Description */}
+                {(product.description || product.details) && (
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-[#52736b] mb-2">Product Details</p>
+                    <div className="text-sm text-[#0c3a32]/70 leading-relaxed font-medium line-clamp-4">
+                      {formatDescription(product.description || product.details)}
                     </div>
                   </div>
-                </div>
+                )}
               </div>
-              <div className="mt-auto pt-4 space-y-3">
-                <div className="flex gap-3 items-center">
+
+              {/* ── Action buttons ── */}
+              <div className="px-5 md:px-7 pt-3 pb-5 border-t border-[#e5f3ee] space-y-2.5 bg-white">
+                <div className="grid grid-cols-2 gap-2.5">
+                  {/* Add to cart */}
                   <button
                     type="button"
-                    disabled={isOutOfStock}
-                    onClick={() => onAddToCart(product)}
-                    className={`w-12 h-12 md:w-auto md:h-20 md:flex-1 rounded-2xl md:rounded-3xl border-2 flex items-center justify-center md:px-8 transition-all shadow-xl shadow-black/5 group shrink-0 ${isOutOfStock ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-50' : 'bg-white border-black/10 text-black hover:bg-black hover:text-white active:scale-95'}`}
+                    disabled={isOutOfStock || !isAvailable}
+                    onClick={handleAddToCart}
+                    className={`flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 border ${
+                      addedToCart
+                        ? "bg-[#edf9f5] border-[#72ccbd] text-[#0c433a]"
+                        : isOutOfStock || !isAvailable
+                        ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                        : "bg-white border-[#0c433a] text-[#0c433a] hover:bg-[#0c433a] hover:text-white shadow-sm hover:shadow-md active:scale-95"
+                    }`}
                   >
-                    <ShoppingBag size={20} className="md:mr-3 transition-transform group-hover:rotate-12" />
-                    <span className="hidden md:inline text-[11px] font-black uppercase tracking-[0.2em]">{isOutOfStock ? 'Out of Stock' : t.product.addToCart}</span>
+                    {addedToCart ? <Check size={14} /> : <ShoppingCart size={14} />}
+                    <span>{addedToCart ? "Added!" : isOutOfStock ? "Out of Stock" : t.product.addToCart}</span>
                   </button>
+
+                  {/* Order now */}
                   <button
                     type="button"
-                    disabled={isOutOfStock}
+                    disabled={isOutOfStock || !isAvailable}
                     onClick={() => onOrderNow(product)}
-                    className={`relative flex-[2] h-12 md:h-20 rounded-2xl md:rounded-3xl text-white shadow-2xl transition-all overflow-hidden group ${isOutOfStock ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 active:scale-95'}`}
+                    className={`relative flex items-center justify-center gap-2 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 overflow-hidden group ${
+                      isOutOfStock || !isAvailable
+                        ? "bg-slate-300 text-white cursor-not-allowed"
+                        : "bg-[#0c433a] hover:bg-[#072a24] text-white shadow-[0_6px_20px_rgba(12,67,58,0.35)] hover:shadow-[0_10px_28px_rgba(12,67,58,0.5)] active:scale-95"
+                    }`}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    <span className="font-black text-[10px] md:text-sm lg:text-base uppercase tracking-[0.2em]">{isOutOfStock ? 'Available Soon' : t.product.orderNow}</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    <Zap size={14} className="shrink-0" />
+                    <span>{isOutOfStock ? "Soon" : t.product.orderNow}</span>
                   </button>
                 </div>
+
+                {/* More details */}
                 <button
                   type="button"
                   onClick={() => onMoreDetails(product.slug || product.id)}
-                  className="w-full flex items-center justify-center gap-3 px-8 py-3 rounded-2xl md:rounded-3xl bg-black text-white text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:bg-gray-800 hover:shadow-2xl active:scale-95 group"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-[#f4fbf8] border border-[#c5e1d7] text-[#0c3a32] text-[10px] font-black uppercase tracking-widest hover:bg-[#0c433a] hover:text-white hover:border-[#0c433a] transition-all duration-300 group active:scale-95"
                 >
-                  <span>More Details</span>
-                  <ArrowRight size={14} className="transition-transform group-hover:translate-x-2" />
+                  <span>Full Product Details</span>
+                  <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>
           </motion.div>
-          <AnimatePresence>
-            {isEnlarged && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 md:p-10"
-              >
-                <button 
-                  onClick={() => setIsEnlarged(false)}
-                  className="absolute top-10 right-10 w-14 h-14 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition-all z-[1010]"
-                >
-                  <X size={32} />
-                </button>
-                <div className="relative w-full h-[60vh] md:h-[80vh] min-h-[300px] max-w-6xl mx-auto flex-1">
-                  <Image 
-                    src={isValidImageUrl(allImages[currentImageIndex]) ? allImages[currentImageIndex] : "/placeholder-product.png"} 
-                    alt="Full View" 
-                    fill 
-                    className="object-contain"
-                  />
-                </div>
-                {allImages.length > 1 && (
-                  <div className="mt-8 flex gap-4">
-                    <button 
-                      onClick={() => setCurrentImageIndex(p => (p - 1 + allImages.length) % allImages.length)}
-                      className="w-16 h-16 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10"
-                    >
-                      <ChevronLeft size={32} />
-                    </button>
-                    <button 
-                      onClick={() => setCurrentImageIndex(p => (p + 1) % allImages.length)}
-                      className="w-16 h-16 rounded-full bg-white/5 text-white flex items-center justify-center hover:bg-white/10"
-                    >
-                      <ChevronRight size={32} />
-                    </button>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>,

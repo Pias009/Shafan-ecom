@@ -104,7 +104,7 @@ export const translations = {
       joinNewsletter: "Join Our Newsletter.",
       receiveCode: "Receive a code for 10% off on your next order.",
       enterEmail: "Enter Your Email",
-      disclosure: "I would like to receive messages on SHANFA GLOBAL products",
+      disclosure: "I would like to receive messages on Glowérive products",
       shop: "Shop",
       customerService: "Customer Service",
       about: "About",

@@ -1,337 +1,209 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, ArrowRight, ShoppingBag, Zap, ShieldCheck, Globe } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { ArrowRight, Play, Leaf, Droplets, FlaskConical, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 
-const skinTypes = ["Oily", "Dry", "Combination", "Sensitive", "Normal"];
-
-// Floating product component with drag ("grab") functionality
-function FloatingProduct({ src, size, delay, x, y, rotate, label }: { src: string, size: number, delay: number, x: string, y: string, rotate: number, label: string }) {
+// Custom Bunny Icon SVG for Cruelty Free feature
+function BunnyIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
-    <motion.div
-      drag
-      dragConstraints={{ left: -50, right: 50, top: -50, bottom: 50 }}
-      dragElastic={0.2}
-      whileDrag={{ scale: 1.1, zIndex: 50, cursor: "grabbing" }}
-      initial={{ opacity: 0, scale: 0.8, x: 0, y: 0 }}
-      animate={{ 
-        opacity: 1, 
-        scale: 1,
-        y: [0, -15, 0],
-        rotate: [rotate, rotate + 5, rotate],
-      }}
-      transition={{ 
-        opacity: { duration: 1, delay },
-        scale: { duration: 1, delay },
-        y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay },
-        rotate: { duration: 5, repeat: Infinity, ease: "easeInOut", delay }
-      }}
-      className="absolute cursor-grab group will-change-transform"
-      style={{ left: x, top: y }}
-    >
-      <div className="relative">
-        {/* Glow effect on hover */}
-        <div className="absolute inset-0 bg-emerald-400/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        
-        <div className="relative bg-white/40 backdrop-blur-md p-3 rounded-2xl border border-white/60 shadow-xl overflow-hidden group-hover:border-emerald-300/50 transition-colors">
-          <div className="relative" style={{ width: size, height: size }}>
-            <Image
-              src={src}
-              alt={label}
-              fill
-              className="object-contain drop-shadow-2xl"
-              priority
-            />
-          </div>
-          
-          {/* Tag */}
-          <div className="mt-2 text-center">
-            <span className="text-[8px] font-black uppercase tracking-widest text-black/40 group-hover:text-emerald-600 transition-colors">{label}</span>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function StatBadge({ icon: Icon, label, value, delay }: { icon: any, label: string, value: string, delay: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, delay }}
-      className="flex items-center gap-3 glass-panel-heavy px-4 py-2 rounded-2xl border border-white/80 shadow-sm"
-    >
-      <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center text-white">
-        <Icon size={14} />
-      </div>
-      <div>
-        <p className="text-[10px] font-black uppercase tracking-wider text-black/30 leading-none mb-1">{label}</p>
-        <p className="text-sm font-bold text-black leading-none">{value}</p>
-      </div>
-    </motion.div>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
+      <path d="M9 10a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
+      <path d="M15 10a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
+      <path d="M9.5 15a3.5 3.5 0 0 0 5 0" />
+      <path d="M7 3L5.5 8" />
+      <path d="M17 3l1.5 5" />
+    </svg>
   );
 }
 
 export function Hero() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const springX = useSpring(mouseX, { stiffness: 50, damping: 20 });
-  const springY = useSpring(mouseY, { stiffness: 50, damping: 20 });
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      const { left, top, width, height } = containerRef.current.getBoundingClientRect();
-      const x = (e.clientX - left) / width - 0.5;
-      const y = (e.clientY - top) / height - 0.5;
-      mouseX.set(x * 40);
-      mouseY.set(y * 40);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY]);
-
   return (
-    <section 
-      ref={containerRef}
-      className="relative min-h-[350px] sm:min-h-[600px] md:min-h-[700px] lg:min-h-[850px] flex flex-col items-center justify-center px-2 sm:px-6 md:px-8 py-6 lg:py-20 overflow-hidden"
-    >
-      {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div 
-          style={{ x: springX, y: springY }}
-          className="absolute top-1/4 -left-20 w-96 h-96 bg-[radial-gradient(circle,rgba(167,243,208,0.4)_0%,transparent_60%)] rounded-full will-change-transform" 
-        />
-        <motion.div 
-          style={{ x: springY, y: springX }}
-          className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(233,213,255,0.4)_0%,transparent_60%)] rounded-full will-change-transform" 
-        />
-      </div>
-
-      <div className="max-w-7xl w-full mx-auto flex flex-row items-center justify-between gap-2 sm:gap-8 z-10">
+    <section className="relative w-full overflow-hidden bg-[#72ccbd]" suppressHydrationWarning>
+      
+      {/* Seamless Hero Container with 100% Blended Right Model Image */}
+      <div className="relative w-full min-h-[540px] sm:min-h-[620px] lg:min-h-[720px] flex items-center">
         
-        {/* Left Content — Compact on Mobile */}
-        <div className="flex-[1.2] lg:col-span-7 flex flex-col items-start text-left space-y-3 sm:space-y-8">
-          
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="inline-flex items-center gap-2 glass-panel px-4 py-2 rounded-full border border-white/60 shadow-sm"
-          >
-            <div className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </div>
-            <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-black/60">
-              New Generation Skincare
-            </span>
-          </motion.div>
+        {/* Single 8K Full Cover Studio Background Image */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <Image
+            src="/images/hero-glowerive-fullcover.png"
+            alt="SHANFA GLOBAL 8K Botanical Skincare Model"
+            fill
+            className="object-cover object-[85%_center] sm:object-[88%_center] lg:object-right"
+            priority
+          />
+          {/* Gentle text backdrop gradient matching sky fresh #72ccbd color */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#72ccbd] via-[#72ccbd]/90 via-45% to-transparent w-full md:w-[70%] lg:w-[60%]" />
+          {/* Subtle SVG Floating Water Droplets */}
+          <svg className="absolute top-24 left-1/3 w-7 h-7 text-white/30 animate-pulse pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+          </svg>
+          <svg className="absolute bottom-16 left-1/4 w-5 h-5 text-white/35 animate-bounce pointer-events-none" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+          </svg>
+        </div>
 
-          <div className="space-y-4 md:space-y-6">
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
+        {/* Hero Left Content Container */}
+        <div className="relative z-10 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-12 pt-28 sm:pt-36 lg:pt-40 pb-16 sm:pb-20">
+          <div className="max-w-xl space-y-4 sm:space-y-6 text-left">
+            
+            {/* Tag Subtitle */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="font-display font-black text-2xl sm:text-6xl md:text-7xl lg:text-8xl text-black leading-[0.9] tracking-[-0.04em]"
+              transition={{ duration: 0.5 }}
+              className="inline-block"
             >
-              YOUR SKIN, <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-600">REIMAGINED.</span>
-            </motion.h1>
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-white bg-white/15 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/30 shadow-sm">
+                NATURALLY RADIANT
+              </span>
+            </motion.div>
 
-            <motion.p
+            {/* H1 Display Headline */}
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="max-w-xl text-[10px] sm:text-xl text-black/60 font-medium leading-relaxed"
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="font-serif text-3xl sm:text-5xl lg:text-7xl font-normal leading-[1.08] tracking-tight text-white drop-shadow-md"
             >
-              Harness the power of AI-driven analysis. Science-backed formulas.
-            </motion.p>
-          </div>
+              Skincare <br />
+              that cares, <br />
+              beauty that <br />
+              shines.
+            </motion.h1>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-wrap gap-4 items-center"
-          >
-            <Link 
-              href="/products"
-              className="group relative inline-flex items-center gap-2 bg-black text-white px-4 py-2 sm:px-8 sm:py-4 rounded-xl sm:rounded-2xl font-black text-[8px] sm:text-sm uppercase tracking-widest overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-lg shadow-black/10"
+            {/* Subtitle with leaf icon divider line */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="space-y-2 pt-1"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <span className="relative z-10 flex items-center gap-2">
-                Explore
-                <ShoppingBag size={12} />
-              </span>
-            </Link>
+              <div className="flex items-center gap-2 text-white/90">
+                <Leaf size={14} className="rotate-45" />
+                <span className="h-px w-8 bg-white/40" />
+              </div>
+              <p className="text-xs sm:text-base text-white/95 font-normal leading-relaxed max-w-md drop-shadow-sm font-medium">
+                Discover the perfect blend of nature and science for healthy, glowing skin every day.
+              </p>
+            </motion.div>
 
-            <button
-              onClick={() => toast.success("AI Analysis Loading...")}
-              className="hidden sm:inline-flex glass-panel-heavy items-center gap-3 px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-black border border-white/80 hover:bg-white/80 transition-all active:scale-95 shadow-sm"
+            {/* 3D Interactive Action Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              className="flex items-center gap-3.5 pt-3"
             >
-              Try AI Analysis
-              <Zap size={18} className="text-emerald-600" />
-            </button>
-          </motion.div>
+              <Link
+                href="/products"
+                className="inline-flex items-center justify-center gap-2 bg-[#0c433a] hover:bg-[#072a24] text-white px-7 sm:px-9 py-3 sm:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-[0_10px_25px_rgba(12,67,58,0.4)] hover:shadow-[0_15px_35px_rgba(12,67,58,0.6)] hover:-translate-y-1 active:translate-y-0 transform-gpu group border border-emerald-500/30"
+              >
+                <span>SHOP NOW</span>
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
 
-          {/* Trust Stats */}
-          <div className="hidden sm:flex flex-wrap gap-4 pt-4 md:pt-8">
-            <StatBadge icon={ShieldCheck} label="Dermatologist" value="Approved" delay={0.8} />
-            <StatBadge icon={Globe} label="Global" value="Shipping" delay={0.9} />
-            <StatBadge icon={Sparkles} label="Results" value="Guaranteed" delay={1.0} />
+              <button
+                onClick={() => toast.success("Playing Skincare Video...")}
+                className="inline-flex items-center justify-center gap-2.5 bg-white/20 hover:bg-white/30 text-white backdrop-blur-md border border-white/40 px-5 sm:px-7 py-3 sm:py-4 rounded-full font-bold text-xs sm:text-sm uppercase tracking-wider transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transform-gpu"
+              >
+                <div className="w-5 h-5 rounded-full bg-white text-[#0c433a] flex items-center justify-center shadow-sm">
+                  <Play size={10} className="fill-current ml-0.5" />
+                </div>
+                <span>WATCH VIDEO</span>
+              </button>
+            </motion.div>
+
           </div>
         </div>
 
-        {/* Right Content — Compact on Mobile */}
-        <div className="flex-1 lg:col-span-5 relative h-[250px] sm:h-[600px] flex items-center justify-center">
-          
-          {/* Central Stage Glow */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <motion.div
-              animate={{ 
-                scale: [1, 1.1, 1],
-                opacity: [0.3, 0.5, 0.3]
-              }}
-              transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-              className="w-80 h-80 md:w-[450px] md:h-[450px] rounded-full bg-[radial-gradient(circle,rgba(209,250,229,1)_0%,rgba(243,232,255,0.8)_40%,transparent_70%)] will-change-transform"
-            />
-          </div>
-
-          {/* Main Hero Visual */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-40 h-40 sm:w-[400px] sm:h-[400px] z-20"
-          >
-            <div className="absolute inset-0 rounded-full border-[1.5px] border-white/40 shadow-inner" />
-            <div className="absolute inset-4 rounded-full border-[0.5px] border-black/5" />
-            
-            <div className="relative w-full h-full rounded-full overflow-hidden border-8 border-white/60 shadow-2xl">
-              <Image
-                src="/images/hero-radiant.png"
-                alt="Radiant Beauty"
-                fill
-                className="object-cover scale-110"
-                priority
-              />
-            </div>
-
-            {/* Orbiting Ring */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-              className="absolute -inset-8 border-[0.5px] border-dashed border-black/10 rounded-full pointer-events-none will-change-transform"
-            />
-          </motion.div>
-
-          {/* Floating Grab-able Products */}
-          <FloatingProduct 
-            src="/images/serum.png" 
-            size={60} 
-            label="Serum"
-            delay={0.5} 
-            x="0%" 
-            y="10%" 
-            rotate={-15} 
-          />
-          
-          <FloatingProduct 
-            src="/images/cream.png" 
-            size={50} 
-            label="Cream"
-            delay={0.8} 
-            x="70%" 
-            y="65%" 
-            rotate={12} 
-          />
-
-          {/* Micro-Interaction Hint - Desktop Only */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 2, duration: 1 }}
-            className="hidden md:flex absolute -bottom-8 left-1/2 -translate-x-1/2 flex-col items-center gap-2"
-          >
-            <div className="w-1 h-8 rounded-full bg-black/10 relative overflow-hidden">
-              <motion.div 
-                animate={{ y: [0, 32] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-emerald-500 to-transparent"
-              />
-            </div>
-            <span className="text-[8px] font-black uppercase tracking-[0.3em] text-black/30">Interact & Discover</span>
-          </motion.div>
-        </div>
       </div>
 
-      {/* Decorative Orbs */}
-      <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-emerald-50/30 to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-t from-purple-50/20 to-transparent pointer-events-none" />
+      {/* Floating 4-Column Feature Trust Bar with Animated Running Train Border */}
+      <div className="relative z-20 max-w-[1440px] mx-auto px-3 sm:px-6 pb-6 -mt-8 sm:-mt-12">
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+          suppressHydrationWarning
+          className="relative bg-[#edf7f3]/95 backdrop-blur-xl border border-[#c5e1d7] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-[0_20px_40px_rgba(12,67,58,0.12)] hover:shadow-[0_25px_50px_rgba(12,67,58,0.18)] transition-all duration-500 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-[#0c3a32] overflow-hidden"
+        >
+          {/* Animated Running Train Light Beam Border */}
+          <div className="absolute inset-0 pointer-events-none rounded-2xl sm:rounded-3xl overflow-hidden z-20">
+            <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+              <rect
+                x="1.5"
+                y="1.5"
+                width="calc(100% - 3px)"
+                height="calc(100% - 3px)"
+                rx="22"
+                fill="none"
+                stroke="url(#train-light-beam)"
+                strokeWidth="3.5"
+                strokeDasharray="220 700"
+                className="animate-train-run"
+              />
+              <defs>
+                <linearGradient id="train-light-beam" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#0c433a" stopOpacity="0.1" />
+                  <stop offset="35%" stopColor="#0c433a" stopOpacity="0.9" />
+                  <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
+                  <stop offset="65%" stopColor="#2dd4bf" stopOpacity="1" />
+                  <stop offset="100%" stopColor="#0c433a" stopOpacity="0.1" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
 
-      {/* Bottom Marquee - Slim & Scroll-reactive on mobile */}
-      <MarqueeSection />
+          <div className="flex items-center gap-3.5 p-1 group relative z-10">
+            <div className="w-11 h-11 rounded-full bg-[#dcf0e7] text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b8dfd0] shadow-sm group-hover:scale-110 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Leaf size={22} />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#0c3a32] leading-tight">Natural Ingredients</h4>
+              <p className="text-[11px] text-[#52736b] mt-0.5 font-medium">Safe & Effective</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3.5 p-1 group relative z-10">
+            <div className="w-11 h-11 rounded-full bg-[#dcf0e7] text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b8dfd0] shadow-sm group-hover:scale-110 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <Droplets size={22} />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#0c3a32] leading-tight">Dermatologist Tested</h4>
+              <p className="text-[11px] text-[#52736b] mt-0.5 font-medium">For All Skin Types</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3.5 p-1 group relative z-10">
+            <div className="w-11 h-11 rounded-full bg-[#dcf0e7] text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b8dfd0] shadow-sm group-hover:scale-110 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <FlaskConical size={22} />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#0c3a32] leading-tight">Paraben & Sulfate Free</h4>
+              <p className="text-[11px] text-[#52736b] mt-0.5 font-medium">Clean & Gentle</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3.5 p-1 group relative z-10">
+            <div className="w-11 h-11 rounded-full bg-[#dcf0e7] text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b8dfd0] shadow-sm group-hover:scale-110 group-hover:bg-[#0c433a] group-hover:text-white transition-all duration-300">
+              <BunnyIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="font-serif font-bold text-xs sm:text-sm text-[#0c3a32] leading-tight">Cruelty Free</h4>
+              <p className="text-[11px] text-[#52736b] mt-0.5 font-medium">Never Tested on Animals</p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
     </section>
   );
 }
 
-function MarqueeSection() {
-  const { scrollYProgress } = useScroll();
-  const xMove = useTransform(scrollYProgress, [0, 1], [0, -500]);
-  const xMoveReverse = useTransform(scrollYProgress, [0, 1], [-500, 0]);
 
-  const marqueeItems = [
-    "SHANFA GLOBAL",
-    "PREMIUM CARE",
-    "AI DRIVEN",
-    "100% Authentic Products",
-    "Delivery Across GCC",
-    "Secure Payment",
-    "Dubai Self Pickup",
-    "WhatsApp Support",
-  ];
-
-  return (
-    <div className="w-full mt-10 md:mt-32 py-2 md:py-10 border-y border-black/5 bg-white/30 backdrop-blur-sm overflow-hidden">
-      {/* Mobile: Scroll-reactive - Single Slim Line */}
-      <div className="md:hidden flex overflow-hidden">
-        <motion.div style={{ x: xMove }} className="flex whitespace-nowrap gap-4 will-change-transform">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="flex items-center gap-4">
-              {marqueeItems.map((item) => (
-                <span key={item} className="flex items-center gap-4">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700">{item}</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
-                </span>
-              ))}
-            </div>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* Desktop: Auto-playing Marquee */}
-      <div className="hidden md:flex items-center whitespace-nowrap animate-marquee">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="flex items-center gap-10 mx-10">
-            {marqueeItems.map((item, idx) => (
-              <span key={item} className="flex items-center gap-10">
-                <span className="text-lg md:text-xl font-black uppercase tracking-wide text-emerald-700">{item}</span>
-                <span className={`w-2 h-2 rounded-full ${["bg-emerald-500", "bg-purple-500", "bg-amber-500", "bg-sky-500", "bg-rose-500", "bg-teal-500", "bg-fuchsia-500", "bg-orange-500"][idx % 8]}`} />
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 

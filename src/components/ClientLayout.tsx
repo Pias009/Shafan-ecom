@@ -3,7 +3,7 @@
 import { useEffect, Suspense, useSyncExternalStore } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FloatingCartButton } from "./FloatingCartButton";
-
+import { LenisProvider } from "./LenisProvider";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -14,7 +14,8 @@ function NavigationScroll() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Use native scroll — Lenis will handle momentum on desktop
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname, searchParams]);
 
   return null;
@@ -32,6 +33,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   return (
     <>
+      {/* Lenis smooth scroll — desktop only, GSAP ticker-synced */}
+      <LenisProvider />
+
       {!isDoctorSasi && (
         <Suspense fallback={null}>
           <NavigationScroll />
