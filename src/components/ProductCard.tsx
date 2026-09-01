@@ -1,9 +1,9 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import Image from "next/image";
-import { useState } from "react";
-import { ShoppingBag, ShoppingCart, Truck, Flame, Star } from "lucide-react";
+import { ShoppingCart, Flame, Star, Eye, Heart, Package } from "lucide-react";
+import { motion } from "framer-motion";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
@@ -13,8 +13,14 @@ import { getOptimizedUrl } from "@/lib/cloudinary-url";
 import { useRouter } from "next/navigation";
 
 function isValidImageUrl(url: unknown): boolean {
-  if (!url || typeof url !== 'string') return false;
-  return url.startsWith('/') || url.startsWith('http');
+  if (!url || typeof url !== "string") return false;
+  return url.startsWith("/") || url.startsWith("http");
+}
+
+export interface CountryPrice {
+  country: string;
+  price: number;
+  currency: string;
 }
 
 interface ProductCardProps {
@@ -25,7 +31,10 @@ interface ProductCardProps {
     brand?: string | { name: string };
     price: number;
     discountPrice?: number;
+    salePrice?: number;
+    salePriceCents?: number;
     imageUrl: string;
+    mainImage?: string;
     hot?: boolean;
     trending?: boolean;
     averageRating?: number;
@@ -33,15 +42,11 @@ interface ProductCardProps {
     stockQuantity?: number;
     totalSales?: number;
     freeDelivery?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    countryPrices?: any[];
+    countryPrices?: CountryPrice[] | Record<string, unknown>[] | unknown[];
   };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onQuickView: (product: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onAddToCart: (product: any) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onOrderNow?: (product: any) => void;
+  onQuickView: (product: unknown) => void;
+  onAddToCart: (product: unknown) => void;
+  onOrderNow?: (product: unknown) => void;
   compact?: boolean;
   priority?: boolean;
 }
@@ -59,185 +64,193 @@ const ProductCardComponent = function ProductCard({
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
   const hasHydrated = useCountryStoreReady();
+  const [isLiked, setIsLiked] = useState(false);
 
   if (!hasHydrated) {
     return (
-      <div className="bg-white shadow-lg rounded-2xl overflow-hidden w-full mx-auto">
-        <div className="aspect-square bg-[#F9FAFB] p-4 animate-pulse" />
-        <div className="p-4 space-y-2">
-          <div className="h-4 bg-gray-200 rounded animate-pulse" />
-          <div className="h-3 bg-gray-200 rounded w-2/3 animate-pulse" />
-          <div className="h-5 bg-gray-200 rounded w-1/2 animate-pulse" />
+      <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 w-full animate-pulse overflow-hidden">
+        <div className="aspect-square bg-white/5 w-full mb-3" />
+        <div className="space-y-2 px-3 pb-3">
+          <div className="h-2.5 bg-white/20 rounded w-1/3" />
+          <div className="h-4 bg-white/20 rounded" />
+          <div className="h-4 bg-white/30 rounded w-1/2" />
         </div>
       </div>
     );
   }
 
-  // Safety Guard: Hide products with zero price for selected country
-  if (!hasValidPrice(product, selectedCountry)) {
-    return null;
-  }
+  if (!hasValidPrice(product, selectedCountry)) return null;
 
-  // Get display price using country-specific pricing
   const displayPrice = (() => {
     const { price: countryPrice } = getDisplayPrice(product, selectedCountry);
-    return countryPrice > 0 ? countryPrice : (product.price || 0);
+    return countryPrice > 0 ? countryPrice : product.price || 0;
   })();
-  
-  // Hide products with zero or invalid price
-  if (!displayPrice || displayPrice <= 0) {
-    return null;
-  }
-  
-  const isNotAvailable = typeof product.stockQuantity === 'number' && product.stockQuantity <= 0;
 
-  // Safely get the brand name as a string
-  const brandName = typeof product.brand === "string"
-    ? product.brand
-    : product.brand?.name || "SHANFA GLOBAL";
+  const salePrice = product.discountPrice || product.salePrice || product.salePriceCents || 0;
+  const hasDiscount = salePrice > 0 && salePrice < displayPrice;
 
-  // Generate star rating display
-  const renderStars = (rating: number = 0) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    
-    for (let i = 0; i < 5; i++) {
-      if (i < fullStars) {
-        stars.push(<Star key={i} size={12} className="text-yellow-400 fill-yellow-400" />);
-      } else if (i === fullStars && hasHalfStar) {
-        stars.push(<Star key={i} size={12} className="text-yellow-400 fill-yellow-400 opacity-50" />);
-      } else {
-        stars.push(<Star key={i} size={12} className="text-gray-300" />);
-      }
-    }
-    return stars;
-  };
+  if (!displayPrice || displayPrice <= 0) return null;
+
+  const isNotAvailable =
+    typeof product.stockQuantity === "number" && product.stockQuantity <= 0;
+
+  const brandName =
+    typeof product.brand === "string"
+      ? product.brand
+      : product.brand?.name || "SHANFA";
+
+  const rating = product.averageRating || 4.9;
+  const reviewCount = product.ratingCount || 245;
+  const discountPct =
+    hasDiscount && displayPrice > 0
+      ? Math.round(((displayPrice - salePrice) / displayPrice) * 100)
+      : 0;
+
+  const badge = (() => {
+    if (isNotAvailable) return { label: "OUT OF STOCK", color: "bg-black/40 backdrop-blur-sm text-white" };
+    if (product.hot || product.trending) return { label: "BEST SELLER", color: "bg-white text-[#0c433a]", icon: true };
+    if (hasDiscount) return { label: `-${discountPct}%`, color: "bg-rose-500 text-white" };
+    return { label: "NEW", color: "bg-white text-[#0c433a]" };
+  })();
+
+  const imgSrc = isValidImageUrl(product.imageUrl || product.mainImage)
+    ? getOptimizedUrl(product.imageUrl || product.mainImage || "", 400)
+    : "/placeholder-product.png";
 
   return (
-    <div 
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.42, ease: "easeOut" }}
       onMouseEnter={() => router.prefetch(`/products/${product.slug || product.id}`)}
-      onClick={(e) => { e.stopPropagation(); router.push(`/products/${product.slug || product.id}`); }}
-      className={`group bg-white shadow-lg hover:shadow-2xl transition-all duration-300 rounded-2xl overflow-hidden w-full h-full flex flex-col cursor-pointer`}
-      style={{ willChange: "transform" }}
+      onClick={(e) => {
+        e.stopPropagation();
+        router.push(`/products/${product.slug || product.id}`);
+      }}
+      className="group relative bg-white/70 backdrop-blur-2xl rounded-2xl border border-white/60 hover:border-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden w-full h-full flex flex-col cursor-pointer transform-gpu"
     >
-      {/* Image Section */}
-      <div className="relative overflow-hidden aspect-square w-full bg-white flex-shrink-0 p-0">
-        <div
-          className="w-full h-full relative block"
+      {/* ── Image Stage (Solid White so White-BG photos blend 100% seamlessly) ── */}
+      <div className="relative aspect-square w-full bg-white flex items-center justify-center p-2 sm:p-4 overflow-hidden border-b border-black/5">
+
+        {/* Badge (Top-Left) */}
+        <div className="absolute top-2.5 left-2.5 z-20">
+          <span
+            className={`inline-flex items-center gap-1 ${badge.color} text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm`}
+          >
+            {"icon" in badge && badge.icon && (
+              <Flame size={9} className="fill-amber-400 text-amber-400" />
+            )}
+            {badge.label}
+          </span>
+        </div>
+
+        {/* Wishlist Heart (Top-Right) */}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setIsLiked((v) => !v); }}
+          className={`absolute top-2.5 right-2.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all duration-300 shrink-0 active:scale-90 transform-gpu shadow-sm ${
+            isLiked
+              ? "bg-rose-500 border-rose-500 text-white"
+              : "bg-white/80 backdrop-blur-md border-black/5 text-[#042b24]/60 hover:text-rose-500 hover:bg-white"
+          }`}
         >
+          <Heart size={13} className={isLiked ? "fill-white" : ""} />
+        </button>
+
+        {/* Product Image */}
+        <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
           <Image
-            src={isValidImageUrl(product.imageUrl || (product as any).mainImage) ? getOptimizedUrl(product.imageUrl || (product as any).mainImage, 400) : "/placeholder-product.png"}
+            src={imgSrc}
             alt={product.name}
             fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover transition-all duration-700 ease-out group-hover:blur-[4px] group-hover:opacity-40"
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 28vw, 20vw"
+            className="object-contain p-1 sm:p-2 transition-transform duration-500 ease-out group-hover:scale-105"
             priority={priority}
           />
+        </div>
+      </div>
 
-          {/* Badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
-            {(product.hot || product.trending) && (
-              <span className="bg-red-600 text-white text-[7px] px-1.5 py-0.5 font-black uppercase tracking-tight rounded-sm shadow-lg flex items-center gap-0.5 border border-white/10">
-                <Flame size={8} className="fill-white" />
-                HOT
+      {/* ── Info Area ── */}
+      <div className="flex flex-col flex-1 justify-between p-2.5 sm:p-3.5 bg-white/30">
+        <div>
+          {/* Brand */}
+          <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#042b24]/50 mb-0.5 leading-none truncate">
+            {brandName}
+          </p>
+
+          {/* Product Name */}
+          <h3 className="font-serif font-bold text-xs sm:text-sm md:text-base text-[#042b24] leading-snug line-clamp-2 min-h-[2rem] sm:min-h-[2.4rem] group-hover:text-black transition-colors mb-1">
+            {product.name}
+          </h3>
+
+          {/* Stars */}
+          <div className="flex items-center gap-1 mb-1.5">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  size={9}
+                  className={i < Math.round(rating) ? "text-amber-400 fill-amber-400" : "text-slate-200 fill-slate-200"}
+                />
+              ))}
+            </div>
+            <span className="text-[9px] font-bold text-[#52736b]">({reviewCount})</span>
+          </div>
+        </div>
+
+        <div>
+          {/* Price */}
+          <div className="flex items-baseline gap-1.5 mb-2">
+            <Price
+              amount={hasDiscount ? salePrice : displayPrice}
+              className="text-xs sm:text-base font-black text-[#042b24]"
+              countryPrices={product.countryPrices as CountryPrice[]}
+            />
+            {hasDiscount && (
+              <span className="text-[10px] text-[#72ccbd] line-through font-bold">
+                <Price amount={displayPrice} countryPrices={product.countryPrices as CountryPrice[]} />
               </span>
             )}
           </div>
 
-          
-        </div>
-
-        {/* Hover Background (desktop only) */}
-        <div className="hidden md:block h-bg absolute top-0 left-0 w-full h-full bg-gradient-to-br from-emerald-600/95 to-teal-600/95 backdrop-blur-sm -translate-x-full transition-all duration-700 ease-out group-hover:translate-x-0"></div>
-
-        {/* Cart Overlay - Shows on Hover (desktop only) */}
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none hidden md:flex flex-col items-center justify-center">
-          {/* Price - Shows on Hover */}
-          <div className="mb-3 text-lg sm:text-xl font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 text-center">
-            <span className="text-[0.65em] font-bold uppercase tracking-wider text-white block mb-1">{brandName}</span>
-            <span className="text-[0.55em] font-medium text-white/80 block line-clamp-2 px-2">{product.name}</span>
-          </div>
-          
-          {/* Action Buttons - Vertical View */}
-          <div className="flex flex-col gap-2 sm:gap-3 transition-all duration-600 ease-out delay-200 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
-            <button
-              type="button"
-              disabled={isNotAvailable}
-              onClick={(e) => {
-                e.stopPropagation();
-                onOrderNow?.(product);
-              }}
-              className={`bg-white px-3 sm:px-4 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95 pointer-events-auto whitespace-nowrap ${isNotAvailable ? 'text-gray-400 cursor-not-allowed' : 'text-emerald-600 hover:text-emerald-700'}`}
-            >
-              {isNotAvailable ? "Not Available" : (t.product.orderNow || "Order NOW")}
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickView(product);
-              }}
-              className="bg-white text-black px-3 sm:px-4 py-2 rounded-full font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-100 active:scale-95 pointer-events-auto whitespace-nowrap"
-            >
-              {t.product.quickView || "Quick View"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Info Section */}
-      <div className="p-2 sm:p-4 bg-white flex flex-col flex-1 min-h-0">
-        {/* Price and Stock Info Row */}
-        <div className="flex items-center justify-between mb-2 flex-shrink-0">
-          <div className="flex items-baseline gap-2">
-            <Price amount={displayPrice} className="text-sm sm:text-base font-black text-black" countryPrices={product.countryPrices} />
-          </div>
-        </div>
-
-        {/* Product Name */}
-        <div className="h-10 sm:h-12 mb-1 flex items-start overflow-hidden">
-          <h3 className="text-xs sm:text-sm font-bold text-black leading-tight line-clamp-2 break-words">
-            {product.name}
-          </h3>
-        </div>
-        
-        {/* Brand Name - Colorful Badge */}
-        <div className="mb-1 -mt-1">
-          <span className="inline-block text-[8px] sm:text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full font-bold bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
-            {brandName}
-          </span>
-        </div>
-
-        {/* Add to Cart Button */}
-        <div className="mt-1 flex justify-center">
+          {/* Full-width Add to Cart Button */}
           <button
             type="button"
             disabled={isNotAvailable}
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart(product);
-            }}
-            className={`add-to-cart-btn w-full max-w-full ${isNotAvailable ? 'opacity-50 cursor-not-allowed' : ''}`}
-            title={isNotAvailable ? "Not Available" : (t.product.addToCart || "Add to Cart")}
+            onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
+            className={`w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all duration-300 shadow-sm active:scale-[0.98] ${
+              isNotAvailable
+                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                : "bg-[#0c433a] hover:bg-[#072a24] text-white shadow-[#0c433a]/20"
+            }`}
           >
-            <span className="text">{isNotAvailable ? "Not Available" : (t.product.addToCart || "Add to Cart")}</span>
-            <span className="icon">
-              <ShoppingCart size={14} />
-            </span>
+            {isNotAvailable ? (
+              <>
+                <Package size={12} />
+                <span>Out of Stock</span>
+              </>
+            ) : (
+              <>
+                <ShoppingCart size={12} />
+                <span>Add to Cart</span>
+              </>
+            )}
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
-}
+};
 
 const ProductCard = memo(ProductCardComponent, (prevProps, nextProps) => {
-  return prevProps.product.id === nextProps.product.id &&
+  return (
+    prevProps.product.id === nextProps.product.id &&
     prevProps.priority === nextProps.priority &&
-    prevProps.compact === nextProps.compact;
+    prevProps.compact === nextProps.compact
+  );
 });
 
-ProductCard.displayName = 'ProductCard';
+ProductCard.displayName = "ProductCard";
 
 export { ProductCard };
