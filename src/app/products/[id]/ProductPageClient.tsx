@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, Maximize2, Star, ShieldCheck, Truck, RefreshCw, Check, Heart, Plus, Minus, Share2, ShoppingBag, Zap } from "lucide-react";
@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
-import { formatDescription, VisualDescription } from "@/utils/formatText";
+import { VisualDescription } from "@/utils/formatText";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackViewItem, trackAddToCart as trackAddToCartDataLayer } from "@/lib/datalayer";
 import TabbyPromo from "@/components/TabbyPromo";
@@ -165,7 +165,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
             shipping = addressData;
           }
         }
-      } catch (e) {}
+      } catch {}
 
       if (!billing) {
         const guestStr = localStorage.getItem('guest_address');
@@ -174,7 +174,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
             const guestData = JSON.parse(guestStr);
             billing = guestData;
             shipping = guestData;
-          } catch (e) {}
+          } catch {}
         }
       }
 
@@ -280,7 +280,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                 {/* Micro-data image counter */}
                 {allImages.length > 1 && (
                   <div className="absolute bottom-4 left-4 px-3 py-1 bg-black/40 backdrop-blur-md text-white text-[10px] font-mono tracking-widest rounded-full z-10">
-                    [{String(currentImageIndex + 1).padStart(2, '0')} // {String(allImages.length).padStart(2, '0')}]
+                    {`[${String(currentImageIndex + 1).padStart(2, '0')} / ${String(allImages.length).padStart(2, '0')}]`}
                   </div>
                 )}
 
