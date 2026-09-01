@@ -30,8 +30,8 @@ export function Hero() {
         {/* Single 8K Full Cover Studio Background Image */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <Image
-            src="/images/hero-banner-nanobanana-1.png"
-            alt="SHANFA GLOBAL Sky-Fresh Luxury Model Banner"
+            src="/images/hero-banner-2to1-ratio.png"
+            alt="SHANFA GLOBAL Flash Sale Luxury Banner"
             fill
             className="object-cover object-[85%_center] sm:object-[88%_center] lg:object-right"
             priority
