@@ -248,7 +248,7 @@ export function HeroSlider() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white/95 sm:bg-white backdrop-blur-2xl border border-white/90 rounded-full sm:rounded-[2rem] px-2 py-2 sm:px-6 sm:py-4 shadow-[0_12px_35px_rgba(4,43,36,0.08)] grid grid-cols-4 gap-1 sm:gap-4 divide-x divide-black/5 text-[#042b24] items-center"
+          className="bg-white/95 sm:bg-white backdrop-blur-2xl border border-white/90 rounded-2xl sm:rounded-3xl px-3 py-3.5 sm:px-6 sm:py-5 shadow-[0_15px_35px_rgba(4,43,36,0.08)] grid grid-cols-4 gap-1.5 sm:gap-4 divide-x divide-black/5 text-[#042b24] items-center"
         >
           {/* Feature 1 */}
           <div className="flex items-center gap-1 sm:gap-3.5 px-0.5 sm:px-3 justify-center sm:justify-start group min-w-0">
