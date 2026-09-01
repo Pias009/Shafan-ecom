@@ -395,7 +395,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
               </div>
 
               {!isOutOfStock && isAvailable && (
-                <div className="flex flex-col gap-2 bg-white/40 backdrop-blur-md p-3 rounded-2xl border border-white/60">
+                <div className="space-y-1.5 p-2 sm:p-3 bg-white/50 backdrop-blur-md rounded-2xl border border-white/70 shadow-sm overflow-hidden text-xs">
                   <TabbyPromo 
                     price={displayPrice} 
                     currency={priceInfo.currency?.toUpperCase() || 'AED'} 
@@ -412,26 +412,26 @@ export default function ProductPageClient({ product, recommendations, reviews = 
               )}
 
               {/* Quantity Counter & Action Buttons */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-3">
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-center gap-2 sm:gap-3">
                   {/* Quantity selector */}
-                  <div className="flex items-center bg-white/80 backdrop-blur-md border border-white rounded-2xl p-1 shadow-sm">
+                  <div className="flex items-center bg-white/80 backdrop-blur-md border border-white rounded-2xl p-1 shadow-sm shrink-0">
                     <button
                       onClick={() => setQuantity(q => Math.max(1, q - 1))}
                       disabled={quantity <= 1 || isOutOfStock}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-[#042b24] hover:bg-black/5 disabled:opacity-30 transition-all"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-[#042b24] hover:bg-black/5 disabled:opacity-30 transition-all"
                     >
-                      <Minus size={16} />
+                      <Minus size={15} />
                     </button>
-                    <span className="w-10 text-center font-mono font-black text-sm text-[#042b24]">
+                    <span className="w-8 sm:w-10 text-center font-mono font-black text-xs sm:text-sm text-[#042b24]">
                       {quantity}
                     </span>
                     <button
                       onClick={() => setQuantity(q => q + 1)}
                       disabled={isOutOfStock}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-[#042b24] hover:bg-black/5 disabled:opacity-30 transition-all"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-[#042b24] hover:bg-black/5 disabled:opacity-30 transition-all"
                     >
-                      <Plus size={16} />
+                      <Plus size={15} />
                     </button>
                   </div>
 
@@ -439,10 +439,10 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                   <button
                     onClick={() => addToCart()}
                     disabled={isAddingToCart || isOutOfStock}
-                    className={`flex-1 h-12 sm:h-14 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 border shadow-sm ${
+                    className={`flex-1 h-11 sm:h-13 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 border shadow-sm ${
                       isOutOfStock
                         ? 'bg-white/20 border-white/30 text-[#042b24]/40 cursor-not-allowed'
-                        : 'bg-white/80 backdrop-blur-md border-white text-[#042b24] hover:bg-white hover:shadow-lg active:scale-[0.98]'
+                        : 'bg-white/90 backdrop-blur-md border-white text-[#042b24] hover:bg-white hover:shadow-md active:scale-[0.98]'
                     }`}
                   >
                     {isAddingToCart ? <Check size={16} className="text-emerald-600" /> : <ShoppingBag size={16} />}
@@ -450,33 +450,33 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                   </button>
                 </div>
 
-                {/* Order Now Desktop Button */}
+                {/* Buy Now Desktop Button */}
                 <button
                   onClick={() => orderNow()}
                   disabled={isOutOfStock}
-                  className={`w-full h-12 sm:h-14 rounded-2xl font-black uppercase tracking-wider text-xs sm:text-sm transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 ${
+                  className={`w-full h-11 sm:h-13 rounded-2xl font-black uppercase tracking-wider text-xs sm:text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 ${
                     isOutOfStock
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-50 shadow-none'
                       : 'bg-[#0c433a] hover:bg-[#072a24] text-white shadow-[#0c433a]/20'
                   }`}
                 >
                   <Zap size={16} className="fill-white" />
-                  {isOutOfStock ? 'Available Soon' : 'Instant Checkout (Order Now)'}
+                  {isOutOfStock ? 'Available Soon' : 'Buy Now'}
                 </button>
               </div>
 
-              {/* Accordion / Tabs */}
+              {/* Accordion / Description Tabs */}
               {availableTabs.length > 0 && (
-                <div className="space-y-4 pt-4 border-t border-black/5">
-                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide border-b border-black/5">
+                <div className="space-y-3 pt-3 border-t border-black/5">
+                  <div className="flex gap-1 p-1 bg-black/5 rounded-2xl overflow-x-auto scrollbar-hide">
                     {availableTabs.map(tab => (
                       <button
                         key={tab.key}
                         onClick={() => setShowDescription(tab.key)}
-                        className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all whitespace-nowrap ${
+                        className={`flex-1 min-w-[90px] py-2 px-3 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all text-center whitespace-nowrap ${
                           showDescription === tab.key
                             ? 'bg-[#0c433a] text-white shadow-sm'
-                            : 'text-[#042b24]/60 hover:text-[#042b24] hover:bg-white/40'
+                            : 'text-[#042b24]/70 hover:text-[#042b24] hover:bg-white/40'
                         }`}
                       >
                         {tab.label}
@@ -488,11 +488,11 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                     {showDescription && (product as any)[showDescription] && (
                       <motion.div
                         key={showDescription}
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
+                        exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.2 }}
-                        className="py-1 text-sm leading-relaxed text-[#042b24]/90"
+                        className="p-4 sm:p-5 bg-white/70 backdrop-blur-md rounded-2xl border border-white/80 shadow-sm text-xs sm:text-sm leading-relaxed text-[#042b24]/90"
                       >
                         <VisualDescription description={(product as any)[showDescription] as string} />
                       </motion.div>

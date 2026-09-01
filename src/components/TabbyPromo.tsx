@@ -90,7 +90,7 @@ export default function TabbyPromo({ price, currency, publicKey, merchantCode, i
       key={`${id}-${price}-${currency}-${resolvedMerchantCode}`} // Force fresh mount on configuration change
       id={id} 
       ref={containerRef} 
-      className="my-4 min-h-[50px] w-full" 
+      className="my-0.5 w-full overflow-hidden" 
     />
   );
 }
