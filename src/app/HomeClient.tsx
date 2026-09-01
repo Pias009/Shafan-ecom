@@ -3,7 +3,6 @@
 import { useMemo, useState, useEffect, Suspense, useRef, memo } from "react";
 import { CategorySection } from "@/components/CategorySection";
 import { HeroSlider } from "@/components/HeroSlider";
-import { HeroPromoCardsSection } from "@/components/HeroPromoCardsSection";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { OfferBannersSection } from "@/components/OfferBannersSection";
@@ -360,7 +359,6 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
       </div>
 
       <HeroSlider />
-      <HeroPromoCardsSection />
 
       <main className="mx-auto max-w-[1536px] w-full px-2 sm:px-4 lg:px-6 pb-20 flex-1 overflow-x-hidden z-10">
 
