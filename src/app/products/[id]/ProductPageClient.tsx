@@ -587,14 +587,40 @@ export default function ProductPageClient({ product, recommendations, reviews = 
 
         {/* Customer Reviews Section */}
         <section className="space-y-8 mb-16 sm:mb-24">
-          <div className="flex items-center gap-6">
-            <h2 className="text-2xl sm:text-4xl font-serif font-black tracking-tight text-[#042b24]">Customer Reviews</h2>
-            <div className="h-[1px] flex-1 bg-[#042b24]/10" />
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <h2 className="text-2xl sm:text-4xl font-serif font-black tracking-tight text-[#042b24]">Customer Reviews</h2>
+              <div className="h-[1px] flex-1 bg-[#042b24]/10 hidden sm:block" />
+            </div>
+
+            {/* Slider Navigation Arrows */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const el = document.getElementById('reviews-slider-container');
+                  if (el) el.scrollBy({ left: -320, behavior: 'smooth' });
+                }}
+                className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-white text-[#042b24] hover:bg-white flex items-center justify-center active:scale-90 transition-all"
+                aria-label="Previous Reviews"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => {
+                  const el = document.getElementById('reviews-slider-container');
+                  if (el) el.scrollBy({ left: 320, behavior: 'smooth' });
+                }}
+                className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-white text-[#042b24] hover:bg-white flex items-center justify-center active:scale-90 transition-all"
+                aria-label="Next Reviews"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             {/* Scorecard */}
-            <div className="lg:col-span-4 bg-white/70 backdrop-blur-2xl rounded-3xl p-6 border border-white/60 shadow-sm space-y-6">
+            <div className="lg:col-span-4 bg-white/70 backdrop-blur-2xl rounded-3xl p-6 border border-white/60 shadow-sm space-y-6 flex flex-col justify-between">
               <div className="text-center space-y-2">
                 <div className="text-5xl font-black text-[#042b24]">
                   {(product.averageRating > 0 ? product.averageRating : 4.9).toFixed(1)}
@@ -651,63 +677,89 @@ export default function ProductPageClient({ product, recommendations, reviews = 
               </div>
             </div>
 
-            {/* Reviews */}
-            <div className="lg:col-span-8 space-y-3">
-              {(reviews && reviews.length > 0 ? reviews : [
-                {
-                  id: "fallback-1",
-                  authorName: "Sarah M.",
-                  rating: 5,
-                  text: "Absolutely outstanding product! My skin feels incredibly nourished and radiant. Highly recommend it to anyone looking for natural luxury skin care.",
-                  date: new Date("2026-05-10")
-                },
-                {
-                  id: "fallback-2",
-                  authorName: "Aisha K.",
-                  rating: 5,
-                  text: "The texture is beautiful and it absorbs so quickly without being greasy. Already seeing a visible improvement in my skin tone and hydration levels. Will buy again!",
-                  date: new Date("2026-05-08")
-                },
-                {
-                  id: "fallback-3",
-                  authorName: "Fatima A.",
-                  rating: 5,
-                  text: "High quality skincare at its best! Love the botanical ingredients and the subtle, elegant natural scent. Highly recommended for sensitive skin.",
-                  date: new Date("2026-05-05")
-                }
-              ]).map((rev: any) => (
-                <div
-                  key={rev.id}
-                  className="bg-white/70 backdrop-blur-2xl rounded-3xl p-5 border border-white/60 shadow-sm space-y-2.5"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#0c433a] flex items-center justify-center text-white font-black text-xs uppercase">
-                        {rev.authorName ? rev.authorName.charAt(0) : rev.author_name ? rev.author_name.charAt(0) : "U"}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-[#042b24] text-xs sm:text-sm">
-                          {rev.authorName || rev.author_name || "Verified Customer"}
-                        </h4>
-                        <div className="flex gap-0.5">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`w-3 h-3 ${star <= rev.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"}`}
-                            />
-                          ))}
+            {/* Reviews Horizontal Touch Slider */}
+            <div className="lg:col-span-8 overflow-hidden">
+              <div
+                id="reviews-slider-container"
+                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-1 px-0.5 h-full"
+              >
+                {(reviews && reviews.length > 0 ? reviews : [
+                  {
+                    id: "fallback-1",
+                    authorName: "Sarah M.",
+                    rating: 5,
+                    text: "Absolutely outstanding product! My skin feels incredibly nourished and radiant. Highly recommend it to anyone looking for natural luxury skin care.",
+                    date: new Date("2026-05-10")
+                  },
+                  {
+                    id: "fallback-2",
+                    authorName: "Aisha K.",
+                    rating: 5,
+                    text: "The texture is beautiful and it absorbs so quickly without being greasy. Already seeing a visible improvement in my skin tone and hydration levels. Will buy again!",
+                    date: new Date("2026-05-08")
+                  },
+                  {
+                    id: "fallback-3",
+                    authorName: "Fatima A.",
+                    rating: 5,
+                    text: "High quality skincare at its best! Love the botanical ingredients and the subtle, elegant natural scent. Highly recommended for sensitive skin.",
+                    date: new Date("2026-05-05")
+                  },
+                  {
+                    id: "fallback-4",
+                    authorName: "Sana Yaqoob",
+                    rating: 5,
+                    text: "Very loving and kind staff first of all. And the products are bomb very very good.",
+                    date: new Date("2026-04-22")
+                  },
+                  {
+                    id: "fallback-5",
+                    authorName: "Qadir Mahal",
+                    rating: 5,
+                    text: "Thanks for brilliant product. Scent and feel is unmatched.",
+                    date: new Date("2026-03-17")
+                  }
+                ]).map((rev: any) => (
+                  <div
+                    key={rev.id}
+                    className="w-[82vw] max-w-[340px] sm:w-[360px] shrink-0 snap-start bg-white/80 backdrop-blur-2xl rounded-3xl p-5 border border-white/60 shadow-sm flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#0c433a] flex items-center justify-center text-white font-black text-xs uppercase shadow-sm">
+                            {rev.authorName ? rev.authorName.charAt(0) : rev.author_name ? rev.author_name.charAt(0) : "U"}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-[#042b24] text-xs sm:text-sm">
+                              {rev.authorName || rev.author_name || "Verified Customer"}
+                            </h4>
+                            <div className="flex gap-0.5 mt-0.5">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={`w-3 h-3 ${star <= rev.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
+                      <p className="text-[#042b24]/90 text-xs sm:text-sm leading-relaxed italic">
+                        "{rev.text}"
+                      </p>
                     </div>
-                    <span className="text-[9px] font-bold text-[#042b24]/40 uppercase tracking-wider">
-                      {rev.date ? new Date(rev.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "Verified Purchase"}
-                    </span>
+                    <div className="pt-2 border-t border-black/5 flex items-center justify-between">
+                      <span className="text-[9px] font-black text-[#042b24]/50 uppercase tracking-widest">
+                        {rev.date ? new Date(rev.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "Verified Purchase"}
+                      </span>
+                      <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-800 text-[8px] font-black uppercase tracking-wider rounded-full">
+                        Verified
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-[#042b24]/80 text-xs leading-relaxed italic">
-                    "{rev.text}"
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </section>
