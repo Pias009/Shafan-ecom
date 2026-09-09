@@ -162,10 +162,10 @@ const ProductCardComponent = function ProductCard({
         }}
         className="group relative bg-gradient-to-b from-white via-[#fcfbfd] to-[#f6eff5] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-black/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden"
       >
-        {/* ── Image Stage (Full Product Fit, Zero Top Crop, 3D Floating Layer) ── */}
+        {/* ── Image Stage (Full Product Fit, Zero Top Crop, 8% Height Reduction) ── */}
         <div
           style={{ transformStyle: "preserve-3d" }}
-          className="relative aspect-square w-full bg-gradient-to-b from-white to-pink-50/15 border-b border-gray-100/80 flex items-center justify-center p-2.5 sm:p-3.5 pt-3 sm:pt-4"
+          className="relative aspect-[1/0.92] w-full bg-gradient-to-b from-white to-pink-50/15 border-b border-gray-100/80 flex items-center justify-center p-2 sm:p-3 pt-2.5 sm:pt-3.5"
         >
           {/* Badge (Top-Left) */}
           <div
@@ -211,13 +211,13 @@ const ProductCardComponent = function ProductCard({
           </div>
         </div>
 
-        {/* ── Info Area (Original Clean Layout Restored) ── */}
+        {/* ── Info Area (Original Clean Layout Restored, 8% Height Trim) ── */}
         <div
           style={{ transform: "translateZ(18px)" }}
           className={`flex flex-col flex-1 justify-between bg-transparent ${
             compact
-              ? "p-1.5 sm:p-2 pb-2 sm:pb-2.5 gap-0.5"
-              : "p-2 sm:p-2.5 pb-2.5 sm:pb-3 gap-0.5 sm:gap-1"
+              ? "p-1.5 sm:p-2 pb-1.5 sm:pb-2 gap-0.5"
+              : "p-1.5 sm:p-2.5 pb-2 sm:pb-2.5 gap-0.5 sm:gap-1"
           }`}
         >
           <div className="flex flex-col gap-0.5">
