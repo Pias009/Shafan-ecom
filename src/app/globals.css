@@ -100,6 +100,41 @@ body {
   42% { transform: scale(1.08); }
 }
 
+/* Handwriting / Drawing Text Stroke Animation for Routine Section */
+@keyframes strokeDraw {
+  0% {
+    stroke-dasharray: 500;
+    stroke-dashoffset: 500;
+    fill: transparent;
+    stroke-width: 1.8px;
+    opacity: 0.2;
+  }
+  20% {
+    opacity: 1;
+  }
+  60% {
+    stroke-dasharray: 500;
+    stroke-dashoffset: 0;
+    fill: transparent;
+    stroke-width: 1.5px;
+  }
+  85%, 100% {
+    stroke-dasharray: 500;
+    stroke-dashoffset: 0;
+    fill: #890754;
+    stroke-width: 0.5px;
+    opacity: 1;
+  }
+}
+
+.routine-draw-text {
+  stroke: #890754;
+  fill: transparent;
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: strokeDraw 3.8s cubic-bezier(0.25, 1, 0.5, 1) infinite alternate;
+}
+
 /* Prevent horizontal overflow on very small screens */
 @media (max-width: 640px) {
   .max-w-7xl {
