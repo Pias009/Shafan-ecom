@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, ShoppingCart, Heart } from "lucide-react";
-import { Price } from "./Price";
-import { useLanguageStore } from "@/lib/language-store";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ProductCard } from "@/components/ProductCard";
 
 interface FlashSaleProduct {
   id: string;
@@ -27,7 +25,6 @@ interface FlashSaleProduct {
   countryPrices?: any[];
   hot?: boolean;
   trending?: boolean;
-  shortDescription?: string;
 }
 
 interface FlashSalesSliderProps {
@@ -37,16 +34,38 @@ interface FlashSalesSliderProps {
   orderNow: (product: any) => void;
 }
 
+function transformProduct(product: any) {
+  const price = product.price || product.priceCents || 0;
+  const salePrice = product.discountPrice || product.salePrice || product.salePriceCents || 0;
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    price: price,
+    discountPrice: salePrice > 0 ? salePrice : undefined,
+    salePrice: salePrice > 0 ? salePrice : undefined,
+    imageUrl: product.imageUrl || product.mainImage || "/placeholder-product.png",
+    mainImage: product.mainImage || product.imageUrl,
+    brand: product.brandName || (typeof product.brand === "string" ? product.brand : product.brand?.name) || "Shafan",
+    averageRating: product.averageRating,
+    ratingCount: product.ratingCount,
+    stockQuantity: product.stockQuantity,
+    totalSales: product.totalSales,
+    countryPrices: product.countryPrices,
+    hot: product.hot,
+    trending: product.trending,
+    freeDelivery: product.freeDelivery,
+  };
+}
+
 export function FlashSalesSlider({
   products,
   onQuickView,
   addToCart,
+  orderNow,
 }: FlashSalesSliderProps) {
   const router = useRouter();
-  const { currentLanguage } = useLanguageStore();
-  const isAr = currentLanguage?.code === "ar";
   const [activeIndex, setActiveIndex] = useState(2);
-  const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [windowWidth, setWindowWidth] = useState(1200);
 
@@ -75,23 +94,6 @@ export function FlashSalesSlider({
     setActiveIndex((prev) => (prev + 1) % total);
   };
 
-  const toggleWishlist = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setWishlist((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleCardClick = (product: FlashSaleProduct, diff: number) => {
-    if (diff !== 0) {
-      setActiveIndex(products.findIndex((p) => p.id === product.id));
-    } else {
-      if (onQuickView) {
-        onQuickView(product);
-      } else if (product.slug || product.id) {
-        router.push(`/products/${product.slug || product.id}`);
-      }
-    }
-  };
-
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -108,17 +110,16 @@ export function FlashSalesSlider({
     setTouchStart(null);
   };
 
-  // Compact spacing matching Routine section product card footprint
   const isMobile = windowWidth < 640;
   const isTablet = windowWidth >= 640 && windowWidth < 1024;
-  const step = isMobile ? 112 : isTablet ? 142 : 172;
+  const step = isMobile ? 118 : isTablet ? 148 : 180;
 
   return (
     <div className="w-full py-1 select-none overflow-hidden">
       <div className="max-w-[1536px] mx-auto">
-        {/* 3D Coverflow Product Carousel Track - Compact Routine Card Scale */}
+        {/* Coverflow Carousel Track — Routine Section ProductCard Style & Size */}
         <div
-          className="relative w-full h-[265px] sm:h-[295px] md:h-[315px] flex items-center justify-center"
+          className="relative w-full h-[255px] sm:h-[285px] md:h-[310px] flex items-center justify-center"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
@@ -126,7 +127,7 @@ export function FlashSalesSlider({
           <button
             onClick={handlePrev}
             aria-label="Previous flash deal"
-            className="no-min-size absolute left-0.5 sm:left-3 md:left-6 top-1/2 -translate-y-1/2 z-40 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.12)] border border-gray-100 flex items-center justify-center text-neutral-700 hover:text-neutral-900 hover:scale-110 active:scale-95 transition-all"
+            className="no-min-size absolute left-0.5 sm:left-3 md:left-6 top-1/2 -translate-y-1/2 z-40 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.12)] border border-pink-100 flex items-center justify-center text-neutral-700 hover:text-[#890754] hover:scale-110 active:scale-95 transition-all"
             style={{ minWidth: 0, minHeight: 0 }}
           >
             <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
@@ -136,7 +137,7 @@ export function FlashSalesSlider({
           <button
             onClick={handleNext}
             aria-label="Next flash deal"
-            className="no-min-size absolute right-0.5 sm:right-3 md:right-6 top-1/2 -translate-y-1/2 z-40 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.12)] border border-gray-100 flex items-center justify-center text-neutral-700 hover:text-neutral-900 hover:scale-110 active:scale-95 transition-all"
+            className="no-min-size absolute right-0.5 sm:right-3 md:right-6 top-1/2 -translate-y-1/2 z-40 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shadow-[0_3px_12px_rgba(0,0,0,0.12)] border border-pink-100 flex items-center justify-center text-neutral-700 hover:text-[#890754] hover:scale-110 active:scale-95 transition-all"
             style={{ minWidth: 0, minHeight: 0 }}
           >
             <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
@@ -155,151 +156,46 @@ export function FlashSalesSlider({
               const isActive = diff === 0;
               const isNeighbor = Math.abs(diff) === 1;
 
-              const scale = isActive ? 1.06 : isNeighbor ? 0.88 : 0.75;
+              const scale = isActive ? 1.05 : isNeighbor ? 0.88 : 0.74;
               const zIndex = isActive ? 30 : isNeighbor ? 20 : 10;
               const opacity = isActive ? 1 : isNeighbor ? (isMobile ? 0.58 : 0.88) : 0.65;
               const offsetX = diff * step;
 
-              const isLiked = !!wishlist[product.id];
-              const imgSrc = product.imageUrl || product.mainImage || "/placeholder-product.png";
-              const rawPrice = product.price || product.priceCents || 0;
-              const rawSalePrice = product.discountPrice || product.salePrice || product.salePriceCents;
-              const hasDiscount = rawSalePrice && rawSalePrice < rawPrice;
-              const displayPrice = hasDiscount ? rawSalePrice : rawPrice;
-              const discountPct = hasDiscount && rawPrice > 0 ? Math.round(((rawPrice - rawSalePrice) / rawPrice) * 100) : null;
-
-              const rating = product.averageRating ? product.averageRating.toFixed(1) : "4.9";
-              const reviews = product.ratingCount || 60 + ((i * 19) % 55);
-              const brandName = typeof product.brand === "string" ? product.brand : product.brand?.name || product.brandName || "Shafan";
-              const shortDesc = product.shortDescription || `${brandName} clinical formula for radiant glow.`;
+              const transformed = transformProduct(product);
 
               return (
                 <div
                   key={product.id}
-                  onClick={() => handleCardClick(product, diff)}
+                  onClickCapture={(e) => {
+                    if (diff !== 0) {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setActiveIndex(products.findIndex((p) => p.id === product.id));
+                    }
+                  }}
                   style={{
                     transform: `translate(calc(-50% + ${offsetX}px), -50%) scale(${scale})`,
                     zIndex,
                     opacity,
-                    transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease-out, box-shadow 0.35s ease-out",
+                    transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease-out",
                   }}
-                  className={`absolute top-1/2 left-1/2 w-[130px] sm:w-[155px] md:w-[178px] rounded-xl sm:rounded-2xl bg-white p-2 sm:p-2.5 md:p-3 flex flex-col justify-between cursor-pointer border select-none transition-shadow ${
-                    isActive
-                      ? "border-[#ebdccb] shadow-[0_14px_30px_-8px_rgba(70,45,25,0.13),0_4px_12px_-3px_rgba(0,0,0,0.04)]"
-                      : "border-[#ede4d8] shadow-[0_6px_16px_-4px_rgba(70,45,25,0.06)] hover:shadow-md"
-                  }`}
+                  className="absolute top-1/2 left-1/2 w-[130px] sm:w-[155px] md:w-[178px] cursor-pointer select-none"
                 >
-                  {/* Top Bar: Pill Tag + Heart */}
-                  <div className="flex items-center justify-between w-full mb-0.5">
-                    {discountPct ? (
-                      <span className="px-1.5 py-0.5 rounded-full text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider bg-[#fbf0e8] text-[#b44b20] border border-[#f2d8c9]">
-                        {discountPct}% OFF
-                      </span>
-                    ) : (
-                      <span className="px-1.5 py-0.5 rounded-full text-[7.5px] sm:text-[8px] font-black uppercase tracking-wider bg-[#f5ede2] text-[#8a653e] border border-[#ebdccb]">
-                        {isAr ? "عرض" : "DEAL"}
-                      </span>
-                    )}
-                    <button
-                      onClick={(e) => toggleWishlist(e, product.id)}
-                      aria-label="Save to wishlist"
-                      className="no-min-size w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white hover:bg-neutral-50 border border-gray-100 shadow-2xs flex items-center justify-center transition-colors"
-                      style={{ minWidth: 0, minHeight: 0 }}
-                    >
-                      <Heart
-                        size={11}
-                        className={isLiked ? "text-rose-500 fill-rose-500" : "text-gray-400 hover:text-rose-500"}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Clean Floating Product Image - Routine Card Proportion */}
-                  <div className="relative w-full h-[88px] sm:h-[105px] md:h-[118px] flex items-center justify-center my-0.5 pointer-events-none">
-                    <Image
-                      src={imgSrc}
-                      alt={product.name}
-                      fill
-                      sizes="(max-width: 640px) 140px, 190px"
-                      className="object-contain p-1 transition-transform duration-500 hover:scale-105"
-                      priority={isActive}
-                    />
-                  </div>
-
-                  {/* Micro 3-Dots below image */}
-                  <div className="flex items-center justify-center gap-1 my-0.5 pointer-events-none">
-                    <span className="w-1 h-1 rounded-full bg-[#a67c52]" />
-                    <span className="w-1 h-1 rounded-full bg-[#e3d7cb]" />
-                    <span className="w-1 h-1 rounded-full bg-[#e3d7cb]" />
-                  </div>
-
-                  {/* Title & Description */}
-                  <div className="flex flex-col mt-0.5">
-                    <h3 className="font-serif font-bold text-[10.5px] sm:text-[11.5px] md:text-xs text-gray-900 line-clamp-1 group-hover:text-[#890754] transition-colors leading-snug">
-                      {product.name}
-                    </h3>
-                    <p className="text-[8px] sm:text-[9px] text-gray-500 font-normal line-clamp-1 sm:line-clamp-2 leading-tight mt-0.5 min-h-[11px] sm:min-h-[22px]">
-                      {shortDesc}
-                    </p>
-
-                    {/* Star Rating */}
-                    <div className="flex items-center gap-0.5 mt-0.5 text-[8.5px] sm:text-[9.5px] font-semibold text-gray-800">
-                      <span className="text-amber-500 text-[10px] leading-none">★</span>
-                      <span>{rating}</span>
-                      <span className="text-gray-400 font-normal">({reviews})</span>
-                    </div>
-                  </div>
-
-                  {/* Bottom Action Bar: Price + Add to Cart Button */}
-                  <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-gray-100/80">
-                    <div className="flex flex-col">
-                      <Price
-                        amount={displayPrice}
-                        countryPrices={product.countryPrices}
-                        className="font-serif font-bold text-[11.5px] sm:text-[13px] md:text-sm text-gray-900"
-                      />
-                      {hasDiscount && (
-                        <Price
-                          amount={rawPrice}
-                          countryPrices={product.countryPrices}
-                          className="text-[8.5px] sm:text-[9px] text-gray-400 line-through font-medium -mt-0.5"
-                        />
-                      )}
-                    </div>
-
-                    {/* Reference UI Action Button */}
-                    {isActive ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(product);
-                        }}
-                        className="no-min-size inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg bg-[#b0875c] hover:bg-[#99734b] active:scale-95 text-white text-[9px] sm:text-[10px] font-bold shadow-2xs transition-all"
-                        style={{ minWidth: 0, minHeight: 0 }}
-                      >
-                        <ShoppingCart size={10} className="stroke-[2.2]" />
-                        <span>Add</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(product);
-                        }}
-                        aria-label="Add to cart"
-                        className="no-min-size w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-[#f5ede2] hover:bg-[#b0875c] text-[#8a653e] hover:text-white active:scale-95 flex items-center justify-center transition-all shadow-2xs"
-                        style={{ minWidth: 0, minHeight: 0 }}
-                      >
-                        <ShoppingCart size={11} className="stroke-[2.2]" />
-                      </button>
-                    )}
-                  </div>
+                  <ProductCard
+                    product={transformed}
+                    onQuickView={onQuickView}
+                    onAddToCart={addToCart}
+                    onOrderNow={orderNow}
+                    compact={true}
+                    priority={isActive}
+                  />
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Bottom Pagination Dots: 5 Small Circles matching Reference UI */}
+        {/* Bottom Pagination Dots */}
         <div className="flex items-center justify-center gap-1.5 mt-3 select-none">
           {Array.from({ length: Math.min(5, total) }).map((_, dotIdx) => {
             const isCurrent = dotIdx === activeIndex % Math.min(5, total);
@@ -310,8 +206,8 @@ export function FlashSalesSlider({
                 aria-label={`Go to slide ${dotIdx + 1}`}
                 className={`no-min-size transition-all duration-300 rounded-full ${
                   isCurrent
-                    ? "bg-[#a67c52]"
-                    : "border border-[#d4c5b5] bg-transparent hover:border-[#a67c52]"
+                    ? "bg-[#890754]"
+                    : "border border-pink-200 bg-transparent hover:border-[#890754]"
                 }`}
                 style={{
                   width: "7px",

@@ -210,11 +210,10 @@ export function TrendingNowSlider({
                     opacity,
                     transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease-out, box-shadow 0.35s ease-out",
                   }}
-                  className={`absolute top-1/2 left-1/2 w-[130px] sm:w-[155px] md:w-[178px] rounded-xl sm:rounded-2xl bg-white p-2 sm:p-2.5 md:p-3 flex flex-col justify-between cursor-pointer border select-none transition-shadow ${
-                    isActive
+                  className={`absolute top-1/2 left-1/2 w-[130px] sm:w-[155px] md:w-[178px] rounded-xl sm:rounded-2xl bg-white p-2 sm:p-2.5 md:p-3 flex flex-col justify-between cursor-pointer border select-none transition-shadow ${isActive
                       ? "border-[#ebdccb] shadow-[0_14px_30px_-8px_rgba(70,45,25,0.13),0_4px_12px_-3px_rgba(0,0,0,0.04)]"
                       : "border-[#ede4d8] shadow-[0_6px_16px_-4px_rgba(70,45,25,0.06)] hover:shadow-md"
-                  }`}
+                    }`}
                 >
                   {/* Top Bar: Pill Tag + Heart Wishlist */}
                   <div className="flex items-center justify-between w-full mb-0.5">
@@ -322,11 +321,10 @@ export function TrendingNowSlider({
                 key={dotIdx}
                 onClick={() => setActiveIndex(dotIdx)}
                 aria-label={`Go to slide ${dotIdx + 1}`}
-                className={`no-min-size transition-all duration-300 rounded-full ${
-                  isCurrent
+                className={`no-min-size transition-all duration-300 rounded-full ${isCurrent
                     ? "bg-[#a67c52]"
                     : "border border-[#d4c5b5] bg-transparent hover:border-[#a67c52]"
-                }`}
+                  }`}
                 style={{
                   width: "7px",
                   height: "7px",
