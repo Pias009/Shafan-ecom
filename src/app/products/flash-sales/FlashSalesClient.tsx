@@ -137,6 +137,7 @@ export default function FlashSalesClient({ products }: FlashSalesClientProps) {
               product={{
                 ...product,
                 price: product.price || 0,
+                discountPrice: (product as any).discountPrice || (product as any).salePrice || (product as any).salePriceCents,
                 imageUrl: product.mainImage,
                 brand: product.brandName || product.brand?.name,
               }}

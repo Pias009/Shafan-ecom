@@ -29,6 +29,29 @@ const BlogShowcase = dynamic(() => import("@/components/BlogShowcase").then(m =>
 const GoogleReviewsSection = dynamic(() => import("@/components/GoogleReviewsSection").then(m => m.GoogleReviewsSection), { ssr: false });
 const BrandMarquee = dynamic(() => import("@/components/BrandMarquee").then(m => m.BrandMarquee), { ssr: false });
 
+function transformProduct(product: any) {
+  return {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    price: product.price || product.priceCents || 0,
+    discountPrice: product.discountPrice || product.salePrice || product.salePriceCents,
+    salePrice: product.discountPrice || product.salePrice || product.salePriceCents,
+    salePriceCents: product.salePriceCents,
+    imageUrl: product.imageUrl || product.mainImage || "/placeholder-product.png",
+    mainImage: product.mainImage || product.imageUrl,
+    brand: product.brandName || (typeof product.brand === "string" ? product.brand : product.brand?.name) || "Generic",
+    averageRating: product.averageRating,
+    ratingCount: product.ratingCount,
+    stockQuantity: product.stockQuantity,
+    totalSales: product.totalSales,
+    countryPrices: product.countryPrices,
+    hot: product.hot,
+    trending: product.trending,
+    freeDelivery: product.freeDelivery,
+  };
+}
+
 const ProductCardItem = memo(function ProductCardItem({ 
   product, 
   onQuickView, 
@@ -36,27 +59,13 @@ const ProductCardItem = memo(function ProductCardItem({
   orderNow, 
   priority 
 }: { 
-  product: { id: string; name: string; price?: number; priceCents?: number; imageUrl?: string; mainImage?: string; brandName?: string; brand?: { name: string }; averageRating?: number; ratingCount?: number; stockQuantity?: number; totalSales?: number; countryPrices?: unknown[] }; 
+  product: any; 
   onQuickView: (p: unknown) => void; 
   addToCart: (p: unknown) => void; 
   orderNow: (p: unknown) => void; 
   priority: boolean;
 }) {
-  const transformed = useMemo(() => {
-    const basePrice = product.price || product.priceCents || 0;
-    return {
-      id: product.id,
-      name: product.name,
-      price: basePrice,
-      imageUrl: product.imageUrl || product.mainImage || "/placeholder-product.png",
-      brand: product.brandName || product.brand?.name || "Generic",
-      averageRating: product.averageRating,
-      ratingCount: product.ratingCount,
-      stockQuantity: product.stockQuantity,
-      totalSales: product.totalSales,
-      countryPrices: product.countryPrices,
-    };
-  }, [product.id, product.name, product.price, product.priceCents, product.imageUrl, product.mainImage, product.brandName, product.brand, product.averageRating, product.ratingCount, product.stockQuantity, product.totalSales, product.countryPrices]);
+  const transformed = useMemo(() => transformProduct(product), [product]);
   return (
     <ProductCard
       product={transformed}
