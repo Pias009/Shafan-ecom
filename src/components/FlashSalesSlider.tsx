@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { ProductCard } from "@/components/ProductCard";
+import { EditorialProductCard } from "@/components/EditorialProductCard";
 
 interface FlashSaleProduct {
   id: string;
@@ -181,12 +181,12 @@ export function FlashSalesSlider({
                   }}
                   className="absolute top-1/2 left-1/2 w-[130px] sm:w-[155px] md:w-[178px] cursor-pointer select-none"
                 >
-                  <ProductCard
+                  <EditorialProductCard
                     product={transformed}
                     onQuickView={onQuickView}
                     onAddToCart={addToCart}
                     onOrderNow={orderNow}
-                    compact={true}
+                    showAddButton={isActive}
                     priority={isActive}
                   />
                 </div>

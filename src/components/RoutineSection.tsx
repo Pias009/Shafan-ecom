@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ChevronUp, ChevronDown, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { ProductCard } from './ProductCard';
+import { EditorialProductCard } from './EditorialProductCard';
 
 interface RoutineBanner {
   id: string;
@@ -252,7 +252,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
           >
             {currentProducts.map((product, idx) => (
               <div key={product.id} className="h-full">
-                <ProductCard
+                <EditorialProductCard
                   product={product}
                   onQuickView={onQuickView}
                   onAddToCart={addToCart}
