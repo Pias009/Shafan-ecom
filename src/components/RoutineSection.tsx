@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, ChevronUp, ChevronDown, Layers } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { ProductCard } from './ProductCard';
 
 interface RoutineBanner {
@@ -27,15 +28,19 @@ interface Props {
 export function RoutineSection({ products, banners = [], onQuickView, addToCart, orderNow }: Props) {
   const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeBanner, setActiveBanner] = useState(0);
 
-  // 3-Row Vertical Slide & Fade-Out on "See" button
+  // Exactly 3 rows: 3 columns x 3 rows = 9 items per set
+  const ITEMS_PER_SET = 9;
+  const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_SET));
+  const [pageIndex, setPageIndex] = useState(0);
+  const [slideDirection, setSlideDirection] = useState<'up' | 'down'>('down');
+
+  // "See All" expansion state & fade-out transition
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
-  const [verticalProgress, setVerticalProgress] = useState(0);
 
-  // Retrigger handwriting stroke drawing animation every time the user visits/scrolls to this section
+  // Retrigger handwriting stroke drawing animation every time user scrolls to this section
   const [animationKey, setAnimationKey] = useState(0);
 
   useEffect(() => {
@@ -58,41 +63,46 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
   const activeBanners = banners.filter((b) => b.active);
   const currentBanner = activeBanners[activeBanner] ?? null;
 
-  // Track vertical scroll progress
-  const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-      const maxScroll = scrollHeight - clientHeight;
-      if (maxScroll > 0) {
-        setVerticalProgress((scrollTop / maxScroll) * 100);
-      } else {
-        setVerticalProgress(0);
-      }
+  // Slide controls
+  const handleSlideUp = () => {
+    if (pageIndex > 0) {
+      setSlideDirection('up');
+      setPageIndex((p) => p - 1);
     }
   };
 
-  // Vertical scroll control (slides up and down by 1 row / step)
-  const scrollVertical = (dir: 'up' | 'down') => {
-    if (scrollContainerRef.current) {
-      const rowStep = Math.max(180, Math.floor(scrollContainerRef.current.clientHeight / 3));
-      scrollContainerRef.current.scrollBy({
-        top: dir === 'up' ? -rowStep : rowStep,
-        behavior: 'smooth',
-      });
+  const handleSlideDown = () => {
+    if (pageIndex < totalPages - 1) {
+      setSlideDirection('down');
+      setPageIndex((p) => p + 1);
     }
   };
 
-  // Interactive track scrubber
+  // Touch swipe support for vertical sliding
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null || isExpanded) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    if (deltaY < -40 && pageIndex < totalPages - 1) {
+      handleSlideDown();
+    } else if (deltaY > 40 && pageIndex > 0) {
+      handleSlideUp();
+    }
+    touchStartY.current = null;
+  };
+
+  // Track click to jump to page
   const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (scrollContainerRef.current) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const clickRatio = (e.clientX - rect.left) / rect.width;
-      const maxScroll = scrollContainerRef.current.scrollHeight - scrollContainerRef.current.clientHeight;
-      scrollContainerRef.current.scrollTo({
-        top: clickRatio * maxScroll,
-        behavior: 'smooth',
-      });
-    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    const targetPage = Math.min(totalPages - 1, Math.max(0, Math.floor(ratio * totalPages)));
+    setSlideDirection(targetPage > pageIndex ? 'down' : 'up');
+    setPageIndex(targetPage);
   };
 
   // Fade-out animation when clicking the "See" button
@@ -105,6 +115,14 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
   };
 
   if (products.length === 0) return null;
+
+  // Products to render: exactly 9 products (3 rows of 3) when compact, or all products when expanded
+  const currentProducts = isExpanded
+    ? products
+    : products.slice(pageIndex * ITEMS_PER_SET, (pageIndex + 1) * ITEMS_PER_SET);
+
+  const thumbWidthPct = Math.max(25, (1 / totalPages) * 100);
+  const thumbMarginLeftPct = totalPages > 1 ? (pageIndex / (totalPages - 1)) * (100 - thumbWidthPct) : 0;
 
   return (
     <section ref={sectionRef} className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-4">
@@ -181,32 +199,38 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
       )}
 
       {/* Routine Products Container */}
-      <div className="relative py-2">
+      <div 
+        className="relative py-2"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Floating Up & Down Buttons (Desktop/Tablet) - Active when in 3-Row sliding mode */}
-        {!isExpanded && (
+        {!isExpanded && totalPages > 1 && (
           <div className="hidden md:flex flex-col gap-2.5 absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 z-20">
             <button
               type="button"
-              onClick={() => scrollVertical('up')}
-              className="w-10 h-10 flex items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
-              aria-label="Slide up to previous routine rows"
-              title="Slide Up"
+              disabled={pageIndex === 0}
+              onClick={handleSlideUp}
+              className="w-10 h-10 flex items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Slide up to previous 3 rows"
+              title="Previous 3 Rows"
             >
               <ChevronUp className="w-5 h-5" />
             </button>
             <button
               type="button"
-              onClick={() => scrollVertical('down')}
-              className="w-10 h-10 flex items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
-              aria-label="Slide down to next routine rows"
-              title="Slide Down"
+              disabled={pageIndex === totalPages - 1}
+              onClick={handleSlideDown}
+              className="w-10 h-10 flex items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+              aria-label="Slide down to next 3 rows"
+              title="Next 3 Rows"
             >
               <ChevronDown className="w-5 h-5" />
             </button>
           </div>
         )}
 
-        {/* 3 Columns Grid, 3-Row Viewport with Fade-Out / Fade-In Transition on "See" click */}
+        {/* 3-Row Grid Viewport with Fade-Out / Fade-In Transition on "See" click & Slide Up/Down */}
         <div
           style={{
             opacity: isFadingOut ? 0 : 1,
@@ -214,34 +238,30 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
             transition: 'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className={`transition-all duration-300 ${
-              isExpanded
-                ? 'max-h-none overflow-visible'
-                : 'max-h-[620px] sm:max-h-[700px] md:max-h-[780px] lg:max-h-[860px] overflow-y-auto scrollbar-hide snap-y snap-mandatory'
-            }`}
+          {/* Exactly 3 Columns, Exactly 3 Rows (9 Cards total) */}
+          <motion.div
+            key={isExpanded ? 'all' : pageIndex}
+            initial={{ opacity: 0, y: slideDirection === 'down' ? 24 : -24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 px-0.5 sm:px-2"
           >
-            {/* Exactly 3 in Column (grid-cols-3) across mobile & desktop with original ProductCard UI */}
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 px-0.5 sm:px-2">
-              {products.map((product, idx) => (
-                <div key={product.id} className="snap-start h-full">
-                  <ProductCard
-                    product={product}
-                    onQuickView={onQuickView}
-                    onAddToCart={addToCart}
-                    onOrderNow={orderNow}
-                    priority={idx < 3}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+            {currentProducts.map((product, idx) => (
+              <div key={product.id} className="h-full">
+                <ProductCard
+                  product={product}
+                  onQuickView={onQuickView}
+                  onAddToCart={addToCart}
+                  onOrderNow={orderNow}
+                  priority={idx < 3}
+                />
+              </div>
+            ))}
+          </motion.div>
         </div>
 
         {/* Bottom Slide Indicator / Track Line so users understand this could be slid */}
-        {!isExpanded && (
+        {!isExpanded && totalPages > 1 && (
           <div className="mt-4 sm:mt-6 flex flex-col items-center justify-center gap-1.5 select-none">
             <div
               onClick={handleTrackClick}
@@ -249,16 +269,16 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
               title="Click along track to slide routine rows"
             >
               <div
-                className="h-full bg-gradient-to-r from-[#540434] via-[#890754] to-pink-500 rounded-full transition-all duration-150 ease-out"
+                className="h-full bg-gradient-to-r from-[#540434] via-[#890754] to-pink-500 rounded-full transition-all duration-200 ease-out"
                 style={{
-                  width: '35%',
-                  marginLeft: `${(verticalProgress / 100) * 65}%`,
+                  width: `${thumbWidthPct}%`,
+                  marginLeft: `${thumbMarginLeftPct}%`,
                 }}
               />
             </div>
             <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-gray-400 tracking-wider uppercase">
               <span className="inline-block animate-pulse text-[#890754]">↕</span>
-              <span>Slide Up & Down to explore</span>
+              <span>Slide Up & Down to explore (3 Rows • Set {pageIndex + 1}/{totalPages})</span>
               <span className="inline-block animate-pulse text-[#890754]">↕</span>
             </div>
           </div>
