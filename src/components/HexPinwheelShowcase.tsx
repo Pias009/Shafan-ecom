@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 interface HexPinwheelShowcaseProps {
   products: any[];
@@ -84,12 +85,21 @@ export function HexPinwheelShowcase({
     p?.imageUrl || p?.mainImage || "/placeholder-product.png";
 
   return (
-    <section className="w-full py-8 sm:py-14 px-2 sm:px-6 select-none overflow-hidden my-4">
-      <div className="max-w-[1440px] mx-auto flex flex-col items-center justify-center">
-        {/* Radial Interactive Flower / Pinwheel Canvas */}
-        <div className="relative w-full max-w-[360px] xs:max-w-[420px] sm:max-w-[530px] md:max-w-[620px] lg:max-w-[680px] aspect-square flex items-center justify-center">
+    <section className="w-full py-10 sm:py-16 md:py-24 lg:py-28 px-2 sm:px-6 select-none overflow-hidden my-4 sm:my-8">
+      <div className="w-full max-w-[1536px] mx-auto flex flex-col items-center justify-center">
+        {/* Radial Interactive Flower / Pinwheel Canvas with 2x Scale and Center Blossom + Spin Animation */}
+        <motion.div
+          initial={{ scale: 0.15, rotate: -40, opacity: 0 }}
+          whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{
+            duration: 1.3,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+          className="relative w-full max-w-[95vw] xs:max-w-[92vw] sm:max-w-[680px] md:max-w-[880px] lg:max-w-[1140px] xl:max-w-[1300px] 2xl:max-w-[1400px] aspect-square flex items-center justify-center will-change-transform"
+        >
           {/* Subtle Ambient Radial Glow */}
-          <div className="absolute inset-4 sm:inset-10 rounded-full bg-gradient-to-tr from-[#890754]/8 via-pink-400/5 to-amber-200/10 blur-3xl pointer-events-none" />
+          <div className="absolute inset-2 sm:inset-6 rounded-full bg-gradient-to-tr from-[#890754]/10 via-pink-400/8 to-amber-200/12 blur-3xl pointer-events-none" />
 
           {/* SVG Vector Canvas with Pure Physical 3D Porcelain Cards & Zero Text */}
           <svg
@@ -260,7 +270,7 @@ export function HexPinwheelShowcase({
               );
             })()}
           </svg>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
