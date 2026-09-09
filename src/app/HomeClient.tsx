@@ -14,6 +14,7 @@ import Link from "next/link";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { RoutineSection } from "@/components/RoutineSection";
 import { BestSellersSection } from "@/components/BestSellersSection";
+import { HexPinwheelShowcase } from "@/components/HexPinwheelShowcase";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
@@ -525,7 +526,17 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
           />
         </div>
 
-        {/* 6. Shop By Brand Section (Immediately After Trending Section) */}
+        {/* 6. Geometric Hex-Pinwheel Showcase (Directly after Trending Now) */}
+        {products.length > 0 && (
+          <HexPinwheelShowcase
+            products={products}
+            onQuickView={setQuickView}
+            onAddToCart={addToCart}
+            onOrderNow={orderNow}
+          />
+        )}
+
+        {/* 7. Shop By Brand Section */}
         <Suspense fallback={null}>
           <BrandMarquee />
         </Suspense>
