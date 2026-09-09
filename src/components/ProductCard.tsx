@@ -160,17 +160,17 @@ const ProductCardComponent = function ProductCard({
             ? "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 7px 0 0 #ded4e0, 0 8px 3px 0 rgba(137, 7, 84, 0.12), 0 24px 44px -6px rgba(137, 7, 84, 0.22), 0 40px 70px -14px rgba(30, 5, 20, 0.25)"
             : "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 4.5px 0 0 #e8dee9, 0 5.5px 2px 0 rgba(137, 7, 84, 0.08), 0 16px 32px -4px rgba(40, 10, 30, 0.14), 0 30px 52px -12px rgba(20, 5, 15, 0.18)",
         }}
-        className="group relative bg-gradient-to-b from-white via-[#fcfbfd] to-[#f6eff5] rounded-[24px] sm:rounded-[28px] border border-white/95 ring-1 ring-black/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden"
+        className="group relative bg-gradient-to-b from-white via-[#fcfbfd] to-[#f6eff5] rounded-[32px] sm:rounded-[40px] border border-white/95 ring-1 ring-black/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden"
       >
         {/* ── Image Stage (Full Product Fit, Zero Top Crop, 3D Floating Layer) ── */}
         <div
           style={{ transformStyle: "preserve-3d" }}
-          className="relative aspect-square w-full bg-gradient-to-b from-white to-pink-50/15 border-b border-gray-100/80 flex items-center justify-center p-2.5 sm:p-3.5 pt-3 sm:pt-4"
+          className="relative aspect-square w-full bg-gradient-to-b from-white to-pink-50/15 border-b border-gray-100/80 flex items-center justify-center p-3 sm:p-4 pt-3.5 sm:pt-4.5"
         >
-          {/* Badge (Top-Left) */}
+          {/* Badge (Top-Left, offset for deep rounded corner) */}
           <div
             style={{ transform: "translateZ(24px)" }}
-            className="absolute top-2 left-2 z-20 pointer-events-none"
+            className="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 z-20 pointer-events-none"
           >
             <span
               className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
@@ -215,7 +215,9 @@ const ProductCardComponent = function ProductCard({
         <div
           style={{ transform: "translateZ(18px)" }}
           className={`flex flex-col flex-1 justify-between bg-transparent ${
-            compact ? "p-1.5 sm:p-2 gap-0.5" : "p-1.5 sm:py-2 sm:px-2.5 gap-0.5 sm:gap-1"
+            compact
+              ? "p-2 sm:p-2.5 pb-2.5 sm:pb-3.5 gap-0.5"
+              : "p-2.5 sm:p-3.5 pb-3 sm:pb-4 gap-0.5 sm:gap-1"
           }`}
         >
           <div className="flex flex-col gap-0.5">
