@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useLanguageStore } from "@/lib/language-store";
 
 interface HexPinwheelShowcaseProps {
   products: any[];
@@ -61,6 +62,8 @@ export function HexPinwheelShowcase({
   onQuickView,
 }: HexPinwheelShowcaseProps) {
   const router = useRouter();
+  const { currentLanguage } = useLanguageStore();
+  const isAr = currentLanguage?.code === "ar";
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   if (!products || products.length === 0) return null;
@@ -85,9 +88,20 @@ export function HexPinwheelShowcase({
     p?.imageUrl || p?.mainImage || "/placeholder-product.png";
 
   return (
-    <section className="w-full py-10 sm:py-16 md:py-24 lg:py-28 px-2 sm:px-6 select-none overflow-hidden my-4 sm:my-8">
-      <div className="w-full max-w-[1536px] mx-auto flex flex-col items-center justify-center">
-        {/* Radial Interactive Flower / Pinwheel Canvas with 2x Scale and Center Blossom + Spin Animation */}
+    <section className="w-full py-8 sm:py-14 md:py-20 lg:py-24 px-2 sm:px-6 select-none overflow-hidden my-4 sm:my-6">
+      <div className="w-full max-w-[1600px] mx-auto flex flex-col items-center justify-center">
+        {/* Sleek Minimalist Section Title */}
+        <div className="text-center mb-6 sm:mb-10">
+          <div className="inline-flex items-center justify-center gap-2.5 sm:gap-3 text-xs sm:text-sm font-black uppercase tracking-[0.25em] text-gray-900">
+            <span className="h-px w-8 sm:w-14 bg-gradient-to-r from-transparent to-[#890754]/40" />
+            <span className="text-[#890754] font-bold">
+              {isAr ? "المنتجات الأكثر بحثاً" : "BEST SEARCHED PRODUCTS"}
+            </span>
+            <span className="h-px w-8 sm:w-14 bg-gradient-to-l from-transparent to-[#890754]/40" />
+          </div>
+        </div>
+
+        {/* Radial Interactive Flower / Pinwheel Canvas with Enlarged Geometry & Elements */}
         <motion.div
           initial={{ scale: 0.15, rotate: -40, opacity: 0 }}
           whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
@@ -96,14 +110,14 @@ export function HexPinwheelShowcase({
             duration: 1.3,
             ease: [0.16, 1, 0.3, 1],
           }}
-          className="relative w-full max-w-[95vw] xs:max-w-[92vw] sm:max-w-[680px] md:max-w-[880px] lg:max-w-[1140px] xl:max-w-[1300px] 2xl:max-w-[1400px] aspect-square flex items-center justify-center will-change-transform"
+          className="relative w-full max-w-[98vw] sm:max-w-[760px] md:max-w-[960px] lg:max-w-[1200px] xl:max-w-[1400px] 2xl:max-w-[1550px] aspect-square flex items-center justify-center will-change-transform"
         >
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute inset-2 sm:inset-6 rounded-full bg-gradient-to-tr from-[#890754]/10 via-pink-400/8 to-amber-200/12 blur-3xl pointer-events-none" />
 
-          {/* SVG Vector Canvas with Pure Physical 3D Porcelain Cards & Zero Text */}
+          {/* SVG Vector Canvas with Tightly Framed 760x760 ViewBox so Elements are 32% Bigger */}
           <svg
-            viewBox="0 0 1000 1000"
+            viewBox="120 120 760 760"
             className="w-full h-full drop-shadow-xl overflow-visible"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -185,10 +199,10 @@ export function HexPinwheelShowcase({
                   <g clipPath={`url(#clip-petal-${i})`}>
                     <image
                       href={imgSrc}
-                      x={center.x - 110}
-                      y={center.y - 110}
-                      width={220}
-                      height={220}
+                      x={center.x - 130}
+                      y={center.y - 130}
+                      width={260}
+                      height={260}
                       preserveAspectRatio="xMidYMid meet"
                       className="transition-transform duration-500"
                       style={{
@@ -244,10 +258,10 @@ export function HexPinwheelShowcase({
                   <g clipPath="url(#center-hex-clip)">
                     <image
                       href={centerImg}
-                      x="380"
-                      y="380"
-                      width="240"
-                      height="240"
+                      x="360"
+                      y="360"
+                      width={280}
+                      height={280}
                       preserveAspectRatio="xMidYMid meet"
                       className="transition-transform duration-500"
                       style={{

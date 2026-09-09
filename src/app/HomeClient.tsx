@@ -324,6 +324,15 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
     return bestSellerProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [bestSellerProducts, selectedCountry, selectedCurrency]);
 
+  const bestSearchedProducts = useMemo(() => {
+    const valid = products.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
+    return [...valid].sort((a, b) => {
+      const scoreA = (a.trending ? 100 : 0) + (a.hot ? 50 : 0) + (a.totalSales || 0) * 5 + (a.ratingCount || 0) * 2;
+      const scoreB = (b.trending ? 100 : 0) + (b.hot ? 50 : 0) + (b.totalSales || 0) * 5 + (b.ratingCount || 0) * 2;
+      return scoreB - scoreA;
+    });
+  }, [products, selectedCountry, selectedCurrency]);
+
   function addToCart(product: any) {
     const cartItem = {
       id: product.id,
@@ -526,10 +535,10 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
           />
         </div>
 
-        {/* 6. Geometric Hex-Pinwheel Showcase (Directly after Trending Now) */}
-        {products.length > 0 && (
+        {/* 6. Geometric Hex-Pinwheel Showcase (Best Searched Products Only) */}
+        {bestSearchedProducts.length > 0 && (
           <HexPinwheelShowcase
-            products={products}
+            products={bestSearchedProducts}
             onQuickView={setQuickView}
             onAddToCart={addToCart}
             onOrderNow={orderNow}
