@@ -50,38 +50,85 @@ export function MobileBottomNav() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          exit={{ y: 100 }}
-          className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-[400px]"
-          style={{ willChange: "transform" }}
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 350, damping: 30 }}
+          className="lg:hidden fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-[390px] pointer-events-auto select-none"
+          style={{ perspective: "1000px", willChange: "transform" }}
         >
-          <div className="bg-white/95 backdrop-blur-2xl border border-white/60 shadow-[0_12px_36px_rgba(0,0,0,0.18)] rounded-3xl px-5 py-2.5 flex items-center justify-between">
+          {/* ── Apple Vision Pro Pure 3D Glass Dock ── */}
+          <nav
+            aria-label="Mobile Navigation"
+            className="relative bg-white/65 backdrop-blur-3xl backdrop-saturate-[180%] border border-white/90 rounded-full px-2 py-1.5 shadow-[0_20px_50px_-10px_rgba(20,5,15,0.25),0_8px_24px_-4px_rgba(0,0,0,0.12),inset_0_2px_3px_0_rgba(255,255,255,1),inset_0_-2px_4px_0_rgba(137,7,84,0.06)] flex items-center justify-between gap-1 ring-1 ring-black/[0.04] overflow-hidden"
+          >
+            {/* Apple Pure Glass Ambient Specular Highlights */}
+            <div className="absolute inset-x-8 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none" />
+            <div className="absolute inset-x-12 bottom-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
+
             {navItems.map((item) => {
               const isActive = !item.isSesi && pathname === item.href;
               const Icon = item.icon;
+
               const content = (
-                <>
-                  <div className={`relative p-2 rounded-2xl transition-all duration-300 ${isActive ? "bg-black text-white shadow-xs" : "text-black/50 hover:bg-black/5"}`}>
-                    <Icon size={21} strokeWidth={isActive ? 2.5 : 2} />
+                <div className="flex flex-col items-center justify-center gap-0.5 relative py-1 px-2 sm:px-2.5 w-full">
+                  {/* 3D Active Pill Background with Apple Vision Pro Specular Bevel */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeTabPill"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      className="absolute inset-0 rounded-full bg-gradient-to-b from-[#890754] via-[#7d064c] to-[#65033d] shadow-[0_4px_14px_rgba(137,7,84,0.42),inset_0_1.5px_1px_rgba(255,255,255,0.5),inset_0_-1px_1.5px_rgba(0,0,0,0.3)]"
+                    />
+                  )}
+
+                  {/* Sesi AI Glow Backdrop */}
+                  {item.isSesi && (
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400/10 via-pink-500/15 to-purple-500/10 blur-xs pointer-events-none" />
+                  )}
+
+                  {/* Icon */}
+                  <div
+                    className={`relative z-10 p-1 rounded-full transition-all duration-200 ${
+                      isActive
+                        ? "text-white scale-105"
+                        : item.isSesi
+                        ? "text-[#890754] group-hover:scale-110"
+                        : "text-gray-600 group-hover:text-[#890754] group-active:scale-90"
+                    }`}
+                  >
+                    <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
+
+                    {/* 3D Cart Notification Badge */}
                     {item.isCart && cartCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] flex items-center justify-center font-black border-2 border-white shadow-md animate-pulse">
+                      <span className="absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-rose-500 to-[#890754] text-white text-[9px] flex items-center justify-center font-black border-2 border-white shadow-[0_2px_8px_rgba(137,7,84,0.6),inset_0_1px_1px_rgba(255,255,255,0.7)] animate-pulse">
                         {cartCount > 9 ? "9+" : cartCount}
                       </span>
                     )}
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${isActive ? "text-black" : "text-black/20"}`}>
+
+                  {/* Label */}
+                  <span
+                    className={`relative z-10 text-[9px] font-bold tracking-wider uppercase leading-none transition-colors duration-200 ${
+                      isActive
+                        ? "text-white font-black"
+                        : item.isSesi
+                        ? "text-[#890754] font-black"
+                        : "text-gray-600/80 group-hover:text-gray-900"
+                    }`}
+                  >
                     {item.label}
                   </span>
-                </>
+                </div>
               );
 
               if (item.isSesi) {
                 return (
                   <button
                     key="sesi"
+                    type="button"
                     onClick={() => openSesi(true)}
-                    className="relative group flex flex-col items-center gap-1"
+                    className="relative group flex-1 flex flex-col items-center justify-center active:scale-95 transition-transform"
+                    aria-label="AI Beauty Assistant"
                   >
                     {content}
                   </button>
@@ -94,13 +141,14 @@ export function MobileBottomNav() {
                   key={href}
                   href={href}
                   onTouchStart={() => router?.prefetch(href)}
-                  className="relative group flex flex-col items-center gap-1"
+                  className="relative group flex-1 flex flex-col items-center justify-center active:scale-95 transition-transform"
+                  aria-label={item.label}
                 >
                   {content}
                 </Link>
               );
             })}
-          </div>
+          </nav>
         </motion.div>
       )}
     </AnimatePresence>

@@ -297,7 +297,6 @@ export function Footer() {
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">VISA</span>
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">MASTERCARD</span>
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">APPLE PAY</span>
-            <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">MADA</span>
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">TABBY</span>
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">TAMARA</span>
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-pink-400/30 text-pink-300">CASH ON DELIVERY</span>
@@ -334,16 +333,6 @@ export function Footer() {
               aria-label="Facebook"
             >
               <Facebook size={15} />
-            </Link>
-            <Link
-              href="https://www.tiktok.com/@shanfaglobal"
-              target="_blank"
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-black text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-sm"
-              aria-label="TikTok"
-            >
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.93 2.93 0 0 1-5.91 0V4.16A1.17 1.17 0 0 1 5 3h.68a4 4 0 0 1 3.93 4.79 9.64 9.64 0 0 1-7.37 3.1V12h3.11v6.63a4.85 4.85 0 0 0 3.08 4.52 4.82 4.82 0 0 0 5.09-.64V12H22V7.9a4.84 4.84 0 0 0-2.41-1.21Z" />
-              </svg>
             </Link>
             <Link
               href="https://linkedin.com/company/shanfa-global/"

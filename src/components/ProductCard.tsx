@@ -162,10 +162,10 @@ const ProductCardComponent = function ProductCard({
         }}
         className="group relative bg-gradient-to-br from-white via-[#fdf0f7] to-[#f7d6ea] hover:from-white hover:via-[#fceaf5] hover:to-[#f5cbe4] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-[#890754]/[0.08] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden transition-all duration-300"
       >
-        {/* ── Image Stage (Full Product Fit, Zero Top Crop, Reduced Height) ── */}
+        {/* ── Image Stage (Full Product Fit, Zero Crop, Dedicated Vertical Breathing Room) ── */}
         <div
           style={{ transformStyle: "preserve-3d" }}
-          className="relative aspect-[1/0.89] w-full bg-gradient-to-b from-white/90 via-white/50 to-pink-50/20 border-b border-pink-100/70 flex items-center justify-center p-2 sm:p-2.5 pt-2 sm:pt-3"
+          className="relative aspect-[1/0.95] w-full bg-gradient-to-b from-white/90 via-white/50 to-pink-50/20 border-b border-pink-100/70 flex items-center justify-center p-2.5 sm:p-3.5 pt-3 sm:pt-4"
         >
           {/* Badge (Top-Left) */}
           <div
@@ -173,10 +173,10 @@ const ProductCardComponent = function ProductCard({
             className="absolute top-2 left-2 z-20 pointer-events-none"
           >
             <span
-              className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
+              className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
             >
               {"icon" in badge && badge.icon && (
-                <Flame size={7} className="fill-amber-400 text-amber-400 shrink-0 sm:w-2.5 sm:h-2.5" />
+                <Flame size={7} className="fill-amber-400 text-amber-400 shrink-0 sm:w-2 sm:h-2" />
               )}
               {badge.label}
             </span>
@@ -185,7 +185,7 @@ const ProductCardComponent = function ProductCard({
           {/* 3D Realistic Grounding Shadow beneath product bottle */}
           <div
             style={{ transform: "translateZ(6px)" }}
-            className="absolute bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-2 bg-[#890754]/15 rounded-[100%] blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
+            className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-3/4 h-1.5 bg-[#890754]/15 rounded-[100%] blur-xs opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
           />
 
           {/* Product Image — Full fit, zero crop, perfectly centered with no top cutoff */}
@@ -211,24 +211,24 @@ const ProductCardComponent = function ProductCard({
           </div>
         </div>
 
-        {/* ── Info Area (Original Clean Layout Restored, Trimmed Height) ── */}
+        {/* ── Info Area (Trimmed Height, Reduced Vertical Space Around Price & Icon) ── */}
         <div
           style={{ transform: "translateZ(18px)" }}
           className={`flex flex-col flex-1 justify-between bg-transparent ${
             compact
-              ? "p-1.5 sm:p-2 pb-1 sm:pb-1.5 gap-0.5"
-              : "p-1.5 sm:p-2 pb-1.5 sm:pb-2 gap-0.5 sm:gap-1"
+              ? "px-2 py-1 pb-0.5 gap-0.5"
+              : "px-2 sm:px-2.5 pt-1 sm:pt-1.5 pb-0.5 sm:pb-1 gap-0.5"
           }`}
         >
           <div className="flex flex-col gap-0.5">
             {/* Brand */}
-            <p className="text-[7.5px] xs:text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-[#890754]/80 leading-none truncate">
+            <p className="text-[7px] xs:text-[7.5px] sm:text-[8px] font-bold uppercase tracking-wider text-[#890754]/80 leading-none truncate">
               {brandName}
             </p>
 
-            {/* Product Name — Crystal clear readable sans-serif typography */}
+            {/* Product Name — Crystal clear readable typography */}
             <h3
-              className={`font-sans font-semibold text-[11px] xs:text-[12px] sm:text-[13px] md:text-[13.5px] text-gray-900 leading-[1.2] transition-colors group-hover:text-[#890754] ${
+              className={`font-sans font-semibold text-[11px] xs:text-[11.5px] sm:text-[12.5px] md:text-[13px] text-gray-900 leading-[1.18] transition-colors group-hover:text-[#890754] ${
                 compact ? "line-clamp-1 sm:line-clamp-2" : "line-clamp-2"
               }`}
             >
@@ -236,7 +236,7 @@ const ProductCardComponent = function ProductCard({
             </h3>
 
             {/* Stars */}
-            <div className="flex items-center gap-0.5 mt-0.5">
+            <div className="flex items-center gap-0.5 mt-0">
               <div className="flex shrink-0">
                 {[...Array(5)].map((_, i) => (
                   <Star
@@ -246,27 +246,27 @@ const ProductCardComponent = function ProductCard({
                   />
                 ))}
               </div>
-              <span className="text-[7px] sm:text-[8.5px] font-bold text-gray-400 truncate">({reviewCount})</span>
+              <span className="text-[7px] sm:text-[8px] font-bold text-gray-400 truncate">({reviewCount})</span>
             </div>
           </div>
 
-          {/* Price & Add to Cart Action Row (Original Clean Cart Button Restored) */}
-          <div className="pt-0.5 sm:pt-1 flex items-center justify-between gap-1 border-t border-gray-100">
+          {/* Price & Add to Cart Action Row (Tight Upper/Lower Padding & Reduced Icon Size) */}
+          <div className="pt-0.5 pb-0 flex items-center justify-between gap-1 border-t border-pink-100/60">
             {/* Price */}
             <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1 leading-none min-w-0">
               <Price
                 amount={hasDiscount ? salePrice : displayPrice}
-                className="text-[12px] xs:text-[13px] sm:text-[15px] md:text-base font-black text-[#890754] tracking-tight"
+                className="text-[11.5px] xs:text-[12px] sm:text-[14px] md:text-[15px] font-black text-[#890754] tracking-tight leading-none"
                 countryPrices={product.countryPrices as CountryPrice[]}
               />
               {hasDiscount && (
-                <span className="text-[8.5px] sm:text-[10px] text-gray-400 line-through font-bold truncate">
+                <span className="text-[8px] sm:text-[9px] text-gray-400 line-through font-bold truncate leading-none">
                   <Price amount={displayPrice} countryPrices={product.countryPrices as CountryPrice[]} />
                 </span>
               )}
             </div>
 
-            {/* Cart Icon Button (Original Clean Button with No Background) */}
+            {/* Cart Icon Button (Reduced Icon Size, Reduced Padding, Clean Transparent Background) */}
             <button
               type="button"
               disabled={isNotAvailable}
@@ -276,7 +276,7 @@ const ProductCardComponent = function ProductCard({
                 setJustAdded(true);
                 setTimeout(() => setJustAdded(false), 1400);
               }}
-              className={`p-1 bg-transparent flex items-center justify-center shrink-0 transition-all duration-200 active:scale-90 ${
+              className={`p-0.5 bg-transparent flex items-center justify-center shrink-0 transition-all duration-200 active:scale-90 ${
                 isNotAvailable
                   ? "text-slate-300 cursor-not-allowed"
                   : justAdded
@@ -287,11 +287,11 @@ const ProductCardComponent = function ProductCard({
               title={isNotAvailable ? "Sold Out" : "Add to Cart"}
             >
               {isNotAvailable ? (
-                <Package size={17} className="sm:w-5 sm:h-5" strokeWidth={2} />
+                <Package size={14} className="sm:w-3.5 sm:h-3.5" strokeWidth={2} />
               ) : justAdded ? (
-                <span className="text-xs sm:text-sm font-black text-emerald-600 leading-none">✓</span>
+                <span className="text-[11px] sm:text-xs font-black text-emerald-600 leading-none">✓</span>
               ) : (
-                <ShoppingCart size={17} className="sm:w-5 sm:h-5" strokeWidth={2.2} />
+                <ShoppingCart size={14} className="sm:w-3.5 sm:h-3.5" strokeWidth={2.2} />
               )}
             </button>
           </div>
