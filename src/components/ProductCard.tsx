@@ -65,6 +65,25 @@ const ProductCardComponent = function ProductCard({
   const { selectedCountry } = useCountryStore();
   const hasHydrated = useCountryStoreReady();
   const [justAdded, setJustAdded] = useState(false);
+  const [rotate, setRotate] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setRotate({ x: -y * 10, y: x * 10 });
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    router.prefetch(`/products/${product.slug || product.id}`);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setRotate({ x: 0, y: 0 });
+  };
 
   if (!hasHydrated) {
     return (
@@ -118,120 +137,166 @@ const ProductCardComponent = function ProductCard({
     : "/placeholder-product.png";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true, margin: "-20px" }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      onMouseEnter={() => router.prefetch(`/products/${product.slug || product.id}`)}
-      onClick={(e) => {
-        e.stopPropagation();
-        router.push(`/products/${product.slug || product.id}`);
-      }}
-      className="group relative bg-white rounded-xl sm:rounded-2xl border border-gray-100 hover:border-pink-200 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden w-full h-full flex flex-col cursor-pointer transform-gpu select-none"
-    >
-      {/* ── Image Stage (Full Product Fit, Zero Crop) ── */}
-      <div className="relative aspect-square w-full bg-white overflow-hidden border-b border-gray-100 p-2 sm:p-2.5 flex items-center justify-center">
-        {/* Badge (Top-Left) */}
-        <div className="absolute top-1.5 left-1.5 z-20 pointer-events-none">
-          <span
-            className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
+    <div style={{ perspective: "1000px" }} className="w-full h-full">
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true, margin: "-20px" }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onClick={(e) => {
+          e.stopPropagation();
+          router.push(`/products/${product.slug || product.id}`);
+        }}
+        style={{
+          transformStyle: "preserve-3d",
+          transform: isHovered
+            ? `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) translateY(-6px)`
+            : "rotateX(0deg) rotateY(0deg) translateY(0px)",
+          transition: isHovered ? "transform 0.1s ease-out" : "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+        }}
+        className="group relative bg-white rounded-xl sm:rounded-2xl border border-gray-100 hover:border-pink-300/80 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(137,7,84,0.18),0_8px_16px_-4px_rgba(0,0,0,0.06)] transition-shadow duration-300 w-full h-full flex flex-col cursor-pointer select-none"
+      >
+        {/* ── Image Stage (3D Floating Pop-Out Layer) ── */}
+        <div
+          style={{ transformStyle: "preserve-3d" }}
+          className={`relative w-full bg-gradient-to-b from-white to-pink-50/20 border-b border-gray-100/80 flex items-center justify-center rounded-t-xl sm:rounded-t-2xl ${
+            compact
+              ? "aspect-[4/3] max-h-[145px] sm:max-h-[175px] md:max-h-[190px] p-2"
+              : "aspect-square max-h-[210px] sm:max-h-[250px] p-2 sm:p-2.5"
+          }`}
+        >
+          {/* Badge (Z-Index Pop-Out) */}
+          <div
+            style={{ transform: "translateZ(26px)" }}
+            className="absolute top-1.5 left-1.5 z-20 pointer-events-none"
           >
-            {"icon" in badge && badge.icon && (
-              <Flame size={7} className="fill-amber-400 text-amber-400 shrink-0 sm:w-2.5 sm:h-2.5" />
-            )}
-            {badge.label}
-          </span>
-        </div>
+            <span
+              className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
+            >
+              {"icon" in badge && badge.icon && (
+                <Flame size={7} className="fill-amber-400 text-amber-400 shrink-0 sm:w-2.5 sm:h-2.5" />
+              )}
+              {badge.label}
+            </span>
+          </div>
 
-        {/* Product Image — Fully fitted, zero cropping */}
-        <div className="relative w-full h-full">
-          <Image
-            src={imgSrc}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-contain transition-transform duration-500 ease-out group-hover:scale-105"
-            priority={priority}
+          {/* 3D Realistic Grounding Shadow beneath product bottle when popping out */}
+          <div
+            style={{ transform: "translateZ(8px)" }}
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-2.5 bg-[#890754]/20 rounded-[100%] blur-sm opacity-0 group-hover:opacity-100 group-hover:scale-95 transition-all duration-300 pointer-events-none"
           />
-        </div>
-      </div>
 
-      {/* ── Info Area ── */}
-      <div className="flex flex-col flex-1 justify-between p-1.5 sm:py-2 sm:px-2.5 bg-white gap-0.5 sm:gap-1">
-        <div className="flex flex-col gap-0.5">
-          {/* Brand */}
-          <p className="text-[7.5px] xs:text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-[#890754]/80 leading-none truncate">
-            {brandName}
-          </p>
-
-          {/* Product Name — Crystal clear readable sans-serif typography */}
-          <h3 className="font-sans font-semibold text-[11px] xs:text-[12px] sm:text-[13px] md:text-[13.5px] text-gray-900 leading-[1.25] line-clamp-2 group-hover:text-[#890754] transition-colors">
-            {product.name}
-          </h3>
-
-          {/* Stars */}
-          <div className="flex items-center gap-0.5 mt-0.5">
-            <div className="flex shrink-0">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  size={7}
-                  className={i < Math.round(rating) ? "text-amber-400 fill-amber-400 sm:w-2 sm:h-2" : "text-slate-200 fill-slate-200 sm:w-2 sm:h-2"}
-                />
-              ))}
-            </div>
-            <span className="text-[7px] sm:text-[8.5px] font-bold text-gray-400 truncate">({reviewCount})</span>
-          </div>
-        </div>
-
-        {/* Price & Add to Cart Action Row */}
-        <div className="pt-0.5 sm:pt-1 flex items-center justify-between gap-1 border-t border-gray-100">
-          {/* Price */}
-          <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1 leading-none min-w-0">
-            <Price
-              amount={hasDiscount ? salePrice : displayPrice}
-              className="text-[12px] xs:text-[13px] sm:text-[15px] md:text-base font-black text-[#890754] tracking-tight"
-              countryPrices={product.countryPrices as CountryPrice[]}
-            />
-            {hasDiscount && (
-              <span className="text-[8.5px] sm:text-[10px] text-gray-400 line-through font-bold truncate">
-                <Price amount={displayPrice} countryPrices={product.countryPrices as CountryPrice[]} />
-              </span>
-            )}
-          </div>
-
-          {/* Cart Icon Button (Bigger, No Background) */}
-          <button
-            type="button"
-            disabled={isNotAvailable}
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart(product);
-              setJustAdded(true);
-              setTimeout(() => setJustAdded(false), 1400);
+          {/* Product Image — 3D Coming Out of the Card */}
+          <div
+            style={{
+              transform: isHovered
+                ? "translateZ(44px) scale(1.12) translateY(-6px)"
+                : "translateZ(14px) scale(1)",
+              transition: isHovered
+                ? "transform 0.14s ease-out, filter 0.25s ease-out"
+                : "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
             }}
-            className={`p-1 bg-transparent flex items-center justify-center shrink-0 transition-all duration-200 active:scale-90 ${
-              isNotAvailable
-                ? "text-slate-300 cursor-not-allowed"
-                : justAdded
-                ? "text-[#890754] scale-110"
-                : "text-[#890754] hover:text-[#540434] hover:scale-110"
-            }`}
-            aria-label="Add to Cart"
-            title={isNotAvailable ? "Sold Out" : "Add to Cart"}
+            className="relative w-full h-full drop-shadow-sm group-hover:drop-shadow-2xl pointer-events-none"
           >
-            {isNotAvailable ? (
-              <Package size={17} className="sm:w-5 sm:h-5" strokeWidth={2} />
-            ) : justAdded ? (
-              <span className="text-xs sm:text-sm font-black text-emerald-600 leading-none">✓</span>
-            ) : (
-              <ShoppingCart size={17} className="sm:w-5 sm:h-5" strokeWidth={2.2} />
-            )}
-          </button>
+            <Image
+              src={imgSrc}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-contain"
+              priority={priority}
+            />
+          </div>
         </div>
-      </div>
-    </motion.div>
+
+        {/* ── Info Area ── */}
+        <div
+          style={{ transform: "translateZ(18px)" }}
+          className={`flex flex-col flex-1 justify-between bg-white rounded-b-xl sm:rounded-b-2xl ${
+            compact ? "p-1.5 sm:p-2 gap-0.5" : "p-1.5 sm:py-2 sm:px-2.5 gap-0.5 sm:gap-1"
+          }`}
+        >
+          <div className="flex flex-col gap-0.5">
+            {/* Brand */}
+            <p className="text-[7.5px] xs:text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-[#890754]/80 leading-none truncate">
+              {brandName}
+            </p>
+
+            {/* Product Name — Crystal clear readable sans-serif typography */}
+            <h3
+              className={`font-sans font-semibold text-[11px] xs:text-[12px] sm:text-[13px] md:text-[13.5px] text-gray-900 leading-[1.2] transition-colors group-hover:text-[#890754] ${
+                compact ? "line-clamp-1 sm:line-clamp-2" : "line-clamp-2"
+              }`}
+            >
+              {product.name}
+            </h3>
+
+            {/* Stars */}
+            <div className="flex items-center gap-0.5 mt-0.5">
+              <div className="flex shrink-0">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    size={7}
+                    className={i < Math.round(rating) ? "text-amber-400 fill-amber-400 sm:w-2 sm:h-2" : "text-slate-200 fill-slate-200 sm:w-2 sm:h-2"}
+                  />
+                ))}
+              </div>
+              <span className="text-[7px] sm:text-[8.5px] font-bold text-gray-400 truncate">({reviewCount})</span>
+            </div>
+          </div>
+
+          {/* Price & Add to Cart Action Row */}
+          <div className="pt-0.5 sm:pt-1 flex items-center justify-between gap-1 border-t border-gray-100">
+            {/* Price */}
+            <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1 leading-none min-w-0">
+              <Price
+                amount={hasDiscount ? salePrice : displayPrice}
+                className="text-[12px] xs:text-[13px] sm:text-[15px] md:text-base font-black text-[#890754] tracking-tight"
+                countryPrices={product.countryPrices as CountryPrice[]}
+              />
+              {hasDiscount && (
+                <span className="text-[8.5px] sm:text-[10px] text-gray-400 line-through font-bold truncate">
+                  <Price amount={displayPrice} countryPrices={product.countryPrices as CountryPrice[]} />
+                </span>
+              )}
+            </div>
+
+            {/* Cart Icon Button (Bigger, No Background) */}
+            <button
+              type="button"
+              disabled={isNotAvailable}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCart(product);
+                setJustAdded(true);
+                setTimeout(() => setJustAdded(false), 1400);
+              }}
+              className={`p-1 bg-transparent flex items-center justify-center shrink-0 transition-all duration-200 active:scale-90 ${
+                isNotAvailable
+                  ? "text-slate-300 cursor-not-allowed"
+                  : justAdded
+                  ? "text-[#890754] scale-110"
+                  : "text-[#890754] hover:text-[#540434] hover:scale-110"
+              }`}
+              aria-label="Add to Cart"
+              title={isNotAvailable ? "Sold Out" : "Add to Cart"}
+            >
+              {isNotAvailable ? (
+                <Package size={17} className="sm:w-5 sm:h-5" strokeWidth={2} />
+              ) : justAdded ? (
+                <span className="text-xs sm:text-sm font-black text-emerald-600 leading-none">✓</span>
+              ) : (
+                <ShoppingCart size={17} className="sm:w-5 sm:h-5" strokeWidth={2.2} />
+              )}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 

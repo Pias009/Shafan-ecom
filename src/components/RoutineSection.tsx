@@ -126,34 +126,38 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
 
   return (
     <section ref={sectionRef} className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-4">
-      {/* Centered Clean Section Header with Drawing / Handwriting Text Animation (No clutter) */}
-      <div className="text-center mb-6 sm:mb-9 flex flex-col items-center justify-center">
-        <div className="inline-flex items-center justify-center gap-3 sm:gap-6">
-          <span className="h-px w-10 sm:w-20 bg-gradient-to-r from-transparent to-[#890754]/40" />
+      {/* Centered Luxury Signature Calligraphy Section Header with Pen Stroke Writing Animation */}
+      <div className="text-center mb-6 sm:mb-10 flex flex-col items-center justify-center">
+        <div className="inline-flex items-center justify-center gap-3 sm:gap-6 w-full max-w-4xl px-2">
+          <span className="h-px flex-1 max-w-[40px] sm:max-w-[80px] md:max-w-[120px] bg-gradient-to-r from-transparent to-[#890754]/30" />
           
-          {/* Animated Drawing / Handwriting Text "ROUTINE" — in Brand Velvet Plum with Luxury Italiana Serif Font */}
-          <div className="relative inline-flex items-center justify-center py-1">
-            <svg
-              key={animationKey}
-              viewBox="0 0 280 52"
-              className="w-48 sm:w-64 md:w-80 h-11 sm:h-16 overflow-visible"
-              aria-label="ROUTINE"
+          {/* Animated Calligraphy Title "Routine" — Extra Large Statement Hero in Brand Velvet Plum */}
+          <div key={animationKey} className="relative inline-flex flex-col items-center justify-center py-1 select-none">
+            <h2
+              className="routine-pen-draw font-['Great_Vibes','Alex_Brush',cursive] text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-normal tracking-wide text-[#890754] leading-none drop-shadow-xs px-2 sm:px-4"
             >
-              <text
-                x="50%"
-                y="52%"
-                textAnchor="middle"
-                dominantBaseline="central"
-                fill="#890754"
+              Routine
+            </h2>
+
+            {/* Hand-drawn luxury calligraphy underline swash */}
+            <svg
+              viewBox="0 0 300 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-48 sm:w-64 md:w-80 lg:w-96 h-3.5 sm:h-5 -mt-1 sm:-mt-2 overflow-visible pointer-events-none"
+              aria-hidden="true"
+            >
+              <path
+                d="M8 14 C 60 18, 140 4, 210 10 C 255 14, 280 11, 295 11"
                 stroke="#890754"
-                className="font-['Italiana',serif] text-3xl sm:text-4xl md:text-5xl font-bold tracking-widest routine-draw-text select-none"
-              >
-                ROUTINE
-              </text>
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                className="routine-swash-draw"
+              />
             </svg>
           </div>
 
-          <span className="h-px w-10 sm:w-20 bg-gradient-to-l from-transparent to-[#890754]/40" />
+          <span className="h-px flex-1 max-w-[40px] sm:max-w-[80px] md:max-w-[120px] bg-gradient-to-l from-transparent to-[#890754]/30" />
         </div>
       </div>
 
@@ -238,13 +242,13 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
             transition: 'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         >
-          {/* Exactly 3 Columns, Exactly 3 Rows (9 Cards total) */}
+          {/* Exactly 3 Columns, Exactly 3 Rows (9 Cards total) — Compact Height & 3D Spatial Layout */}
           <motion.div
             key={isExpanded ? 'all' : pageIndex}
             initial={{ opacity: 0, y: slideDirection === 'down' ? 24 : -24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 px-0.5 sm:px-2"
+            className="grid grid-cols-3 gap-2 sm:gap-3.5 md:gap-4.5 px-0.5 sm:px-2 max-w-5xl mx-auto"
           >
             {currentProducts.map((product, idx) => (
               <div key={product.id} className="h-full">
@@ -253,6 +257,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                   onQuickView={onQuickView}
                   onAddToCart={addToCart}
                   onOrderNow={orderNow}
+                  compact={true}
                   priority={idx < 3}
                 />
               </div>
