@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Trophy, Flame } from "lucide-react";
-import { Price } from "./Price";
-import { CountryPrice } from "./ProductCard";
+import { ArrowRight, Trophy } from "lucide-react";
 
 interface BestSellersSectionProps {
   products: any[];
@@ -78,7 +76,6 @@ interface TileAnimationState {
 function ProductCollageTile({
   product,
   nextProduct,
-  tileConfig,
   animatingState,
   onQuickView,
 }: {
@@ -96,17 +93,12 @@ function ProductCollageTile({
   const imgSrc = product.imageUrl || product.mainImage || "/placeholder-product.png";
   const nextImgSrc = nextProduct ? (nextProduct.imageUrl || nextProduct.mainImage || "/placeholder-product.png") : "";
 
-  const brandName = typeof product.brand === "string" ? product.brand : product.brand?.name || "SHANFA";
-  const salePrice = product.discountPrice || product.salePrice || product.salePriceCents || 0;
-  const regularPrice = product.price || 0;
-  const effectivePrice = salePrice > 0 ? salePrice : regularPrice;
-
   return (
     <div
       className="relative w-full h-full overflow-hidden cursor-pointer group bg-gradient-to-br from-pink-50/40 via-white to-pink-100/30 rounded-2xl sm:rounded-3xl border border-pink-100/80 shadow-[0_4px_16px_rgba(20,5,15,0.06)] hover:shadow-[0_12px_32px_rgba(137,7,84,0.14)] hover:border-[#890754]/40 transition-all duration-300 select-none"
       onClick={() => onQuickView(product)}
     >
-      {/* Current Photo Tile */}
+      {/* Current Photo Tile (Only Image) */}
       <div
         style={{
           position: "absolute",
@@ -124,42 +116,9 @@ function ProductCollageTile({
           className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           sizes="(max-width: 640px) 50vw, 33vw"
         />
-
-        {/* Top Floating Ranking Badge */}
-        <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 pointer-events-none">
-          <span className="px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider bg-white/95 text-[#890754] backdrop-blur-md shadow-sm border border-white/70 flex items-center gap-1">
-            {tileConfig.rank <= 3 ? (
-              <Flame size={10} className="fill-amber-400 text-amber-400 shrink-0" />
-            ) : (
-              <span className="w-1.5 h-1.5 rounded-full bg-[#890754] shrink-0" />
-            )}
-            {tileConfig.badge}
-          </span>
-        </div>
-
-        {/* Vignette Bottom Gradient Overlay with Luxury Typography */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pt-12 pb-2.5 px-2.5 sm:px-3.5 flex flex-col justify-end pointer-events-none">
-          <span className="text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-[0.16em] text-pink-200 drop-shadow truncate">
-            {brandName}
-          </span>
-          <h3 className="text-white text-[10.5px] sm:text-xs md:text-sm font-bold truncate leading-tight drop-shadow-sm mt-0.5">
-            {product.name}
-          </h3>
-
-          <div className="flex items-center justify-between mt-1 pt-1 border-t border-white/20">
-            <Price
-              amount={effectivePrice}
-              className="text-[10px] sm:text-xs font-black text-white tracking-tight"
-              countryPrices={product.countryPrices as CountryPrice[]}
-            />
-            <span className="text-[8.5px] sm:text-[9.5px] font-bold text-white/80 group-hover:text-white flex items-center gap-0.5 transition-colors">
-              Quick View →
-            </span>
-          </div>
-        </div>
       </div>
 
-      {/* Next sliding photo tile (Smooth turnover) */}
+      {/* Next sliding photo tile (Only Image) */}
       {isSliding && nextProduct && (
         <div
           style={{
@@ -176,38 +135,6 @@ function ProductCollageTile({
             className="object-cover"
             sizes="(max-width: 640px) 50vw, 33vw"
           />
-
-          {/* Badge */}
-          <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 pointer-events-none">
-            <span className="px-2 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider bg-white/95 text-[#890754] backdrop-blur-md shadow-sm border border-white/70 flex items-center gap-1">
-              {tileConfig.rank <= 3 ? (
-                <Flame size={10} className="fill-amber-400 text-amber-400 shrink-0" />
-              ) : (
-                <span className="w-1.5 h-1.5 rounded-full bg-[#890754] shrink-0" />
-              )}
-              {tileConfig.badge}
-            </span>
-          </div>
-
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pt-12 pb-2.5 px-2.5 sm:px-3.5 flex flex-col justify-end pointer-events-none">
-            <span className="text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-[0.16em] text-pink-200 drop-shadow truncate">
-              {typeof nextProduct.brand === "string" ? nextProduct.brand : nextProduct.brand?.name || "SHANFA"}
-            </span>
-            <h3 className="text-white text-[10.5px] sm:text-xs md:text-sm font-bold truncate leading-tight drop-shadow-sm mt-0.5">
-              {nextProduct.name}
-            </h3>
-
-            <div className="flex items-center justify-between mt-1 pt-1 border-t border-white/20">
-              <Price
-                amount={nextProduct.discountPrice || nextProduct.salePrice || nextProduct.price || 0}
-                className="text-[10px] sm:text-xs font-black text-white tracking-tight"
-                countryPrices={nextProduct.countryPrices as CountryPrice[]}
-              />
-              <span className="text-[8.5px] sm:text-[9.5px] font-bold text-white/80 flex items-center gap-0.5">
-                Quick View →
-              </span>
-            </div>
-          </div>
         </div>
       )}
     </div>
