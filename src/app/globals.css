@@ -156,9 +156,9 @@ body {
     padding-right: 0.75rem;
   }
 
-  /* Improve touch targets */
-  button,
-  a {
+  /* Improve touch targets (excluding micro controls with .no-min-size) */
+  button:not(.no-min-size):not([data-no-min]),
+  a:not(.no-min-size):not([data-no-min]) {
     min-height: 44px;
     min-width: 44px;
   }

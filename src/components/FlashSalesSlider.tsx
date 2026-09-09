@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, ShoppingCart, Heart, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShoppingCart, Heart } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 
@@ -41,7 +41,6 @@ export function FlashSalesSlider({
   products,
   onQuickView,
   addToCart,
-  orderNow,
 }: FlashSalesSliderProps) {
   const router = useRouter();
   const { currentLanguage } = useLanguageStore();
@@ -111,14 +110,14 @@ export function FlashSalesSlider({
 
   const isMobile = windowWidth < 640;
   const isTablet = windowWidth >= 640 && windowWidth < 1024;
-  const step = isMobile ? 140 : isTablet ? 170 : 205;
+  const step = isMobile ? 165 : isTablet ? 195 : 230;
 
   return (
     <div className="w-full py-2 select-none overflow-hidden">
       <div className="max-w-[1536px] mx-auto">
-        {/* 3D Coverflow Product Track */}
+        {/* 3D Coverflow Product Carousel Track */}
         <div
-          className="relative w-full h-[395px] sm:h-[420px] md:h-[435px] flex items-center justify-center"
+          className="relative w-full h-[415px] sm:h-[435px] md:h-[450px] flex items-center justify-center"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
@@ -126,18 +125,20 @@ export function FlashSalesSlider({
           <button
             onClick={handlePrev}
             aria-label="Previous flash deal"
-            className="absolute left-2 sm:left-6 md:left-8 top-1/2 -translate-y-1/2 z-40 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.12)] border border-pink-100 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 active:scale-95 transition-all"
+            className="no-min-size absolute left-1 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-40 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-100 flex items-center justify-center text-neutral-700 hover:text-neutral-900 hover:scale-110 active:scale-95 transition-all"
+            style={{ minWidth: 0, minHeight: 0 }}
           >
-            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
           </button>
 
           {/* Right Navigation Chevron */}
           <button
             onClick={handleNext}
             aria-label="Next flash deal"
-            className="absolute right-2 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 z-40 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.12)] border border-pink-100 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 active:scale-95 transition-all"
+            className="no-min-size absolute right-1 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-40 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.1)] border border-gray-100 flex items-center justify-center text-neutral-700 hover:text-neutral-900 hover:scale-110 active:scale-95 transition-all"
+            style={{ minWidth: 0, minHeight: 0 }}
           >
-            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
           </button>
 
           {/* Cards Stage */}
@@ -153,9 +154,10 @@ export function FlashSalesSlider({
               const isActive = diff === 0;
               const isNeighbor = Math.abs(diff) === 1;
 
-              const scale = isActive ? 1.08 : isNeighbor ? 0.92 : 0.80;
+              // Reference UI scale: Center is elevated, side cards are slightly smaller
+              const scale = isActive ? 1.06 : isNeighbor ? 0.90 : 0.78;
               const zIndex = isActive ? 30 : isNeighbor ? 20 : 10;
-              const opacity = isActive ? 1 : isNeighbor ? (isMobile ? 0.6 : 0.9) : 0.72;
+              const opacity = isActive ? 1 : isNeighbor ? (isMobile ? 0.55 : 0.88) : 0.65;
               const offsetX = diff * step;
 
               const isLiked = !!wishlist[product.id];
@@ -169,7 +171,7 @@ export function FlashSalesSlider({
               const rating = product.averageRating ? product.averageRating.toFixed(1) : "4.9";
               const reviews = product.ratingCount || 60 + ((i * 19) % 55);
               const brandName = typeof product.brand === "string" ? product.brand : product.brand?.name || product.brandName || "Shafan";
-              const shortDesc = product.shortDescription || `${brandName} premium clinical formula flash sale deal.`;
+              const shortDesc = product.shortDescription || `${brandName} clinical formula for radiant, healthy glow.`;
 
               return (
                 <div
@@ -181,53 +183,53 @@ export function FlashSalesSlider({
                     opacity,
                     transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease-out, box-shadow 0.4s ease-out",
                   }}
-                  className={`absolute top-1/2 left-1/2 w-[175px] sm:w-[190px] md:w-[205px] rounded-[22px] sm:rounded-[26px] bg-white p-3 sm:p-3.5 flex flex-col justify-between cursor-pointer border select-none transition-shadow ${
+                  className={`absolute top-1/2 left-1/2 w-[190px] sm:w-[210px] md:w-[225px] rounded-[26px] sm:rounded-[28px] bg-white p-3.5 sm:p-4 flex flex-col justify-between cursor-pointer border select-none transition-shadow ${
                     isActive
-                      ? "border-pink-200 shadow-[0_20px_45px_-10px_rgba(137,7,84,0.18),0_6px_16px_-4px_rgba(0,0,0,0.06)]"
-                      : "border-pink-100/80 shadow-[0_8px_20px_-5px_rgba(80,10,50,0.06)] hover:shadow-md"
+                      ? "border-[#ebdccb] shadow-[0_20px_45px_-10px_rgba(70,45,25,0.14),0_6px_16px_-4px_rgba(0,0,0,0.04)]"
+                      : "border-[#ede4d8] shadow-[0_8px_20px_-5px_rgba(70,45,25,0.06)] hover:shadow-md"
                   }`}
                 >
-                  {/* Top Bar: Flash Discount Badge + Heart */}
-                  <div className="flex items-center justify-between w-full mb-0.5">
+                  {/* Top Bar: Pill Tag + Heart */}
+                  <div className="flex items-center justify-between w-full mb-1">
                     {discountPct ? (
-                      <span className="px-2 py-0.5 rounded-full text-[8.5px] sm:text-[9px] font-black tracking-wider bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center gap-0.5">
-                        <Zap size={9} className="fill-rose-500 text-rose-500" />
-                        <span>{discountPct}% OFF</span>
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[9.5px] font-black uppercase tracking-wider bg-[#fbf0e8] text-[#b44b20] border border-[#f2d8c9]">
+                        {discountPct}% OFF
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[8.5px] sm:text-[9px] font-black uppercase tracking-wider bg-pink-50 text-[#890754] border border-pink-200/80">
-                        {isAr ? "عرض خاص" : "FLASH DEAL"}
+                      <span className="px-2.5 py-0.5 rounded-full text-[9px] sm:text-[9.5px] font-black uppercase tracking-wider bg-[#f5ede2] text-[#8a653e] border border-[#ebdccb]">
+                        {isAr ? "عرض خاص" : "BEST SELLER"}
                       </span>
                     )}
                     <button
                       onClick={(e) => toggleWishlist(e, product.id)}
                       aria-label="Save to wishlist"
-                      className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white hover:bg-pink-50 border border-pink-100 shadow-2xs flex items-center justify-center transition-colors"
+                      className="no-min-size w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-neutral-50 border border-gray-100 shadow-2xs flex items-center justify-center transition-colors"
+                      style={{ minWidth: 0, minHeight: 0 }}
                     >
                       <Heart
-                        size={13}
+                        size={14}
                         className={isLiked ? "text-rose-500 fill-rose-500" : "text-gray-400 hover:text-rose-500"}
                       />
                     </button>
                   </div>
 
                   {/* Clean Floating Product Image */}
-                  <div className="relative w-full h-[125px] sm:h-[135px] md:h-[145px] flex items-center justify-center my-0.5 pointer-events-none">
+                  <div className="relative w-full h-[135px] sm:h-[150px] md:h-[160px] flex items-center justify-center my-1 pointer-events-none">
                     <Image
                       src={imgSrc}
                       alt={product.name}
                       fill
-                      sizes="(max-width: 640px) 180px, 220px"
+                      sizes="(max-width: 640px) 200px, 240px"
                       className="object-contain p-1 transition-transform duration-500 hover:scale-105"
                       priority={isActive}
                     />
                   </div>
 
-                  {/* Micro 3-Dots below image */}
-                  <div className="flex items-center justify-center gap-1 my-0.5 pointer-events-none">
-                    <span className="w-1 h-1 rounded-full bg-[#890754]" />
-                    <span className="w-1 h-1 rounded-full bg-pink-200" />
-                    <span className="w-1 h-1 rounded-full bg-pink-200" />
+                  {/* Micro 3-Dots below image (matching reference UI) */}
+                  <div className="flex items-center justify-center gap-1.5 my-1 pointer-events-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#a67c52]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#e3d7cb]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#e3d7cb]" />
                   </div>
 
                   {/* Title & Description */}
@@ -235,7 +237,7 @@ export function FlashSalesSlider({
                     <h3 className="font-serif font-bold text-xs sm:text-[13px] md:text-sm text-gray-900 line-clamp-1 group-hover:text-[#890754] transition-colors">
                       {product.name}
                     </h3>
-                    <p className="text-[10px] sm:text-[10.5px] text-gray-500 font-normal line-clamp-2 leading-snug mt-0.5 min-h-[26px]">
+                    <p className="text-[10px] sm:text-[11px] text-gray-500 font-normal line-clamp-2 leading-snug mt-0.5 min-h-[26px]">
                       {shortDesc}
                     </p>
 
@@ -247,30 +249,32 @@ export function FlashSalesSlider({
                     </div>
                   </div>
 
-                  {/* Bottom Action Bar: Price + Add to Cart */}
+                  {/* Bottom Action Bar: Price + Add to Cart Button */}
                   <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100/80">
                     <div className="flex flex-col">
                       <Price
                         amount={displayPrice}
                         countryPrices={product.countryPrices}
-                        className="font-serif font-bold text-sm sm:text-base text-[#890754]"
+                        className="font-serif font-bold text-sm sm:text-base text-gray-900"
                       />
                       {hasDiscount && (
                         <Price
                           amount={rawPrice}
                           countryPrices={product.countryPrices}
-                          className="text-[10px] text-gray-400 line-through font-medium"
+                          className="text-[10px] text-gray-400 line-through font-medium -mt-0.5"
                         />
                       )}
                     </div>
 
+                    {/* Reference UI: Active card has "Add to Cart" camel pill, Side cards have camel cart square */}
                     {isActive ? (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           addToCart(product);
                         }}
-                        className="inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#890754] to-[#680540] hover:from-[#a00863] hover:to-[#540434] active:scale-95 text-white text-[10px] sm:text-[11px] font-bold shadow-xs hover:shadow transition-all"
+                        className="no-min-size inline-flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-[#b0875c] hover:bg-[#99734b] active:scale-95 text-white text-[11px] sm:text-xs font-bold shadow-xs transition-all"
+                        style={{ minWidth: 0, minHeight: 0 }}
                       >
                         <ShoppingCart size={13} className="stroke-[2.2]" />
                         <span>Add to Cart</span>
@@ -282,9 +286,10 @@ export function FlashSalesSlider({
                           addToCart(product);
                         }}
                         aria-label="Add to cart"
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-pink-50 hover:bg-[#890754] text-[#890754] hover:text-white active:scale-95 flex items-center justify-center transition-all shadow-xs"
+                        className="no-min-size w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#f5ede2] hover:bg-[#b0875c] text-[#8a653e] hover:text-white active:scale-95 flex items-center justify-center transition-all shadow-2xs"
+                        style={{ minWidth: 0, minHeight: 0 }}
                       >
-                        <ShoppingCart size={13} className="stroke-[2.2]" />
+                        <ShoppingCart size={14} className="stroke-[2.2]" />
                       </button>
                     )}
                   </div>
@@ -294,8 +299,8 @@ export function FlashSalesSlider({
           </div>
         </div>
 
-        {/* Bottom Super Small Pagination Indicator Dots */}
-        <div className="flex items-center justify-center gap-1.5 mt-4 sm:mt-5 select-none">
+        {/* Bottom Pagination Dots: 5 Small Circles matching Reference UI */}
+        <div className="flex items-center justify-center gap-2 mt-4 select-none">
           {Array.from({ length: Math.min(5, total) }).map((_, dotIdx) => {
             const isCurrent = dotIdx === activeIndex % Math.min(5, total);
             return (
@@ -303,11 +308,19 @@ export function FlashSalesSlider({
                 key={dotIdx}
                 onClick={() => setActiveIndex(dotIdx)}
                 aria-label={`Go to slide ${dotIdx + 1}`}
-                className={`transition-all duration-300 rounded-full ${
+                className={`no-min-size transition-all duration-300 rounded-full ${
                   isCurrent
-                    ? "w-2 h-1 bg-[#890754] ring-1 ring-[#890754]/30"
-                    : "w-1 h-1 bg-pink-200 hover:bg-[#890754]/50"
+                    ? "w-2.5 h-2.5 bg-[#a67c52]"
+                    : "w-2.5 h-2.5 border-[1.5px] border-[#d4c5b5] bg-transparent hover:border-[#a67c52]"
                 }`}
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  minWidth: "0px",
+                  minHeight: "0px",
+                  padding: "0px",
+                  borderWidth: isCurrent ? "0px" : "1.5px",
+                }}
               />
             );
           })}
