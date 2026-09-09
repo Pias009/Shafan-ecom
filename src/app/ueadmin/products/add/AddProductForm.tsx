@@ -2,13 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box, Scale } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box, Scale, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { autoCompleteCountryPrices } from '@/lib/country-pricing';
 import { parseCommaSeparatedPriceInput, formatPriceForAdmin } from '@/lib/money';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import {
+  OFFICIAL_BRANDS,
+  OFFICIAL_CATEGORIES,
+  OFFICIAL_SUBCATEGORIES,
+  OFFICIAL_SKIN_TYPES,
+  OFFICIAL_SKIN_CONCERNS,
+} from '@/lib/product-taxonomy';
 
 const SUPPORTED_COUNTRIES = ['AE', 'SA', 'KW', 'QA', 'BH', 'OM'];
 const COUNTRY_CODES = SUPPORTED_COUNTRIES;
@@ -76,10 +83,10 @@ export function AddProductForm({
   const searchParams = useSearchParams();
   
   // Determine initial storeId based on admin's access
-  // For SUPERADMIN: default to GLOBAL, for regular admin: use their store
   const initialStoreId = isSuperAdmin ? 'GLOBAL' : (adminStoreCode || '');
 
   const [loading, setLoading] = useState(false);
+  const [activeDescTab, setActiveDescTab] = useState<'short' | 'benefits' | 'ingredients' | 'howToUse'>('short');
   
   // Initialize country prices for all supported countries
   const initialCountryPrices = COUNTRY_CODES.map(code => ({
@@ -94,24 +101,29 @@ export function AddProductForm({
     name: '',
     slug: '',
     sku: '',
-    brandName: brands[0]?.name || '',
+    brandName: brands[0]?.name || OFFICIAL_BRANDS[0] || '',
     categoryIds: [] as string[],
     subCategoryId: '',
     skinToneIds: [] as string[],
     skinConcernIds: [] as string[],
     description: '',
+    shortDescription: '',
     benefits: '',
     ingredients: '',
     howToUse: '',
     features: [] as string[],
-    price: 0, // Base price 0
+    price: 0, // Base price
     discountPrice: 0,
-    stockQuantity: 10,
+    stockQuantity: 20,
+    dubaiStock: 10,
+    kuwaitStock: 10,
     mainImage: '',
     images: [] as string[],
     hot: false,
     trending: false,
-    storeId: initialStoreId, // Set based on admin's access
+    clearanceSale: false,
+    promotion: false,
+    storeId: initialStoreId,
     countryPrices: initialCountryPrices,
     subCategoryIds: [] as string[],
     tags: [] as string[],
@@ -121,7 +133,13 @@ export function AddProductForm({
 
   const [showAddBrand, setShowAddBrand] = useState(false);
   const [newBrandName, setNewBrandName] = useState("");
-  const [availableBrands, setAvailableBrands] = useState(brands);
+  
+  // Merge official brands with props brands, deduplicating
+  const mergedBrands = Array.from(
+    new Set([...OFFICIAL_BRANDS, ...brands.map(b => b.name)])
+  ).map(name => ({ name }));
+  
+  const [availableBrands, setAvailableBrands] = useState(mergedBrands);
 
   // Filter sub-categories based on selected categories (first category) - now showing all
   const filteredSubCategories = subCategories;
@@ -291,19 +309,24 @@ export function AddProductForm({
         slug: formData.slug || undefined,
         sku: formData.sku || undefined,
         description: formData.description || undefined,
+        shortDescription: formData.shortDescription || formData.description || undefined,
         benefits: formData.benefits,
         ingredients: formData.ingredients,
         howToUse: formData.howToUse,
         price: formData.price,
         discountPrice: formData.discountPrice,
-        stockQuantity: formData.stockQuantity,
+        stockQuantity: (Number(formData.dubaiStock) || 0) + (Number(formData.kuwaitStock) || 0),
+        dubaiStock: Number(formData.dubaiStock) || 0,
+        kuwaitStock: Number(formData.kuwaitStock) || 0,
         brandName: formData.brandName,
         categoryIds: formData.categoryIds,
         skinToneIds: formData.skinToneIds,
         skinConcernIds: formData.skinConcernIds,
-        subCategoryId: formData.subCategoryIds[0] || null,
+        subCategoryId: formData.subCategoryId || formData.subCategoryIds[0] || null,
         hot: formData.hot,
         trending: formData.trending,
+        clearanceSale: formData.clearanceSale,
+        promotion: formData.promotion,
         storeId: formData.storeId,
         countryPrices,
         mainImage: formData.mainImage,
@@ -461,160 +484,197 @@ export function AddProductForm({
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <RichTextEditor
-                name="description"
-                value={formData.description}
-                onChange={(value) => setFormData({ ...formData, description: value })}
-                placeholder="Tell customers about this product... (Use toolbar for formatting)"
-                label="Description"
-                rows={6}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <RichTextEditor
-                name="benefits"
-                value={formData.benefits}
-                onChange={(value) => setFormData({ ...formData, benefits: value })}
-                placeholder="Key benefits of the product... (Use toolbar for formatting)"
-                label="Benefits"
-                rows={5}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <RichTextEditor
-                name="ingredients"
-                value={formData.ingredients}
-                onChange={(value) => setFormData({ ...formData, ingredients: value })}
-                placeholder="List of ingredients... (Use toolbar for formatting)"
-                label="Ingredients"
-                rows={5}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <RichTextEditor
-                name="howToUse"
-                value={formData.howToUse}
-                onChange={(value) => setFormData({ ...formData, howToUse: value })}
-                placeholder="Instructions on how to use the product... (Use toolbar for formatting)"
-                label="How to Use"
-                rows={5}
-              />
-            </div>
-
-            {/* Categories */}
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 mb-2">Categories</h4>
-              <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
-                <div className="flex flex-wrap gap-2">
-                  {categories.map(cat => (
-                    <label
-                      key={cat.id}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-                        formData.categoryIds.includes(cat.id)
-                          ? 'bg-black text-white'
-                          : 'bg-white hover:bg-black/5'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.categoryIds.includes(cat.id)}
-                        onChange={() => handleCategoryToggle(cat.id)}
-                        className="hidden"
-                      />
-                      <span className="text-sm font-medium">{cat.name}</span>
-                    </label>
-                  ))}
-                </div>
+            {/* 4 Description Tabs (Page 10 Feedback) */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">
+                  Product Details & Description Tabs
+                </label>
+                <span className="text-[10px] text-black/40 font-bold uppercase tracking-wider">4 Sections Available</span>
               </div>
-            </div>
 
-            {/* Sub-categories */}
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 mb-2">Sub-categories</h4>
-              <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
-                <div className="flex flex-wrap gap-2">
-                  {subCategories.map((subCat) => (
-                    <label
-                      key={subCat.id}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-                        formData.subCategoryIds.includes(subCat.id)
-                          ? 'bg-black text-white'
-                          : 'bg-white hover:bg-black/5'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.subCategoryIds.includes(subCat.id)}
-                        onChange={() => handleSubCategoryToggle(subCat.id)}
-                        className="hidden"
-                      />
-                      <span className="text-sm font-medium">{subCat.name}</span>
-                    </label>
-                  ))}
-                </div>
+              {/* Tab Navigation */}
+              <div className="flex p-1 bg-black/5 rounded-2xl gap-1 overflow-x-auto">
+                {[
+                  { id: 'short', label: 'Short Description', filled: !!formData.description },
+                  { id: 'benefits', label: 'Benefits', filled: !!formData.benefits },
+                  { id: 'ingredients', label: 'Ingredients', filled: !!formData.ingredients },
+                  { id: 'howToUse', label: 'How to Use', filled: !!formData.howToUse },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveDescTab(tab.id as any)}
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                      activeDescTab === tab.id
+                        ? 'bg-black text-white shadow-md'
+                        : 'text-black/60 hover:text-black hover:bg-black/5'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    {tab.filled && (
+                      <span className={`w-1.5 h-1.5 rounded-full ${activeDescTab === tab.id ? 'bg-emerald-400' : 'bg-emerald-600'}`} />
+                    )}
+                  </button>
+                ))}
               </div>
-            </div>
 
-            {/* Skin Tones */}
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 mb-2">Skin Tones</h4>
-              <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
-                <div className="flex flex-wrap gap-2">
-                  {skinTones.map((tone) => (
-                    <label
-                      key={tone.id}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-                        formData.skinToneIds.includes(tone.id)
-                          ? 'bg-black text-white'
-                          : 'bg-white hover:bg-black/5'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.skinToneIds.includes(tone.id)}
-                        onChange={() => handleSkinToneToggle(tone.id)}
-                        className="hidden"
-                      />
-                      {tone.hexColor && (
-                        <div
-                          className="w-4 h-4 rounded-full border border-white/20"
-                          style={{ backgroundColor: tone.hexColor }}
-                        />
-                      )}
-                      <span className="text-sm font-medium">{tone.name}</span>
-                    </label>
-                  ))}
+              {/* Tab Content */}
+              {activeDescTab === 'short' && (
+                <div className="space-y-1.5 animate-fadeIn">
+                  <RichTextEditor
+                    name="description"
+                    value={formData.description}
+                    onChange={(value) => setFormData({ ...formData, description: value, shortDescription: value })}
+                    placeholder="Short product overview and description... (Use toolbar for formatting)"
+                    label="Short Description / Overview"
+                    rows={6}
+                  />
                 </div>
-              </div>
+              )}
+
+              {activeDescTab === 'benefits' && (
+                <div className="space-y-1.5 animate-fadeIn">
+                  <RichTextEditor
+                    name="benefits"
+                    value={formData.benefits}
+                    onChange={(value) => setFormData({ ...formData, benefits: value })}
+                    placeholder="Key benefits and proven results of the product..."
+                    label="Product Benefits"
+                    rows={6}
+                  />
+                </div>
+              )}
+
+              {activeDescTab === 'ingredients' && (
+                <div className="space-y-1.5 animate-fadeIn">
+                  <RichTextEditor
+                    name="ingredients"
+                    value={formData.ingredients}
+                    onChange={(value) => setFormData({ ...formData, ingredients: value })}
+                    placeholder="Key ingredients (e.g., Niacinamide, Centella Asiatica, Hyaluronic Acid)..."
+                    label="Ingredients & Formulation"
+                    rows={6}
+                  />
+                </div>
+              )}
+
+              {activeDescTab === 'howToUse' && (
+                <div className="space-y-1.5 animate-fadeIn">
+                  <RichTextEditor
+                    name="howToUse"
+                    value={formData.howToUse}
+                    onChange={(value) => setFormData({ ...formData, howToUse: value })}
+                    placeholder="Step-by-step application instructions..."
+                    label="How to Use"
+                    rows={6}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Skin Concerns */}
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 mb-2">Skin Concerns</h4>
-              <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
-                <div className="flex flex-wrap gap-2">
-                  {skinConcerns.map((concern) => (
-                    <label
-                      key={concern.id}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-                        formData.skinConcernIds.includes(concern.id)
-                          ? 'bg-black text-white'
-                          : 'bg-white hover:bg-black/5'
-                      }`}
+            {/* Taxonomy Dropdowns (Page 10 Feedback: Category, Sub Category, Skin Type, Skin Concern) */}
+            <div className="pt-4 border-t border-black/5 space-y-6">
+              <h4 className="text-xs font-black uppercase tracking-widest text-black/40">Taxonomy & Categorization</h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Category Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Category *</label>
+                  <div className="relative">
+                    <select
+                      value={formData.categoryIds[0] || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          categoryIds: selectedId ? [selectedId] : []
+                        }));
+                      }}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
                     >
-                      <input
-                        type="checkbox"
-                        checked={formData.skinConcernIds.includes(concern.id)}
-                        onChange={() => handleSkinConcernToggle(concern.id)}
-                        className="hidden"
-                      />
-                      <span className="text-sm font-medium">{concern.name}</span>
-                    </label>
-                  ))}
+                      <option value="">Select Category</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/40" size={16} />
+                  </div>
+                </div>
+
+                {/* Sub-Category Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Sub-Category *</label>
+                  <div className="relative">
+                    <select
+                      value={formData.subCategoryId || formData.subCategoryIds[0] || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          subCategoryId: selectedId,
+                          subCategoryIds: selectedId ? [selectedId] : []
+                        }));
+                      }}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select Sub-Category</option>
+                      {subCategories.map((subCat) => (
+                        <option key={subCat.id} value={subCat.id}>
+                          {subCat.name} {subCat.category?.name ? `(${subCat.category.name})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/40" size={16} />
+                  </div>
+                </div>
+
+                {/* Skin Type Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Skin Type *</label>
+                  <div className="relative">
+                    <select
+                      value={formData.skinToneIds[0] || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          skinToneIds: selectedId ? [selectedId] : []
+                        }));
+                      }}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select Skin Type</option>
+                      {skinTones.map((tone) => (
+                        <option key={tone.id} value={tone.id}>{tone.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/40" size={16} />
+                  </div>
+                </div>
+
+                {/* Skin Concern Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Skin Concern *</label>
+                  <div className="relative">
+                    <select
+                      value={formData.skinConcernIds[0] || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          skinConcernIds: selectedId ? [selectedId] : []
+                        }));
+                      }}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select Skin Concern</option>
+                      {skinConcerns.map((concern) => (
+                        <option key={concern.id} value={concern.id}>{concern.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/40" size={16} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -759,22 +819,62 @@ export function AddProductForm({
               <Box size={14} /> Stock & SKU
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Dubai Warehouse Stock */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">Stock Quantity</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 flex items-center justify-between">
+                  <span>Dubai Stock (UAE)</span>
+                  <span className="text-xs">🇦🇪</span>
+                </label>
                 <div className="relative">
                   <input
                     type="number"
-                    name="stockQuantity"
-                    value={formData.stockQuantity}
-                    onChange={handleChange}
+                    name="dubaiStock"
+                    value={formData.dubaiStock}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 0;
+                      setFormData(prev => ({
+                        ...prev,
+                        dubaiStock: val,
+                        stockQuantity: val + (Number(prev.kuwaitStock) || 0)
+                      }));
+                    }}
                     min="0"
+                    placeholder="0"
                     className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
                   />
                   <Package className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
                 </div>
               </div>
 
+              {/* Kuwait Warehouse Stock */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2 flex items-center justify-between">
+                  <span>Kuwait Stock</span>
+                  <span className="text-xs">🇰🇼</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="kuwaitStock"
+                    value={formData.kuwaitStock}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 0;
+                      setFormData(prev => ({
+                        ...prev,
+                        kuwaitStock: val,
+                        stockQuantity: val + (Number(prev.dubaiStock) || 0)
+                      }));
+                    }}
+                    min="0"
+                    placeholder="0"
+                    className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
+                  />
+                  <Package className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
+                </div>
+              </div>
+
+              {/* SKU */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-black/70 px-2">SKU (Stock Keeping Unit)</label>
                 <div className="relative">
@@ -788,6 +888,13 @@ export function AddProductForm({
                   <Hash className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/50" size={16} />
                 </div>
               </div>
+            </div>
+
+            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-900">Total Combined Inventory:</span>
+              <span className="text-sm font-black font-mono text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
+                {(Number(formData.dubaiStock) || 0) + (Number(formData.kuwaitStock) || 0)} Units
+              </span>
             </div>
 
             <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
@@ -1076,7 +1183,7 @@ export function AddProductForm({
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-black/50">Status & Vibes</h3>
             
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="flex items-center justify-between p-4 bg-black/5 rounded-2xl cursor-pointer group">
                 <span className="text-xs font-bold uppercase tracking-widest text-black/60 group-hover:text-black">Hot Item</span>
                 <input
@@ -1094,6 +1201,28 @@ export function AddProductForm({
                   type="checkbox"
                   name="trending"
                   checked={formData.trending}
+                  onChange={handleChange}
+                  className="w-5 h-5 rounded-lg border-none bg-black/10 checked:bg-black text-black focus:ring-0 cursor-pointer"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-4 bg-black/5 rounded-2xl cursor-pointer group">
+                <span className="text-xs font-bold uppercase tracking-widest text-black/60 group-hover:text-black">Clearance Sale</span>
+                <input
+                  type="checkbox"
+                  name="clearanceSale"
+                  checked={formData.clearanceSale}
+                  onChange={handleChange}
+                  className="w-5 h-5 rounded-lg border-none bg-black/10 checked:bg-black text-black focus:ring-0 cursor-pointer"
+                />
+              </label>
+
+              <label className="flex items-center justify-between p-4 bg-black/5 rounded-2xl cursor-pointer group">
+                <span className="text-xs font-bold uppercase tracking-widest text-black/60 group-hover:text-black">Promotion</span>
+                <input
+                  type="checkbox"
+                  name="promotion"
+                  checked={formData.promotion}
                   onChange={handleChange}
                   className="w-5 h-5 rounded-lg border-none bg-black/10 checked:bg-black text-black focus:ring-0 cursor-pointer"
                 />

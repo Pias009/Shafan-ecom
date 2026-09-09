@@ -18,6 +18,12 @@ const UpdateSchema = z.object({
   discountPrice: z.number().optional(),
   active: z.boolean().optional(),
   stockQuantity: z.number().optional(),
+  dubaiStock: z.number().optional(),
+  kuwaitStock: z.number().optional(),
+  hot: z.boolean().optional(),
+  trending: z.boolean().optional(),
+  clearanceSale: z.boolean().optional(),
+  promotion: z.boolean().optional(),
   brandName: z.string().optional(),
   categoryIds: z.array(z.string()).optional(),
   skinToneIds: z.array(z.string()).optional(),
@@ -51,6 +57,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       productCategories: { include: { category: { select: { name: true, id: true } } } },
       productSkinTones: { include: { skinTone: { select: { name: true, id: true, hexColor: true } } } },
       productSkinConcerns: { include: { skinConcern: { select: { name: true, id: true } } } },
+      countryPrices: true,
+      storeInventories: {
+        include: {
+          store: { select: { code: true, name: true } }
+        }
+      },
     },
   });
   if (!product) return new Response('Not found', { status: 404 });
@@ -86,6 +98,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (data.price) data.price = Number(data.price);
     if (data.discountPrice) data.discountPrice = Number(data.discountPrice);
     if (data.stockQuantity) data.stockQuantity = Number(data.stockQuantity);
+    if (data.dubaiStock !== undefined && data.dubaiStock !== null) data.dubaiStock = Number(data.dubaiStock);
+    if (data.kuwaitStock !== undefined && data.kuwaitStock !== null) data.kuwaitStock = Number(data.kuwaitStock);
+    if (data.dubaiStock !== undefined || data.kuwaitStock !== undefined) {
+      data.stockQuantity = (Number(data.dubaiStock) || 0) + (Number(data.kuwaitStock) || 0);
+    }
     if (data.weight) data.weight = Number(data.weight);
     if (data.countryPrices && Array.isArray(data.countryPrices)) {
       data.countryPrices = data.countryPrices.map((cp: any) => ({
@@ -129,7 +146,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (typeof parsed.data.price !== 'undefined') updates.price = parsed.data.price;
     if (typeof parsed.data.discountPrice !== 'undefined') updates.discountPrice = parsed.data.discountPrice;
     if (typeof parsed.data.active !== 'undefined') updates.active = parsed.data.active;
+    if (typeof parsed.data.hot !== 'undefined') updates.hot = parsed.data.hot;
     if (typeof (parsed.data as any).trending !== 'undefined') updates.trending = (parsed.data as any).trending;
+    if (typeof (parsed.data as any).clearanceSale !== 'undefined') updates.clearanceSale = (parsed.data as any).clearanceSale;
+    if (typeof (parsed.data as any).promotion !== 'undefined') updates.promotion = (parsed.data as any).promotion;
     if (typeof parsed.data.stockQuantity !== 'undefined') updates.stockQuantity = parsed.data.stockQuantity;
     if (typeof parsed.data.weight !== 'undefined') updates.weight = parsed.data.weight;
     if (typeof parsed.data.weightUnit !== 'undefined') updates.weightUnit = parsed.data.weightUnit;
@@ -253,6 +273,38 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
     const updated = await prisma.product.update({ where: { id: id }, data: updates });
+
+    // Dual store inventory update (Dubai & Kuwait)
+    if (parsed.data.dubaiStock !== undefined || parsed.data.kuwaitStock !== undefined) {
+      try {
+        const effPrice = (typeof parsed.data.price === 'number' ? parsed.data.price : (updated.price ?? 0)) - 
+                         (typeof parsed.data.discountPrice === 'number' ? parsed.data.discountPrice : (updated.discountPrice || 0));
+        
+        if (parsed.data.dubaiStock !== undefined) {
+          const uaeStore = await prisma.store.findFirst({ where: { code: 'UAE' } });
+          if (uaeStore) {
+            await prisma.storeInventory.upsert({
+              where: { storeId_productId: { storeId: uaeStore.id, productId: id } },
+              update: { quantity: Number(parsed.data.dubaiStock) || 0, price: effPrice },
+              create: { storeId: uaeStore.id, productId: id, quantity: Number(parsed.data.dubaiStock) || 0, price: effPrice }
+            });
+          }
+        }
+
+        if (parsed.data.kuwaitStock !== undefined) {
+          const kuwStore = await prisma.store.findFirst({ where: { OR: [{ code: 'KUW' }, { code: 'KUWAIT' }] } });
+          if (kuwStore) {
+            await prisma.storeInventory.upsert({
+              where: { storeId_productId: { storeId: kuwStore.id, productId: id } },
+              update: { quantity: Number(parsed.data.kuwaitStock) || 0, price: effPrice },
+              create: { storeId: kuwStore.id, productId: id, quantity: Number(parsed.data.kuwaitStock) || 0, price: effPrice }
+            });
+          }
+        }
+      } catch (invErr) {
+        console.error('STORE_INVENTORY_UPDATE_ERROR:', invErr);
+      }
+    }
 
     try {
       await prisma.auditLog.create({

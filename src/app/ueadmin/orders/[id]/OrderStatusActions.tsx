@@ -18,12 +18,13 @@ export default function OrderStatusActions({ orderId, currentStatus, onStatusCha
   const [sendEmail, setSendEmail] = useState(true);
 
   const statuses = [
-    { id: OrderStatus.ORDER_RECEIVED, label: 'Received', icon: Package },
-    { id: OrderStatus.ORDER_CONFIRMED, label: 'Confirmed', icon: Check },
-    { id: OrderStatus.PROCESSING, label: 'Processing', icon: Loader2 },
-    { id: OrderStatus.READY_FOR_PICKUP, label: 'Pickup', icon: Truck },
-    { id: OrderStatus.IN_TRANSIT, label: 'Transit', icon: Truck },
-    { id: OrderStatus.DELIVERED, label: 'Delivered', icon: Check },
+    { id: OrderStatus.ORDER_RECEIVED, label: '1. Received', icon: Package },
+    { id: OrderStatus.ORDER_CONFIRMED, label: '2. Confirmed', icon: Check },
+    { id: OrderStatus.PROCESSING, label: '3. Processing', icon: Loader2 },
+    { id: OrderStatus.READY_FOR_PICKUP, label: '4. Ready for Pickup', icon: Truck },
+    { id: OrderStatus.ORDER_PICKED_UP, label: '5. Order Picked up', icon: Truck },
+    { id: OrderStatus.IN_TRANSIT, label: '6. In Transit', icon: Truck },
+    { id: OrderStatus.DELIVERED, label: '7. Delivered', icon: Check },
     { id: OrderStatus.CANCELLED, label: 'Cancel', icon: RotateCcw },
     { id: OrderStatus.REFUNDED, label: 'Refund', icon: CircleDollarSign },
   ];

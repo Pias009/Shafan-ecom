@@ -8,6 +8,8 @@ import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { ChevronRight, Sparkles, Search } from "lucide-react";
 
+import { OFFICIAL_BRANDS } from "@/lib/product-taxonomy";
+
 export default function BrandsPage() {
   const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,9 +23,37 @@ export default function BrandsPage() {
       try {
         const res = await fetch("/api/brands");
         const data = await res.json();
-        setBrands(data);
+        const apiBrands = Array.isArray(data) ? data : [];
+        
+        // Ensure all 23 official brands exist in the list
+        const brandMap = new Map<string, any>();
+        apiBrands.forEach((b: any) => {
+          if (b && b.name) brandMap.set(b.name.toLowerCase().trim(), b);
+        });
+
+        OFFICIAL_BRANDS.forEach((officialName) => {
+          const key = officialName.toLowerCase().trim();
+          if (!brandMap.has(key)) {
+            brandMap.set(key, {
+              id: `brand-${officialName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+              name: officialName,
+              image: null,
+              _count: { products: 0 },
+            });
+          }
+        });
+
+        setBrands(Array.from(brandMap.values()));
       } catch (err) {
         console.error("Failed to fetch brands:", err);
+        setBrands(
+          OFFICIAL_BRANDS.map((officialName) => ({
+            id: `brand-${officialName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            name: officialName,
+            image: null,
+            _count: { products: 0 },
+          }))
+        );
       } finally {
         setLoading(false);
       }

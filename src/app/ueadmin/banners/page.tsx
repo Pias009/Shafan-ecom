@@ -116,9 +116,12 @@ export default function AdminHeroBannersPage() {
         toast.success(editing ? "Banner updated!" : "Banner created!");
         setForm(emptyForm); setEditing(null); setShowForm(false); load();
       } else {
-        toast.error("Failed to save banner");
+        const err = await r.json().catch(() => ({}));
+        toast.error(err.error || "Failed to save banner");
       }
-    } catch { toast.error("Failed to save"); }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save");
+    }
     setSaving(false);
   }
 

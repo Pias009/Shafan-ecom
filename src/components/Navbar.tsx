@@ -25,6 +25,18 @@ export function Navbar() {
   const [authOpen, setAuthOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [orderNotification, setOrderNotification] = useState<string | null>(null);
+  const [notices, setNotices] = useState<{ id: string; text: string; active: boolean }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/notices")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => {
+        if (Array.isArray(d)) {
+          setNotices(d.filter((n: any) => n.active));
+        }
+      })
+      .catch(() => {});
+  }, []);
   
   // Check for recent order notification
   useEffect(() => {
@@ -56,6 +68,35 @@ export function Navbar() {
   
   const handleSearchClose = useCallback(() => setSearchOpen(false), []);
   
+  // Unified rotating announcements (combining admin notices + trust guarantees)
+  const [announcementIndex, setAnnouncementIndex] = useState(0);
+  const activeAnnouncements = useMemo(() => {
+    const list: string[] = [];
+    if (notices.length > 0) {
+      list.push(`✨ ${notices[0].text}`);
+    }
+    list.push(
+      "🚚 FREE GCC Express Delivery on orders over 150 AED",
+      "💳 Split in 4 with Tabby & Tamara — 0% Interest",
+      "💵 Cash on Delivery (COD) Available in UAE & KSA",
+      "🛡️ 100% Authentic Dermatologist Formulated Products"
+    );
+    return list;
+  }, [notices]);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setAnnouncementIndex((prev) => (prev + 1) % activeAnnouncements.length);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [activeAnnouncements.length]);
+
+  useEffect(() => {
+    const handleOpen = () => setSearchOpen(true);
+    window.addEventListener("open-search", handleOpen);
+    return () => window.removeEventListener("open-search", handleOpen);
+  }, []);
+
   // Safe pathname for SSR - use empty string if null
   const safePathname = pathname || "";
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -77,6 +118,7 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/", label: t.nav.home },
+    { href: "/brands", label: "BRANDS" },
     { href: "/products", label: "PRODUCTS" },
     { href: "#", label: "CATEGORIES" },
     { href: "/products/routine", label: "ROUTINE" },
@@ -210,31 +252,57 @@ export function Navbar() {
           } : {})
         }}
       >
-        {/* Top Announcement Bar matching Reference UI */}
-        <div className="bg-[#083029] text-white/95 text-[10.5px] sm:text-[11px] py-1.5 px-4 hidden md:block border-b border-emerald-900/40">
+        {/* Single Top Announcement Bar: Responsive Mobile & Desktop */}
+        <div className="bg-[#083029] text-white/95 text-[10.5px] sm:text-[11px] py-1 px-3 sm:px-4 border-b border-emerald-900/40 select-none">
           <div className="max-w-[1536px] mx-auto flex items-center justify-between font-medium">
-            <div className="flex items-center gap-2">
-              <span>🚚 Free Shipping on Orders Over $50</span>
+            {/* Mobile Animated Announcement */}
+            <div className="w-full md:hidden flex items-center justify-center overflow-hidden h-4">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={announcementIndex}
+                  initial={{ y: 12, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -12, opacity: 0 }}
+                  transition={{ duration: 0.28 }}
+                  className="text-center font-bold tracking-tight text-white flex items-center justify-center gap-1.5"
+                >
+                  <span>{activeAnnouncements[announcementIndex]}</span>
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <div className="flex items-center gap-4 text-white/80 text-[10.5px]">
+
+            {/* Desktop Announcement */}
+            <div className="hidden md:flex items-center gap-2">
+              {notices.length > 0 ? (
+                <span className="flex items-center gap-1.5 text-amber-300 font-bold">
+                  <Sparkles size={12} className="shrink-0 fill-amber-300" />
+                  {notices[0].text}
+                </span>
+              ) : (
+                <span>🚚 FREE GCC Express Delivery on Orders Over 150 AED / SAR</span>
+              )}
+            </div>
+            <div className="hidden md:flex items-center gap-4 text-white/80 text-[10.5px]">
+              <div className="scale-90 origin-right">
+                <CountrySelector compact direction="down" />
+              </div>
+              <span className="text-white/30">|</span>
               <Link href="/account/orders" className="hover:text-white transition-colors">Track Order</Link>
               <span className="text-white/30">|</span>
               <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
-              <span className="text-white/30">|</span>
-              <Link href="/stores" className="hover:text-white transition-colors">Store Locator</Link>
               <span className="text-white/30">|</span>
               <Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link>
             </div>
           </div>
         </div>
 
-        <div className="max-w-[1536px] mx-auto py-2.5 flex items-center justify-between px-4 sm:px-6">
+        <div className="max-w-[1536px] mx-auto py-1.5 sm:py-2 flex items-center justify-between px-3 sm:px-6">
           
           {/* Mobile layout */}
-          <div className="flex items-center justify-between w-full lg:hidden py-1">
+          <div className="flex items-center justify-between w-full lg:hidden py-0.5">
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+              className="p-1.5 text-white hover:bg-white/10 rounded-full transition-colors"
               aria-label="Toggle menu"
             >
               {mobileOpen ? <X size={22} className="text-[#0c3a32]" /> : <Menu size={22} />}
@@ -250,7 +318,7 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
                 aria-label="Search"
               >
                 <Search size={20} />

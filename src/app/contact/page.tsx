@@ -1,126 +1,213 @@
 "use client";
 
-import { ArrowLeft, Phone, Mail, MapPin, Facebook, Instagram, Linkedin, MessageCircle, Loader2, Clock } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Clock, MessageSquare, ExternalLink, Send, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+const OFFICES = [
+  {
+    title: "Dubai Office",
+    address: "405, Al Diyafa Center, Satwa Roundabout, Dubai, United Arab Emirates",
+    phone: "+971 04 834 7827",
+    tel: "+971048347827",
+    email: "support@shanfaglobal.com",
+    mapUrl: "https://maps.google.com/?q=Al+Diyafa+Shopping+Center+Satwa+Dubai",
+    embedMap: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3608.847113039648!2d55.275529!3d25.242056!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f42c262e3d33f%3A0xbd88f7b7cb3b65cb!2sAl%20Diyafa%20Shopping%20Centre!5e0!3m2!1sen!2sae!4v1700000000000",
+  },
+  {
+    title: "Kuwait Office",
+    address: "Abdullah Al Mubarak St., Star Tower 6th Floor, Kuwait City, Kuwait",
+    phone: "+965 50564595",
+    tel: "+96550564595",
+    email: "info@shanfagroup.com",
+    mapUrl: "https://maps.google.com/?q=Star+Tower+Kuwait+City",
+    embedMap: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3477.536965156734!2d47.977408!3d29.378586!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3fcf848e028b21c3%3A0x3be652033dbcfbd!2sStar%20Tower!5e0!3m2!1sen!2skw!4v1700000000000",
+  },
+  {
+    title: "Spain Office",
+    address: "Av. de Mistral 25, 08015 Barcelona, Spain",
+    phone: "+34 612 44 08 18",
+    tel: "+34612440818",
+    email: "support@shanfaglobal.com",
+    mapUrl: "https://maps.google.com/?q=Av.+de+Mistral+25+08015+Barcelona+Spain",
+    embedMap: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2993.842795897034!2d2.155799!3d41.377519!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a4a27bc19a4bc9%3A0xc3ce1e5a5f57ff76!2sAv.%20de%20Mistral%2C%2025%2C%20Eixample%2C%2008015%20Barcelona%2C%20Spain!5e0!3m2!1sen!2ses!4v1700000000000",
+  },
+];
+
 export default function ContactPage() {
+  const [formOpen, setFormOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-white/40 backdrop-blur-sm">
-      <div className="bg-black text-white py-16 md:py-20">
+    <div className="min-h-screen bg-neutral-50/50 pb-20">
+      {/* Top Banner Header */}
+      <div className="bg-neutral-900 text-white py-14 border-b border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-white/60 hover:text-white mb-8 text-xs font-bold uppercase tracking-widest"
+            className="inline-flex items-center gap-2 text-neutral-400 hover:text-white mb-6 text-xs font-bold uppercase tracking-widest transition-colors"
           >
             <ArrowLeft size={14} /> Back to Home
           </Link>
-          <h1 className="font-display text-4xl md:text-5xl font-black">Contact Us</h1>
+          <h1 className="text-3xl md:text-5xl font-black tracking-tight">Contact Us For Any Questions</h1>
+          <p className="text-neutral-400 mt-2 text-sm md:text-base">
+            Reach out to our international offices or get direct assistance from our global customer team.
+          </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 md:py-16">
-        <div className="grid md:grid-cols-2 gap-12">
-          <div className="space-y-8">
-            <div>
-              <h2 className="font-display text-2xl md:text-3xl font-black text-black mb-4">Get in Touch</h2>
-              <p className="text-black/60 text-lg">
-                Have a question? We&apos;d love to hear from you.
-              </p>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-6">
+        {/* 3 Global Offices Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          {OFFICES.map((office) => (
+            <div
+              key={office.title}
+              className="bg-white rounded-2xl shadow-sm border border-neutral-200/80 overflow-hidden flex flex-col hover:shadow-md transition-shadow"
+            >
+              {/* Map embed preview */}
+              <div className="h-44 w-full bg-neutral-100 relative">
+                <iframe
+                  title={`${office.title} Map`}
+                  src={office.embedMap}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  className="w-full h-full grayscale-[25%] contrast-125"
+                />
+              </div>
 
-            {/* WhatsApp */}
-            <div className="flex items-center gap-4 p-4 bg-green-50 rounded-2xl">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <MessageCircle size={24} className="text-green-600" />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-green-600 mb-1">WhatsApp</p>
-                <a href="https://wa.me/971547206046?text=Hi%20Shafa%20Global,%20I%20have%20a%20question." target="_blank" className="font-bold text-black hover:text-green-600 transition">
-                  +971 54 720 6046
-                </a>
-              </div>
-            </div>
+              {/* Office Details */}
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-neutral-900 mb-3">{office.title}</h3>
+                  <div className="space-y-2.5 text-sm text-neutral-600">
+                    <div className="flex items-start gap-2.5">
+                      <MapPin size={16} className="text-neutral-400 shrink-0 mt-0.5" />
+                      <span>{office.address}</span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <Phone size={16} className="text-neutral-400 shrink-0" />
+                      <a href={`tel:${office.tel}`} className="font-semibold text-neutral-900 hover:text-neutral-600">
+                        {office.phone}
+                      </a>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <Mail size={16} className="text-neutral-400 shrink-0" />
+                      <a href={`mailto:${office.email}`} className="text-neutral-700 hover:underline">
+                        {office.email}
+                      </a>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Phone */}
-            <div className="flex items-center gap-4 p-4 bg-black/5 rounded-2xl">
-              <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center">
-                <Phone size={24} className="text-black" />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-black/40 mb-1">Landline</p>
-                <a href="tel:+971048387827" className="font-bold text-black hover:text-black/70 transition">
-                  +971 04 838 7827
-                </a>
-              </div>
-            </div>
-
-            {/* Email */}
-            <div className="flex items-center gap-4 p-4 bg-black/5 rounded-2xl">
-              <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center">
-                <Mail size={24} className="text-black" />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-black/40 mb-1">Email</p>
-                <a href="mailto:support@shanfaglobal.com" className="font-bold text-black hover:text-black/70 transition">
-                  support@shanfaglobal.com
-                </a>
-              </div>
-            </div>
-
-            {/* Address */}
-            <div className="flex items-start gap-4 p-4 bg-black/5 rounded-2xl">
-              <div className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center">
-                <MapPin size={24} className="text-black" />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-black/40 mb-1">Address</p>
-                <div className="font-bold text-black">
-                  <div>AL Diyafa Shopping Center</div>
-                  <div>AL Baada, Dubai</div>
-                  <div>United Arab Emirates</div>
+                <div className="pt-5 mt-5 border-t border-neutral-100">
+                  <a
+                    href={office.mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-neutral-600"
+                  >
+                    Open in Maps <ExternalLink size={13} />
+                  </a>
                 </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            <div className="pt-4">
-              <p className="text-xs font-black uppercase tracking-widest text-black/30 mb-4">Follow Us</p>
-              <div className="flex gap-3">
-                <a href="https://wa.me/971547206046" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center hover:bg-green-500/20 transition" aria-label="WhatsApp">
-                  <MessageCircle className="text-green-600" size={20} />
-                </a>
-                <a href="https://www.facebook.com/ShanfaGlobalArabia" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-blue-600/10 rounded-full flex items-center justify-center hover:bg-blue-600/20 transition" aria-label="Facebook">
-                  <Facebook className="text-blue-600" size={20} />
-                </a>
-                <a href="https://www.instagram.com/shanfa.global" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-pink-500/10 rounded-full flex items-center justify-center hover:bg-pink-500/20 transition" aria-label="Instagram">
-                  <Instagram className="text-pink-600" size={20} />
-                </a>
-                <a href="https://www.linkedin.com/company/shanfaglobal" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-blue-700/10 rounded-full flex items-center justify-center hover:bg-blue-700/20 transition" aria-label="LinkedIn">
-                  <Linkedin className="text-blue-700" size={20} />
-                </a>
-                <a href="https://www.tiktok.com/@shanfaglobal" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-black/10 rounded-full flex items-center justify-center hover:bg-black/20 transition" aria-label="TikTok">
-                  <svg width={20} height={20} viewBox="0 0 24 24" fill="currentColor" className="text-black">
-                    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93v6.6c0 2.67-1.89 4.98-4.46 5.27-2.44.28-4.72-.86-5.39-2.87-.71-2.14-.29-4.52 1.11-5.93 1.32-1.34 3.3-1.78 5.17-1.45V.02z" />
-                  </svg>
-                </a>
-                <a href="https://www.youtube.com/@Shanfaglobal" target="_blank" rel="noopener noreferrer" className="w-12 h-12 bg-red-600/10 rounded-full flex items-center justify-center hover:bg-red-600/20 transition" aria-label="YouTube">
-                  <svg width={20} height={20} viewBox="0 0 24 24" fill="currentColor" className="text-red-600">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.346 0 12 0 12s0 3.654.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.654 24 12 24 12s0-3.654-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                  </svg>
-                </a>
+        {/* Support Section */}
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <h2 className="text-2xl md:text-3xl font-black text-neutral-900">Do you have some questions?</h2>
+          <p className="text-neutral-500 mt-2 text-sm md:text-base">We are at your disposal 7 days a week!</p>
+        </div>
+
+        {/* 3 Channels (Call Us, Send Message, Visit in our Store) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          {/* Call us */}
+          <div className="bg-white p-8 rounded-2xl border border-neutral-200/80 text-center flex flex-col items-center justify-between">
+            <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900 mb-4">
+              <Phone size={24} />
+            </div>
+            <div className="space-y-2 mb-6">
+              <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Call us</h3>
+              <p className="text-xl font-bold text-neutral-900">+971 04 834 7827</p>
+              <div className="text-xs text-neutral-500 space-y-0.5 pt-1">
+                <p>Monday – Friday: 9:00 – 20:00</p>
+                <p>Saturday: 11:00 – 16:00</p>
               </div>
             </div>
+            <a
+              href="https://wa.me/971547206046?text=Hello%20Shanfa%20Customer%20Support"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 px-4 rounded-xl border border-neutral-300 text-xs font-bold uppercase tracking-wider text-neutral-800 hover:bg-neutral-900 hover:text-white transition-colors"
+            >
+              Live Chat
+            </a>
           </div>
 
-          <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl border border-black/5">
-            <h2 className="font-display text-xl font-black text-black mb-6">Send us a Message</h2>
-            <ContactForm />
+          {/* Send message */}
+          <div className="bg-white p-8 rounded-2xl border border-neutral-200/80 text-center flex flex-col items-center justify-between">
+            <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900 mb-4">
+              <Mail size={24} />
+            </div>
+            <div className="space-y-2 mb-6">
+              <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Send message</h3>
+              <p className="text-sm font-semibold text-neutral-900">support@shanfaglobal.com</p>
+              <div className="text-xs text-neutral-500 space-y-1 pt-1">
+                <p><span className="font-semibold text-neutral-700">Orders:</span> support@shanfaglobal.com</p>
+                <p><span className="font-semibold text-neutral-700">Returns:</span> support@shanfaglobal.com</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setFormOpen(true);
+                document.getElementById("contact-form-section")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="w-full py-3 px-4 rounded-xl border border-neutral-300 text-xs font-bold uppercase tracking-wider text-neutral-800 hover:bg-neutral-900 hover:text-white transition-colors"
+            >
+              Contact form
+            </button>
           </div>
+
+          {/* Visit our store */}
+          <div className="bg-white p-8 rounded-2xl border border-neutral-200/80 text-center flex flex-col items-center justify-between">
+            <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900 mb-4">
+              <MapPin size={24} />
+            </div>
+            <div className="space-y-2 mb-6">
+              <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Visit in our store</h3>
+              <p className="text-sm font-semibold text-neutral-900">
+                Al Diyafa Center, Satwa Roundabout
+              </p>
+              <p className="text-xs text-neutral-500">Dubai, United Arab Emirates</p>
+            </div>
+            <a
+              href="https://maps.google.com/?q=Al+Diyafa+Shopping+Center+Satwa+Dubai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 px-4 rounded-xl border border-neutral-300 text-xs font-bold uppercase tracking-wider text-neutral-800 hover:bg-neutral-900 hover:text-white transition-colors"
+            >
+              Show on map
+            </a>
+          </div>
+        </div>
+
+        {/* Contact Form Section */}
+        <div id="contact-form-section" className="bg-white rounded-3xl p-8 md:p-12 border border-neutral-200/80 shadow-sm max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-black text-neutral-900">Send Us an Inquiry</h3>
+            <p className="text-neutral-500 text-sm mt-1">
+              Have questions regarding orders, partnerships, or product inquiries? Fill out the form below.
+            </p>
+          </div>
+          <ContactForm />
         </div>
       </div>
     </div>
   );
 }
+
 function ContactForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -133,14 +220,15 @@ function ContactForm() {
     const data = {
       name: formData.get("name"),
       email: formData.get("email"),
-      message: formData.get("message")
+      subject: formData.get("subject"),
+      message: formData.get("message"),
     };
 
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       if (res.ok) {
@@ -155,60 +243,76 @@ function ContactForm() {
 
   if (success) {
     return (
-      <div className="text-center py-8">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <MessageCircle className="w-8 h-8 text-green-600" />
+      <div className="text-center py-10">
+        <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Send className="w-6 h-6 text-emerald-600" />
         </div>
-        <h3 className="font-black text-black text-xl mb-2">Thank You!</h3>
-        <p className="text-black/60">We&apos;ll respond within 24-48 hours.</p>
+        <h4 className="font-bold text-neutral-900 text-lg mb-1">Message Sent Successfully!</h4>
+        <p className="text-neutral-500 text-sm">Thank you for reaching out. We will get back to you within 24 hours.</p>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+            Full Name *
+          </label>
+          <input
+            type="text"
+            name="name"
+            required
+            placeholder="John Doe"
+            className="w-full h-12 px-4 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:bg-white focus:outline-none transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+            Email Address *
+          </label>
+          <input
+            type="email"
+            name="email"
+            required
+            placeholder="john@example.com"
+            className="w-full h-12 px-4 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:bg-white focus:outline-none transition-all"
+          />
+        </div>
+      </div>
+
       <div>
+        <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+          Subject
+        </label>
         <input
           type="text"
-          name="name"
-          required
-          placeholder="Your Name"
-          className="w-full h-14 px-5 bg-black/5 border border-black/10 rounded-2xl font-bold text-black placeholder:text-black/30 focus:border-black focus:outline-none transition-colors"
+          name="subject"
+          placeholder="Order Inquiry / Product Question"
+          className="w-full h-12 px-4 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:bg-white focus:outline-none transition-all"
         />
       </div>
+
       <div>
-        <input
-          type="email"
-          name="email"
-          required
-          placeholder="Email Address"
-          className="w-full h-14 px-5 bg-black/5 border border-black/10 rounded-2xl font-bold text-black placeholder:text-black/30 focus:border-black focus:outline-none transition-colors"
-        />
-      </div>
-      <div>
-        <input
-          type="email"
-          name="email"
-          required
-          placeholder="Email Address"
-          className="w-full h-14 px-5 bg-black/5 border border-black/10 rounded-2xl font-bold text-black placeholder:text-black/30 focus:border-black focus:outline-none transition-colors"
-        />
-      </div>
-      <div>
+        <label className="block text-xs font-bold uppercase tracking-wider text-neutral-600 mb-1.5">
+          Your Message *
+        </label>
         <textarea
           name="message"
           required
-          rows={5}
-          placeholder="Your Message"
-          className="w-full px-5 py-4 bg-black/5 border border-black/10 rounded-2xl font-bold text-black placeholder:text-black/30 focus:border-black focus:outline-none transition-colors resize-none"
+          rows={4}
+          placeholder="How can we assist you today?"
+          className="w-full p-4 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:bg-white focus:outline-none transition-all resize-none"
         />
       </div>
+
       <button
         type="submit"
         disabled={loading}
-        className="w-full h-14 bg-black text-white rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-black/80 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+        className="w-full h-12 bg-neutral-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
       >
-        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Message"}
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Inquiry"}
       </button>
     </form>
   );

@@ -2,21 +2,91 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import Image from "next/image";
+import { OFFICIAL_BRANDS } from "@/lib/product-taxonomy";
 
 interface Brand {
   id: string;
   name: string;
   image?: string | null;
-  _count?: {
-    products: number;
-  };
+}
+
+// 8 tiles that mathematically pack 100% of the grid with zero blank slots
+// Mobile: 4 columns × 3 rows = 12 slots (4 + 1 + 1 + 1 + 1 + 1 + 1 + 2 = 12)
+// Desktop: 6 columns × 2 rows = 12 slots (4 + 1 + 1 + 2 + 1 + 1 + 1 + 1 = 12)
+const TILE_LAYOUT = [
+  { col: "col-span-2 row-span-2 md:col-span-2 md:row-span-2", delay: 0 },
+  { col: "col-span-1 row-span-1 md:col-span-1 md:row-span-1", delay: 1.2 },
+  { col: "col-span-1 row-span-1 md:col-span-1 md:row-span-1", delay: 2.4 },
+  { col: "col-span-1 row-span-1 md:col-span-2 md:row-span-1", delay: 0.6 },
+  { col: "col-span-1 row-span-1 md:col-span-1 md:row-span-1", delay: 1.8 },
+  { col: "col-span-1 row-span-1 md:col-span-1 md:row-span-1", delay: 3.0 },
+  { col: "col-span-1 row-span-1 md:col-span-1 md:row-span-1", delay: 1.5 },
+  { col: "col-span-2 row-span-1 md:col-span-1 md:row-span-1", delay: 2.1 },
+];
+
+function BrandTile({ brands, tileIndex, delay }: { brands: Brand[]; tileIndex: number; delay: number }) {
+  const [currentIdx, setCurrentIdx] = useState(tileIndex % brands.length);
+  const [flipping, setFlipping] = useState(false);
+
+  useEffect(() => {
+    if (brands.length <= TILE_LAYOUT.length) return;
+
+    const interval = setInterval(() => {
+      setFlipping(true);
+      setTimeout(() => {
+        setCurrentIdx((prev) => (prev + TILE_LAYOUT.length) % brands.length);
+        setFlipping(false);
+      }, 400);
+    }, 5500 + delay * 1000);
+
+    return () => clearInterval(interval);
+  }, [brands.length, delay]);
+
+  const brand = brands[currentIdx];
+  if (!brand) return null;
+
+  return (
+    <Link
+      href={`/products?brand=${encodeURIComponent(brand.name)}`}
+      className="group relative w-full h-full overflow-hidden rounded-xl sm:rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center p-2.5 sm:p-4"
+      style={{ perspective: "600px" }}
+    >
+      <div
+        className="w-full h-full flex items-center justify-center transition-all duration-400"
+        style={{
+          transform: flipping ? "rotateY(90deg)" : "rotateY(0deg)",
+          opacity: flipping ? 0 : 1,
+          transition: "transform 0.4s ease-in-out, opacity 0.4s ease-in-out",
+        }}
+      >
+        {brand.image ? (
+          <div className="relative w-full h-full min-h-[36px] flex items-center justify-center">
+            <Image
+              src={brand.image}
+              alt={brand.name}
+              fill
+              className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 640px) 40vw, 20vw"
+            />
+          </div>
+        ) : (
+          <span className="font-serif italic font-bold text-[#0c433a]/75 group-hover:text-[#0c433a] transition-colors text-center leading-tight text-xs sm:text-sm md:text-base px-2">
+            {brand.name}
+          </span>
+        )}
+      </div>
+
+      {/* Hover shimmer overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#72ccbd]/0 to-[#0c433a]/0 group-hover:from-[#72ccbd]/5 group-hover:to-[#0c433a]/5 transition-all duration-300 rounded-xl sm:rounded-2xl pointer-events-none" />
+    </Link>
+  );
 }
 
 export function BrandMarquee() {
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [brands, setBrands] = useState<Brand[]>(
+    OFFICIAL_BRANDS.map((name, i) => ({ id: `brand-${i}`, name, image: null }))
+  );
 
   useEffect(() => {
     async function fetchBrands() {
@@ -24,145 +94,60 @@ export function BrandMarquee() {
         const res = await fetch("/api/brands");
         if (res.ok) {
           const data = await res.json();
-          setBrands(data);
+          if (Array.isArray(data) && data.length > 0) {
+            const apiMap = new Map(data.map((b: any) => [b.name?.toLowerCase()?.trim(), b]));
+            const merged = OFFICIAL_BRANDS.map((name, i) => {
+              const fromApi = apiMap.get(name.toLowerCase().trim());
+              return { id: fromApi?.id || `brand-${i}`, name, image: fromApi?.image || null };
+            });
+            setBrands(merged);
+          }
         }
-      } catch (error) {
-        console.error("Failed to fetch brands:", error);
-      } finally {
-        setLoading(false);
-      }
+      } catch {}
     }
     fetchBrands();
   }, []);
 
-  // Sort brands with Color Wow first
-  const sortedBrands = [...brands].sort((a, b) => {
-    if (a.name === 'Color Wow') return -1;
-    if (b.name === 'Color Wow') return 1;
-    return a.name.localeCompare(b.name);
-  });
-
-  if (loading) {
-    return null;
-  }
-
-  if (brands.length === 0) {
-    return null;
-  }
-
-  // Filter brands with images
-  const brandsWithImages = sortedBrands.filter(b => b.image);
-  const brandsWithoutImages = sortedBrands.filter(b => !b.image);
-
-  // If few brands, show centered layout
-  const isFewBrands = sortedBrands.length <= 4;
-
-  if (isFewBrands) {
-    return (
-      <section id="brands" className="w-full bg-gradient-to-b from-gray-50 to-white py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-8 md:mb-12"
-          >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-gray-900">
-              Premium Partners
-            </h2>
-            <div className="w-16 h-1 bg-black mx-auto mt-3 rounded-full" />
-          </motion.div>
-
-          <div className="flex flex-wrap justify-center gap-8 md:gap-12">
-            {sortedBrands.map((brand) => (
-              <Link
-                key={brand.id}
-                href={`/products?brand=${encodeURIComponent(brand.name)}`}
-                className="flex items-center justify-center"
-              >
-                {brand.image ? (
-                  <div className="relative w-24 h-12 md:w-28 md:h-14">
-                    <Image
-                      src={brand.image}
-                      alt={brand.name}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                ) : (
-                  <span className="text-xl md:text-2xl font-bold text-gray-800 hover:text-black transition-colors">
-                    {brand.name}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  // Brands with images for the marquee
-  const marqueeBrands = brandsWithImages.length > 0 ? brandsWithImages : sortedBrands;
-  const duplicatedBrands = [...marqueeBrands, ...marqueeBrands, ...marqueeBrands, ...marqueeBrands];
+  if (brands.length === 0) return null;
 
   return (
-    <section id="brands" className="w-full bg-gradient-to-b from-gray-50 to-white py-12 md:py-16 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-8 md:mb-12"
-        >
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight text-gray-900">
-            Premium Partners
-          </h2>
-          <div className="w-16 h-1 bg-black mx-auto mt-3 rounded-full" />
-        </motion.div>
-
-        <div className="relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-20 md:w-32 h-full bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
-          <div className="absolute top-0 right-0 w-20 md:w-32 h-full bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
-
-          <motion.div
-            animate={{ x: [0, -1000] }}
-            transition={{
-              duration: 30,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-            className="flex gap-8 md:gap-12 items-center"
+    <section className="w-full bg-gray-50 border-y border-gray-100 py-10 sm:py-14 px-4 sm:px-6">
+      <div className="max-w-[1440px] mx-auto">
+        {/* Header */}
+        <div className="flex items-end justify-between mb-6 sm:mb-8">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#0c433a]/40 block mb-1">
+              Featured Brands
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#0c433a] tracking-tight">
+              Shop by Brand
+            </h2>
+          </div>
+          <Link
+            href="/brands"
+            className="text-[11px] font-black uppercase tracking-wider text-[#0c433a]/60 hover:text-[#0c433a] transition-colors border-b border-[#0c433a]/20 hover:border-[#0c433a] pb-0.5"
           >
-            {duplicatedBrands.map((brand, index) => (
-              <motion.div
-                key={`${brand.id}-${index}`}
-                whileHover={{ scale: 1.05 }}
-                className="flex-shrink-0"
-              >
-                <Link
-                  href={`/products?brand=${encodeURIComponent(brand.name)}`}
-                  className="block"
-                >
-                  {brand.image ? (
-                    <div className="relative w-24 h-12 md:w-28 md:h-14">
-                      <Image
-                        src={brand.image}
-                        alt={brand.name}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <span className="text-lg md:text-xl font-bold text-gray-800 whitespace-nowrap hover:text-black transition-colors">
-                      {brand.name}
-                    </span>
-                  )}
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
+            All Brands →
+          </Link>
         </div>
+
+        {/* Gallery Grid — 100% covered, 0 blank slots */}
+        <div className="grid grid-cols-4 md:grid-cols-6 auto-rows-[75px] sm:auto-rows-[95px] md:auto-rows-[115px] gap-2 sm:gap-3">
+          {TILE_LAYOUT.map((tile, i) => (
+            <div key={i} className={`${tile.col} w-full h-full`}>
+              <BrandTile
+                brands={brands}
+                tileIndex={i}
+                delay={tile.delay}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom hint */}
+        <p className="text-center text-[11px] text-gray-400 mt-4 font-medium">
+          Tiles flip to reveal more brands
+        </p>
       </div>
     </section>
   );

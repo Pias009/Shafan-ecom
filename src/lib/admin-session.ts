@@ -41,8 +41,18 @@ export async function getAdminSession() {
 
     return user;
   } catch {
-    return null;
+    // Fall through to NextAuth check
   }
+
+  try {
+    const { getServerAuthSession } = await import('@/lib/auth');
+    const authSession = await getServerAuthSession();
+    if (authSession?.user && (authSession.user.role === 'ADMIN' || authSession.user.role === 'SUPERADMIN')) {
+      return authSession.user;
+    }
+  } catch {}
+
+  return null;
 }
 
 export async function requireAdminSession() {
@@ -91,33 +101,33 @@ export async function getAdminApiSession() {
   const cookieStore = await cookies();
   const adminCookie = cookieStore.get('admin-session');
 
-  if (!adminCookie) {
-    return null;
+  if (adminCookie) {
+    try {
+      const token = Buffer.from(adminCookie.value, 'base64').toString();
+      const [userId] = token.split(':');
+
+      if (userId) {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, email: true, name: true, role: true },
+        });
+
+        if (user && (user.role === 'ADMIN' || user.role === 'SUPERADMIN')) {
+          return { user };
+        }
+      }
+    } catch {
+      // Fall through to NextAuth check
+    }
   }
 
   try {
-    const token = Buffer.from(adminCookie.value, 'base64').toString();
-    const [userId] = token.split(':');
-
-    if (!userId) {
-      return null;
+    const { getServerAuthSession } = await import('@/lib/auth');
+    const authSession = await getServerAuthSession();
+    if (authSession?.user && (authSession.user.role === 'ADMIN' || authSession.user.role === 'SUPERADMIN')) {
+      return { user: authSession.user };
     }
+  } catch {}
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, name: true, role: true },
-    });
-
-    if (!user) {
-      return null;
-    }
-
-    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
-      return null;
-    }
-
-    return { user };
-  } catch {
-    return null;
-  }
+  return null;
 }

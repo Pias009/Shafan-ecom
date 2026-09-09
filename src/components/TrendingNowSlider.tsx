@@ -72,8 +72,8 @@ export function TrendingNowSlider({
   
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -320 : 320;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      const amount = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
     }
   };
   
@@ -113,10 +113,10 @@ export function TrendingNowSlider({
 
         <div 
           ref={scrollRef}
-          className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-1 sm:px-2 gap-3 sm:gap-4 md:gap-5"
+          className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-1.5 sm:px-2 gap-2 sm:gap-3 lg:gap-4"
         >
           {products.map((product, idx) => (
-            <div key={product.id} className="flex-shrink-0 snap-start w-[160px] sm:w-[200px] md:w-[240px] lg:w-[270px]">
+            <div key={product.id} className="flex-shrink-0 snap-start w-[calc(38%-6px)] sm:w-[calc(28%-8px)] md:w-[calc(22%-10px)] lg:w-[calc(19%-12px)]">
               <ProductCardItem
                 product={product}
                 onQuickView={onQuickView}

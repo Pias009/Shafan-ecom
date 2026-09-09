@@ -2,31 +2,32 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Leaf } from "lucide-react";
 
 export function Logo({ className = "", light = false }: { className?: string; light?: boolean }) {
   return (
-    <Link href="/" className={`flex items-center gap-2.5 group whitespace-nowrap select-none ${className}`}>
+    <Link href="/" className={`flex items-center group whitespace-nowrap select-none ${className}`}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="flex items-center gap-2.5"
+        initial={{ opacity: 0, y: -2 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="flex flex-col text-left py-1"
       >
-        {/* Leaf Circle Badge */}
-        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-[#0c433a] flex items-center justify-center shrink-0 border border-[#b5dbce] shadow-sm group-hover:scale-105 transition-transform">
-          <Leaf className="w-4 h-4 sm:w-5 sm:h-5 text-[#0c433a] fill-[#0c433a]/20" />
-        </div>
-
-        {/* SHANFA GLOBAL Typography */}
-        <div className="flex flex-col text-left">
-          <span className={`font-display text-base sm:text-xl font-black tracking-tight leading-none group-hover:opacity-90 transition-opacity ${light ? 'text-white' : 'text-[#0c3a32]'}`}>
-            SHANFA GLOBAL
-          </span>
-          <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-[0.22em] leading-tight mt-0.5 ${light ? 'text-white/80' : 'text-[#52736b]'}`}>
-            NATURAL SKINCARE
-          </span>
-        </div>
+        {/* BasharaCare-style clean modern bold uppercase wordmark */}
+        <span
+          className={`font-sans text-lg sm:text-2xl font-black tracking-[0.18em] uppercase leading-none transition-all ${
+            light ? 'text-white group-hover:text-white/90' : 'text-[#0c3a32] group-hover:text-black'
+          }`}
+          style={{ letterSpacing: "0.2em" }}
+        >
+          SHANFA GLOBAL
+        </span>
+        <span
+          className={`text-[8px] sm:text-[9px] font-extrabold uppercase tracking-[0.35em] leading-tight mt-1 transition-opacity ${
+            light ? 'text-white/75' : 'text-[#0c3a32]/70'
+          }`}
+        >
+          LUXURY SKINCARE
+        </span>
       </motion.div>
     </Link>
   );

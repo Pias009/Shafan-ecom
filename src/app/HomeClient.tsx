@@ -13,6 +13,7 @@ import { ArrowRight, Sparkles, Zap, ChevronLeft, ChevronRight, ShieldCheck, Flam
 import Link from "next/link";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { RoutineSection } from "@/components/RoutineSection";
+import { BestSellersSection } from "@/components/BestSellersSection";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCurrencyStore } from "@/lib/currency-store";
@@ -70,8 +71,8 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -320 : 320;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      const amount = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
     }
   };
 
@@ -95,10 +96,10 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
 
       <div 
         ref={scrollRef}
-        className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-1 sm:px-2 gap-3 sm:gap-4 md:gap-5"
+        className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-1.5 sm:px-2 gap-2 sm:gap-3 lg:gap-4"
       >
         {products.map((product, idx) => (
-          <div key={product.id} className="flex-shrink-0 snap-start w-[160px] sm:w-[200px] md:w-[240px] lg:w-[270px]">
+          <div key={product.id} className="flex-shrink-0 snap-start w-[calc(38%-6px)] sm:w-[calc(28%-8px)] md:w-[calc(22%-10px)] lg:w-[calc(19%-12px)]">
             <ProductCardItem
               product={product}
               onQuickView={onQuickView}
@@ -110,16 +111,44 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
         ))}
       </div>
       
-      {/* Mobile See All button */}
-      <div className="flex justify-center mt-4 sm:hidden">
-        <Link
-          href="/products/flash-sales"
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#0c433a] text-white text-xs font-black uppercase tracking-widest shadow-md active:scale-95"
-        >
-          <span>All Flash Sales</span>
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
+
+    </div>
+  );
+}
+
+function FlashSaleCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 28, seconds: 45 });
+
+  useEffect(() => {
+    const calculateTime = () => {
+      const now = new Date();
+      const totalSecondsToday = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+      const cycleLength = 6 * 3600; // 6-hour deals cycle
+      const remainingSeconds = cycleLength - (totalSecondsToday % cycleLength);
+
+      const h = Math.floor(remainingSeconds / 3600);
+      const m = Math.floor((remainingSeconds % 3600) / 60);
+      const s = remainingSeconds % 60;
+      setTimeLeft({ hours: h, minutes: m, seconds: s });
+    };
+
+    calculateTime();
+    const interval = setInterval(calculateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return (
+    <div className="flex items-center gap-1.5 bg-[#051f1a]/85 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full border border-amber-400/40 text-amber-300 text-[10px] sm:text-xs font-black tracking-wider shadow-sm select-none">
+      <Zap size={12} className="text-amber-400 fill-amber-400 animate-pulse shrink-0" />
+      <span className="hidden xs:inline">DEALS END IN:</span>
+      <span className="xs:hidden">ENDS:</span>
+      <span className="bg-black/40 px-1 py-0.5 rounded text-white font-mono">{pad(timeLeft.hours)}h</span>
+      <span>:</span>
+      <span className="bg-black/40 px-1 py-0.5 rounded text-white font-mono">{pad(timeLeft.minutes)}m</span>
+      <span>:</span>
+      <span className="bg-black/40 px-1 py-0.5 rounded text-amber-300 font-mono">{pad(timeLeft.seconds)}s</span>
     </div>
   );
 }
@@ -129,8 +158,8 @@ function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { pro
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -320 : 320;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      const amount = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
     }
   };
 
@@ -152,10 +181,10 @@ function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { pro
 
       <div 
         ref={scrollRef}
-        className="flex overflow-x-auto pb-3 md:pb-5 scrollbar-hide snap-x snap-mandatory px-1 sm:px-2 gap-3 sm:gap-4 md:gap-5"
+        className="flex overflow-x-auto pb-3 md:pb-5 scrollbar-hide snap-x snap-mandatory px-1.5 sm:px-2 gap-2 sm:gap-3 lg:gap-4"
       >
         {products.map((product, idx) => (
-          <div key={product.id} className="flex-shrink-0 snap-start w-[160px] sm:w-[200px] md:w-[240px] lg:w-[270px]">
+          <div key={product.id} className="flex-shrink-0 snap-start w-[calc(38%-6px)] sm:w-[calc(28%-8px)] md:w-[calc(22%-10px)] lg:w-[calc(19%-12px)]">
             <ProductCardItem
               product={product}
               onQuickView={onQuickView}
@@ -167,15 +196,7 @@ function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { pro
         ))}
       </div>
       
-      <div className="flex justify-center mt-4 sm:hidden">
-        <Link
-          href="/products/new-arrivals"
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#0c433a] text-white text-xs font-black uppercase tracking-widest shadow-md active:scale-95"
-        >
-          <span>All New Arrivals</span>
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
+
     </div>
   );
 }
@@ -212,7 +233,7 @@ const isDummyProduct = (p: any) => {
 
 
 
-export default function HomeClient({ initialProducts, newArrivals = [], flashSales = [], hot: hotProducts = [], routine: routineProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[] }) {
+export default function HomeClient({ initialProducts, newArrivals = [], flashSales = [], hot: hotProducts = [], routine: routineProducts = [], bestSellers: bestSellerProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[], bestSellers?: any[] }) {
   const [products] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -241,6 +262,10 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
   const filteredRoutine = useMemo(() => {
     return routineProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [routineProducts, selectedCountry, selectedCurrency]);
+
+  const filteredBestSellers = useMemo(() => {
+    return bestSellerProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
+  }, [bestSellerProducts, selectedCountry, selectedCurrency]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -358,6 +383,7 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_70%)]" />
       </div>
 
+      {/* Hero Section (Original Position at Top) */}
       <HeroSlider />
 
       <main className="mx-auto max-w-[1536px] w-full px-2 sm:px-4 lg:px-6 pb-20 flex-1 overflow-x-hidden z-10">
@@ -369,34 +395,49 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
           }}
         />
 
-        {/* Featured Products Section matching Reference Screenshot */}
-        {filteredNewArrivals.length > 0 && (
+        {/* 1. Flash Sales Section */}
+        {filteredFlashSales.length > 0 && (
           <section className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-2">
-            <div className="mb-4 md:mb-8 flex items-center justify-between border-b border-white/30 pb-4">
-              <div className="inline-flex items-center gap-3">
-                <span className="h-px w-6 bg-white/50" />
-                <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white uppercase drop-shadow-md">
-                  FEATURED PRODUCTS
-                </h2>
-                <span className="h-px w-6 bg-white/50 hidden sm:inline-block" />
+            {/* Section Header Card */}
+            <div className="mb-5 md:mb-8 relative overflow-hidden rounded-2xl bg-[#0c433a]/80 backdrop-blur-xl border border-white/10 px-4 py-3.5 sm:px-6 sm:py-4 shadow-[0_8px_32px_rgba(0,0,0,0.18)]">
+              {/* Glow accent */}
+              <div className="absolute -top-8 -left-8 w-40 h-40 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-6 right-10 w-32 h-32 bg-amber-400/15 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative flex flex-wrap items-center justify-between gap-3">
+                {/* Left: Title + Badge + Countdown */}
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl sm:text-2xl">⚡</span>
+                    <h2 className="font-serif text-xl sm:text-3xl md:text-4xl font-black tracking-tight text-white uppercase">
+                      Flash Sales
+                    </h2>
+                    <span className="hidden sm:inline-flex items-center gap-1 bg-rose-500 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
+                      LIVE
+                    </span>
+                  </div>
+                  <FlashSaleCountdown />
+                </div>
+
+                {/* Right: Wave CTA */}
+                <Link
+                  href="/products/flash-sales"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/20 bg-transparent hover:border-white/50 hover:scale-105 transition-all text-xs font-black uppercase tracking-wider shadow-sm active:scale-95"
+                >
+                  <span className="wave-text">See All Deals</span>
+                  <ArrowRight className="w-3.5 h-3.5 wave-icon" />
+                </Link>
               </div>
-              <Link
-                href="/products/new-arrivals"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/40 bg-white/15 hover:bg-white hover:text-[#0c433a] transition-all text-xs font-black uppercase tracking-wider text-white shadow-sm"
-              >
-                <span>VIEW ALL</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
             </div>
 
-            <NewArrivalsSlider products={filteredNewArrivals} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
+            <FlashSalesSlider products={filteredFlashSales} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
           </section>
         )}
 
-        {/* Offer Banners - Special Offer 20% Off */}
+        {/* 2. Banner Section */}
         <OfferBannersSection />
 
-        {/* Routine Section */}
+        {/* 3. Routine Section */}
         {filteredRoutine.length > 0 && (
           <RoutineSection
             products={filteredRoutine}
@@ -406,29 +447,17 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
           />
         )}
 
+        {/* 4. Best Sellers Section */}
+        {filteredBestSellers.length > 0 && (
+          <BestSellersSection
+            products={filteredBestSellers}
+            onQuickView={setQuickView}
+            addToCart={addToCart}
+            orderNow={orderNow}
+          />
+        )}
 
-
-        {/* Flash Sales Section */}
-        <section className="pt-6 md:pt-10 pb-8 md:pb-12 px-1 sm:px-2">
-          <div className="mb-4 md:mb-8 flex items-center justify-between border-b border-white/30 pb-4">
-            <div className="inline-flex items-center gap-3">
-              <span className="h-px w-6 bg-white/50" />
-              <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white uppercase drop-shadow-md">
-                FLASH SALES
-              </h2>
-            </div>
-            <Link
-              href="/products/flash-sales"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/40 bg-white/15 hover:bg-white hover:text-[#0c433a] transition-all text-xs font-black uppercase tracking-wider text-white shadow-sm"
-            >
-              <span>SEE ALL DEALS</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <FlashSalesSlider products={filteredFlashSales} onQuickView={setQuickView} addToCart={addToCart} orderNow={orderNow} />
-        </section>
-
+        {/* 5. Trending Section */}
         <div style={{ display: mounted && filteredHot.length === 0 ? 'none' : undefined }}>
           <TrendingNowSlider
             products={filteredHot}
@@ -440,19 +469,14 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
 
       </main>
 
-      {/* Blog Showcase Section */}
-      <Suspense fallback={<div className="h-32" />}>
-        <BlogShowcase />
-      </Suspense>
-
-      {/* Brand Slider Section */}
-      <Suspense fallback={null}>
-        <BrandMarquee />
-      </Suspense>
-
-      {/* Google Reviews Section */}
+      {/* 6. Google Reviews Section */}
       <Suspense fallback={<div className="h-32" />}>
         <GoogleReviewsSection />
+      </Suspense>
+
+      {/* 7. Brand Section */}
+      <Suspense fallback={null}>
+        <BrandMarquee />
       </Suspense>
 
       {/* Footer Trust Features Bar matching bottom row of Screenshot */}

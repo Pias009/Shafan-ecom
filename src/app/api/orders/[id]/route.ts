@@ -26,8 +26,9 @@ export async function GET(
     }
 
     // Allow unauthenticated access for pending payment orders (checkout flow)
-    // Only require auth if user is logged in AND trying to access someone else's order
-    if (session?.user?.id && order.userId && order.userId !== session.user.id) {
+    // Only require auth if user is logged in AND trying to access someone else's order (excluding admins)
+    const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPERADMIN';
+    if (!isAdmin && session?.user?.id && order.userId && order.userId !== session.user.id) {
       return NextResponse.json({ error: "Unauthorized access to order" }, { status: 403 });
     }
 

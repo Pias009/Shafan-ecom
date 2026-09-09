@@ -204,6 +204,8 @@ model Product {
   active        Boolean  @default(true)
   hot           Boolean  @default(false)
   trending      Boolean  @default(false)
+  clearanceSale Boolean  @default(false)
+  promotion     Boolean  @default(false)
   freshFromShelf Boolean  @default(false)
   routine       Boolean  @default(false)
   sku           String?

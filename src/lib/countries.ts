@@ -15,51 +15,83 @@ export interface CountryConfig {
 export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
   {
     code: 'AE',
-    name: 'United Arab Emirates',
+    name: 'UAE (AED)',
     currency: 'AED',
-    currencySymbol: 'د.إ',
+    currencySymbol: 'AED',
     isActive: true,
     flag: '🇦🇪'
   },
   {
+    code: 'SA',
+    name: 'Saudi Arabia (SAR)',
+    currency: 'SAR',
+    currencySymbol: 'SAR',
+    isActive: true,
+    flag: '🇸🇦'
+  },
+  {
+    code: 'QA',
+    name: 'Qatar (QAR)',
+    currency: 'QAR',
+    currencySymbol: 'QAR',
+    isActive: true,
+    flag: '🇶🇦'
+  },
+  {
     code: 'KW',
-    name: 'Kuwait',
+    name: 'Kuwait (KWD)',
     currency: 'KWD',
-    currencySymbol: 'د.ك',
+    currencySymbol: 'KWD',
     isActive: true,
     flag: '🇰🇼'
   },
   {
     code: 'BH',
-    name: 'Bahrain',
+    name: 'Bahrain (BHD)',
     currency: 'BHD',
-    currencySymbol: '.د.ب',
+    currencySymbol: 'BHD',
     isActive: true,
     flag: '🇧🇭'
   },
   {
-    code: 'SA',
-    name: 'Saudi Arabia',
-    currency: 'SAR',
-    currencySymbol: 'ر.س',
-    isActive: true,
-    flag: '🇸🇦'
-  },
-  {
     code: 'OM',
-    name: 'Oman',
+    name: 'Oman (OMR)',
     currency: 'OMR',
-    currencySymbol: 'ر.ع.',
+    currencySymbol: 'OMR',
     isActive: true,
     flag: '🇴🇲'
   },
   {
-    code: 'QA',
-    name: 'Qatar',
-    currency: 'QAR',
-    currencySymbol: 'ر.ق',
+    code: 'US',
+    name: 'USD ($)',
+    currency: 'USD',
+    currencySymbol: '$',
     isActive: true,
-    flag: '🇶🇦'
+    flag: '🇺🇸'
+  },
+  {
+    code: 'EU',
+    name: 'EURO (EUR)',
+    currency: 'EUR',
+    currencySymbol: '€',
+    isActive: true,
+    flag: '🇪🇺'
+  },
+  {
+    code: 'GB',
+    name: 'Pound (GBP)',
+    currency: 'GBP',
+    currencySymbol: '£',
+    isActive: true,
+    flag: '🇬🇧'
+  },
+  {
+    code: 'BD',
+    name: 'BDT (৳)',
+    currency: 'BDT',
+    currencySymbol: '৳',
+    isActive: true,
+    flag: '🇧🇩'
   }
 ] as const;
 

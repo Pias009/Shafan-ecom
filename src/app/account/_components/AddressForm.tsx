@@ -221,8 +221,8 @@ export default function AddressForm() {
             <p className="text-xs md:text-sm text-black/50 mt-1 font-medium">Required for completing orders.</p>
           </div>
           <button type="submit" disabled={saving}
-            className="bg-black text-white rounded-full px-4 py-2 md:px-8 md:py-2.5 text-[10px] md:text-sm font-bold shadow-lg shadow-black/20 transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 md:gap-2 shrink-0">
-            {saving ? <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Save className="w-3 h-3 md:w-4 md:h-4" />}
+            className="bg-black text-white hover:bg-neutral-800 rounded-full px-5 py-2.5 md:px-8 md:py-3 text-xs md:text-sm font-black uppercase tracking-wider shadow-xl shadow-black/20 transition hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 shrink-0 cursor-pointer">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Save Address
           </button>
         </div>
@@ -257,24 +257,34 @@ export default function AddressForm() {
               placeholder="your@email.com" className={inputCls("email")} />
           </div>
 
-          {/* Country dropdown */}
+          {/* Country dropdown - strictly fixed to 6 GCC countries */}
           <div className="space-y-2 relative">
-            <label className={labelCls}>Country *</label>
-            <button type="button" onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-              className="w-full rounded-2xl px-5 py-3.5 text-left text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white flex items-center justify-between">
-              <span>{formData.country || "Select Country"}</span>
-              <ChevronDown className={`w-5 h-5 transition ${showCountryDropdown ? "rotate-180" : ""}`} />
-            </button>
-            {showCountryDropdown && (
-              <div className="absolute z-50 w-full mt-1 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                {COUNTRIES.map(c => (
-                  <button key={c} type="button" onClick={() => { setFormData({...formData, country: c, city: "", area_name: "", block_no: "", zone: "", region: ""}); setShowCountryDropdown(false); }}
-                    className={`w-full px-5 py-3 text-left font-semibold hover:bg-black/5 transition ${formData.country === c ? "bg-black text-white" : "text-black"}`}>
+            <label className={labelCls}>Country (GCC Only) *</label>
+            <div className="relative">
+              <select
+                value={formData.country}
+                onChange={(e) => {
+                  const newCountry = e.target.value;
+                  setFormData({
+                    ...formData,
+                    country: newCountry,
+                    city: "",
+                    area_name: "",
+                    block_no: "",
+                    zone: "",
+                    region: "",
+                  });
+                }}
+                className="w-full rounded-2xl px-5 py-3.5 text-left text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white appearance-none cursor-pointer pr-10"
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c} value={c}>
                     {c}
-                  </button>
+                  </option>
                 ))}
-              </div>
-            )}
+              </select>
+              <ChevronDown className="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-black/40" />
+            </div>
           </div>
 
           {/* House / Building */}
@@ -355,6 +365,18 @@ export default function AddressForm() {
                 placeholder="e.g. Riyadh, Jeddah, Dammam" className={inputCls("region")} />
             </div>
           )}
+        </div>
+
+        {/* Bottom Save Button */}
+        <div className="pt-6 mt-8 border-t border-black/5 flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full md:w-auto bg-black text-white hover:bg-neutral-800 rounded-full px-8 py-3.5 text-xs md:text-sm font-black uppercase tracking-widest shadow-xl shadow-black/20 transition hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Save Address
+          </button>
         </div>
       </div>
     </form>

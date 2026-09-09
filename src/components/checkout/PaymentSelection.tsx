@@ -83,93 +83,98 @@ export default function PaymentSelection({
   onPaymentSelect,
   useBillingAddress,
   onBillingToggle,
-  lang,
-  currentCountry,
-}: PaymentSelectionProps) {
-  const showInstallments = currentCountry === "AE" || currentCountry === "SA";
-  const tamaraSummaryRef = useRef<HTMLDivElement>(null);
-  const tamaraLogoRef = useRef<HTMLDivElement>(null);
-
-  function handleTamaraScriptLoad() {
-    window.tamaraWidgetConfig = {
-      lang,
-      country: currentCurrency === "KWD" ? "KW" : "AE",
-      publicKey: TAMARA_PUBLIC_KEY,
-    };
-  }
-
-  // Mount tamara-logo widget
-  useEffect(() => {
-    if (!tamaraLogoRef.current) return;
-    let logo = tamaraLogoRef.current.querySelector(
-      "tamara-widget"
-    ) as HTMLElement | null;
-    if (!logo) {
-      logo = document.createElement("tamara-widget");
-      logo.setAttribute("type", "tamara-logo");
-      tamaraLogoRef.current.appendChild(logo);
+    lang,
+    currentCountry,
+  }: PaymentSelectionProps) {
+    const showInstallments = ["AE", "SA", "KW", "BH", "QA", "OM"].includes(currentCountry?.toUpperCase() || "") || ["AED", "SAR", "KWD"].includes(currentCurrency?.toUpperCase() || "");
+    const tamaraSummaryRef = useRef<HTMLDivElement>(null);
+    const tamaraLogoRef = useRef<HTMLDivElement>(null);
+  
+    function handleTamaraScriptLoad() {
+      window.tamaraWidgetConfig = {
+        lang,
+        country: currentCurrency === "KWD" ? "KW" : "AE",
+        publicKey: TAMARA_PUBLIC_KEY,
+      };
     }
-  }, []);
-
-  // Mount or update tamara-summary with lang='en' enforced
-  useEffect(() => {
-    if (activePayment !== "tamara" || !tamaraSummaryRef.current) return;
-
-    let widget = tamaraSummaryRef.current.querySelector(
-      "tamara-widget"
-    ) as HTMLElement | null;
-    if (!widget) {
-      widget = document.createElement("tamara-widget");
-      widget.setAttribute("type", "tamara-summary");
-      widget.setAttribute("inline-type", "2");
-      widget.setAttribute("currency", currentCurrency);
-      widget.setAttribute("theme", "light");
+  
+    // Mount tamara-logo widget
+    useEffect(() => {
+      if (!tamaraLogoRef.current) return;
+      let logo = tamaraLogoRef.current.querySelector(
+        "tamara-widget"
+      ) as HTMLElement | null;
+      if (!logo) {
+        logo = document.createElement("tamara-widget");
+        logo.setAttribute("type", "tamara-logo");
+        tamaraLogoRef.current.appendChild(logo);
+      }
+    }, []);
+  
+    // Mount or update tamara-summary with lang='en' enforced
+    useEffect(() => {
+      if (activePayment !== "tamara" || !tamaraSummaryRef.current) return;
+  
+      let widget = tamaraSummaryRef.current.querySelector(
+        "tamara-widget"
+      ) as HTMLElement | null;
+      if (!widget) {
+        widget = document.createElement("tamara-widget");
+        widget.setAttribute("type", "tamara-summary");
+        widget.setAttribute("inline-type", "2");
+        widget.setAttribute("currency", currentCurrency);
+        widget.setAttribute("theme", "light");
+        widget.setAttribute("lang", lang);
+        tamaraSummaryRef.current.appendChild(widget);
+      }
+      widget.setAttribute("amount", String(totalCartAmount));
       widget.setAttribute("lang", lang);
-      tamaraSummaryRef.current.appendChild(widget);
-    }
-    widget.setAttribute("amount", String(totalCartAmount));
-    widget.setAttribute("lang", lang);
-
-    if (window.TamaraWidgetV2?.refresh) {
-      window.TamaraWidgetV2.refresh();
-    }
-  }, [activePayment, totalCartAmount, currentCurrency, lang]);
-
-  return (
-    <div className="space-y-3">
-      <Script
-        src={TAMARA_SCRIPT_SRC}
-        strategy="afterInteractive"
-        onLoad={handleTamaraScriptLoad}
-      />
-
-      {/* Card Payment */}
-      <div>
-        <button
-          type="button"
-          onClick={() => onPaymentSelect("stripe")}
-          className={`w-full bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer select-none hover:bg-gray-50/50 transition-all shadow-sm ${
-            activePayment === "stripe" ? "ring-2 ring-black" : ""
-          }`}
-        >
-          <div className="flex items-center flex-1 min-w-0">
-            <div className="w-12 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center shadow-sm shrink-0">
-              <CreditCard className="w-5 h-5 text-gray-700" />
-            </div>
-            <span className="flex-1 pl-4 text-left text-sm font-medium text-gray-900">
-              Card Payment
-            </span>
-          </div>
-          <div
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3 transition-colors ${
-              activePayment === "stripe" ? "border-black" : "border-gray-300"
+  
+      if (window.TamaraWidgetV2?.refresh) {
+        window.TamaraWidgetV2.refresh();
+      }
+    }, [activePayment, totalCartAmount, currentCurrency, lang]);
+  
+    return (
+      <div className="space-y-3">
+        <Script
+          src={TAMARA_SCRIPT_SRC}
+          strategy="afterInteractive"
+          onLoad={handleTamaraScriptLoad}
+        />
+  
+        {/* Card Payment */}
+        <div>
+          <button
+            type="button"
+            onClick={() => onPaymentSelect("stripe")}
+            className={`w-full bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer select-none hover:bg-gray-50/50 transition-all shadow-sm ${
+              activePayment === "stripe" ? "ring-2 ring-black" : ""
             }`}
           >
-            {activePayment === "stripe" && (
-              <div className="w-2.5 h-2.5 rounded-full bg-black" />
-            )}
-          </div>
-        </button>
+            <div className="flex items-center flex-1 min-w-0">
+              <div className="w-12 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center shadow-sm shrink-0">
+                <CreditCard className="w-5 h-5 text-gray-700" />
+              </div>
+              <div className="flex-1 pl-4 text-left">
+                <span className="block text-sm font-bold text-gray-900">
+                  Online Payment
+                </span>
+                <span className="block text-[10px] text-gray-500 font-semibold mt-0.5">
+                  Card, Link Pay, Google Pay, Apple Pay
+                </span>
+              </div>
+            </div>
+            <div
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3 transition-colors ${
+                activePayment === "stripe" ? "border-black" : "border-gray-300"
+              }`}
+            >
+              {activePayment === "stripe" && (
+                <div className="w-2.5 h-2.5 rounded-full bg-black" />
+              )}
+            </div>
+          </button>
 
         {activePayment === "stripe" && (
           <div className="mt-3 px-4 pb-2 space-y-3">

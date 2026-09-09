@@ -10,15 +10,15 @@ export interface Currency {
 
 export const SUPPORTED_CURRENCIES: Currency[] = [
   { code: "AED", name: "UAE (AED)", symbol: "AED", rate: 1.0 },
-  { code: "SAR", name: "KSA (SAR)", symbol: "SAR", rate: 1.02 },
+  { code: "SAR", name: "Saudi Arabia (SAR)", symbol: "SAR", rate: 1.02 },
+  { code: "QAR", name: "Qatar (QAR)", symbol: "QAR", rate: 0.991 },
+  { code: "KWD", name: "Kuwait (KWD)", symbol: "KWD", rate: 0.083 },
+  { code: "BHD", name: "Bahrain (BHD)", symbol: "BHD", rate: 0.103 },
+  { code: "OMR", name: "Oman (OMR)", symbol: "OMR", rate: 0.105 },
   { code: "USD", name: "US Dollar ($)", symbol: "$", rate: 0.272 },
   { code: "EUR", name: "Euro (€)", symbol: "€", rate: 0.25 },
   { code: "GBP", name: "Pound (£)", symbol: "£", rate: 0.21 },
   { code: "BDT", name: "Bangladesh (BDT)", symbol: "৳", rate: 30.0 },
-  { code: "KWD", name: "Kuwait (KWD)", symbol: "KWD", rate: 0.083 },
-  { code: "BHD", name: "Bahrain (BHD)", symbol: "BHD", rate: 0.103 },
-  { code: "QAR", name: "Qatar (QAR)", symbol: "QAR", rate: 0.991 },
-  { code: "OMR", name: "Oman (OMR)", symbol: "OMR", rate: 0.105 },
 ];
 
 interface CurrencyState {

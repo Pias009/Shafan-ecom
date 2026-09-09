@@ -324,6 +324,53 @@ body {
     animation: rainbowBorder 3s linear infinite;
   }
 
+  @keyframes colorWeaveFlow {
+    0%, 100% {
+      color: #0c433a;
+      filter: drop-shadow(0 0 1px rgba(12, 67, 58, 0.4));
+    }
+    20% {
+      color: #059669;
+      filter: drop-shadow(0 0 2px rgba(5, 150, 105, 0.5));
+    }
+    40% {
+      color: #0d9488;
+      filter: drop-shadow(0 0 2px rgba(13, 148, 136, 0.5));
+    }
+    60% {
+      color: #d97706;
+      filter: drop-shadow(0 0 2.5px rgba(217, 119, 6, 0.55));
+    }
+    80% {
+      color: #0284c7;
+      filter: drop-shadow(0 0 2px rgba(2, 132, 199, 0.5));
+    }
+  }
+
+  .color-weave-0 {
+    animation: colorWeaveFlow 2.4s ease-in-out infinite 0s;
+  }
+
+  .color-weave-1 {
+    animation: colorWeaveFlow 2.4s ease-in-out infinite 0.22s;
+  }
+
+  .color-weave-2 {
+    animation: colorWeaveFlow 2.4s ease-in-out infinite 0.44s;
+  }
+
+  .color-weave-3 {
+    animation: colorWeaveFlow 2.4s ease-in-out infinite 0.66s;
+  }
+
+  .color-wave-icon {
+    animation: colorWeaveFlow 2.4s ease-in-out infinite 0s;
+  }
+
+  .color-wave-text {
+    animation: colorWeaveFlow 2.4s ease-in-out infinite 0.35s;
+  }
+
   @keyframes ping {
 
     75%,
@@ -1267,4 +1314,74 @@ body {
 
 .animate-train-run {
   animation: train-run 4.5s linear infinite;
+}
+
+/* Color wave animation for transparent buttons */
+@keyframes wave-color {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.wave-text {
+  background: linear-gradient(
+    90deg,
+    #2dd4bf,
+    #ffffff,
+    #2dd4bf
+  );
+  background-size: 250% 250%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  animation: wave-color 5s ease infinite;
+}
+
+.wave-icon {
+  color: #2dd4bf;
+  animation: wave-icon-color 5s ease infinite;
+}
+
+@keyframes wave-icon-color {
+  0%   { color: #2dd4bf; }
+  50%  { color: #ffffff; }
+  100% { color: #2dd4bf; }
+}
+
+/* Best Sellers Smooth Directional Slide Animations */
+@keyframes bs-exit-right {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(100%, 0, 0); }
+}
+@keyframes bs-enter-right {
+  0% { transform: translate3d(-100%, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes bs-exit-left {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-100%, 0, 0); }
+}
+@keyframes bs-enter-left {
+  0% { transform: translate3d(100%, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes bs-exit-down {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, 100%, 0); }
+}
+@keyframes bs-enter-down {
+  0% { transform: translate3d(0, -100%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes bs-exit-up {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, -100%, 0); }
+}
+@keyframes bs-enter-up {
+  0% { transform: translate3d(0, 100%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
 }

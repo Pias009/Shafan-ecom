@@ -41,15 +41,19 @@ const ProductCreateSchema = z.object({
   images: z.array(z.string()).optional(),
   mainImage: z.string().nullable().optional(),
   trending: z.boolean().optional(),
+  hot: z.boolean().optional(),
+  clearanceSale: z.boolean().optional().default(false),
+  promotion: z.boolean().optional().default(false),
   price: z.number().min(0, { message: "Product price must be 0 or more" }),
   discountPrice: z.number().min(0).optional(),
   stockQuantity: z.number().int().min(0).optional(),
+  dubaiStock: z.number().int().min(0).optional(),
+  kuwaitStock: z.number().int().min(0).optional(),
   brandName: z.string().optional(),
   categoryIds: z.array(z.string()).optional().default([]),
   skinToneIds: z.array(z.string()).optional().default([]),
   skinConcernIds: z.array(z.string()).optional().default([]),
   subCategoryId: z.string().nullable().optional(),
-  hot: z.boolean().optional(),
   storeId: z.string().optional(),
   tags: z.array(z.string()).optional().default([]),
   weight: z.number().optional().default(0),
@@ -234,6 +238,15 @@ export async function POST(req: Request) {
     if (processedBody.stockQuantity !== undefined && processedBody.stockQuantity !== null) {
       processedBody.stockQuantity = Number(processedBody.stockQuantity);
     }
+    if (processedBody.dubaiStock !== undefined && processedBody.dubaiStock !== null) {
+      processedBody.dubaiStock = Number(processedBody.dubaiStock);
+    }
+    if (processedBody.kuwaitStock !== undefined && processedBody.kuwaitStock !== null) {
+      processedBody.kuwaitStock = Number(processedBody.kuwaitStock);
+    }
+    if (processedBody.dubaiStock !== undefined || processedBody.kuwaitStock !== undefined) {
+      processedBody.stockQuantity = (Number(processedBody.dubaiStock) || 0) + (Number(processedBody.kuwaitStock) || 0);
+    }
     if (processedBody.weight !== undefined && processedBody.weight !== null) {
       processedBody.weight = Number(processedBody.weight);
     }
@@ -400,6 +413,8 @@ export async function POST(req: Request) {
       stockQuantity: productData.stockQuantity ?? 0,
       hot: productData.hot ?? false,
       trending: productData.trending ?? false,
+      clearanceSale: productData.clearanceSale ?? false,
+      promotion: productData.promotion ?? false,
       brandId,
       subCategoryId,
       storeId,
@@ -471,39 +486,62 @@ export async function POST(req: Request) {
       }
     }
 
-    // Handle initial store inventory if storeId provided (and not GLOBAL)
-    if (storeCodeForInventory && storeId) {
-      const store = await prisma.store.findFirst({
-        where: { code: storeCodeForInventory }
-      });
-      
-      if (store) {
-        try {
-          await prisma.storeInventory.upsert({
-            where: {
-              storeId_productId: {
-                storeId: store.id,
-                productId: product.id
-              }
-            },
-            update: {
-              quantity: productData.stockQuantity ?? 0,
-              price: productData.price - (productData.discountPrice || 0)
-            },
-            create: {
-              storeId: store.id,
-              productId: product.id,
-              quantity: productData.stockQuantity ?? 0,
-              price: productData.price - (productData.discountPrice || 0)
+    // Handle dual store inventory (Dubai & Kuwait)
+    const effectiveDubaiStock = productData.dubaiStock !== undefined 
+      ? productData.dubaiStock 
+      : (storeCodeForInventory === 'UAE' ? (productData.stockQuantity ?? 0) : 0);
+    const effectiveKuwaitStock = productData.kuwaitStock !== undefined 
+      ? productData.kuwaitStock 
+      : (storeCodeForInventory === 'KUW' ? (productData.stockQuantity ?? 0) : 0);
+
+    try {
+      const uaeStore = await prisma.store.findFirst({ where: { code: 'UAE' } });
+      if (uaeStore) {
+        await prisma.storeInventory.upsert({
+          where: {
+            storeId_productId: {
+              storeId: uaeStore.id,
+              productId: product.id
             }
-          });
-        } catch (inventoryError) {
-          console.error('[DEBUG] ERROR creating store inventory:', inventoryError);
-          throw inventoryError; // Re-throw to be caught by outer catch block
-        }
-      } else {
+          },
+          update: {
+            quantity: effectiveDubaiStock,
+            price: productData.price - (productData.discountPrice || 0)
+          },
+          create: {
+            storeId: uaeStore.id,
+            productId: product.id,
+            quantity: effectiveDubaiStock,
+            price: productData.price - (productData.discountPrice || 0)
+          }
+        });
       }
-    } else {
+
+      const kuwStore = await prisma.store.findFirst({ 
+        where: { OR: [{ code: 'KUW' }, { code: 'KUWAIT' }] } 
+      });
+      if (kuwStore) {
+        await prisma.storeInventory.upsert({
+          where: {
+            storeId_productId: {
+              storeId: kuwStore.id,
+              productId: product.id
+            }
+          },
+          update: {
+            quantity: effectiveKuwaitStock,
+            price: productData.price - (productData.discountPrice || 0)
+          },
+          create: {
+            storeId: kuwStore.id,
+            productId: product.id,
+            quantity: effectiveKuwaitStock,
+            price: productData.price - (productData.discountPrice || 0)
+          }
+        });
+      }
+    } catch (inventoryError) {
+      console.error('[DEBUG] ERROR creating dual store inventory:', inventoryError);
     }
 
     // Create country-specific prices if provided

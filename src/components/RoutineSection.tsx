@@ -28,7 +28,10 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
   const [activeBanner, setActiveBanner] = useState(0);
 
   const scroll = (dir: 'left' | 'right') => {
-    scrollRef.current?.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' });
+    if (scrollRef.current) {
+      const amount = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+    }
   };
 
   const activeBanners = banners.filter(b => b.active);
@@ -51,10 +54,10 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
         </div>
         <Link
           href="/products/routine"
-          className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-white/40 bg-white/15 text-white text-xs font-black uppercase tracking-widest hover:bg-white hover:text-[#0c433a] transition-all shadow-sm"
+          className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-white/30 bg-transparent text-xs font-black uppercase tracking-widest transition-all shadow-sm hover:border-white/60 hover:scale-105 active:scale-95"
         >
-          See All
-          <ArrowRight className="w-4 h-4" />
+          <span className="wave-text">See All</span>
+          <ArrowRight className="w-4 h-4 wave-icon" />
         </Link>
       </div>
 
@@ -104,23 +107,23 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
       <div className="relative py-2">
         <button
           onClick={() => scroll('left')}
-          className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+          className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
         >
-          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+          <ChevronLeft className="w-6 h-6" />
         </button>
         <button
           onClick={() => scroll('right')}
-          className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 items-center justify-center bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-black/10 hover:bg-white transition-all active:scale-95"
+          className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
         >
-          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-black" />
+          <ChevronRight className="w-6 h-6" />
         </button>
 
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-2 sm:px-4 gap-2 sm:gap-3 md:gap-4"
+          className="flex overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-1.5 sm:px-2 gap-2 sm:gap-3 lg:gap-4"
         >
           {products.map((product, idx) => (
-            <div key={product.id} className="flex-shrink-0 snap-start w-[150px] sm:w-[180px] md:w-[220px] lg:w-[260px]">
+            <div key={product.id} className="flex-shrink-0 snap-start w-[calc(38%-6px)] sm:w-[calc(28%-8px)] md:w-[calc(22%-10px)] lg:w-[calc(19%-12px)]">
               <ProductCard
                 product={product}
                 onQuickView={onQuickView}
@@ -135,10 +138,10 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
         <div className="flex justify-center mt-4 sm:hidden">
           <Link
             href="/products/routine"
-            className="flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-black uppercase tracking-widest"
+            className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/30 bg-transparent text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
           >
-            See All Routine
-            <ArrowRight className="w-4 h-4" />
+            <span className="wave-text">See All Routine</span>
+            <ArrowRight className="w-4 h-4 wave-icon" />
           </Link>
         </div>
       </div>

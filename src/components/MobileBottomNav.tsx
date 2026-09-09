@@ -28,21 +28,8 @@ export function MobileBottomNav() {
   }, []);
 
   useEffect(() => {
-    let lastScrollTop = 0;
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      // Auto-hide on scroll down, show on scroll up
-      if (currentScrollY > lastScrollTop && currentScrollY > 100) {
-        setVisible(false);
-      } else {
-        setVisible(true);
-      }
-      lastScrollTop = currentScrollY;
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    // Keep bottom navigation comfortably accessible while browsing
+    setVisible(true);
   }, []);
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
@@ -66,19 +53,19 @@ export function MobileBottomNav() {
           initial={{ y: 100 }}
           animate={{ y: 0 }}
           exit={{ y: 100 }}
-          className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-[400px]"
+          className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-[400px]"
           style={{ willChange: "transform" }}
         >
-          <div className="bg-white/90 backdrop-blur-xl border border-black/5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-3xl px-6 py-3 flex items-center justify-between">
+          <div className="bg-white/95 backdrop-blur-2xl border border-white/60 shadow-[0_12px_36px_rgba(0,0,0,0.18)] rounded-3xl px-5 py-2.5 flex items-center justify-between">
             {navItems.map((item) => {
               const isActive = !item.isSesi && pathname === item.href;
               const Icon = item.icon;
               const content = (
                 <>
-                  <div className={`p-2 rounded-2xl transition-all duration-300 ${isActive ? "bg-black text-white" : "text-black/40 group-hover:bg-black/5"}`}>
-                    <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                  <div className={`relative p-2 rounded-2xl transition-all duration-300 ${isActive ? "bg-black text-white shadow-xs" : "text-black/50 hover:bg-black/5"}`}>
+                    <Icon size={21} strokeWidth={isActive ? 2.5 : 2} />
                     {item.isCart && cartCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-black border-2 border-white shadow-sm">
+                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] flex items-center justify-center font-black border-2 border-white shadow-md animate-pulse">
                         {cartCount > 9 ? "9+" : cartCount}
                       </span>
                     )}

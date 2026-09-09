@@ -175,14 +175,18 @@ function PaymentPageContent() {
         let orderData: any;
         let isPendingCheckout = false;
         const orderRes = await fetch(`/api/orders/${id}`);
-        if (orderRes.status === 404) {
+        if (!orderRes.ok) {
           const pcRes = await fetch(`/api/pending-checkout/${id}`);
-          orderData = await pcRes.json();
-          isPendingCheckout = true;
+          if (pcRes.ok) {
+            orderData = await pcRes.json();
+            isPendingCheckout = true;
+          } else {
+            orderData = await orderRes.json();
+          }
         } else {
           orderData = await orderRes.json();
         }
-        if (orderData.error) throw new Error(orderData.error);
+        if (orderData?.error) throw new Error(orderData.error);
         setOrder(orderData);
 
         // If returned with cancel/reject param, update order status in DB

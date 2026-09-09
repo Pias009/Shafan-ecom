@@ -79,7 +79,7 @@ export async function getHomePageData(storeCode?: string) {
       };
     };
 
-    const [allProducts, newArrivals, flashSales, trending, routineProducts] = await Promise.all([
+    const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers] = await Promise.all([
       prisma.product.findMany({
         where: { active: true },
         select: selectFields,
@@ -110,6 +110,12 @@ export async function getHomePageData(storeCode?: string) {
         orderBy: { createdAt: 'desc' },
         take: 12,
       }),
+      prisma.product.findMany({
+        where: { active: true },
+        select: selectFields,
+        orderBy: { totalSales: 'desc' },
+        take: 12,
+      }),
     ]);
 
     const data = {
@@ -118,13 +124,14 @@ export async function getHomePageData(storeCode?: string) {
       flashSales: flashSales.map(mapProduct),
       trending: trending.map(mapProduct),
       routine: routineProducts.map(mapProduct),
+      bestSellers: bestSellers.map(mapProduct),
     };
 
     homepageCache = { data, timestamp: Date.now() };
     return data;
   } catch (error) {
     console.error("HomePage data fetch error:", error);
-    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [] };
+    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [] };
   }
 }
 

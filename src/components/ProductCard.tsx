@@ -2,7 +2,7 @@
 
 import { memo, useState } from "react";
 import Image from "next/image";
-import { ShoppingCart, Flame, Star, Eye, Heart, Package } from "lucide-react";
+import { ShoppingCart, Flame, Star, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
@@ -64,7 +64,7 @@ const ProductCardComponent = function ProductCard({
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
   const hasHydrated = useCountryStoreReady();
-  const [isLiked, setIsLiked] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
 
   if (!hasHydrated) {
     return (
@@ -119,122 +119,112 @@ const ProductCardComponent = function ProductCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.42, ease: "easeOut" }}
+      initial={{ opacity: 0, x: -20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true, margin: "-20px" }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
       onMouseEnter={() => router.prefetch(`/products/${product.slug || product.id}`)}
       onClick={(e) => {
         e.stopPropagation();
         router.push(`/products/${product.slug || product.id}`);
       }}
-      className="group relative bg-white/70 backdrop-blur-2xl rounded-2xl border border-white/60 hover:border-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden w-full h-full flex flex-col cursor-pointer transform-gpu"
+      className="group relative bg-white/85 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/70 hover:border-white shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden w-full h-full flex flex-col cursor-pointer transform-gpu select-none"
     >
-      {/* ── Image Stage (Solid White so White-BG photos blend 100% seamlessly) ── */}
-      <div className="relative aspect-square w-full bg-white flex items-center justify-center p-2 sm:p-4 overflow-hidden border-b border-black/5">
-
+      {/* ── Image Stage (Edge-to-edge fit, no blank borders) ── */}
+      <div className="relative aspect-[1/0.78] w-full bg-white overflow-hidden border-b border-black/5">
         {/* Badge (Top-Left) */}
-        <div className="absolute top-2.5 left-2.5 z-20">
+        <div className="absolute top-1.5 left-1.5 z-20">
           <span
-            className={`inline-flex items-center gap-1 ${badge.color} text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm`}
+            className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
           >
             {"icon" in badge && badge.icon && (
-              <Flame size={9} className="fill-amber-400 text-amber-400" />
+              <Flame size={7} className="fill-amber-400 text-amber-400 shrink-0 sm:w-2.5 sm:h-2.5" />
             )}
             {badge.label}
           </span>
         </div>
 
-        {/* Wishlist Heart (Top-Right) */}
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setIsLiked((v) => !v); }}
-          className={`absolute top-2.5 right-2.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all duration-300 shrink-0 active:scale-90 transform-gpu shadow-sm ${
-            isLiked
-              ? "bg-rose-500 border-rose-500 text-white"
-              : "bg-white/80 backdrop-blur-md border-black/5 text-[#042b24]/60 hover:text-rose-500 hover:bg-white"
-          }`}
-        >
-          <Heart size={13} className={isLiked ? "fill-white" : ""} />
-        </button>
-
-        {/* Product Image */}
-        <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
-          <Image
-            src={imgSrc}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 28vw, 20vw"
-            className="object-contain p-1 sm:p-2 transition-transform duration-500 ease-out group-hover:scale-105"
-            priority={priority}
-          />
-        </div>
+        {/* Product Image — Edge-to-edge, zero blank borders */}
+        <Image
+          src={imgSrc}
+          alt={product.name}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          priority={priority}
+        />
       </div>
 
       {/* ── Info Area ── */}
-      <div className="flex flex-col flex-1 justify-between p-2.5 sm:p-3.5 bg-white/30">
-        <div>
+      <div className="flex flex-col flex-1 justify-between p-1.5 sm:py-2 sm:px-2.5 bg-white/40 gap-0.5 sm:gap-1">
+        <div className="flex flex-col gap-0.5">
           {/* Brand */}
-          <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#042b24]/50 mb-0.5 leading-none truncate">
+          <p className="text-[7.5px] xs:text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-[#042b24]/60 leading-none truncate">
             {brandName}
           </p>
 
-          {/* Product Name */}
-          <h3 className="font-serif font-bold text-xs sm:text-sm md:text-base text-[#042b24] leading-snug line-clamp-2 min-h-[2rem] sm:min-h-[2.4rem] group-hover:text-black transition-colors mb-1">
+          {/* Product Name — Crystal clear readable sans-serif typography */}
+          <h3 className="font-sans font-semibold text-[11px] xs:text-[12px] sm:text-[13px] md:text-[13.5px] text-[#051c17] leading-[1.25] line-clamp-2 group-hover:text-black transition-colors">
             {product.name}
           </h3>
 
           {/* Stars */}
-          <div className="flex items-center gap-1 mb-1.5">
-            <div className="flex">
+          <div className="flex items-center gap-0.5 mt-0.5">
+            <div className="flex shrink-0">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  size={9}
-                  className={i < Math.round(rating) ? "text-amber-400 fill-amber-400" : "text-slate-200 fill-slate-200"}
+                  size={7}
+                  className={i < Math.round(rating) ? "text-amber-400 fill-amber-400 sm:w-2 sm:h-2" : "text-slate-200 fill-slate-200 sm:w-2 sm:h-2"}
                 />
               ))}
             </div>
-            <span className="text-[9px] font-bold text-[#52736b]">({reviewCount})</span>
+            <span className="text-[7px] sm:text-[8.5px] font-bold text-[#52736b] truncate">({reviewCount})</span>
           </div>
         </div>
 
-        <div>
+        {/* Price & Add to Cart Action Row */}
+        <div className="pt-0.5 sm:pt-1 flex items-center justify-between gap-1 border-t border-black/5">
           {/* Price */}
-          <div className="flex items-baseline gap-1.5 mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1 leading-none min-w-0">
             <Price
               amount={hasDiscount ? salePrice : displayPrice}
-              className="text-xs sm:text-base font-black text-[#042b24]"
+              className="text-[12px] xs:text-[13px] sm:text-[15px] md:text-base font-black text-[#042b24] tracking-tight"
               countryPrices={product.countryPrices as CountryPrice[]}
             />
             {hasDiscount && (
-              <span className="text-[10px] text-[#72ccbd] line-through font-bold">
+              <span className="text-[8.5px] sm:text-[10px] text-[#0c433a]/60 line-through font-bold truncate">
                 <Price amount={displayPrice} countryPrices={product.countryPrices as CountryPrice[]} />
               </span>
             )}
           </div>
 
-          {/* Full-width Add to Cart Button */}
+          {/* Cart Icon Button (Bigger, No Background) */}
           <button
             type="button"
             disabled={isNotAvailable}
-            onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
-            className={`w-full py-1.5 sm:py-2 px-2 sm:px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all duration-300 shadow-sm active:scale-[0.98] ${
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart(product);
+              setJustAdded(true);
+              setTimeout(() => setJustAdded(false), 1400);
+            }}
+            className={`p-1 bg-transparent flex items-center justify-center shrink-0 transition-all duration-200 active:scale-90 ${
               isNotAvailable
-                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                : "bg-[#0c433a] hover:bg-[#072a24] text-white shadow-[#0c433a]/20"
+                ? "text-slate-300 cursor-not-allowed"
+                : justAdded
+                ? "text-emerald-600 scale-110"
+                : "text-[#0c433a] hover:text-[#06241f] hover:scale-110"
             }`}
+            aria-label="Add to Cart"
+            title={isNotAvailable ? "Sold Out" : "Add to Cart"}
           >
             {isNotAvailable ? (
-              <>
-                <Package size={12} />
-                <span>Out of Stock</span>
-              </>
+              <Package size={17} className="sm:w-5 sm:h-5" strokeWidth={2} />
+            ) : justAdded ? (
+              <span className="text-xs sm:text-sm font-black text-emerald-600 leading-none">✓</span>
             ) : (
-              <>
-                <ShoppingCart size={12} />
-                <span>Add to Cart</span>
-              </>
+              <ShoppingCart size={17} className="sm:w-5 sm:h-5" strokeWidth={2.2} />
             )}
           </button>
         </div>

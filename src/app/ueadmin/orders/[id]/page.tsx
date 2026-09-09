@@ -10,6 +10,7 @@ import { OrderStatus } from '@prisma/client';
 import RequestAlerts from './RequestAlerts';
 import OrderEditor from './_components/OrderEditor';
 import TamaraRefundAction from './_components/TamaraRefundAction';
+import InvoicePreview from './_components/InvoicePreview';
 
 function formatPrice(amount: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
@@ -126,8 +127,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      {/* Main Content - Single Column with Sections */}
-      <div className="space-y-6">
+      {/* Main Content - Grid with Left Order Details and Right Live Invoice Preview */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        {/* Left Column */}
+        <div className="xl:col-span-7 space-y-6">
         
         {/* Cancellation/Return Requests */}
         <RequestAlerts 
@@ -422,7 +425,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             totalWeight={order.totalWeight}
           />
         </section>
+        </div>
 
+        {/* Right Column: Live Invoice Preview */}
+        <div className="xl:col-span-5 space-y-6 xl:sticky xl:top-6">
+          <InvoicePreview order={order} />
+        </div>
       </div>
     </div>
   );

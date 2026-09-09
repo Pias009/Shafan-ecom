@@ -297,17 +297,22 @@ function CartPageContent() {
   }
 
   async function saveAddressToBackend(addr: ReturnType<typeof buildAddressFromForm>) {
+    let savedToBackend = false;
     if (session) {
-      const res = await fetch("/api/account/address", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addr),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to save address");
+      try {
+        const res = await fetch("/api/account/address", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addr),
+        });
+        if (res.ok) {
+          savedToBackend = true;
+        }
+      } catch (err) {
+        console.warn("Failed to sync address to account, saving locally:", err);
       }
-    } else {
+    }
+    if (!savedToBackend) {
       localStorage.setItem("guest_address", JSON.stringify(addr));
       if (email) {
         localStorage.setItem("guest_email", email);

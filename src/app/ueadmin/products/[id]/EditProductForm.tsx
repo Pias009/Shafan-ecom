@@ -2,11 +2,19 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store, Plus, Scale } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store, Plus, Scale, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { parseCommaSeparatedPriceInput, formatPriceForAdmin } from '@/lib/money';
+import { RichTextEditor } from '@/components/RichTextEditor';
+import {
+  OFFICIAL_BRANDS,
+  OFFICIAL_CATEGORIES,
+  OFFICIAL_SUBCATEGORIES,
+  OFFICIAL_SKIN_TYPES,
+  OFFICIAL_SKIN_CONCERNS,
+} from '@/lib/product-taxonomy';
 
 interface EditProductFormProps {
   product: any;
@@ -22,7 +30,13 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
   const [loading, setLoading] = useState(false);
   const [showAddBrand, setShowAddBrand] = useState(false);
   const [newBrandName, setNewBrandName] = useState("");
-  const [availableBrands, setAvailableBrands] = useState(brands);
+  const [activeDescTab, setActiveDescTab] = useState<'short' | 'benefits' | 'ingredients' | 'howToUse'>('short');
+  
+  // Merge official brands with props brands, deduplicating
+  const mergedBrands = Array.from(
+    new Set([...OFFICIAL_BRANDS, ...brands.map(b => b.name)])
+  ).map(name => ({ name }));
+  const [availableBrands, setAvailableBrands] = useState(mergedBrands);
   
   // Ensure numeric fields are properly converted to numbers
   // Initialize all supported country prices
@@ -41,12 +55,25 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     return existing || { country: sc.code, price: 0, currency: sc.currency, active: true };
   });
 
+  // Dual warehouse stock extraction from store inventories
+  const inventories = initialProduct.allInventories || initialProduct.storeInventories || [];
+  const uaeInv = inventories.find((inv: any) => inv.store?.code === 'UAE');
+  const kuwInv = inventories.find((inv: any) => inv.store?.code === 'KUW' || inv.store?.code === 'KUWAIT');
+  const initialDubaiStock = uaeInv?.quantity ?? (initialProduct.store?.code === 'UAE' ? (initialProduct.stockQuantity || 0) : 0);
+  const initialKuwaitStock = kuwInv?.quantity ?? (initialProduct.store?.code === 'KUW' || initialProduct.store?.code === 'KUWAIT' ? (initialProduct.stockQuantity || 0) : 0);
+
   const normalizedProduct = {
     ...initialProduct,
     slug: initialProduct.slug || '',
     price: Number(initialProduct.price) || 0,
     discountPrice: Number(initialProduct.discountPrice) || 0,
-    stockQuantity: Number(initialProduct.stockQuantity) || 0,
+    stockQuantity: (initialDubaiStock + initialKuwaitStock) > 0 ? (initialDubaiStock + initialKuwaitStock) : (Number(initialProduct.stockQuantity) || 0),
+    dubaiStock: initialDubaiStock,
+    kuwaitStock: initialKuwaitStock,
+    hot: !!initialProduct.hot,
+    trending: !!initialProduct.trending,
+    clearanceSale: !!initialProduct.clearanceSale,
+    promotion: !!initialProduct.promotion,
     categoryIds: initialProduct.categories?.map((c: any) => c.id) || [],
     subCategoryIds: initialProduct.subCategory?.id ? [initialProduct.subCategory.id] : [],
     skinToneIds: initialProduct.skinTones?.map((s: any) => s.id) || [],
@@ -335,8 +362,14 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
         howToUse: product.howToUse,
         price: typeof product.price === 'number' ? product.price : Number(product.price) || 0,
         discountPrice: typeof product.discountPrice === 'number' ? product.discountPrice : Number(product.discountPrice) || 0,
-        stockQuantity: typeof product.stockQuantity === 'number' ? product.stockQuantity : Number(product.stockQuantity) || 0,
+        stockQuantity: (Number(product.dubaiStock) || 0) + (Number(product.kuwaitStock) || 0),
+        dubaiStock: Number(product.dubaiStock) || 0,
+        kuwaitStock: Number(product.kuwaitStock) || 0,
         active: product.active,
+        hot: product.hot,
+        trending: product.trending,
+        clearanceSale: product.clearanceSale,
+        promotion: product.promotion,
         mainImage: product.mainImage || '',
         images: product.images || [],
         brandName: product.brandName,
@@ -344,7 +377,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
         skinToneIds: product.skinToneIds,
         skinConcernIds: product.skinConcernIds,
         subCategoryIds: product.subCategoryIds,
-        subCategoryId: product.subCategoryIds?.[0] || null,
+        subCategoryId: product.subCategoryId || product.subCategoryIds?.[0] || null,
         tags: product.tags || [],
         countryPrices: safeCountryPrices,
         weight: product.weight,
@@ -485,175 +518,200 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between px-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Description</label>
-                  <span className="text-[8px] text-black/30">Drag corner to resize</span>
-                </div>
-                <textarea 
-                  name="description"
-                  value={product.description || ''} 
-                  onChange={handleChange}
-                  rows={5}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
-                />
+            {/* 4 Description Tabs (Page 10 Feedback) */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">
+                  Product Details & Description Tabs
+                </label>
+                <span className="text-[10px] text-black/30 font-bold uppercase tracking-wider">4 Sections Available</span>
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between px-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Benefits</label>
-                  <span className="text-[8px] text-black/30">Drag corner to resize</span>
-                </div>
-                <textarea 
-                  name="benefits"
-                  value={product.benefits || ''} 
-                  onChange={handleChange}
-                  rows={5}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
-                />
+              {/* Tab Navigation */}
+              <div className="flex p-1 bg-black/5 rounded-2xl gap-1 overflow-x-auto">
+                {[
+                  { id: 'short', label: 'Short Description', filled: !!product.description },
+                  { id: 'benefits', label: 'Benefits', filled: !!product.benefits },
+                  { id: 'ingredients', label: 'Ingredients', filled: !!product.ingredients },
+                  { id: 'howToUse', label: 'How to Use', filled: !!product.howToUse },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveDescTab(tab.id as any)}
+                    className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                      activeDescTab === tab.id
+                        ? 'bg-black text-white shadow-md'
+                        : 'text-black/60 hover:text-black hover:bg-black/5'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    {tab.filled && (
+                      <span className={`w-1.5 h-1.5 rounded-full ${activeDescTab === tab.id ? 'bg-emerald-400' : 'bg-emerald-600'}`} />
+                    )}
+                  </button>
+                ))}
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between px-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40">Ingredients</label>
-                  <span className="text-[8px] text-black/30">Drag corner to resize</span>
+              {/* Tab Content */}
+              {activeDescTab === 'short' && (
+                <div className="space-y-1.5 animate-fadeIn">
+                  <RichTextEditor
+                    name="description"
+                    value={product.description || ''}
+                    onChange={(value) => setProduct({ ...product, description: value, shortDescription: value })}
+                    placeholder="Short product overview and description... (Use toolbar for formatting)"
+                    label="Short Description / Overview"
+                    rows={6}
+                  />
                 </div>
-                <textarea 
-                  name="ingredients"
-                  value={product.ingredients || ''} 
-                  onChange={handleChange}
-                  rows={5}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
-                />
-              </div>
+              )}
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between px-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40">How to Use</label>
-                  <span className="text-[8px] text-black/30">Drag corner to resize</span>
+              {activeDescTab === 'benefits' && (
+                <div className="space-y-1.5 animate-fadeIn">
+                  <RichTextEditor
+                    name="benefits"
+                    value={product.benefits || ''}
+                    onChange={(value) => setProduct({ ...product, benefits: value })}
+                    placeholder="Key benefits and proven results of the product..."
+                    label="Product Benefits"
+                    rows={6}
+                  />
                 </div>
-                <textarea 
-                  name="howToUse"
-                  value={product.howToUse || ''} 
-                  onChange={handleChange}
-                  rows={5}
-                  className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all resize-y min-h-[120px]"
-                />
-              </div>
+              )}
 
-              {/* Categories */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Categories</h4>
-                <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
-                  <div className="flex flex-wrap gap-2">
-                    {categories.map(cat => (
-                      <label
-                        key={cat.id}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-                          (product.categoryIds || []).includes(cat.id)
-                            ? 'bg-black text-white'
-                            : 'bg-white hover:bg-black/5'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={(product.categoryIds || []).includes(cat.id)}
-                          onChange={() => handleCategoryToggle(cat.id)}
-                          className="hidden"
-                        />
-                        <span className="text-sm font-medium">{cat.name}</span>
-                      </label>
-                    ))}
+              {activeDescTab === 'ingredients' && (
+                <div className="space-y-1.5 animate-fadeIn">
+                  <RichTextEditor
+                    name="ingredients"
+                    value={product.ingredients || ''}
+                    onChange={(value) => setProduct({ ...product, ingredients: value })}
+                    placeholder="Key ingredients (e.g., Niacinamide, Centella Asiatica, Hyaluronic Acid)..."
+                    label="Ingredients & Formulation"
+                    rows={6}
+                  />
+                </div>
+              )}
+
+              {activeDescTab === 'howToUse' && (
+                <div className="space-y-1.5 animate-fadeIn">
+                  <RichTextEditor
+                    name="howToUse"
+                    value={product.howToUse || ''}
+                    onChange={(value) => setProduct({ ...product, howToUse: value })}
+                    placeholder="Step-by-step application instructions..."
+                    label="How to Use"
+                    rows={6}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Taxonomy Dropdowns (Page 10 Feedback: Category, Sub Category, Skin Type, Skin Concern) */}
+            <div className="pt-4 border-t border-black/5 space-y-6">
+              <h4 className="text-xs font-black uppercase tracking-widest text-black/30">Taxonomy & Categorization</h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Category Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Category *</label>
+                  <div className="relative">
+                    <select
+                      value={product.categoryIds?.[0] || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setProduct((prev: any) => ({
+                          ...prev,
+                          categoryIds: selectedId ? [selectedId] : []
+                        }));
+                      }}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/30" size={16} />
+                  </div>
+                </div>
+
+                {/* Sub-Category Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Sub-Category *</label>
+                  <div className="relative">
+                    <select
+                      value={product.subCategoryId || product.subCategoryIds?.[0] || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setProduct((prev: any) => ({
+                          ...prev,
+                          subCategoryId: selectedId,
+                          subCategoryIds: selectedId ? [selectedId] : []
+                        }));
+                      }}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select Sub-Category</option>
+                      {subCategories.map((subCat) => (
+                        <option key={subCat.id} value={subCat.id}>
+                          {subCat.name} {subCat.category?.name ? `(${subCat.category.name})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/30" size={16} />
+                  </div>
+                </div>
+
+                {/* Skin Type Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Skin Type *</label>
+                  <div className="relative">
+                    <select
+                      value={product.skinToneIds?.[0] || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setProduct((prev: any) => ({
+                          ...prev,
+                          skinToneIds: selectedId ? [selectedId] : []
+                        }));
+                      }}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select Skin Type</option>
+                      {skinTones.map((tone) => (
+                        <option key={tone.id} value={tone.id}>{tone.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/30" size={16} />
+                  </div>
+                </div>
+
+                {/* Skin Concern Dropdown */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Skin Concern *</label>
+                  <div className="relative">
+                    <select
+                      value={product.skinConcernIds?.[0] || ''}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        setProduct((prev: any) => ({
+                          ...prev,
+                          skinConcernIds: selectedId ? [selectedId] : []
+                        }));
+                      }}
+                      className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none appearance-none cursor-pointer"
+                    >
+                      <option value="">Select Skin Concern</option>
+                      {skinConcerns.map((concern) => (
+                        <option key={concern.id} value={concern.id}>{concern.name}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-black/30" size={16} />
                   </div>
                 </div>
               </div>
-
-              {/* Sub-categories */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Sub-categories</h4>
-                <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
-                  <div className="flex flex-wrap gap-2">
-                    {subCategories.map((subCat) => (
-                      <label
-                        key={subCat.id}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-                          (product.subCategoryIds || []).includes(subCat.id)
-                            ? 'bg-black text-white'
-                            : 'bg-white hover:bg-black/5'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={(product.subCategoryIds || []).includes(subCat.id)}
-                          onChange={() => handleSubCategoryToggle(subCat.id)}
-                          className="hidden"
-                        />
-                        <span className="text-sm font-medium">{subCat.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Skin Tones */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Skin Tones</h4>
-                <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
-                  <div className="flex flex-wrap gap-2">
-                    {skinTones.map((tone) => (
-                      <label
-                        key={tone.id}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-                          (product.skinToneIds || []).includes(tone.id)
-                            ? 'bg-black text-white'
-                            : 'bg-white hover:bg-black/5'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={(product.skinToneIds || []).includes(tone.id)}
-                          onChange={() => handleSkinToneToggle(tone.id)}
-                          className="hidden"
-                        />
-                        {tone.hexColor && (
-                          <div
-                            className="w-4 h-4 rounded-full border border-white/20"
-                            style={{ backgroundColor: tone.hexColor }}
-                          />
-                        )}
-                        <span className="text-sm font-medium">{tone.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Skin Concerns */}
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2 mb-2">Skin Concerns</h4>
-                <div className="bg-black/5 rounded-2xl p-3 max-h-40 overflow-y-auto">
-                  <div className="flex flex-wrap gap-2">
-                    {skinConcerns.map((concern) => (
-                      <label
-                        key={concern.id}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-                          (product.skinConcernIds || []).includes(concern.id)
-                            ? 'bg-black text-white'
-                            : 'bg-white hover:bg-black/5'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={(product.skinConcernIds || []).includes(concern.id)}
-                          onChange={() => handleSkinConcernToggle(concern.id)}
-                          className="hidden"
-                        />
-                        <span className="text-sm font-medium">{concern.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            </div>
             </div>
           </section>
 
@@ -853,36 +911,121 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-black/5 rounded-xl"><Tag size={16} /></div>
-              <h3 className="font-bold">Status</h3>
+              <h3 className="font-bold">Status & Vibes</h3>
             </div>
-            <div className="flex items-center gap-3 px-4">
-              <input 
-                type="checkbox"
-                name="active"
-                checked={product.active}
-                onChange={(e) => setProduct({...product, active: e.target.checked})}
-                className="w-5 h-5 rounded border-black/10 text-black focus:ring-black"
-              />
-              <span className="text-xs font-black uppercase tracking-widest">Active / Visible</span>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 px-4 py-2 bg-black/5 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox"
+                  name="active"
+                  checked={product.active}
+                  onChange={(e) => setProduct({...product, active: e.target.checked})}
+                  className="w-4 h-4 rounded border-black/10 text-black focus:ring-black"
+                />
+                <span className="text-xs font-bold uppercase tracking-wider">Active / Visible</span>
+              </label>
+              
+              <label className="flex items-center gap-3 px-4 py-2 bg-black/5 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox"
+                  name="hot"
+                  checked={product.hot}
+                  onChange={(e) => setProduct({...product, hot: e.target.checked})}
+                  className="w-4 h-4 rounded border-black/10 text-black focus:ring-black"
+                />
+                <span className="text-xs font-bold uppercase tracking-wider">Hot Item</span>
+              </label>
+
+              <label className="flex items-center gap-3 px-4 py-2 bg-black/5 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox"
+                  name="trending"
+                  checked={product.trending}
+                  onChange={(e) => setProduct({...product, trending: e.target.checked})}
+                  className="w-4 h-4 rounded border-black/10 text-black focus:ring-black"
+                />
+                <span className="text-xs font-bold uppercase tracking-wider">Trending</span>
+              </label>
+
+              <label className="flex items-center gap-3 px-4 py-2 bg-black/5 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox"
+                  name="clearanceSale"
+                  checked={product.clearanceSale}
+                  onChange={(e) => setProduct({...product, clearanceSale: e.target.checked})}
+                  className="w-4 h-4 rounded border-black/10 text-black focus:ring-black"
+                />
+                <span className="text-xs font-bold uppercase tracking-wider">Clearance Sale</span>
+              </label>
+
+              <label className="flex items-center gap-3 px-4 py-2 bg-black/5 rounded-xl cursor-pointer">
+                <input 
+                  type="checkbox"
+                  name="promotion"
+                  checked={product.promotion}
+                  onChange={(e) => setProduct({...product, promotion: e.target.checked})}
+                  className="w-4 h-4 rounded border-black/10 text-black focus:ring-black"
+                />
+                <span className="text-xs font-bold uppercase tracking-wider">Promotion</span>
+              </label>
             </div>
           </section>
 
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-black/5 rounded-xl"><Package size={16} /></div>
-              <h3 className="font-bold">Inventory</h3>
+              <h3 className="font-bold">Dual Warehouse Inventory</h3>
             </div>
             <div className="space-y-4">
                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Global Stock</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/40 flex items-center gap-1.5">
+                    <span>🇦🇪</span> Dubai Stock
+                  </span>
                   <input 
-                    name="stockQuantity"
+                    name="dubaiStock"
                     type="number"
-                    value={product.stockQuantity || 0}
-                    onChange={handleChange}
+                    min="0"
+                    value={product.dubaiStock ?? 0}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 0;
+                      setProduct((prev: any) => ({
+                        ...prev,
+                        dubaiStock: val,
+                        stockQuantity: val + (Number(prev.kuwaitStock) || 0)
+                      }));
+                    }}
                     className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"
                   />
                </div>
+
+               <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/40 flex items-center gap-1.5">
+                    <span>🇰🇼</span> Kuwait Stock
+                  </span>
+                  <input 
+                    name="kuwaitStock"
+                    type="number"
+                    min="0"
+                    value={product.kuwaitStock ?? 0}
+                    onChange={(e) => {
+                      const val = Number(e.target.value) || 0;
+                      setProduct((prev: any) => ({
+                        ...prev,
+                        kuwaitStock: val,
+                        stockQuantity: val + (Number(prev.dubaiStock) || 0)
+                      }));
+                    }}
+                    className="w-24 bg-black/5 border-none rounded-lg p-2 text-center font-black"
+                  />
+               </div>
+
+               <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Total Stock</span>
+                  <span className="font-mono font-black text-sm bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg">
+                    {(Number(product.dubaiStock) || 0) + (Number(product.kuwaitStock) || 0)} Units
+                  </span>
+               </div>
+
                <div className="flex items-center justify-between pt-2 border-t border-black/5">
                   <span className="text-[10px] font-black uppercase tracking-widest text-black/20">Base Price (USD)</span>
                   <input 
