@@ -172,29 +172,29 @@ export function BestSellersSection({ products, onQuickView, addToCart, orderNow 
   }, [products.length]);
 
   return (
-    <section className="w-full py-10 sm:py-14 px-4 sm:px-6" style={{ backgroundColor: "#72ccbd" }}>
+    <section className="w-full py-8 sm:py-12 px-4 sm:px-6 bg-white rounded-3xl border border-pink-100/80 shadow-xs my-6">
       <div className="max-w-[1440px] mx-auto">
         {/* Header */}
         <div className="flex items-end justify-between mb-5 sm:mb-7">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-white/60 block mb-1">
+            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#890754] block mb-1">
               🔥 On-Going
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Trophy size={22} className="text-amber-300 fill-amber-300/30" />
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+              <Trophy size={22} className="text-[#890754] fill-pink-100" />
               Best Sellers
             </h2>
           </div>
           <Link
             href="/products?sort=best-selling"
-            className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-white/70 hover:text-white transition-colors border-b border-white/30 hover:border-white pb-0.5"
+            className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-[#890754] hover:text-[#540434] transition-colors border-b border-[#890754]/30 hover:border-[#890754] pb-0.5"
           >
             Shop All <ArrowRight size={12} />
           </Link>
         </div>
 
-        {/* Gallery Grid — sharp corners, site background, zero blank space */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 auto-rows-[95px] sm:auto-rows-[150px] md:auto-rows-[170px] gap-1.5 sm:gap-2">
+        {/* Gallery Grid — rounded corners, crisp borders, zero blank space */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 auto-rows-[95px] sm:auto-rows-[150px] md:auto-rows-[170px] gap-2 sm:gap-3">
           {TILE_LAYOUT.map((tile, i) => {
             const productIdx = tileIndices[i] ?? (i % products.length);
             const product = products[productIdx];
@@ -204,7 +204,7 @@ export function BestSellersSection({ products, onQuickView, addToCart, orderNow 
               : null;
 
             return (
-              <div key={i} className={`${tile.col} overflow-hidden`}>
+              <div key={i} className={`${tile.col} overflow-hidden rounded-xl sm:rounded-2xl border border-gray-100 shadow-2xs`}>
                 <ProductTile
                   product={product}
                   nextProduct={nextProduct}

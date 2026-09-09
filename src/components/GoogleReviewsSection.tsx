@@ -108,7 +108,7 @@ export function GoogleReviewsSection() {
 
   if (loading) {
     return (
-      <section className="w-full py-16 bg-gray-50 flex items-center justify-center">
+      <section className="w-full py-16 bg-transparent flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-[#4285F4]" />
       </section>
     );
@@ -119,7 +119,7 @@ export function GoogleReviewsSection() {
   const track = [...reviews, ...reviews, ...reviews];
 
   return (
-    <section className="w-full bg-gray-50 py-12 sm:py-14 overflow-hidden">
+    <section className="w-full bg-transparent py-12 sm:py-14 overflow-hidden">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6">
         {/* Header */}
         <motion.div

@@ -71,14 +71,14 @@ function BrandTile({ brands, tileIndex, delay }: { brands: Brand[]; tileIndex: n
             />
           </div>
         ) : (
-          <span className="font-serif italic font-bold text-[#0c433a]/75 group-hover:text-[#0c433a] transition-colors text-center leading-tight text-xs sm:text-sm md:text-base px-2">
+          <span className="font-serif italic font-bold text-[#890754]/80 group-hover:text-[#890754] transition-colors text-center leading-tight text-xs sm:text-sm md:text-base px-2">
             {brand.name}
           </span>
         )}
       </div>
 
       {/* Hover shimmer overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#72ccbd]/0 to-[#0c433a]/0 group-hover:from-[#72ccbd]/5 group-hover:to-[#0c433a]/5 transition-all duration-300 rounded-xl sm:rounded-2xl pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-pink-500/0 to-[#890754]/0 group-hover:from-pink-500/5 group-hover:to-[#890754]/5 transition-all duration-300 rounded-xl sm:rounded-2xl pointer-events-none" />
     </Link>
   );
 }
@@ -111,21 +111,21 @@ export function BrandMarquee() {
   if (brands.length === 0) return null;
 
   return (
-    <section className="w-full bg-gray-50 border-y border-gray-100 py-10 sm:py-14 px-4 sm:px-6">
+    <section className="w-full bg-transparent py-10 sm:py-14 px-4 sm:px-6">
       <div className="max-w-[1440px] mx-auto">
         {/* Header */}
         <div className="flex items-end justify-between mb-6 sm:mb-8">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#0c433a]/40 block mb-1">
+            <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#890754]/70 block mb-1">
               Featured Brands
             </span>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#0c433a] tracking-tight">
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
               Shop by Brand
             </h2>
           </div>
           <Link
             href="/brands"
-            className="text-[11px] font-black uppercase tracking-wider text-[#0c433a]/60 hover:text-[#0c433a] transition-colors border-b border-[#0c433a]/20 hover:border-[#0c433a] pb-0.5"
+            className="text-[11px] font-black uppercase tracking-wider text-[#890754] hover:text-[#540434] transition-colors border-b border-[#890754]/30 hover:border-[#890754] pb-0.5"
           >
             All Brands →
           </Link>

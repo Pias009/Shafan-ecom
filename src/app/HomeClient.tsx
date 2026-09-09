@@ -21,6 +21,9 @@ import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackAddToCart } from "@/lib/datalayer";
+import { ShopByConcernSection } from "@/components/ShopByConcernSection";
+import { SkincareDiagnosticBanner } from "@/components/SkincareDiagnosticBanner";
+import { WhatsAppConciergeButton } from "@/components/WhatsAppConciergeButton";
 
 import dynamic from "next/dynamic";
 const BlogShowcase = dynamic(() => import("@/components/BlogShowcase").then(m => m.BlogShowcase), { ssr: false });
@@ -68,6 +71,17 @@ const ProductCardItem = memo(function ProductCardItem({
 
 function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { products: any[]; onQuickView: (p: any) => void; addToCart: (p: any) => void; orderNow: (p: any) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll > 0) {
+        setScrollProgress((scrollLeft / maxScroll) * 100);
+      }
+    }
+  };
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -76,12 +90,24 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
     }
   };
 
+  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (scrollRef.current) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickRatio = (e.clientX - rect.left) / rect.width;
+      const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+      scrollRef.current.scrollTo({ left: clickRatio * maxScroll, behavior: 'smooth' });
+    }
+  };
+
+  const thumbWidthPct = Math.max(20, Math.min(60, products.length > 0 ? (4 / products.length) * 100 : 30));
+
   return (
     <div className="py-2 sm:py-4 relative">
       {/* Left Scroll Button - Desktop Only */}
       <button
         onClick={() => scroll('left')}
-        className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
+        className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
+        aria-label="Previous flash sale deals"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
@@ -89,13 +115,15 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
       {/* Right Scroll Button - Desktop Only */}
       <button
         onClick={() => scroll('right')}
-        className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
+        className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
+        aria-label="Next flash sale deals"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
 
       <div 
         ref={scrollRef}
+        onScroll={handleScroll}
         className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-1.5 sm:px-2 gap-2 sm:gap-3 lg:gap-4"
       >
         {products.map((product, idx) => (
@@ -110,8 +138,28 @@ function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { prod
           </div>
         ))}
       </div>
-      
 
+      {/* Bottom Slide Indicator / Track Line */}
+      <div className="mt-2 sm:mt-4 flex flex-col items-center justify-center gap-1.5 select-none">
+        <div 
+          onClick={handleTrackClick}
+          className="w-36 sm:w-56 h-1 sm:h-1.5 bg-pink-100/90 hover:bg-pink-200/90 rounded-full relative overflow-hidden cursor-pointer shadow-inner transition-colors"
+          title="Click to navigate deals slider"
+        >
+          <div
+            className="h-full bg-gradient-to-r from-[#540434] via-[#890754] to-pink-500 rounded-full transition-all duration-150 ease-out"
+            style={{
+              width: `${thumbWidthPct}%`,
+              marginLeft: `${(scrollProgress / 100) * (100 - thumbWidthPct)}%`,
+            }}
+          />
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-gray-400 tracking-wider uppercase">
+          <span className="inline-block animate-pulse text-[#890754]">‹</span>
+          <span>Slide or Drag to explore</span>
+          <span className="inline-block animate-pulse text-[#890754]">›</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -140,15 +188,15 @@ function FlashSaleCountdown() {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div className="flex items-center gap-1.5 bg-[#051f1a]/85 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full border border-amber-400/40 text-amber-300 text-[10px] sm:text-xs font-black tracking-wider shadow-sm select-none">
-      <Zap size={12} className="text-amber-400 fill-amber-400 animate-pulse shrink-0" />
+    <div className="flex items-center gap-1.5 bg-[#400327]/90 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full border border-pink-400/30 text-pink-200 text-[10px] sm:text-xs font-black tracking-wider shadow-sm select-none">
+      <Zap size={12} className="text-pink-400 fill-pink-400 animate-pulse shrink-0" />
       <span className="hidden xs:inline">DEALS END IN:</span>
       <span className="xs:hidden">ENDS:</span>
       <span className="bg-black/40 px-1 py-0.5 rounded text-white font-mono">{pad(timeLeft.hours)}h</span>
       <span>:</span>
       <span className="bg-black/40 px-1 py-0.5 rounded text-white font-mono">{pad(timeLeft.minutes)}m</span>
       <span>:</span>
-      <span className="bg-black/40 px-1 py-0.5 rounded text-amber-300 font-mono">{pad(timeLeft.seconds)}s</span>
+      <span className="bg-black/40 px-1 py-0.5 rounded text-pink-300 font-mono">{pad(timeLeft.seconds)}s</span>
     </div>
   );
 }
@@ -167,14 +215,14 @@ function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { pro
     <div className="py-2 sm:py-3 relative">
       <button
         onClick={() => scroll('left')}
-        className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
+        className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
 
       <button
         onClick={() => scroll('right')}
-        className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
+        className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
@@ -375,12 +423,12 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   return (
-    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full bg-[#72ccbd] text-white selection:bg-[#0c433a] selection:text-white" suppressHydrationWarning>
+    <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full bg-transparent text-gray-900 selection:bg-[#890754] selection:text-white" suppressHydrationWarning>
       
       {/* Background Soft Illumination */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2),transparent_70%)]" />
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_70%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[550px] bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.9),transparent_70%)]" />
+        <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.015),transparent_70%)]" />
       </div>
 
       {/* Hero Section (Original Position at Top) */}
@@ -395,13 +443,16 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
           }}
         />
 
+        {/* Targeted Results - Shop By Skin Concern */}
+        <ShopByConcernSection />
+
         {/* 1. Flash Sales Section */}
         {filteredFlashSales.length > 0 && (
           <section className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-2">
             {/* Section Header Card */}
-            <div className="mb-5 md:mb-8 relative overflow-hidden rounded-2xl bg-[#0c433a]/80 backdrop-blur-xl border border-white/10 px-4 py-3.5 sm:px-6 sm:py-4 shadow-[0_8px_32px_rgba(0,0,0,0.18)]">
+            <div className="mb-5 md:mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4a032d] via-[#540434] to-[#360220] backdrop-blur-xl border border-pink-500/20 px-4 py-3.5 sm:px-6 sm:py-4 shadow-[0_8px_32px_rgba(84,4,52,0.22)]">
               {/* Glow accent */}
-              <div className="absolute -top-8 -left-8 w-40 h-40 bg-rose-500/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -top-8 -left-8 w-40 h-40 bg-pink-500/20 rounded-full blur-2xl pointer-events-none" />
               <div className="absolute -bottom-6 right-10 w-32 h-32 bg-amber-400/15 rounded-full blur-2xl pointer-events-none" />
 
               <div className="relative flex flex-wrap items-center justify-between gap-3">
@@ -412,7 +463,7 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
                     <h2 className="font-serif text-xl sm:text-3xl md:text-4xl font-black tracking-tight text-white uppercase">
                       Flash Sales
                     </h2>
-                    <span className="hidden sm:inline-flex items-center gap-1 bg-rose-500 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
+                    <span className="hidden sm:inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
                       LIVE
                     </span>
                   </div>
@@ -422,7 +473,7 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
                 {/* Right: Wave CTA */}
                 <Link
                   href="/products/flash-sales"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/20 bg-transparent hover:border-white/50 hover:scale-105 transition-all text-xs font-black uppercase tracking-wider shadow-sm active:scale-95"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white/20 hover:border-pink-300/60 hover:scale-105 transition-all text-xs font-black uppercase tracking-wider shadow-sm active:scale-95 text-white"
                 >
                   <span className="wave-text">See All Deals</span>
                   <ArrowRight className="w-3.5 h-3.5 wave-icon" />
@@ -447,6 +498,9 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
           />
         )}
 
+        {/* Interactive Routine Finder - Skincare Diagnostic */}
+        <SkincareDiagnosticBanner />
+
         {/* 4. Best Sellers Section */}
         {filteredBestSellers.length > 0 && (
           <BestSellersSection
@@ -467,58 +521,72 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
           />
         </div>
 
+        {/* 6. Shop By Brand Section (Immediately After Trending Section) */}
+        <Suspense fallback={null}>
+          <BrandMarquee />
+        </Suspense>
+
       </main>
 
-      {/* 6. Google Reviews Section */}
+      {/* 7. Google Reviews Section */}
       <Suspense fallback={<div className="h-32" />}>
         <GoogleReviewsSection />
       </Suspense>
 
-      {/* 7. Brand Section */}
-      <Suspense fallback={null}>
-        <BrandMarquee />
-      </Suspense>
+      {/* Luxury Trust Guarantee Ribbon */}
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-6 my-8 sm:my-12">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white/90 backdrop-blur-xl border border-pink-200/60 p-5 sm:p-6 lg:p-8 shadow-[0_10px_30px_rgba(137,7,84,0.05)]">
+          {/* Subtle brand ambient glow */}
+          <div className="absolute -top-16 -right-16 w-48 h-48 bg-[#890754]/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-pink-500/5 rounded-full blur-2xl pointer-events-none" />
 
-      {/* Footer Trust Features Bar matching bottom row of Screenshot */}
-      <section className="bg-[#5ebbaf]/95 backdrop-blur-md border-t border-white/30 py-6 sm:py-8 px-2 sm:px-6 mt-12 text-white">
-        <div className="max-w-[1536px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center md:text-left">
-          <div className="flex items-center gap-3.5 justify-center md:justify-start">
-            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
-              <Truck size={20} />
+          <div className="relative grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="group flex items-center gap-3 sm:gap-3.5">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-pink-50 to-[#faedf4] border border-pink-200/60 text-[#890754] flex items-center justify-center shrink-0 shadow-xs group-hover:bg-[#890754] group-hover:text-white group-hover:scale-105 transition-all duration-300">
+                <Truck size={20} />
+              </div>
+              <div className="min-w-0">
+                <h5 className="font-bold text-xs sm:text-sm text-gray-900 group-hover:text-[#890754] transition-colors truncate">
+                  Complimentary Delivery
+                </h5>
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium truncate">Across the UAE & GCC</p>
+              </div>
             </div>
-            <div>
-              <h5 className="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">FREE SHIPPING</h5>
-              <p className="text-[11px] text-white/85 font-medium">On orders over $50</p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3.5 justify-center md:justify-start">
-            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
-              <Shield size={20} />
+            <div className="group flex items-center gap-3 sm:gap-3.5">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-pink-50 to-[#faedf4] border border-pink-200/60 text-[#890754] flex items-center justify-center shrink-0 shadow-xs group-hover:bg-[#890754] group-hover:text-white group-hover:scale-105 transition-all duration-300">
+                <ShieldCheck size={20} />
+              </div>
+              <div className="min-w-0">
+                <h5 className="font-bold text-xs sm:text-sm text-gray-900 group-hover:text-[#890754] transition-colors truncate">
+                  100% Genuine Brands
+                </h5>
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium truncate">Certified authenticity</p>
+              </div>
             </div>
-            <div>
-              <h5 className="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">SECURE PAYMENT</h5>
-              <p className="text-[11px] text-white/85 font-medium">100% safe & secure</p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3.5 justify-center md:justify-start">
-            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
-              <RefreshCw size={20} />
+            <div className="group flex items-center gap-3 sm:gap-3.5">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-pink-50 to-[#faedf4] border border-pink-200/60 text-[#890754] flex items-center justify-center shrink-0 shadow-xs group-hover:bg-[#890754] group-hover:text-white group-hover:scale-105 transition-all duration-300">
+                <RefreshCw size={20} />
+              </div>
+              <div className="min-w-0">
+                <h5 className="font-bold text-xs sm:text-sm text-gray-900 group-hover:text-[#890754] transition-colors truncate">
+                  30-Day Ritual Guarantee
+                </h5>
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium truncate">Seamless & easy returns</p>
+              </div>
             </div>
-            <div>
-              <h5 className="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">EASY RETURNS</h5>
-              <p className="text-[11px] text-white/85 font-medium">30 days return policy</p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-3.5 justify-center md:justify-start">
-            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center shrink-0 border border-white/40 shadow-sm">
-              <Headset size={20} />
-            </div>
-            <div>
-              <h5 className="font-bold text-xs sm:text-sm text-white uppercase tracking-wider">CUSTOMER SUPPORT</h5>
-              <p className="text-[11px] text-white/85 font-medium">We're here to help</p>
+            <div className="group flex items-center gap-3 sm:gap-3.5">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-pink-50 to-[#faedf4] border border-pink-200/60 text-[#890754] flex items-center justify-center shrink-0 shadow-xs group-hover:bg-[#890754] group-hover:text-white group-hover:scale-105 transition-all duration-300">
+                <Headset size={20} />
+              </div>
+              <div className="min-w-0">
+                <h5 className="font-bold text-xs sm:text-sm text-gray-900 group-hover:text-[#890754] transition-colors truncate">
+                  Skincare Concierge
+                </h5>
+                <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium truncate">Personal beauty advisor</p>
+              </div>
             </div>
           </div>
         </div>
@@ -537,6 +605,9 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
         onOrderNow={orderNow}
         onMoreDetails={(productId: string) => router.push(`/products/${productId}`)}
       />
+
+      {/* Floating VIP WhatsApp Skincare Concierge */}
+      <WhatsAppConciergeButton />
     </div>
   );
 }

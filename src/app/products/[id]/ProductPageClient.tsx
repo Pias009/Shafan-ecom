@@ -227,11 +227,11 @@ export default function ProductPageClient({ product, recommendations, reviews = 
   }
 
   return (
-    <div suppressHydrationWarning className="min-h-screen bg-gradient-to-b from-[#96dacc] via-[#82cdbe] to-[#96dacc] text-[#042b24]">
+    <div suppressHydrationWarning className="min-h-screen bg-transparent text-gray-900 selection:bg-[#890754] selection:text-white">
       <main suppressHydrationWarning className="max-w-7xl mx-auto px-3 sm:px-6 pt-20 sm:pt-28 pb-28 sm:pb-28">
         
         {/* Main Product Showcase Card */}
-        <div className="bg-white/60 backdrop-blur-3xl rounded-[2rem] sm:rounded-[3rem] border border-white/60 shadow-2xl shadow-[#0c433a]/10 p-4 sm:p-8 lg:p-12 mb-12 sm:mb-20">
+        <div className="bg-white/90 backdrop-blur-3xl rounded-[2rem] sm:rounded-[3rem] border border-pink-100 shadow-2xl shadow-[#890754]/5 p-4 sm:p-8 lg:p-12 mb-12 sm:mb-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
             
             {/* Gallery Section - 6 cols desktop */}
@@ -314,7 +314,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                       key={idx}
                       onClick={() => setCurrentImageIndex(idx)}
                       className={`relative w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-xl sm:rounded-2xl overflow-hidden flex-shrink-0 transition-all border-2 ${
-                        currentImageIndex === idx ? "border-[#0c433a] scale-105 shadow-md" : "border-transparent opacity-60 hover:opacity-100"
+                        currentImageIndex === idx ? "border-[#890754] scale-105 shadow-md" : "border-gray-200 opacity-60 hover:opacity-100"
                       }`}
                     >
                       <Image src={img} alt="Thumbnail" fill className="object-contain p-1" />
@@ -331,12 +331,12 @@ export default function ProductPageClient({ product, recommendations, reviews = 
               <div className="space-y-2.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   {product.categories?.map((cat: string, idx: number) => (
-                    <span key={idx} className="px-3 py-1 bg-[#0c433a] text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                    <span key={idx} className="px-3 py-1 bg-[#890754] text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-sm">
                       {cat}
                     </span>
                   ))}
                   {product.subCategory?.name && (
-                    <span className="px-3 py-1 bg-white/80 text-[#042b24] text-[9px] font-black uppercase tracking-widest rounded-full border border-white">
+                    <span className="px-3 py-1 bg-white text-[#890754] text-[9px] font-black uppercase tracking-widest rounded-full border border-pink-200 shadow-xs">
                       {product.subCategory.name}
                     </span>
                   )}
@@ -440,7 +440,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                   className={`w-full h-11 sm:h-13 rounded-2xl font-black uppercase tracking-wider text-xs sm:text-sm transition-all shadow-lg active:scale-[0.98] flex items-center justify-center ${
                     isOutOfStock
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-50 shadow-none'
-                      : 'bg-[#0c433a] hover:bg-[#072a24] text-white shadow-[#0c433a]/20'
+                      : 'bg-[#890754] hover:bg-[#6b0542] text-white shadow-md shadow-[#890754]/25'
                   }`}
                 >
                   {isOutOfStock ? 'Available Soon' : 'Buy Now'}
@@ -479,8 +479,8 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                         onClick={() => setShowDescription(tab.key)}
                         className={`flex-1 min-w-[90px] py-2 px-3 text-[11px] font-black uppercase tracking-wider rounded-xl transition-all text-center whitespace-nowrap ${
                           showDescription === tab.key
-                            ? 'bg-[#0c433a] text-white shadow-sm'
-                            : 'text-[#042b24]/70 hover:text-[#042b24] hover:bg-white/40'
+                            ? 'bg-[#890754] text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-white/60'
                         }`}
                       >
                         {tab.label}
@@ -508,12 +508,12 @@ export default function ProductPageClient({ product, recommendations, reviews = 
               {/* Specifications */}
               {product.features && product.features.length > 0 && (
                 <div className="space-y-3 pt-3 border-t border-black/5">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-[#042b24]/50">Specifications</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Specifications</div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {product.features.map((f: string, i: number) => (
-                      <div key={i} className="flex items-center gap-2.5 p-2.5 bg-white/50 backdrop-blur-md border border-white/60 rounded-xl">
-                        <div className="w-1.5 h-1.5 bg-[#0c433a] rounded-full shrink-0" />
-                        <span className="text-xs font-bold text-[#042b24] uppercase tracking-wider">{f}</span>
+                      <div key={i} className="flex items-center gap-2.5 p-2.5 bg-white/70 backdrop-blur-md border border-pink-100 rounded-xl">
+                        <div className="w-1.5 h-1.5 bg-[#890754] rounded-full shrink-0" />
+                        <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">{f}</span>
                       </div>
                     ))}
                   </div>
@@ -525,10 +525,10 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                 <div className="space-y-3 pt-3 border-t border-black/5">
                   {product.skinTones && product.skinTones.length > 0 && (
                     <div className="space-y-2">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-[#042b24]/50">Suitable for Skin Tones</div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Suitable for Skin Tones</div>
                       <div className="flex flex-wrap gap-2">
                         {product.skinTones.map((tone: any, idx: number) => (
-                          <span key={idx} className="inline-flex items-center gap-2 px-3 py-1 bg-white/60 border border-white text-[#042b24] text-xs font-bold uppercase tracking-wider rounded-full shadow-sm">
+                          <span key={idx} className="inline-flex items-center gap-2 px-3 py-1 bg-white/80 border border-gray-200 text-gray-800 text-xs font-bold uppercase tracking-wider rounded-full shadow-xs">
                             {tone.hexColor && (
                               <span className="w-3 h-3 rounded-full border border-black/10 shrink-0" style={{ backgroundColor: tone.hexColor }} />
                             )}
@@ -541,10 +541,10 @@ export default function ProductPageClient({ product, recommendations, reviews = 
 
                   {product.skinConcerns && product.skinConcerns.length > 0 && (
                     <div className="space-y-2 pt-2">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-[#042b24]/50">Addresses Skin Concerns</div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Addresses Skin Concerns</div>
                       <div className="flex flex-wrap gap-2">
                         {product.skinConcerns.map((concern: string, idx: number) => (
-                          <span key={idx} className="px-3 py-1 bg-rose-500/10 text-rose-700 text-xs font-bold uppercase tracking-wider rounded-full border border-rose-200/50">
+                          <span key={idx} className="px-3 py-1 bg-pink-50 text-[#890754] text-xs font-bold uppercase tracking-wider rounded-full border border-pink-200">
                             {concern}
                           </span>
                         ))}
@@ -556,32 +556,32 @@ export default function ProductPageClient({ product, recommendations, reviews = 
 
               {/* Perks */}
               <div className="grid grid-cols-3 gap-2 pt-4 border-t border-black/5 text-center">
-                <div className="space-y-1 p-2.5 bg-white/40 backdrop-blur-md rounded-2xl border border-white">
-                  <div className="w-8 h-8 bg-[#0c433a] text-white rounded-full flex items-center justify-center mx-auto shadow-sm">
+                <div className="space-y-1 p-2.5 bg-white/70 backdrop-blur-md rounded-2xl border border-pink-100">
+                  <div className="w-8 h-8 bg-pink-50 border border-pink-200 text-[#890754] rounded-full flex items-center justify-center mx-auto shadow-xs">
                     <Truck size={16} />
                   </div>
-                  <div className="text-[9px] font-black uppercase tracking-wider text-[#042b24]">Free Shipping</div>
+                  <div className="text-[9px] font-black uppercase tracking-wider text-gray-800">Free Shipping</div>
                 </div>
-                <div className="space-y-1 p-2.5 bg-white/40 backdrop-blur-md rounded-2xl border border-white">
-                  <div className="w-8 h-8 bg-[#0c433a] text-white rounded-full flex items-center justify-center mx-auto shadow-sm">
+                <div className="space-y-1 p-2.5 bg-white/70 backdrop-blur-md rounded-2xl border border-pink-100">
+                  <div className="w-8 h-8 bg-pink-50 border border-pink-200 text-[#890754] rounded-full flex items-center justify-center mx-auto shadow-xs">
                     <RefreshCw size={16} />
                   </div>
-                  <div className="text-[9px] font-black uppercase tracking-wider text-[#042b24]">Easy Returns</div>
+                  <div className="text-[9px] font-black uppercase tracking-wider text-gray-800">Easy Returns</div>
                 </div>
-                <div className="space-y-1 p-2.5 bg-white/40 backdrop-blur-md rounded-2xl border border-white">
-                  <div className="w-8 h-8 bg-[#0c433a] text-white rounded-full flex items-center justify-center mx-auto shadow-sm">
+                <div className="space-y-1 p-2.5 bg-white/70 backdrop-blur-md rounded-2xl border border-pink-100">
+                  <div className="w-8 h-8 bg-pink-50 border border-pink-200 text-[#890754] rounded-full flex items-center justify-center mx-auto shadow-xs">
                     <ShieldCheck size={16} />
                   </div>
-                  <div className="text-[9px] font-black uppercase tracking-wider text-[#042b24]">Secured Payment</div>
+                  <div className="text-[9px] font-black uppercase tracking-wider text-gray-800">Secured Payment</div>
                 </div>
               </div>
 
               {/* Trust Badge */}
-              <div className="flex items-center gap-3 p-3.5 bg-white/70 backdrop-blur-md border border-white rounded-2xl shadow-sm">
-                <ShieldCheck className="w-6 h-6 text-[#0c433a] shrink-0" />
+              <div className="flex items-center gap-3 p-3.5 bg-white/80 backdrop-blur-md border border-pink-100 rounded-2xl shadow-xs">
+                <ShieldCheck className="w-6 h-6 text-[#890754] shrink-0" />
                 <div>
-                  <p className="text-xs font-black text-[#042b24] uppercase tracking-wider">100% Authentic Product</p>
-                  <p className="text-[10px] font-bold text-[#042b24]/60 mt-0.5">Guaranteed genuine, sourced directly from brands</p>
+                  <p className="text-xs font-black text-gray-900 uppercase tracking-wider">100% Authentic Product</p>
+                  <p className="text-[10px] font-medium text-gray-500 mt-0.5">Guaranteed genuine, sourced directly from brands</p>
                 </div>
               </div>
 
@@ -593,8 +593,8 @@ export default function ProductPageClient({ product, recommendations, reviews = 
         <section className="space-y-8 mb-16 sm:mb-24">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1">
-              <h2 className="text-2xl sm:text-4xl font-serif font-black tracking-tight text-[#042b24]">Customer Reviews</h2>
-              <div className="h-[1px] flex-1 bg-[#042b24]/10 hidden sm:block" />
+              <h2 className="text-2xl sm:text-4xl font-serif font-bold tracking-tight text-gray-900">Customer Reviews</h2>
+              <div className="h-[1px] flex-1 bg-gray-200 hidden sm:block" />
             </div>
 
             {/* Slider Navigation Arrows */}
@@ -674,7 +674,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                   href="https://maps.google.com/?cid=14264924938566658650"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0c433a] text-white text-xs font-black uppercase tracking-wider hover:bg-[#072a24] active:scale-95 transition-all shadow-md"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#890754] hover:bg-[#540434] text-white text-xs font-black uppercase tracking-wider active:scale-95 transition-all shadow-md"
                 >
                   Write a review on Google
                 </a>
@@ -731,11 +731,11 @@ export default function ProductPageClient({ product, recommendations, reviews = 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#0c433a] flex items-center justify-center text-white font-black text-xs uppercase shadow-sm">
+                          <div className="w-10 h-10 rounded-full bg-[#890754] flex items-center justify-center text-white font-black text-xs uppercase shadow-sm">
                             {rev.authorName ? rev.authorName.charAt(0) : rev.author_name ? rev.author_name.charAt(0) : "U"}
                           </div>
                           <div>
-                            <h4 className="font-bold text-[#042b24] text-xs sm:text-sm">
+                            <h4 className="font-bold text-gray-900 text-xs sm:text-sm">
                               {rev.authorName || rev.author_name || "Verified Customer"}
                             </h4>
                             <div className="flex gap-0.5 mt-0.5">
@@ -804,7 +804,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
 
       {/* Sticky Mobile Quick-Action Bar */}
       {mounted && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0c433a]/95 backdrop-blur-xl border-t border-white/20 p-3 flex items-center justify-between gap-3 md:hidden shadow-2xl">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#540434]/95 backdrop-blur-xl border-t border-pink-400/20 p-3 flex items-center justify-between gap-3 md:hidden shadow-2xl">
           <div>
             <div className="text-[9px] font-bold text-white/60 uppercase tracking-widest">Price</div>
             <Price amount={displayPrice * quantity} className="text-lg font-black text-white" />
@@ -821,7 +821,7 @@ export default function ProductPageClient({ product, recommendations, reviews = 
             <button
               onClick={() => orderNow()}
               disabled={isOutOfStock}
-              className="flex-1 h-11 rounded-xl bg-white text-[#042b24] text-xs font-black uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center shadow-lg"
+              className="flex-1 h-11 rounded-xl bg-white hover:bg-pink-50 text-[#890754] text-xs font-black uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center shadow-lg border border-white"
             >
               Buy Now
             </button>

@@ -100,81 +100,68 @@ export function Footer() {
   };
 
   return (
-    <footer className="w-full relative overflow-hidden bg-gradient-to-b from-[#082822] via-[#051b17] to-[#02100d] text-white selection:bg-[#72ccbd] selection:text-[#0c433a] border-t border-white/10 mt-auto">
+    <footer className="w-full relative overflow-hidden bg-gradient-to-b from-[#2d021c] via-[#1c0111] to-[#0c0007] text-white selection:bg-[#890754] selection:text-white border-t border-pink-900/40 mt-auto">
       {/* Ambient background glows */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#72ccbd]/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-[#0c433a]/30 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#890754]/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-[#540434]/25 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* ── 1. VIP Newsletter Banner ── */}
-      <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-8">
-        <div className="relative overflow-hidden rounded-3xl bg-white/[0.04] backdrop-blur-2xl border border-white/10 p-6 sm:p-10 lg:p-12 shadow-[0_16px_48px_rgba(0,0,0,0.35)]">
+      {/* ── 1. Shanfa Privé VIP Invitation Card ── */}
+      <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-6">
+        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-white/[0.07] backdrop-blur-2xl border border-pink-500/20 p-5 sm:p-8 lg:p-10 shadow-[0_16px_48px_rgba(0,0,0,0.4)]">
           {/* Subtle corner light reflection */}
-          <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#72ccbd]/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-20 -right-20 w-60 h-60 bg-pink-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left Copy */}
-            <div className="lg:col-span-7 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-[#72ccbd] text-[10px] font-black uppercase tracking-[0.2em] mb-3">
+          <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
+            {/* Left Copy: Compact & Luxury */}
+            <div className="lg:col-span-7 text-center lg:text-left space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-pink-300 text-[9.5px] sm:text-[10px] font-black uppercase tracking-[0.22em]">
                 <Sparkles size={12} className="text-amber-300" />
-                <span>Exclusive Member Privileges</span>
+                <span>SHANFA PRIVÉ • VIP ACCESS</span>
               </div>
-              <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white leading-tight">
-                Unlock <span className="wave-text">10% Off</span> Your First Order
+              <h2 className="font-serif text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-white leading-tight">
+                Enjoy <span className="wave-text">10% Off</span> Your First Skincare Ritual
               </h2>
-              <p className="font-sans text-xs sm:text-sm text-white/70 mt-2 max-w-xl font-normal leading-relaxed">
-                Subscribe to the Shanfa Global inner circle for private flash sales, personalized skincare regimens & luxury product drops across the GCC.
+              <p className="font-sans text-xs sm:text-sm text-white/70 max-w-xl font-normal leading-relaxed">
+                Receive private flash sales, personalized regimen guides, and exclusive GCC luxury beauty drops.
               </p>
-
-              {/* Perks badges */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 mt-4 pt-2 border-t border-white/10 text-white/60 text-[11px] font-medium">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck size={14} className="text-[#72ccbd]" /> 100% Authentic Brands
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Truck size={14} className="text-[#72ccbd]" /> Rapid GCC Dispatch
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <RotateCcw size={14} className="text-[#72ccbd]" /> Hassle-Free Returns
-                </span>
-              </div>
             </div>
 
-            {/* Right Form */}
+            {/* Right Form: Sleek Single-Pill Design */}
             <div className="lg:col-span-5 w-full">
               {subscribed ? (
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">
-                  <CheckCircle2 size={24} className="text-emerald-400 shrink-0" />
+                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200">
+                  <CheckCircle2 size={22} className="text-emerald-400 shrink-0" />
                   <div>
-                    <h4 className="font-bold text-sm text-white">Welcome to Shanfa VIP!</h4>
-                    <p className="text-xs text-emerald-200/80">Your 10% discount code is on its way to your inbox.</p>
+                    <h4 className="font-bold text-xs sm:text-sm text-white">Welcome to Shanfa Privé!</h4>
+                    <p className="text-[11px] text-emerald-200/80">Your 10% privilege code is on its way to your inbox.</p>
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleSubscribe} className="relative flex flex-col sm:flex-row gap-2">
-                  <div className="relative flex-1">
-                    <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
+                <form onSubmit={handleSubscribe} className="relative">
+                  <div className="relative flex items-center bg-white/[0.08] hover:bg-white/[0.12] focus-within:bg-white/[0.15] border border-white/20 focus-within:border-pink-400/80 rounded-full p-1.5 transition-all shadow-inner">
+                    <Mail size={16} className="text-white/40 ml-3 shrink-0 pointer-events-none" />
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email address…"
-                      className="w-full h-12 pl-11 pr-4 bg-white/10 border border-white/20 rounded-2xl text-white text-xs sm:text-sm font-medium placeholder:text-white/40 focus:outline-none focus:border-[#72ccbd] focus:bg-white/15 transition-all shadow-inner"
+                      className="w-full bg-transparent px-3 text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none font-medium"
                     />
+                    <button
+                      type="submit"
+                      className="h-10 sm:h-11 px-4 sm:px-6 rounded-full bg-gradient-to-r from-[#890754] to-[#a8146c] hover:from-[#a8146c] hover:to-[#890754] text-white font-black text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md hover:scale-[1.03] active:scale-95 shrink-0 border border-pink-400/30 cursor-pointer"
+                    >
+                      <span>Claim 10%</span>
+                      <ArrowRight size={13} />
+                    </button>
                   </div>
-                  <button
-                    type="submit"
-                    className="h-12 px-6 rounded-2xl bg-[#72ccbd] hover:bg-[#5dbfae] text-[#06241f] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md hover:scale-[1.02] active:scale-95 shrink-0"
-                  >
-                    <span>Claim 10%</span>
-                    <ArrowRight size={14} />
-                  </button>
+                  <p className="text-[10px] text-white/40 text-center lg:text-left mt-2 px-3">
+                    Instant delivery to your inbox • Zero spam, unsubscribe anytime.
+                  </p>
                 </form>
               )}
-              <p className="text-[10px] text-white/40 text-center lg:text-left mt-2.5">
-                By subscribing, you agree to our Privacy Policy. Zero spam, unsubscribe anytime.
-              </p>
             </div>
           </div>
         </div>
@@ -202,16 +189,16 @@ export function Footer() {
                 <Link
                   href="https://wa.me/971547206046"
                   target="_blank"
-                  className="inline-flex items-center gap-2 hover:text-[#72ccbd] transition-colors"
+                  className="inline-flex items-center gap-2 hover:text-pink-300 transition-colors"
                 >
                   <MessageCircle size={14} className="text-emerald-400" />
                   <span>WhatsApp: +971 54 720 6046</span>
                 </Link>
                 <Link
                   href="mailto:support@shanfaglobal.com"
-                  className="inline-flex items-center gap-2 hover:text-[#72ccbd] transition-colors"
+                  className="inline-flex items-center gap-2 hover:text-pink-300 transition-colors"
                 >
-                  <Mail size={14} className="text-[#72ccbd]" />
+                  <Mail size={14} className="text-pink-300" />
                   <span>support@shanfaglobal.com</span>
                 </Link>
               </div>
@@ -231,7 +218,7 @@ export function Footer() {
                       <Link
                         href={link.href}
                         onClick={() => window.scrollTo({ top: 0, behavior: "instant" })}
-                        className="text-xs sm:text-sm text-white/60 hover:text-[#72ccbd] hover:translate-x-1 inline-block transition-all duration-200"
+                        className="text-xs sm:text-sm text-white/60 hover:text-pink-300 hover:translate-x-1 inline-block transition-all duration-200"
                       >
                         {link.label}
                       </Link>
@@ -264,7 +251,7 @@ export function Footer() {
                 <ChevronDown
                   size={16}
                   className={`text-white/60 transition-transform duration-300 ${
-                    openSection === section.id ? "rotate-180 text-[#72ccbd]" : ""
+                    openSection === section.id ? "rotate-180 text-pink-300" : ""
                   }`}
                 />
               </button>
@@ -282,7 +269,7 @@ export function Footer() {
                           <Link
                             href={link.href}
                             onClick={() => window.scrollTo({ top: 0, behavior: "instant" })}
-                            className="text-xs text-white/70 hover:text-[#72ccbd] py-1 block transition-colors"
+                            className="text-xs text-white/70 hover:text-pink-300 py-1 block transition-colors"
                           >
                             {link.label}
                           </Link>
@@ -301,7 +288,7 @@ export function Footer() {
       <div className="relative z-10 border-t border-white/10 bg-black/20">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-white/50 text-[11px] font-bold uppercase tracking-wider">
-            <Lock size={13} className="text-[#72ccbd]" />
+            <Lock size={13} className="text-pink-300" />
             <span>256-Bit SSL Encrypted & Secure Checkout</span>
           </div>
 
@@ -313,7 +300,7 @@ export function Footer() {
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">MADA</span>
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">TABBY</span>
             <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15">TAMARA</span>
-            <span className="px-2.5 py-1 rounded-md bg-white/10 border border-white/15 text-[#72ccbd]">CASH ON DELIVERY</span>
+            <span className="px-2.5 py-1 rounded-md bg-white/10 border border-pink-400/30 text-pink-300">CASH ON DELIVERY</span>
           </div>
         </div>
       </div>

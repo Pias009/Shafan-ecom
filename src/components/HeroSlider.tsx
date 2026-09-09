@@ -168,7 +168,7 @@ export function HeroSlider() {
 
   return (
     <section
-      className="relative w-full overflow-hidden bg-[#72ccbd] pb-2 sm:pb-4"
+      className="relative w-full overflow-hidden bg-transparent pb-2 sm:pb-4"
       onMouseEnter={pause}
       onMouseLeave={resume}
       suppressHydrationWarning
@@ -247,7 +247,7 @@ export function HeroSlider() {
                 {slide.ctaText && (
                   <Link
                     href={slideLink}
-                    className="inline-flex items-center gap-2 mt-2 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full bg-white text-[#0c433a] font-bold text-xs sm:text-sm hover:bg-white/90 shadow-md transition-transform active:scale-95"
+                    className="inline-flex items-center gap-2 mt-2 px-5 py-2 sm:px-6 sm:py-2.5 rounded-full bg-[#890754] text-white font-bold text-xs sm:text-sm hover:bg-[#6b0542] shadow-md transition-transform active:scale-95"
                   >
                     <span>{slide.ctaText}</span>
                   </Link>
@@ -299,60 +299,149 @@ export function HeroSlider() {
         )}
       </div>
 
-
-
-      {/* Feature Trust Bar */}
-      <div className="relative z-30 max-w-[1440px] mx-auto px-3 sm:px-6 mt-3 sm:mt-4 mb-2 sm:mb-4">
+      {/* Feature Trust Bar: 4 Living Animated Logos in 1 Single Row */}
+      <div className="relative z-30 max-w-[1440px] mx-auto px-2 sm:px-6 mt-3 sm:mt-4 mb-2 sm:mb-4">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.15 }}
-          className="relative overflow-hidden bg-[#0c433a]/85 backdrop-blur-xl border border-white/10 rounded-2xl sm:rounded-2xl px-3 sm:px-6 py-3 sm:py-4 shadow-[0_8px_32px_rgba(0,0,0,0.15)] grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-0 sm:divide-x sm:divide-white/10"
+          className="relative overflow-hidden bg-white/95 backdrop-blur-xl border border-pink-100/90 rounded-2xl px-1 sm:px-4 py-2 sm:py-3 shadow-[0_6px_24px_rgba(137,7,84,0.06)] grid grid-cols-4 divide-x divide-pink-100/70"
         >
-          {/* Ambient glow */}
-          <div className="absolute -top-6 left-1/4 w-48 h-24 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
+          {/* Subtle soft blush glow */}
+          <div className="absolute -top-8 left-1/3 w-60 h-24 bg-pink-500/5 rounded-full blur-2xl pointer-events-none" />
 
-          {/* Feature 1: Natural Ingredients */}
-          <div className="flex items-center gap-2.5 sm:gap-3 sm:px-5 group">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 text-emerald-300 flex items-center justify-center shrink-0 border border-white/10 group-hover:bg-white/20 transition-all duration-300">
-              <Leaf className="w-4 h-4 sm:w-5 sm:h-5" />
+          {/* Feature 1: Natural Ingredients (Animated Swaying Leaf & Dew Sparkle) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2.5 px-0.5 sm:px-3 text-center sm:text-left group cursor-default">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-pink-50 to-rose-100/60 border border-pink-200/80 flex items-center justify-center shrink-0 shadow-xs overflow-hidden group-hover:scale-110 transition-transform">
+              <span className="absolute inset-0 bg-pink-400/10 rounded-xl animate-pulse pointer-events-none" />
+              <svg
+                className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#890754] drop-shadow-xs"
+                style={{
+                  transformOrigin: "bottom left",
+                  animation: "leafSway 3s ease-in-out infinite",
+                }}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+              </svg>
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-400 rounded-full animate-ping opacity-75" />
             </div>
-            <div>
-              <h4 className="font-bold text-[11px] sm:text-xs text-white leading-tight">Natural Ingredients</h4>
-              <p className="text-[10px] text-white/55 mt-0.5 font-medium">100% Organic & Safe</p>
+            <div className="min-w-0 max-w-full">
+              <h4 className="font-bold text-[9px] xs:text-[10px] sm:text-xs text-gray-900 group-hover:text-[#890754] transition-colors leading-tight truncate">
+                Natural Actives
+              </h4>
+              <p className="text-[7.5px] xs:text-[8.5px] sm:text-[10px] text-gray-400 font-medium hidden xs:block truncate">
+                100% Pure
+              </p>
             </div>
           </div>
 
-          {/* Feature 2: Dermatologist Tested */}
-          <div className="flex items-center gap-2.5 sm:gap-3 sm:px-5 group">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 text-emerald-300 flex items-center justify-center shrink-0 border border-white/10 group-hover:bg-white/20 transition-all duration-300">
-              <Droplets className="w-4 h-4 sm:w-5 sm:h-5" />
+          {/* Feature 2: Dermatologist Tested (Animated Concentric Ripple & Droplet) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2.5 px-0.5 sm:px-3 text-center sm:text-left group cursor-default">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-50 to-orange-100/60 border border-amber-200/80 flex items-center justify-center shrink-0 shadow-xs overflow-hidden group-hover:scale-110 transition-transform">
+              <span
+                className="absolute w-5 h-5 rounded-full border border-amber-400/60 pointer-events-none"
+                style={{
+                  animation: "dropRipple 2.2s cubic-bezier(0, 0.2, 0.8, 1) infinite",
+                }}
+              />
+              <svg
+                className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-700 relative z-10 drop-shadow-xs"
+                style={{
+                  animation: "dropPulse 2.2s ease-in-out infinite",
+                }}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />
+                <path d="M12 18a3 3 0 0 0 3-3" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
             </div>
-            <div>
-              <h4 className="font-bold text-[11px] sm:text-xs text-white leading-tight">Dermatologist Tested</h4>
-              <p className="text-[10px] text-white/55 mt-0.5 font-medium">For All Skin Types</p>
+            <div className="min-w-0 max-w-full">
+              <h4 className="font-bold text-[9px] xs:text-[10px] sm:text-xs text-gray-900 group-hover:text-[#890754] transition-colors leading-tight truncate">
+                Derm Tested
+              </h4>
+              <p className="text-[7.5px] xs:text-[8.5px] sm:text-[10px] text-gray-400 font-medium hidden xs:block truncate">
+                All Skin Types
+              </p>
             </div>
           </div>
 
-          {/* Feature 3: Clean & Pure */}
-          <div className="flex items-center gap-2.5 sm:gap-3 sm:px-5 group">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 text-emerald-300 flex items-center justify-center shrink-0 border border-white/10 group-hover:bg-white/20 transition-all duration-300">
-              <FlaskConical className="w-4 h-4 sm:w-5 sm:h-5" />
+          {/* Feature 3: Clean & Pure (Animated Rising Chemistry Bubbles) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2.5 px-0.5 sm:px-3 text-center sm:text-left group cursor-default">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-purple-50 to-pink-100/60 border border-purple-200/80 flex items-center justify-center shrink-0 shadow-xs overflow-hidden group-hover:scale-110 transition-transform">
+              <svg
+                className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-purple-700 relative z-10 drop-shadow-xs"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2" />
+                <path d="M8.5 2h7" />
+                <path d="M7 16h10" strokeDasharray="2 2" />
+              </svg>
+              <span
+                className="absolute bottom-2 left-3 w-1 h-1 bg-purple-500 rounded-full pointer-events-none"
+                style={{ animation: "bubbleFloat1 1.8s ease-in-out infinite" }}
+              />
+              <span
+                className="absolute bottom-2.5 right-2.5 w-1.5 h-1.5 bg-pink-500 rounded-full pointer-events-none"
+                style={{ animation: "bubbleFloat2 2.2s ease-in-out 0.6s infinite" }}
+              />
             </div>
-            <div>
-              <h4 className="font-bold text-[11px] sm:text-xs text-white leading-tight">Clean & Pure</h4>
-              <p className="text-[10px] text-white/55 mt-0.5 font-medium">Paraben & Sulfate Free</p>
+            <div className="min-w-0 max-w-full">
+              <h4 className="font-bold text-[9px] xs:text-[10px] sm:text-xs text-gray-900 group-hover:text-[#890754] transition-colors leading-tight truncate">
+                Clean Formulas
+              </h4>
+              <p className="text-[7.5px] xs:text-[8.5px] sm:text-[10px] text-gray-400 font-medium hidden xs:block truncate">
+                Toxin Free
+              </p>
             </div>
           </div>
 
-          {/* Feature 4: Cruelty Free */}
-          <div className="flex items-center gap-2.5 sm:gap-3 sm:px-5 group">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 text-emerald-300 flex items-center justify-center shrink-0 border border-white/10 group-hover:bg-white/20 transition-all duration-300">
-              <BunnyIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+          {/* Feature 4: Cruelty Free (Animated Heartbeat Bunny) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2.5 px-0.5 sm:px-3 text-center sm:text-left group cursor-default">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-100/60 border border-emerald-200/80 flex items-center justify-center shrink-0 shadow-xs overflow-hidden group-hover:scale-110 transition-transform">
+              <span className="absolute inset-0 bg-emerald-400/10 rounded-xl animate-pulse pointer-events-none" />
+              <div
+                className="relative z-10 flex items-center justify-center"
+                style={{
+                  animation: "bunnyHeartbeat 2.4s ease-in-out infinite",
+                }}
+              >
+                <svg
+                  className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-emerald-700 drop-shadow-xs"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold text-[11px] sm:text-xs text-white leading-tight">Cruelty Free</h4>
-              <p className="text-[10px] text-white/55 mt-0.5 font-medium">100% Vegan Certified</p>
+            <div className="min-w-0 max-w-full">
+              <h4 className="font-bold text-[9px] xs:text-[10px] sm:text-xs text-gray-900 group-hover:text-[#890754] transition-colors leading-tight truncate">
+                Cruelty Free
+              </h4>
+              <p className="text-[7.5px] xs:text-[8.5px] sm:text-[10px] text-gray-400 font-medium hidden xs:block truncate">
+                100% Ethical
+              </p>
             </div>
           </div>
         </motion.div>

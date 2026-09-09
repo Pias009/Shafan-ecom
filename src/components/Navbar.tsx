@@ -232,10 +232,10 @@ export function Navbar() {
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-          scrolled ? "bg-[#50aba1]/95 backdrop-blur-md shadow-md text-white" : "bg-[#50aba1]/90 backdrop-blur-md text-white border-b border-white/10"
+          scrolled ? "bg-[#540434]/95 backdrop-blur-md shadow-md text-white border-b border-pink-900/30" : "bg-[#540434]/95 backdrop-blur-md text-white border-b border-pink-400/20"
         } ${
           mobileOpen
-            ? "translate-y-0 !fixed top-0 bg-white text-[#0c3a32] z-[100000]"
+            ? "translate-y-0 !fixed top-0 bg-white text-[#540434] z-[100000]"
             : visible
             ? "translate-y-0"
             : "-translate-y-full"
@@ -253,7 +253,7 @@ export function Navbar() {
         }}
       >
         {/* Single Top Announcement Bar: Responsive Mobile & Desktop */}
-        <div className="bg-[#083029] text-white/95 text-[10.5px] sm:text-[11px] py-1 px-3 sm:px-4 border-b border-emerald-900/40 select-none">
+        <div className="bg-[#2b0119] text-white/95 text-[10.5px] sm:text-[11px] py-1 px-3 sm:px-4 border-b border-pink-950/40 select-none">
           <div className="max-w-[1536px] mx-auto flex items-center justify-between font-medium">
             {/* Mobile Animated Announcement */}
             <div className="w-full md:hidden flex items-center justify-center overflow-hidden h-4">
@@ -305,7 +305,7 @@ export function Navbar() {
               className="p-1.5 text-white hover:bg-white/10 rounded-full transition-colors"
               aria-label="Toggle menu"
             >
-              {mobileOpen ? <X size={22} className="text-[#0c3a32]" /> : <Menu size={22} />}
+              {mobileOpen ? <X size={22} className="text-[#540434]" /> : <Menu size={22} />}
             </button>
             
             {/* Logo centered */}
@@ -348,11 +348,11 @@ export function Navbar() {
                           </button>
                           <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300">
                             <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-2 w-48 flex flex-col">
-                              <Link href="/products?category=Skin+Care" className="px-4 py-2.5 text-xs font-bold text-[#0c433a]/70 hover:text-[#0c433a] hover:bg-black/5 rounded-xl transition-colors">Skin Care</Link>
-                              <Link href="/products?category=Body+Care" className="px-4 py-2.5 text-xs font-bold text-[#0c433a]/70 hover:text-[#0c433a] hover:bg-black/5 rounded-xl transition-colors">Body Care</Link>
-                              <Link href="/products?category=Hair+Care" className="px-4 py-2.5 text-xs font-bold text-[#0c433a]/70 hover:text-[#0c433a] hover:bg-black/5 rounded-xl transition-colors">Hair Care</Link>
+                              <Link href="/products?category=Skin+Care" className="px-4 py-2.5 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Skin Care</Link>
+                              <Link href="/products?category=Body+Care" className="px-4 py-2.5 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Body Care</Link>
+                              <Link href="/products?category=Hair+Care" className="px-4 py-2.5 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Hair Care</Link>
                               <div className="border-t border-black/5 my-1" />
-                              <Link href="/products" className="px-4 py-2.5 text-xs font-black text-[#0c433a] hover:bg-black/5 rounded-xl transition-colors">All Categories</Link>
+                              <Link href="/products" className="px-4 py-2.5 text-xs font-black text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">All Categories</Link>
                             </div>
                           </div>
                         </div>
@@ -367,7 +367,7 @@ export function Navbar() {
                         onMouseEnter={() => router.prefetch(link.href)}
                         className={`px-3.5 py-1.5 text-xs font-black tracking-widest uppercase transition-all duration-300 rounded-full relative overflow-hidden whitespace-nowrap ${
                           isActive 
-                            ? "text-[#0c433a] bg-white shadow-sm font-black" 
+                            ? "text-[#890754] bg-white shadow-sm font-black" 
                             : "text-white/90 hover:text-white hover:bg-white/20"
                         } ${isOffers ? "animate-pulse" : ""}`}
                       >
@@ -403,18 +403,18 @@ export function Navbar() {
                 >
                   <UserRound size={20} />
                   {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-[#0c433a] font-black text-[9px] flex items-center justify-center shadow-md">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#890754] text-white font-black text-[9px] flex items-center justify-center shadow-md">
                       {cartCount}
                     </span>
                   )}
                 </button>
                 <div className="absolute top-full right-0 pt-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300">
-                  <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-3 w-56 flex flex-col gap-1 text-[#0c433a]">
-                    <Link href="/cart" className="flex items-center justify-between px-3 py-2.5 text-xs font-bold hover:bg-black/5 rounded-xl transition-colors">
+                  <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-3 w-56 flex flex-col gap-1 text-[#540434]">
+                    <Link href="/cart" className="flex items-center justify-between px-3 py-2.5 text-xs font-bold hover:bg-pink-50 rounded-xl transition-colors">
                       <div className="flex items-center gap-2"><ShoppingBag size={16} /> My Cart</div>
-                      {cartCount > 0 && <span className="bg-[#0c433a] text-white px-2 py-0.5 rounded-full text-[10px]">{cartCount}</span>}
+                      {cartCount > 0 && <span className="bg-[#890754] text-white px-2 py-0.5 rounded-full text-[10px]">{cartCount}</span>}
                     </Link>
-                    <button onClick={onUserButtonClick} className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold hover:bg-black/5 rounded-xl text-left w-full transition-colors">
+                    <button onClick={onUserButtonClick} className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold hover:bg-pink-50 rounded-xl text-left w-full transition-colors">
                       <UserRound size={16} /> {userLabel || "Account"}
                     </button>
                     <div className="border-t border-black/5 my-2" />

@@ -108,9 +108,9 @@ const ProductCardComponent = function ProductCard({
 
   const badge = (() => {
     if (isNotAvailable) return { label: "OUT OF STOCK", color: "bg-black/40 backdrop-blur-sm text-white" };
-    if (product.hot || product.trending) return { label: "BEST SELLER", color: "bg-white text-[#0c433a]", icon: true };
-    if (hasDiscount) return { label: `-${discountPct}%`, color: "bg-rose-500 text-white" };
-    return { label: "NEW", color: "bg-white text-[#0c433a]" };
+    if (product.hot || product.trending) return { label: "BEST SELLER", color: "bg-white text-[#890754] shadow-xs", icon: true };
+    if (hasDiscount) return { label: `-${discountPct}%`, color: "bg-[#890754] text-white shadow-xs" };
+    return { label: "NEW", color: "bg-white text-[#890754] shadow-xs" };
   })();
 
   const imgSrc = isValidImageUrl(product.imageUrl || product.mainImage)
@@ -128,12 +128,12 @@ const ProductCardComponent = function ProductCard({
         e.stopPropagation();
         router.push(`/products/${product.slug || product.id}`);
       }}
-      className="group relative bg-white/85 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/70 hover:border-white shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden w-full h-full flex flex-col cursor-pointer transform-gpu select-none"
+      className="group relative bg-white rounded-xl sm:rounded-2xl border border-gray-100 hover:border-pink-200 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden w-full h-full flex flex-col cursor-pointer transform-gpu select-none"
     >
-      {/* ── Image Stage (Edge-to-edge fit, no blank borders) ── */}
-      <div className="relative aspect-[1/0.78] w-full bg-white overflow-hidden border-b border-black/5">
+      {/* ── Image Stage (Full Product Fit, Zero Crop) ── */}
+      <div className="relative aspect-square w-full bg-white overflow-hidden border-b border-gray-100 p-2 sm:p-2.5 flex items-center justify-center">
         {/* Badge (Top-Left) */}
-        <div className="absolute top-1.5 left-1.5 z-20">
+        <div className="absolute top-1.5 left-1.5 z-20 pointer-events-none">
           <span
             className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
           >
@@ -144,27 +144,29 @@ const ProductCardComponent = function ProductCard({
           </span>
         </div>
 
-        {/* Product Image — Edge-to-edge, zero blank borders */}
-        <Image
-          src={imgSrc}
-          alt={product.name}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-          priority={priority}
-        />
+        {/* Product Image — Fully fitted, zero cropping */}
+        <div className="relative w-full h-full">
+          <Image
+            src={imgSrc}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-contain transition-transform duration-500 ease-out group-hover:scale-105"
+            priority={priority}
+          />
+        </div>
       </div>
 
       {/* ── Info Area ── */}
-      <div className="flex flex-col flex-1 justify-between p-1.5 sm:py-2 sm:px-2.5 bg-white/40 gap-0.5 sm:gap-1">
+      <div className="flex flex-col flex-1 justify-between p-1.5 sm:py-2 sm:px-2.5 bg-white gap-0.5 sm:gap-1">
         <div className="flex flex-col gap-0.5">
           {/* Brand */}
-          <p className="text-[7.5px] xs:text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-[#042b24]/60 leading-none truncate">
+          <p className="text-[7.5px] xs:text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-[#890754]/80 leading-none truncate">
             {brandName}
           </p>
 
           {/* Product Name — Crystal clear readable sans-serif typography */}
-          <h3 className="font-sans font-semibold text-[11px] xs:text-[12px] sm:text-[13px] md:text-[13.5px] text-[#051c17] leading-[1.25] line-clamp-2 group-hover:text-black transition-colors">
+          <h3 className="font-sans font-semibold text-[11px] xs:text-[12px] sm:text-[13px] md:text-[13.5px] text-gray-900 leading-[1.25] line-clamp-2 group-hover:text-[#890754] transition-colors">
             {product.name}
           </h3>
 
@@ -179,21 +181,21 @@ const ProductCardComponent = function ProductCard({
                 />
               ))}
             </div>
-            <span className="text-[7px] sm:text-[8.5px] font-bold text-[#52736b] truncate">({reviewCount})</span>
+            <span className="text-[7px] sm:text-[8.5px] font-bold text-gray-400 truncate">({reviewCount})</span>
           </div>
         </div>
 
         {/* Price & Add to Cart Action Row */}
-        <div className="pt-0.5 sm:pt-1 flex items-center justify-between gap-1 border-t border-black/5">
+        <div className="pt-0.5 sm:pt-1 flex items-center justify-between gap-1 border-t border-gray-100">
           {/* Price */}
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1 leading-none min-w-0">
             <Price
               amount={hasDiscount ? salePrice : displayPrice}
-              className="text-[12px] xs:text-[13px] sm:text-[15px] md:text-base font-black text-[#042b24] tracking-tight"
+              className="text-[12px] xs:text-[13px] sm:text-[15px] md:text-base font-black text-[#890754] tracking-tight"
               countryPrices={product.countryPrices as CountryPrice[]}
             />
             {hasDiscount && (
-              <span className="text-[8.5px] sm:text-[10px] text-[#0c433a]/60 line-through font-bold truncate">
+              <span className="text-[8.5px] sm:text-[10px] text-gray-400 line-through font-bold truncate">
                 <Price amount={displayPrice} countryPrices={product.countryPrices as CountryPrice[]} />
               </span>
             )}
@@ -213,8 +215,8 @@ const ProductCardComponent = function ProductCard({
               isNotAvailable
                 ? "text-slate-300 cursor-not-allowed"
                 : justAdded
-                ? "text-emerald-600 scale-110"
-                : "text-[#0c433a] hover:text-[#06241f] hover:scale-110"
+                ? "text-[#890754] scale-110"
+                : "text-[#890754] hover:text-[#540434] hover:scale-110"
             }`}
             aria-label="Add to Cart"
             title={isNotAvailable ? "Sold Out" : "Add to Cart"}

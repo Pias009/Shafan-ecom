@@ -104,19 +104,19 @@ export default function RoutinePageClient({ products }: { products: any[] }) {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-white">
+    <div className="min-h-screen bg-transparent text-gray-900 selection:bg-[#890754] selection:text-white">
       {/* Hero */}
-      <div className="px-4 sm:px-6 py-12 sm:py-16">
+      <div className="px-4 sm:px-6 py-10 sm:py-14">
         <div className="max-w-[1536px] mx-auto">
-          <div className="inline-flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-full px-3 py-1.5 mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-[#0c433a]" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#0c433a]">Curated</span>
+          <div className="inline-flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 mb-4 border border-pink-200 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#890754]" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#890754]">Curated</span>
           </div>
-          <h1 className="font-serif text-4xl sm:text-6xl font-medium tracking-tight text-white mb-3">
-            Routine
+          <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-gray-900 mb-3">
+            Skincare Routines
           </h1>
-          <p className="text-white/80 font-medium text-lg max-w-xl">
-            Your daily skincare essentials, curated by our experts.
+          <p className="text-gray-600 font-medium text-base sm:text-lg max-w-xl">
+            Your daily skincare essentials, curated by our experts for visible radiance.
           </p>
         </div>
       </div>

@@ -461,7 +461,7 @@ return sorted;
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-white selection:bg-[#0c433a] selection:text-white">
+    <div className="min-h-screen bg-transparent text-gray-900 selection:bg-[#890754] selection:text-white">
       <div className="max-w-[1536px] mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
         {isTrending && (
           <div className="mb-8">
@@ -470,8 +470,8 @@ return sorted;
               <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-black/60">Trending Now</span>
               <Flame className="text-red-500 fill-red-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-white font-normal tracking-tight drop-shadow-sm">Most Loved Products</h1>
-            <p className="text-white/90 mt-2 text-sm sm:text-lg max-w-xl font-medium">Discover our customers' absolute favorites that everyone's raving about.</p>
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-gray-900 font-normal tracking-tight">Most Loved Products</h1>
+            <p className="text-gray-600 mt-2 text-sm sm:text-lg max-w-xl font-medium">Discover our customers' absolute favorites that everyone's raving about.</p>
           </div>
         )}
         
@@ -485,8 +485,8 @@ return sorted;
               }}
               className={`px-6 py-2.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border ${
                 selectedCategory === tab.category
-                  ? "bg-[#0c433a] text-white border-[#0c433a]"
-                  : "bg-white/20 text-white hover:bg-white hover:text-[#0c433a] border-white/40"
+                  ? "bg-[#890754] text-white border-[#890754]"
+                  : "bg-white text-gray-800 hover:bg-pink-50 hover:text-[#890754] border-gray-200"
               }`}
             >
               {tab.label}
@@ -498,7 +498,7 @@ return sorted;
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md border active:scale-95 ${
-              showFilters ? "bg-[#0c433a] text-white border-[#0c433a]" : "bg-white/20 text-white border-white/40 hover:bg-white hover:text-[#0c433a]"
+              showFilters ? "bg-[#890754] text-white border-[#890754]" : "bg-white text-gray-800 border-gray-200 hover:bg-pink-50 hover:text-[#890754]"
             }`}
           >
             {showFilters ? <X size={14} /> : <Filter size={14} />}
@@ -514,9 +514,9 @@ return sorted;
               exit={{ opacity: 0, y: -20, height: 0 }}
               className="overflow-hidden mb-12"
             >
-              <div className="bg-[#e2f0ea]/90 backdrop-blur-xl rounded-[2rem] p-4 md:p-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-4 items-stretch shadow-xl border border-[#c5e1d7]">
+              <div className="bg-white rounded-[2rem] p-4 md:p-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-4 items-stretch shadow-xl border border-pink-100">
                 <div className="col-span-2 md:col-span-3 lg:col-span-1">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#890754]/80 mb-2 px-2">
                     {t.product.search}
                   </label>
                   <input
@@ -524,25 +524,25 @@ return sorted;
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder={t.product.search + "…"}
-                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-4 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none placeholder:text-[#0c3a32]/30"
+                    className="h-10 md:h-11 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 text-gray-900 font-body text-xs focus:ring-2 focus:ring-[#890754] outline-none placeholder:text-gray-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#890754]/80 mb-2 px-2">
                     {t.product.brand}
                   </label>
                   <select
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
+                    className="h-10 md:h-11 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 text-gray-900 font-body text-xs focus:ring-2 focus:ring-[#890754] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {brands.map(b => <option key={b} value={b}>{b === "All" ? t.product.all : b}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#890754]/80 mb-2 px-2">
                     Category
                   </label>
                   <select
@@ -551,59 +551,59 @@ return sorted;
                       setSelectedCategory(e.target.value);
                       setSelectedSubCategory('All');
                     }}
-                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
+                    className="h-10 md:h-11 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 text-gray-900 font-body text-xs focus:ring-2 focus:ring-[#890754] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {categoriesList.map((c: string) => <option key={c} value={c}>{c === "All" ? t.product.all : c}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#890754]/80 mb-2 px-2">
                     Subcategory
                   </label>
                   <select
                     value={selectedSubCategory}
                     onChange={(e) => setSelectedSubCategory(e.target.value)}
-                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
+                    className="h-10 md:h-11 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 text-gray-900 font-body text-xs focus:ring-2 focus:ring-[#890754] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {subCategories.map(sc => <option key={sc} value={sc}>{sc}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#890754]/80 mb-2 px-2">
                     Skin Tone
                   </label>
                   <select
                     value={selectedSkinTone}
                     onChange={(e) => setSelectedSkinTone(e.target.value)}
-                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
+                    className="h-10 md:h-11 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 text-gray-900 font-body text-xs focus:ring-2 focus:ring-[#890754] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {skinTones.map(st => <option key={st} value={st}>{st}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#890754]/80 mb-2 px-2">
                     Skin Concern
                   </label>
                   <select
                     value={selectedSkinConcern}
                     onChange={(e) => setSelectedSkinConcern(e.target.value)}
-                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
+                    className="h-10 md:h-11 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 text-gray-900 font-body text-xs focus:ring-2 focus:ring-[#890754] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     {skinConcernsList.map(sc => <option key={sc} value={sc}>{sc}</option>)}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#890754]/80 mb-2 px-2">
                     Sort By
                   </label>
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="h-10 md:h-11 w-full bg-white border-none rounded-xl px-3 text-[#0c3a32] font-body text-xs focus:ring-2 focus:ring-[#72ccbd] outline-none cursor-pointer appearance-none shadow-sm"
+                    className="h-10 md:h-11 w-full bg-gray-50 border border-gray-200 rounded-xl px-3 text-gray-900 font-body text-xs focus:ring-2 focus:ring-[#890754] outline-none cursor-pointer appearance-none shadow-sm"
                   >
                     <option value="newest">Newest First</option>
                     <option value="sale">On Sale</option>
@@ -614,11 +614,11 @@ return sorted;
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#0c433a]/60 mb-2 px-2">
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#890754]/80 mb-2 px-2">
                     Max Price
                   </label>
-                  <div className="h-10 md:h-11 flex items-center px-3 bg-white rounded-xl shadow-sm">
-                    <Price amount={maxPrice} className="text-[11px] font-black mr-3 text-[#0c3a32]" />
+                  <div className="h-10 md:h-11 flex items-center px-3 bg-gray-50 border border-gray-200 rounded-xl shadow-sm">
+                    <Price amount={maxPrice} className="text-[11px] font-black mr-3 text-[#890754]" />
                     <input
                       type="range"
                       min="0"
@@ -626,7 +626,7 @@ return sorted;
                       step="100"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(Number(e.target.value))}
-                      className="flex-1 h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
+                      className="flex-1 h-1.5 bg-black/10 rounded-lg appearance-none cursor-pointer accent-[#890754]"
                     />
                   </div>
                 </div>

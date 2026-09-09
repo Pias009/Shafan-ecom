@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, ChevronUp, ChevronDown, Sparkles, Layers } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 
 interface RoutineBanner {
@@ -24,46 +25,123 @@ interface Props {
 }
 
 export function RoutineSection({ products, banners = [], onQuickView, addToCart, orderNow }: Props) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeBanner, setActiveBanner] = useState(0);
 
-  const scroll = (dir: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const amount = scrollRef.current.clientWidth;
-      scrollRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+  // 3-Row Vertical Slide & Fade-Out on "See" button
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [verticalProgress, setVerticalProgress] = useState(0);
+
+  const activeBanners = banners.filter((b) => b.active);
+  const currentBanner = activeBanners[activeBanner] ?? null;
+
+  // Track vertical scroll progress
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      const maxScroll = scrollHeight - clientHeight;
+      if (maxScroll > 0) {
+        setVerticalProgress((scrollTop / maxScroll) * 100);
+      } else {
+        setVerticalProgress(0);
+      }
     }
   };
 
-  const activeBanners = banners.filter(b => b.active);
-  const currentBanner = activeBanners[activeBanner] ?? null;
+  // Vertical scroll control (slides up and down by 1 row / step)
+  const scrollVertical = (dir: 'up' | 'down') => {
+    if (scrollContainerRef.current) {
+      const rowStep = Math.max(180, Math.floor(scrollContainerRef.current.clientHeight / 3));
+      scrollContainerRef.current.scrollBy({
+        top: dir === 'up' ? -rowStep : rowStep,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  // Interactive track scrubber
+  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (scrollContainerRef.current) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickRatio = (e.clientX - rect.left) / rect.width;
+      const maxScroll = scrollContainerRef.current.scrollHeight - scrollContainerRef.current.clientHeight;
+      scrollContainerRef.current.scrollTo({
+        top: clickRatio * maxScroll,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  // Fade-out animation when clicking the "See" button
+  const handleSeeButtonClick = () => {
+    setIsFadingOut(true);
+    setTimeout(() => {
+      setIsExpanded((prev) => !prev);
+      setIsFadingOut(false);
+    }, 350);
+  };
+
+  const handleNavigateToRoutinePage = () => {
+    setIsFadingOut(true);
+    setTimeout(() => {
+      router.push('/products/routine');
+    }, 350);
+  };
+
+  if (products.length === 0) return null;
 
   return (
-    <section className="pt-6 md:pt-10 pb-4 md:pb-6 px-1 sm:px-4">
+    <section className="pt-6 md:pt-10 pb-6 md:pb-8 px-1 sm:px-4">
       {/* Section header */}
-      <div className="mb-3 md:mb-5 flex items-center justify-between border-b border-white/30 pb-4">
+      <div className="mb-4 md:mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-pink-100 pb-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit border border-white/30 shadow-sm">
-            <Sparkles className="text-white w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-white">Routine Essentials</span>
-            <Sparkles className="text-white w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <div className="inline-flex items-center gap-1.5 bg-pink-50 rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-1.5 sm:mb-2 w-fit border border-pink-200 shadow-2xs">
+            <Sparkles className="text-[#890754] w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#890754]">
+              Routine Essentials
+            </span>
+            <Sparkles className="text-[#890754] w-3 h-3 sm:w-3.5 sm:h-3.5" />
           </div>
-          <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight text-white uppercase drop-shadow-sm">Routine</h2>
-          <p className="font-body text-white/90 mt-1 text-sm sm:text-base max-w-xl font-medium">
-            Your daily skincare essentials
+          <h2 className="font-serif text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight text-gray-900 uppercase">
+            Routine
+          </h2>
+          <p className="font-body text-gray-500 mt-1 text-xs sm:text-sm md:text-base max-w-xl font-medium">
+            Your curated daily skincare regimens • 3 Columns
           </p>
         </div>
-        <Link
-          href="/products/routine"
-          className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-full border border-white/30 bg-transparent text-xs font-black uppercase tracking-widest transition-all shadow-sm hover:border-white/60 hover:scale-105 active:scale-95"
-        >
-          <span className="wave-text">See All</span>
-          <ArrowRight className="w-4 h-4 wave-icon" />
-        </Link>
+
+        {/* Action Buttons: See All Toggle + Page Link */}
+        <div className="flex items-center gap-2">
+          {/* Main "See" button with fade-out animation */}
+          <button
+            type="button"
+            onClick={handleSeeButtonClick}
+            className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-full border border-pink-200 bg-white text-[11px] sm:text-xs font-black uppercase tracking-widest transition-all shadow-xs hover:border-[#890754] hover:bg-pink-50/50 hover:text-[#890754] active:scale-95"
+            title={isExpanded ? "Collapse to 3 rows" : "Render full routine view"}
+          >
+            <Layers className="w-3.5 h-3.5 text-[#890754]" />
+            <span className="wave-text">
+              {isExpanded ? "See 3 Rows (Compact)" : "See All Routine"}
+            </span>
+          </button>
+
+          {/* Direct link to dedicated routine page with fade transition */}
+          <button
+            type="button"
+            onClick={handleNavigateToRoutinePage}
+            className="hidden sm:inline-flex items-center gap-1 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full bg-[#890754] text-white hover:bg-[#540434] transition-all text-[11px] sm:text-xs font-black uppercase tracking-wider shadow-sm active:scale-95"
+          >
+            <span>Full Page</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Admin banner — shown only when one is active */}
       {currentBanner && (
-        <div className="mb-4 relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 to-purple-500">
+        <div className="mb-4 relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#540434] to-[#890754]">
           {currentBanner.imageUrl && (
             <Image
               src={currentBanner.imageUrl}
@@ -82,13 +160,12 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
             {currentBanner.linkUrl && (
               <Link
                 href={currentBanner.linkUrl}
-                className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-violet-600 rounded-full font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-colors"
+                className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-[#890754] rounded-full font-black text-xs uppercase tracking-widest hover:bg-white/90 transition-colors shadow-md"
               >
                 Shop Now <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             )}
           </div>
-          {/* Dot nav if multiple banners */}
           {activeBanners.length > 1 && (
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
               {activeBanners.map((_, i) => (
@@ -103,46 +180,102 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
         </div>
       )}
 
-      {/* Product slider */}
+      {/* Routine Products Container */}
       <div className="relative py-2">
-        <button
-          onClick={() => scroll('left')}
-          className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <button
-          onClick={() => scroll('right')}
-          className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-[#c5e1d7] text-[#0c433a] hover:bg-[#0c433a] hover:text-white transition-all active:scale-95"
-        >
-          <ChevronRight className="w-6 h-6" />
-        </button>
+        {/* Floating Up & Down Buttons (Desktop/Tablet) - Active when in 3-Row sliding mode */}
+        {!isExpanded && (
+          <div className="hidden md:flex flex-col gap-2.5 absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 z-20">
+            <button
+              type="button"
+              onClick={() => scrollVertical('up')}
+              className="w-10 h-10 flex items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
+              aria-label="Slide up to previous routine rows"
+              title="Slide Up"
+            >
+              <ChevronUp className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollVertical('down')}
+              className="w-10 h-10 flex items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
+              aria-label="Slide down to next routine rows"
+              title="Slide Down"
+            >
+              <ChevronDown className="w-5 h-5" />
+            </button>
+          </div>
+        )}
 
+        {/* 3 in Column (3 Columns Grid), 3-Row Viewport with Fade-Out / Fade-In Transition on "See" click */}
         <div
-          ref={scrollRef}
-          className="flex overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-1.5 sm:px-2 gap-2 sm:gap-3 lg:gap-4"
+          style={{
+            opacity: isFadingOut ? 0 : 1,
+            transform: isFadingOut ? 'scale(0.98)' : 'scale(1)',
+            transition: 'opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
         >
-          {products.map((product, idx) => (
-            <div key={product.id} className="flex-shrink-0 snap-start w-[calc(38%-6px)] sm:w-[calc(28%-8px)] md:w-[calc(22%-10px)] lg:w-[calc(19%-12px)]">
-              <ProductCard
-                product={product}
-                onQuickView={onQuickView}
-                onAddToCart={addToCart}
-                onOrderNow={orderNow}
-                priority={idx < 4}
-              />
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className={`transition-all duration-300 ${
+              isExpanded
+                ? 'max-h-none overflow-visible'
+                : 'max-h-[620px] sm:max-h-[700px] md:max-h-[780px] lg:max-h-[860px] overflow-y-auto scrollbar-hide snap-y snap-mandatory'
+            }`}
+          >
+            {/* Exactly 3 in Column (grid-cols-3) across mobile & desktop with the original ProductCard UI */}
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 px-0.5 sm:px-2">
+              {products.map((product, idx) => (
+                <div key={product.id} className="snap-start h-full">
+                  <ProductCard
+                    product={product}
+                    onQuickView={onQuickView}
+                    onAddToCart={addToCart}
+                    onOrderNow={orderNow}
+                    priority={idx < 3}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
-        <div className="flex justify-center mt-4 sm:hidden">
-          <Link
-            href="/products/routine"
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/30 bg-transparent text-xs font-black uppercase tracking-widest active:scale-95 transition-all"
+        {/* Bottom Slide Indicator / Track Line so users understand this could be slid */}
+        {!isExpanded && (
+          <div className="mt-3 sm:mt-5 flex flex-col items-center justify-center gap-1.5 select-none">
+            <div
+              onClick={handleTrackClick}
+              className="w-36 sm:w-56 h-1 sm:h-1.5 bg-pink-100/90 hover:bg-pink-200/90 rounded-full relative overflow-hidden cursor-pointer shadow-inner transition-colors"
+              title="Click along track to slide routine rows"
+            >
+              <div
+                className="h-full bg-gradient-to-r from-[#540434] via-[#890754] to-pink-500 rounded-full transition-all duration-150 ease-out"
+                style={{
+                  width: '35%',
+                  marginLeft: `${(verticalProgress / 100) * 65}%`,
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-gray-400 tracking-wider uppercase">
+              <span className="inline-block animate-pulse text-[#890754]">↕</span>
+              <span>Slide Up & Down to explore (3 Columns • 3 Rows)</span>
+              <span className="inline-block animate-pulse text-[#890754]">↕</span>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile "See" CTA footer */}
+        <div className="flex justify-center mt-3 sm:hidden">
+          <button
+            type="button"
+            onClick={handleSeeButtonClick}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-full border border-pink-200 bg-white text-xs font-black uppercase tracking-widest active:scale-95 transition-all shadow-xs"
           >
-            <span className="wave-text">See All Routine</span>
+            <span className="wave-text">
+              {isExpanded ? "See 3 Rows (Compact)" : "See All Routine"}
+            </span>
             <ArrowRight className="w-4 h-4 wave-icon" />
-          </Link>
+          </button>
         </div>
       </div>
     </section>
