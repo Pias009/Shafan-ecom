@@ -153,11 +153,14 @@ const ProductCardComponent = function ProductCard({
         style={{
           transformStyle: "preserve-3d",
           transform: isHovered
-            ? `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) translateY(-6px)`
+            ? `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) translateY(-8px)`
             : "rotateX(0deg) rotateY(0deg) translateY(0px)",
-          transition: isHovered ? "transform 0.1s ease-out" : "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: isHovered ? "transform 0.12s ease-out, box-shadow 0.25s ease-out" : "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+          boxShadow: isHovered
+            ? "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 7px 0 0 #ded4e0, 0 8px 3px 0 rgba(137, 7, 84, 0.12), 0 24px 44px -6px rgba(137, 7, 84, 0.22), 0 40px 70px -14px rgba(30, 5, 20, 0.25)"
+            : "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 4.5px 0 0 #e8dee9, 0 5.5px 2px 0 rgba(137, 7, 84, 0.08), 0 16px 32px -4px rgba(40, 10, 30, 0.14), 0 30px 52px -12px rgba(20, 5, 15, 0.18)",
         }}
-        className="group relative bg-gradient-to-b from-white via-[#fcfbfd] to-[#f7f4f6] rounded-2xl sm:rounded-3xl border border-white/95 ring-1 ring-black/[0.04] shadow-[0_16px_36px_-8px_rgba(20,5,15,0.07),0_4px_12px_-2px_rgba(0,0,0,0.03),inset_0_1.5px_2px_0_rgba(255,255,255,1),inset_0_-2px_4px_0_rgba(137,7,84,0.03)] hover:shadow-[0_26px_52px_-10px_rgba(137,7,84,0.18),0_8px_20px_-4px_rgba(0,0,0,0.06),inset_0_1.5px_2px_0_rgba(255,255,255,1),inset_0_-2px_4px_0_rgba(137,7,84,0.04)] transition-shadow duration-300 w-full h-full flex flex-col cursor-pointer select-none overflow-hidden"
+        className="group relative bg-gradient-to-b from-white via-[#fcfbfd] to-[#f6eff5] rounded-[24px] sm:rounded-[28px] border border-white/95 ring-1 ring-black/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden"
       >
         {/* ── Image Stage (Full Product Fit, Zero Top Crop, 3D Floating Layer) ── */}
         <div
