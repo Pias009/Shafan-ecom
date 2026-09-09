@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Sparkles, Zap, ChevronLeft, ChevronRight, ShieldCheck, Flame, Truck, Shield, RefreshCw, Headset } from "lucide-react";
 import Link from "next/link";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
+import { FlashSalesSlider } from "@/components/FlashSalesSlider";
 import { RoutineSection } from "@/components/RoutineSection";
 import { BestSellersSection } from "@/components/BestSellersSection";
 import { HexPinwheelShowcase } from "@/components/HexPinwheelShowcase";
@@ -78,101 +79,6 @@ const ProductCardItem = memo(function ProductCardItem({
   );
 });
 
-function FlashSalesSlider({ products, onQuickView, addToCart, orderNow }: { products: any[]; onQuickView: (p: any) => void; addToCart: (p: any) => void; orderNow: (p: any) => void }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-
-  const handleScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      const maxScroll = scrollWidth - clientWidth;
-      if (maxScroll > 0) {
-        setScrollProgress((scrollLeft / maxScroll) * 100);
-      }
-    }
-  };
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const amount = scrollRef.current.clientWidth;
-      scrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
-    }
-  };
-
-  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (scrollRef.current) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const clickRatio = (e.clientX - rect.left) / rect.width;
-      const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
-      scrollRef.current.scrollTo({ left: clickRatio * maxScroll, behavior: 'smooth' });
-    }
-  };
-
-  const thumbWidthPct = Math.max(20, Math.min(60, products.length > 0 ? (4 / products.length) * 100 : 30));
-
-  return (
-    <div className="py-2 sm:py-4 relative">
-      {/* Left Scroll Button - Desktop Only */}
-      <button
-        onClick={() => scroll('left')}
-        className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
-        aria-label="Previous flash sale deals"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-
-      {/* Right Scroll Button - Desktop Only */}
-      <button
-        onClick={() => scroll('right')}
-        className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
-        aria-label="Next flash sale deals"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
-
-      <div 
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex overflow-x-auto pb-4 md:pb-6 scrollbar-hide snap-x snap-mandatory px-1.5 sm:px-2 gap-2 sm:gap-3 lg:gap-4"
-      >
-        {products.map((product, idx) => (
-          <div key={product.id} className="flex-shrink-0 snap-start w-[calc(38%-6px)] sm:w-[calc(28%-8px)] md:w-[calc(22%-10px)] lg:w-[calc(19%-12px)]">
-            <ProductCardItem
-              product={product}
-              onQuickView={onQuickView}
-              addToCart={addToCart}
-              orderNow={orderNow}
-              priority={idx < 4}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Bottom Slide Indicator / Track Line */}
-      <div className="mt-2 sm:mt-4 flex flex-col items-center justify-center gap-1.5 select-none">
-        <div 
-          onClick={handleTrackClick}
-          className="w-36 sm:w-56 h-1 sm:h-1.5 bg-pink-100/90 hover:bg-pink-200/90 rounded-full relative overflow-hidden cursor-pointer shadow-inner transition-colors"
-          title="Click to navigate deals slider"
-        >
-          <div
-            className="h-full bg-gradient-to-r from-[#540434] via-[#890754] to-pink-500 rounded-full transition-all duration-150 ease-out"
-            style={{
-              width: `${thumbWidthPct}%`,
-              marginLeft: `${(scrollProgress / 100) * (100 - thumbWidthPct)}%`,
-            }}
-          />
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-gray-400 tracking-wider uppercase">
-          <span className="inline-block animate-pulse text-[#890754]">‹</span>
-          <span>Slide or Drag to explore</span>
-          <span className="inline-block animate-pulse text-[#890754]">›</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function FlashSaleCountdown() {
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 28, seconds: 45 });
 
@@ -197,15 +103,14 @@ function FlashSaleCountdown() {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div className="flex items-center gap-1.5 bg-[#400327]/90 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-full border border-pink-400/30 text-pink-200 text-[10px] sm:text-xs font-black tracking-wider shadow-sm select-none">
-      <Zap size={12} className="text-pink-400 fill-pink-400 animate-pulse shrink-0" />
-      <span className="hidden xs:inline">DEALS END IN:</span>
-      <span className="xs:hidden">ENDS:</span>
-      <span className="bg-black/40 px-1 py-0.5 rounded text-white font-mono">{pad(timeLeft.hours)}h</span>
+    <div className="flex items-center gap-1 sm:gap-1.5 bg-black/40 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-pink-400/30 text-pink-200 text-[9.5px] sm:text-[11px] font-black tracking-wider shadow-xs select-none shrink-0 whitespace-nowrap">
+      <Zap size={11} className="text-amber-400 fill-amber-400 animate-pulse shrink-0" />
+      <span className="hidden xs:inline text-[9px] sm:text-[10px] text-pink-300">ENDS:</span>
+      <span className="bg-black/50 px-1 py-0.2 rounded text-white font-mono">{pad(timeLeft.hours)}h</span>
       <span>:</span>
-      <span className="bg-black/40 px-1 py-0.5 rounded text-white font-mono">{pad(timeLeft.minutes)}m</span>
+      <span className="bg-black/50 px-1 py-0.2 rounded text-white font-mono">{pad(timeLeft.minutes)}m</span>
       <span>:</span>
-      <span className="bg-black/40 px-1 py-0.5 rounded text-pink-300 font-mono">{pad(timeLeft.seconds)}s</span>
+      <span className="bg-black/50 px-1 py-0.2 rounded text-pink-300 font-mono">{pad(timeLeft.seconds)}s</span>
     </div>
   );
 }
@@ -466,35 +371,35 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
 
         {/* 1. Flash Sales Section */}
         {filteredFlashSales.length > 0 && (
-          <section className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-2">
-            {/* Section Header Card */}
-            <div className="mb-5 md:mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4a032d] via-[#540434] to-[#360220] backdrop-blur-xl border border-pink-500/20 px-4 py-3.5 sm:px-6 sm:py-4 shadow-[0_8px_32px_rgba(84,4,52,0.22)]">
+          <section className="pt-2 md:pt-4 pb-4 md:pb-6 px-1 sm:px-2">
+            {/* Ultra-Slim Section Header Bar */}
+            <div className="mb-3 sm:mb-4 relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#4a032d] via-[#540434] to-[#360220] backdrop-blur-xl border border-pink-500/20 px-3 py-2 sm:px-5 sm:py-2.5 shadow-[0_6px_24px_rgba(84,4,52,0.18)]">
               {/* Glow accent */}
-              <div className="absolute -top-8 -left-8 w-40 h-40 bg-pink-500/20 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute -bottom-6 right-10 w-32 h-32 bg-amber-400/15 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -top-8 -left-8 w-32 h-32 bg-pink-500/15 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -bottom-6 right-10 w-28 h-28 bg-amber-400/10 rounded-full blur-xl pointer-events-none" />
 
-              <div className="relative flex flex-wrap items-center justify-between gap-3">
-                {/* Left: Title + Badge + Countdown */}
-                <div className="flex flex-wrap items-center gap-2.5 sm:gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl sm:text-2xl">⚡</span>
-                    <h2 className="font-serif text-xl sm:text-3xl md:text-4xl font-black tracking-tight text-white uppercase">
-                      Flash Sales
-                    </h2>
-                    <span className="hidden sm:inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
-                      LIVE
-                    </span>
-                  </div>
-                  <FlashSaleCountdown />
+              <div className="relative flex items-center justify-between gap-2 sm:gap-4">
+                {/* Left: Title + Mini LIVE Badge */}
+                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                  <span className="text-base sm:text-xl text-amber-400">⚡</span>
+                  <h2 className="font-serif text-sm sm:text-lg md:text-xl font-black tracking-tight text-white uppercase whitespace-nowrap">
+                    Flash Sales
+                  </h2>
+                  <span className="hidden md:inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full animate-pulse">
+                    LIVE
+                  </span>
                 </div>
 
-                {/* Right: Wave CTA */}
+                {/* Center: Slim Countdown Timer */}
+                <FlashSaleCountdown />
+
+                {/* Right: Slim See All Deals CTA */}
                 <Link
                   href="/products/flash-sales"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white/20 hover:border-pink-300/60 hover:scale-105 transition-all text-xs font-black uppercase tracking-wider shadow-sm active:scale-95 text-white"
+                  className="inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white/20 hover:border-pink-300/60 hover:scale-105 transition-all text-[9.5px] sm:text-xs font-black uppercase tracking-wider shadow-xs active:scale-95 text-white shrink-0 whitespace-nowrap"
                 >
-                  <span className="wave-text">See All Deals</span>
-                  <ArrowRight className="w-3.5 h-3.5 wave-icon" />
+                  <span>See All</span>
+                  <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>

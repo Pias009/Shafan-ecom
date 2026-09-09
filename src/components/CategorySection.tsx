@@ -76,25 +76,25 @@ function CategoryCircleCard({
   return (
     <div
       onClick={onClick}
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88px] h-[88px] sm:w-[100px] sm:h-[100px] md:w-[112px] md:h-[112px] lg:w-[120px] lg:h-[120px] rounded-full bg-white border border-gray-100/90 shadow-[0_8px_20px_rgba(0,0,0,0.07),0_2px_6px_rgba(0,0,0,0.03)] group-hover:shadow-[0_14px_28px_rgba(137,7,84,0.18),0_4px_10px_rgba(0,0,0,0.06)] group-hover:scale-105 group-hover:border-[#890754]/30 transition-all duration-300 ease-out flex flex-col items-center justify-center p-1.5 text-center cursor-pointer z-10 select-none"
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88px] h-[88px] sm:w-[100px] sm:h-[100px] md:w-[112px] md:h-[112px] lg:w-[122px] lg:h-[122px] rounded-full overflow-hidden border-2 border-white shadow-[0_8px_20px_rgba(0,0,0,0.1),0_2px_6px_rgba(0,0,0,0.04)] group-hover:shadow-[0_16px_32px_rgba(137,7,84,0.22)] group-hover:scale-105 group-hover:border-pink-200 transition-all duration-300 ease-out cursor-pointer z-10 select-none"
     >
-      {/* Big Prominent Category Image */}
-      <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-[70px] lg:h-[70px] rounded-full overflow-hidden ring-1 ring-gray-100/90 shadow-inner bg-gray-50 flex-shrink-0">
-        <Image
-          src={imgSrc}
-          alt={oneWordTitle}
-          fill
-          unoptimized
-          onError={() => setImgSrc(fallback)}
-          className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-          sizes="(max-width: 640px) 25vw, 15vw"
-        />
-      </div>
+      {/* Full-Bleed Category Image Covering the Full Circle */}
+      <Image
+        src={imgSrc}
+        alt={oneWordTitle}
+        fill
+        unoptimized
+        onError={() => setImgSrc(fallback)}
+        className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500 ease-out"
+        sizes="(max-width: 640px) 25vw, 15vw"
+      />
 
-      {/* One Word Text Only */}
-      <span className="font-extrabold text-[9px] sm:text-[10px] md:text-[11px] lg:text-xs tracking-wider text-gray-900 group-hover:text-[#890754] uppercase transition-colors duration-300 max-w-[94%] truncate mt-1 sm:mt-1.5">
-        {oneWordTitle}
-      </span>
+      {/* Subtle Legibility Gradient Vignette with One-Word Text */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent flex items-end justify-center pb-2 sm:pb-2.5 px-1.5 transition-opacity">
+        <span className="font-black text-[9.5px] sm:text-[10.5px] md:text-[11.5px] lg:text-xs tracking-wider text-white uppercase drop-shadow-md text-center line-clamp-1">
+          {oneWordTitle}
+        </span>
+      </div>
     </div>
   );
 }
