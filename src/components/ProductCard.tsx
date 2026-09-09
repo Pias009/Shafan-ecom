@@ -157,10 +157,10 @@ const ProductCardComponent = function ProductCard({
             : "rotateX(0deg) rotateY(0deg) translateY(0px)",
           transition: isHovered ? "transform 0.12s ease-out, box-shadow 0.25s ease-out" : "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
           boxShadow: isHovered
-            ? "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(137, 7, 84, 0.06), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 7px 0 0 #dcbcd3, 0 8px 3px 0 rgba(137, 7, 84, 0.14), 0 24px 44px -6px rgba(137, 7, 84, 0.25), 0 40px 70px -14px rgba(60, 5, 40, 0.26)"
-            : "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(137, 7, 84, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 4.5px 0 0 #e6cfdf, 0 5.5px 2px 0 rgba(137, 7, 84, 0.10), 0 16px 32px -4px rgba(137, 7, 84, 0.14), 0 30px 52px -12px rgba(60, 5, 40, 0.18)",
+            ? "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 7px 0 0 #ded7cd, 0 8px 3px 0 rgba(60, 40, 50, 0.08), 0 24px 44px -6px rgba(40, 20, 30, 0.16), 0 40px 70px -14px rgba(20, 10, 15, 0.18)"
+            : "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 4.5px 0 0 #e8e3dc, 0 5.5px 2px 0 rgba(60, 40, 50, 0.06), 0 16px 32px -4px rgba(40, 20, 30, 0.10), 0 30px 52px -12px rgba(20, 10, 15, 0.12)",
         }}
-        className="group relative bg-gradient-to-br from-white via-[#fdf0f7] to-[#f7d6ea] hover:from-white hover:via-[#fceaf5] hover:to-[#f5cbe4] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-[#890754]/[0.08] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden transition-all duration-300"
+        className="group relative bg-gradient-to-b from-white via-[#fbfaf9] to-[#f2ede6] hover:from-white hover:via-[#f8f6f4] hover:to-[#ede6dd] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-black/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden transition-all duration-300"
       >
         {/* ── Image Stage (Full Product Fit, No Border, Seamless Card Integration) ── */}
         <div
