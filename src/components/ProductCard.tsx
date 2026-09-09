@@ -160,7 +160,7 @@ const ProductCardComponent = function ProductCard({
             ? "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 7px 0 0 #ded4e0, 0 8px 3px 0 rgba(137, 7, 84, 0.12), 0 24px 44px -6px rgba(137, 7, 84, 0.22), 0 40px 70px -14px rgba(30, 5, 20, 0.25)"
             : "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 4.5px 0 0 #e8dee9, 0 5.5px 2px 0 rgba(137, 7, 84, 0.08), 0 16px 32px -4px rgba(40, 10, 30, 0.14), 0 30px 52px -12px rgba(20, 5, 15, 0.18)",
         }}
-        className="group relative bg-gradient-to-b from-white via-[#fcfbfd] to-[#f6eff5] rounded-[18px] sm:rounded-[22px] border border-white/95 ring-1 ring-black/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden"
+        className="group relative bg-gradient-to-b from-white via-[#fcfbfd] to-[#f6eff5] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-black/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden"
       >
         {/* ── Image Stage (Full Product Fit, Zero Top Crop, 3D Floating Layer) ── */}
         <div
