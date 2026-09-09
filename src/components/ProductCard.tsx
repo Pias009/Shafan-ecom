@@ -162,10 +162,10 @@ const ProductCardComponent = function ProductCard({
         }}
         className="group relative bg-gradient-to-br from-white via-[#fdf0f7] to-[#f7d6ea] hover:from-white hover:via-[#fceaf5] hover:to-[#f5cbe4] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-[#890754]/[0.08] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden transition-all duration-300"
       >
-        {/* ── Image Stage (Full Product Fit, Zero Crop, Dedicated Vertical Breathing Room) ── */}
+        {/* ── Image Stage (Full Product Fit, No Border, Seamless Card Integration) ── */}
         <div
           style={{ transformStyle: "preserve-3d" }}
-          className="relative aspect-[1/0.95] w-full bg-gradient-to-b from-white/90 via-white/50 to-pink-50/20 border-b border-pink-100/70 flex items-center justify-center p-2.5 sm:p-3.5 pt-3 sm:pt-4"
+          className="relative aspect-square w-full bg-transparent flex items-center justify-center overflow-hidden"
         >
           {/* Badge (Top-Left) */}
           <div
@@ -188,11 +188,11 @@ const ProductCardComponent = function ProductCard({
             className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-3/4 h-1.5 bg-[#890754]/15 rounded-[100%] blur-xs opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
           />
 
-          {/* Product Image — Full fit, zero crop, perfectly centered with no top cutoff */}
+          {/* Product Image — Fits card edge-to-edge with zero border */}
           <div
             style={{
               transform: isHovered
-                ? "translateZ(26px) scale(1.03)"
+                ? "translateZ(26px) scale(1.04)"
                 : "translateZ(10px) scale(1)",
               transition: isHovered
                 ? "transform 0.15s ease-out"
@@ -205,13 +205,13 @@ const ProductCardComponent = function ProductCard({
               alt={product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain object-center drop-shadow-sm group-hover:drop-shadow-xl transition-all duration-300"
+              className="object-contain object-center drop-shadow-sm group-hover:scale-105 transition-all duration-300"
               priority={priority}
             />
           </div>
         </div>
 
-        {/* ── Info Area (Trimmed Height, Reduced Vertical Space Around Price & Icon) ── */}
+        {/* ── Info Area (Trimmed Height, No Border) ── */}
         <div
           style={{ transform: "translateZ(18px)" }}
           className={`flex flex-col flex-1 justify-between bg-transparent ${
@@ -250,8 +250,8 @@ const ProductCardComponent = function ProductCard({
             </div>
           </div>
 
-          {/* Price & Add to Cart Action Row (Tight Upper/Lower Padding & Reduced Icon Size) */}
-          <div className="pt-0.5 pb-0 flex items-center justify-between gap-1 border-t border-pink-100/60">
+          {/* Price & Add to Cart Action Row (No Border, Tight Spacing) */}
+          <div className="pt-0.5 pb-0 flex items-center justify-between gap-1">
             {/* Price */}
             <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1 leading-none min-w-0">
               <Price
