@@ -159,19 +159,15 @@ const ProductCardComponent = function ProductCard({
         }}
         className="group relative bg-white rounded-xl sm:rounded-2xl border border-gray-100 hover:border-pink-300/80 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)] hover:shadow-[0_20px_35px_-8px_rgba(137,7,84,0.18),0_8px_16px_-4px_rgba(0,0,0,0.06)] transition-shadow duration-300 w-full h-full flex flex-col cursor-pointer select-none"
       >
-        {/* ── Image Stage (3D Floating Pop-Out Layer) ── */}
+        {/* ── Image Stage (Full Product Fit, Zero Top Crop, 3D Floating Layer) ── */}
         <div
           style={{ transformStyle: "preserve-3d" }}
-          className={`relative w-full bg-gradient-to-b from-white to-pink-50/20 border-b border-gray-100/80 flex items-center justify-center rounded-t-xl sm:rounded-t-2xl ${
-            compact
-              ? "aspect-[4/3] max-h-[145px] sm:max-h-[175px] md:max-h-[190px] p-2"
-              : "aspect-square max-h-[210px] sm:max-h-[250px] p-2 sm:p-2.5"
-          }`}
+          className="relative aspect-square w-full bg-gradient-to-b from-white to-pink-50/15 border-b border-gray-100/80 flex items-center justify-center rounded-t-xl sm:rounded-t-2xl p-2.5 sm:p-3.5 pt-3 sm:pt-4"
         >
           {/* Badge (Z-Index Pop-Out) */}
           <div
-            style={{ transform: "translateZ(26px)" }}
-            className="absolute top-1.5 left-1.5 z-20 pointer-events-none"
+            style={{ transform: "translateZ(24px)" }}
+            className="absolute top-2 left-2 z-20 pointer-events-none"
           >
             <span
               className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
@@ -183,30 +179,30 @@ const ProductCardComponent = function ProductCard({
             </span>
           </div>
 
-          {/* 3D Realistic Grounding Shadow beneath product bottle when popping out */}
+          {/* 3D Realistic Grounding Shadow beneath product bottle */}
           <div
-            style={{ transform: "translateZ(8px)" }}
-            className="absolute bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-2.5 bg-[#890754]/20 rounded-[100%] blur-sm opacity-0 group-hover:opacity-100 group-hover:scale-95 transition-all duration-300 pointer-events-none"
+            style={{ transform: "translateZ(6px)" }}
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-2 bg-[#890754]/15 rounded-[100%] blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
           />
 
-          {/* Product Image — 3D Coming Out of the Card */}
+          {/* Product Image — Full fit, zero crop, perfectly centered with no top cutoff */}
           <div
             style={{
               transform: isHovered
-                ? "translateZ(44px) scale(1.12) translateY(-6px)"
-                : "translateZ(14px) scale(1)",
+                ? "translateZ(28px) scale(1.04)"
+                : "translateZ(10px) scale(1)",
               transition: isHovered
-                ? "transform 0.14s ease-out, filter 0.25s ease-out"
-                : "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+                ? "transform 0.15s ease-out"
+                : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
             }}
-            className="relative w-full h-full drop-shadow-sm group-hover:drop-shadow-2xl pointer-events-none"
+            className="relative w-full h-full pointer-events-none flex items-center justify-center"
           >
             <Image
               src={imgSrc}
               alt={product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain"
+              className="object-contain object-center drop-shadow-sm group-hover:drop-shadow-xl transition-all duration-300"
               priority={priority}
             />
           </div>
