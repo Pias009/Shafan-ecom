@@ -233,7 +233,7 @@ export function OfferBannersSection() {
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 className="absolute -bottom-3 right-2 sm:right-4 z-20 bg-white/95 backdrop-blur-xl px-4 py-2 rounded-full shadow-xl border border-pink-200 flex items-center gap-2"
               >
-                <Sparkles size={14} className="text-amber-500 fill-amber-400" />
+                <span className="w-2 h-2 rounded-full bg-[#890754] animate-pulse" />
                 <span className="text-[10px] sm:text-xs font-black text-[#890754] uppercase tracking-wider">
                   GLOWING SKIN STARTS HERE
                 </span>

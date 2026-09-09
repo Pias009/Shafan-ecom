@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Droplets, Sparkles, ShieldAlert, Sun, Hourglass, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Droplets, Heart, ShieldAlert, Sun, Hourglass, SlidersHorizontal } from "lucide-react";
 
 interface ConcernItem {
   id: string;
@@ -50,7 +50,7 @@ const CONCERNS: ConcernItem[] = [
     name: "Redness & Calming",
     tag: "Barrier Care",
     href: "/products?concern=Redness",
-    icon: <Sparkles size={18} className="text-emerald-700" />,
+    icon: <Heart size={18} className="text-emerald-700" />,
     iconBg: "bg-emerald-50 border-emerald-200/60",
   },
   {

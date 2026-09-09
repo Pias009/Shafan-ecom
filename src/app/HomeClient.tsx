@@ -22,7 +22,6 @@ import { hasValidPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackAddToCart } from "@/lib/datalayer";
 import { ShopByConcernSection } from "@/components/ShopByConcernSection";
-import { SkincareDiagnosticBanner } from "@/components/SkincareDiagnosticBanner";
 import { WhatsAppConciergeButton } from "@/components/WhatsAppConciergeButton";
 
 import dynamic from "next/dynamic";
@@ -497,10 +496,6 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
             orderNow={orderNow}
           />
         )}
-
-        {/* Interactive Routine Finder - Skincare Diagnostic */}
-        <SkincareDiagnosticBanner />
-
         {/* 4. Best Sellers Section */}
         {filteredBestSellers.length > 0 && (
           <BestSellersSection

@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, ChevronUp, ChevronDown, Sparkles, Layers } from 'lucide-react';
+import { ArrowRight, ChevronUp, ChevronDown, Layers } from 'lucide-react';
 import { ProductCard } from './ProductCard';
 
 interface RoutineBanner {
@@ -26,6 +26,7 @@ interface Props {
 
 export function RoutineSection({ products, banners = [], onQuickView, addToCart, orderNow }: Props) {
   const router = useRouter();
+  const sectionRef = useRef<HTMLElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeBanner, setActiveBanner] = useState(0);
 
@@ -33,6 +34,26 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [verticalProgress, setVerticalProgress] = useState(0);
+
+  // Retrigger handwriting stroke drawing animation every time the user visits/scrolls to this section
+  const [animationKey, setAnimationKey] = useState(0);
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setAnimationKey((prev) => prev + 1);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const activeBanners = banners.filter((b) => b.active);
   const currentBanner = activeBanners[activeBanner] ?? null;
@@ -83,27 +104,21 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
     }, 350);
   };
 
-  const handleNavigateToRoutinePage = () => {
-    setIsFadingOut(true);
-    setTimeout(() => {
-      router.push('/products/routine');
-    }, 350);
-  };
-
   if (products.length === 0) return null;
 
   return (
-    <section className="pt-6 md:pt-10 pb-6 md:pb-8 px-1 sm:px-4">
-      {/* Centered Clean Section Header with Drawing / Handwriting Text Animation */}
+    <section ref={sectionRef} className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-4">
+      {/* Centered Clean Section Header with Drawing / Handwriting Text Animation (No clutter) */}
       <div className="text-center mb-6 sm:mb-9 flex flex-col items-center justify-center">
-        <div className="inline-flex items-center justify-center gap-3 sm:gap-5">
+        <div className="inline-flex items-center justify-center gap-3 sm:gap-6">
           <span className="h-px w-10 sm:w-20 bg-gradient-to-r from-transparent to-[#890754]/40" />
           
-          {/* Animated Drawing / Handwriting Text "ROUTINE" */}
+          {/* Animated Drawing / Handwriting Text "ROUTINE" — in Brand Velvet Plum with Luxury Italiana Serif Font */}
           <div className="relative inline-flex items-center justify-center py-1">
             <svg
+              key={animationKey}
               viewBox="0 0 280 52"
-              className="w-48 sm:w-64 md:w-72 h-11 sm:h-14 overflow-visible"
+              className="w-48 sm:w-64 md:w-80 h-11 sm:h-16 overflow-visible"
               aria-label="ROUTINE"
             >
               <text
@@ -111,7 +126,9 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                 y="52%"
                 textAnchor="middle"
                 dominantBaseline="central"
-                className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold tracking-widest routine-draw-text select-none"
+                fill="#890754"
+                stroke="#890754"
+                className="font-['Italiana',serif] text-3xl sm:text-4xl md:text-5xl font-bold tracking-widest routine-draw-text select-none"
               >
                 ROUTINE
               </text>
@@ -119,21 +136,6 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
           </div>
 
           <span className="h-px w-10 sm:w-20 bg-gradient-to-l from-transparent to-[#890754]/40" />
-        </div>
-
-        {/* Clean Centered "See" Button */}
-        <div className="mt-2.5 flex items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={handleSeeButtonClick}
-            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-1.5 sm:py-2 rounded-full border border-pink-200/90 bg-white/90 hover:bg-pink-50 hover:border-[#890754] text-[#890754] text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all shadow-2xs hover:scale-105 active:scale-95"
-            title={isExpanded ? "Collapse to 3 rows" : "See all routine"}
-          >
-            <Layers className="w-3.5 h-3.5 text-[#890754]" />
-            <span className="wave-text">
-              {isExpanded ? "See 3 Rows (Compact)" : "See All Routine"}
-            </span>
-          </button>
         </div>
       </div>
 
@@ -204,7 +206,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
           </div>
         )}
 
-        {/* 3 in Column (3 Columns Grid), 3-Row Viewport with Fade-Out / Fade-In Transition on "See" click */}
+        {/* 3 Columns Grid, 3-Row Viewport with Fade-Out / Fade-In Transition on "See" click */}
         <div
           style={{
             opacity: isFadingOut ? 0 : 1,
@@ -221,7 +223,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                 : 'max-h-[620px] sm:max-h-[700px] md:max-h-[780px] lg:max-h-[860px] overflow-y-auto scrollbar-hide snap-y snap-mandatory'
             }`}
           >
-            {/* Exactly 3 in Column (grid-cols-3) across mobile & desktop with the original ProductCard UI */}
+            {/* Exactly 3 in Column (grid-cols-3) across mobile & desktop with original ProductCard UI */}
             <div className="grid grid-cols-3 gap-1.5 sm:gap-3 md:gap-4 px-0.5 sm:px-2">
               {products.map((product, idx) => (
                 <div key={product.id} className="snap-start h-full">
@@ -240,7 +242,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
 
         {/* Bottom Slide Indicator / Track Line so users understand this could be slid */}
         {!isExpanded && (
-          <div className="mt-3 sm:mt-5 flex flex-col items-center justify-center gap-1.5 select-none">
+          <div className="mt-4 sm:mt-6 flex flex-col items-center justify-center gap-1.5 select-none">
             <div
               onClick={handleTrackClick}
               className="w-36 sm:w-56 h-1 sm:h-1.5 bg-pink-100/90 hover:bg-pink-200/90 rounded-full relative overflow-hidden cursor-pointer shadow-inner transition-colors"
@@ -261,6 +263,22 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
             </div>
           </div>
         )}
+
+        {/* Bottom Centered "See All" Action Button (moved after section bottom) */}
+        <div className="mt-6 sm:mt-8 flex justify-center items-center">
+          <button
+            type="button"
+            onClick={handleSeeButtonClick}
+            className="group inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full border border-pink-200 bg-white/95 hover:bg-gradient-to-r hover:from-[#540434] hover:to-[#890754] text-[#890754] hover:text-white text-xs font-black uppercase tracking-widest transition-all duration-300 shadow-xs hover:shadow-lg hover:shadow-pink-900/15 hover:scale-105 active:scale-95"
+            title={isExpanded ? "Collapse to 3 rows" : "See all routine"}
+          >
+            <Layers className="w-4 h-4 text-[#890754] group-hover:text-white transition-colors" />
+            <span className="wave-text">
+              {isExpanded ? "See 3 Rows (Compact)" : "See All Routine"}
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 wave-icon" />
+          </button>
+        </div>
       </div>
     </section>
   );
