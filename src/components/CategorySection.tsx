@@ -3,21 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useLanguageStore } from "@/lib/language-store";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import {
-  Droplets,
-  Sparkles,
-  Waves,
-  Flower2,
-  Eye,
-  Sun,
-  Heart,
-  FlaskConical,
-  Leaf,
-  ChevronLeft,
-  ChevronRight,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CategoryItem {
   id: string;
@@ -28,12 +16,12 @@ interface CategoryItem {
 }
 
 const defaultCategories: CategoryItem[] = [
-  { id: "c1", name: "SERUMS", link: "/products?category=Skin%20Care" },
-  { id: "c2", name: "MOISTURIZERS", link: "/products?category=Skin%20Care" },
-  { id: "c3", name: "CLEANSERS", link: "/products?category=Skin%20Care" },
-  { id: "c4", name: "TONERS", link: "/products?category=Hair%20Care" },
-  { id: "c5", name: "EYECARE", link: "/products?category=Body%20Care" },
-  { id: "c6", name: "SUNCARE", link: "/products?category=Fragrances" },
+  { id: "c1", name: "SERUMS", link: "/products?category=Skin%20Care", image: "/images/categories/serums.jpg" },
+  { id: "c2", name: "MOISTURIZERS", link: "/products?category=Skin%20Care", image: "/images/categories/moisturizers.jpg" },
+  { id: "c3", name: "CLEANSERS", link: "/products?category=Skin%20Care", image: "/images/categories/cleansers.jpg" },
+  { id: "c4", name: "TONERS", link: "/products?category=Hair%20Care", image: "/images/categories/toners.jpg" },
+  { id: "c5", name: "EYECARE", link: "/products?category=Body%20Care", image: "/images/categories/eyecare.jpg" },
+  { id: "c6", name: "SUNCARE", link: "/products?category=Fragrances", image: "/images/categories/suncare.jpg" },
 ];
 
 const NODE_GRADIENTS = [
@@ -57,18 +45,58 @@ function getOneWordTitle(name: string): string {
   return trimmed.split(/\s+/)[0].toUpperCase();
 }
 
-// Map category to a minimalist beauty line icon
-function getCategoryIcon(name: string): LucideIcon {
+function getCategoryFallbackImage(name: string, idx: number): string {
   const n = name.toLowerCase();
-  if (n.includes("serum")) return Droplets;
-  if (n.includes("moistur") || n.includes("cream")) return Sparkles;
-  if (n.includes("clean") || n.includes("wash")) return Waves;
-  if (n.includes("toner")) return Flower2;
-  if (n.includes("eye")) return Eye;
-  if (n.includes("sun") || n.includes("spf")) return Sun;
-  if (n.includes("hair")) return Leaf;
-  if (n.includes("body")) return Heart;
-  return FlaskConical;
+  if (n.includes("serum")) return "/images/categories/serums.jpg";
+  if (n.includes("moistur") || n.includes("cream")) return "/images/categories/moisturizers.jpg";
+  if (n.includes("clean") || n.includes("wash")) return "/images/categories/cleansers.jpg";
+  if (n.includes("toner")) return "/images/categories/toners.jpg";
+  if (n.includes("eye")) return "/images/categories/eyecare.jpg";
+  if (n.includes("sun") || n.includes("spf")) return "/images/categories/suncare.jpg";
+  return defaultCategories[idx % defaultCategories.length]?.image || "/images/categories/serums.jpg";
+}
+
+function CategoryCircleCard({
+  category,
+  idx,
+  onClick,
+}: {
+  category: CategoryItem;
+  idx: number;
+  onClick: () => void;
+}) {
+  const fallback = getCategoryFallbackImage(category.name, idx);
+  const [imgSrc, setImgSrc] = useState(category.image || fallback);
+  const oneWordTitle = getOneWordTitle(category.name);
+
+  useEffect(() => {
+    setImgSrc(category.image || fallback);
+  }, [category.image, fallback]);
+
+  return (
+    <div
+      onClick={onClick}
+      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88px] h-[88px] sm:w-[100px] sm:h-[100px] md:w-[112px] md:h-[112px] lg:w-[120px] lg:h-[120px] rounded-full bg-white border border-gray-100/90 shadow-[0_8px_20px_rgba(0,0,0,0.07),0_2px_6px_rgba(0,0,0,0.03)] group-hover:shadow-[0_14px_28px_rgba(137,7,84,0.18),0_4px_10px_rgba(0,0,0,0.06)] group-hover:scale-105 group-hover:border-[#890754]/30 transition-all duration-300 ease-out flex flex-col items-center justify-center p-1.5 text-center cursor-pointer z-10 select-none"
+    >
+      {/* Big Prominent Category Image */}
+      <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-[70px] lg:h-[70px] rounded-full overflow-hidden ring-1 ring-gray-100/90 shadow-inner bg-gray-50 flex-shrink-0">
+        <Image
+          src={imgSrc}
+          alt={oneWordTitle}
+          fill
+          unoptimized
+          onError={() => setImgSrc(fallback)}
+          className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+          sizes="(max-width: 640px) 25vw, 15vw"
+        />
+      </div>
+
+      {/* One Word Text Only */}
+      <span className="font-extrabold text-[9px] sm:text-[10px] md:text-[11px] lg:text-xs tracking-wider text-gray-900 group-hover:text-[#890754] uppercase transition-colors duration-300 max-w-[94%] truncate mt-1 sm:mt-1.5">
+        {oneWordTitle}
+      </span>
+    </div>
+  );
 }
 
 export function CategorySection({
@@ -126,7 +154,7 @@ export function CategorySection({
 
   const handleScroll = (direction: "left" | "right") => {
     if (!scrollRef.current) return;
-    const amount = 240;
+    const amount = 200;
     scrollRef.current.scrollBy({
       left: direction === "left" ? -amount : amount,
       behavior: "smooth",
@@ -134,19 +162,16 @@ export function CategorySection({
   };
 
   return (
-    <section className="mx-auto max-w-[1536px] px-3 sm:px-6 pt-10 sm:pt-14 pb-12 sm:pb-16 select-none overflow-hidden">
+    <section className="mx-auto max-w-[1440px] px-2 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 select-none overflow-hidden">
       {/* Header: Minimalist Architectural Infographic Title */}
-      <div className="text-center mb-10 sm:mb-14">
-        <div className="inline-flex items-center justify-center gap-3 text-xs sm:text-sm font-black uppercase tracking-[0.25em] text-gray-900">
-          <span className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-[#890754]/40" />
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="inline-flex items-center justify-center gap-2 sm:gap-3 text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-[0.2em] text-gray-900">
+          <span className="h-px w-6 sm:w-10 bg-gradient-to-r from-transparent to-[#890754]/40" />
           <span className="text-[#890754] font-bold">
             {isAr ? "تسوق حسب الفئة" : "SHOP BY CATEGORY"}
           </span>
-          <span className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-[#890754]/40" />
+          <span className="h-px w-6 sm:w-10 bg-gradient-to-l from-transparent to-[#890754]/40" />
         </div>
-        <p className="text-[11px] sm:text-xs text-gray-400 font-medium tracking-wider uppercase mt-1">
-          {isAr ? "المجموعات الأساسية" : "CURATED ESSENTIALS"}
-        </p>
       </div>
 
       {/* Main Flowing Ribbon Chain Container */}
@@ -156,18 +181,18 @@ export function CategorySection({
           <button
             onClick={() => handleScroll("left")}
             aria-label="Scroll Left"
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-gray-200/80 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 transition-all xl:hidden"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md shadow-md border border-gray-200/80 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 transition-all lg:hidden"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
           </button>
         )}
         {canScrollRight && (
           <button
             onClick={() => handleScroll("right")}
             aria-label="Scroll Right"
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-gray-200/80 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 transition-all xl:hidden"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md shadow-md border border-gray-200/80 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 transition-all lg:hidden"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4" />
           </button>
         )}
 
@@ -175,24 +200,22 @@ export function CategorySection({
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="w-full overflow-x-auto scrollbar-none py-6 px-2 flex items-center justify-start xl:justify-center scroll-smooth"
+          className="w-full overflow-x-auto scrollbar-none py-3 px-1 flex items-center justify-start lg:justify-center scroll-smooth"
         >
-          <div className="flex items-center min-w-max py-2">
+          <div className="flex items-center min-w-max py-1">
             {itemsToRender.map((category, idx) => {
               const isEven = idx % 2 === 0;
               const grad = NODE_GRADIENTS[idx % NODE_GRADIENTS.length];
-              const oneWordTitle = getOneWordTitle(category.name);
-              const Icon = getCategoryIcon(category.name);
               const gradId = `cat-ribbon-grad-${idx}`;
 
               return (
                 <motion.div
                   key={category.id || idx}
-                  initial={{ opacity: 0, y: isEven ? -16 : 16 }}
+                  initial={{ opacity: 0, y: isEven ? -12 : 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-20px" }}
-                  transition={{ duration: 0.5, delay: idx * 0.07, ease: [0.16, 1, 0.3, 1] }}
-                  className="group relative shrink-0 w-[170px] h-[170px] sm:w-[190px] sm:h-[190px] md:w-[210px] md:h-[210px] lg:w-[220px] lg:h-[220px] -ml-[21px] sm:-ml-[24px] md:-ml-[26px] lg:-ml-[28px] first:ml-0"
+                  viewport={{ once: true, margin: "-10px" }}
+                  transition={{ duration: 0.45, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                  className="group relative shrink-0 w-[124px] h-[124px] sm:w-[140px] sm:h-[140px] md:w-[155px] md:h-[155px] lg:w-[165px] lg:h-[165px] -ml-[16px] sm:-ml-[18px] md:-ml-[20px] lg:-ml-[21px] first:ml-0"
                 >
                   {/* SVG Infographic Interconnected Track (viewBox 220x220, R=96, center 110,110) */}
                   <svg
@@ -208,7 +231,7 @@ export function CategorySection({
 
                       {/* Soft Glow Filter on Ribbon */}
                       <filter id={`glow-${idx}`} x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor={grad.start} floodOpacity="0.25" />
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor={grad.start} floodOpacity="0.25" />
                       </filter>
                     </defs>
 
@@ -261,21 +284,12 @@ export function CategorySection({
                     )}
                   </svg>
 
-                  {/* Pristine Elevated White Disc (One Word Text Only + Icon) */}
-                  <div
+                  {/* Pristine Elevated White Disc (One Word Text Only + Big Prominent Category Image) */}
+                  <CategoryCircleCard
+                    category={category}
+                    idx={idx}
                     onClick={() => handleCategoryClick(category)}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[116px] h-[116px] sm:w-[130px] sm:h-[130px] md:w-[142px] md:h-[142px] lg:w-[150px] lg:h-[150px] rounded-full bg-white border border-gray-100/90 shadow-[0_12px_28px_rgba(0,0,0,0.08),0_4px_10px_rgba(0,0,0,0.03)] group-hover:shadow-[0_18px_36px_rgba(137,7,84,0.18),0_6px_14px_rgba(0,0,0,0.06)] group-hover:scale-105 group-hover:border-[#890754]/30 transition-all duration-300 ease-out flex flex-col items-center justify-center p-3 text-center cursor-pointer z-10 select-none"
-                  >
-                    {/* Minimalist Line Icon */}
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-gray-50/90 group-hover:bg-[#890754]/10 flex items-center justify-center transition-colors duration-300 mb-1 sm:mb-1.5">
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 group-hover:text-[#890754] transition-colors duration-300 stroke-[1.8]" />
-                    </div>
-
-                    {/* One Word Text Only (No subtitle, no paragraphs) */}
-                    <span className="font-extrabold text-[11px] sm:text-xs md:text-[13px] tracking-wider text-gray-900 group-hover:text-[#890754] uppercase transition-colors duration-300 max-w-[92%] truncate">
-                      {oneWordTitle}
-                    </span>
-                  </div>
+                  />
                 </motion.div>
               );
             })}
