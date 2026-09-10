@@ -54,17 +54,15 @@ export function MobileBottomNav() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", stiffness: 350, damping: 30 }}
-          className="lg:hidden fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-[390px] pointer-events-auto select-none"
-          style={{ perspective: "1000px", willChange: "transform" }}
+          className="lg:hidden fixed bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-0 mx-auto z-[100] w-[92%] max-w-[390px] pointer-events-auto select-none antialiased"
         >
           {/* ── Apple Vision Pro Pure 3D Glass Dock ── */}
           <nav
             aria-label="Mobile Navigation"
-            className="relative bg-white/65 backdrop-blur-3xl backdrop-saturate-[180%] border border-white/90 rounded-full px-2 py-1.5 shadow-[0_20px_50px_-10px_rgba(20,5,15,0.25),0_8px_24px_-4px_rgba(0,0,0,0.12),inset_0_2px_3px_0_rgba(255,255,255,1),inset_0_-2px_4px_0_rgba(137,7,84,0.06)] flex items-center justify-between gap-1 ring-1 ring-black/[0.04] overflow-hidden"
+            className="relative bg-white/90 backdrop-blur-xl border border-white/90 rounded-full px-2 py-1.5 shadow-[0_12px_36px_-6px_rgba(20,5,15,0.20),0_4px_12px_-2px_rgba(0,0,0,0.08),inset_0_1.5px_2px_0_rgba(255,255,255,1)] flex items-center justify-between gap-1 ring-1 ring-black/[0.04] overflow-hidden"
           >
-            {/* Apple Pure Glass Ambient Specular Highlights */}
+            {/* Specular Highlights */}
             <div className="absolute inset-x-8 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none" />
-            <div className="absolute inset-x-12 bottom-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent pointer-events-none" />
 
             {navItems.map((item) => {
               const isActive = !item.isSesi && pathname === item.href;
@@ -72,49 +70,50 @@ export function MobileBottomNav() {
 
               const content = (
                 <div className="flex flex-col items-center justify-center gap-0.5 relative py-1 px-2 sm:px-2.5 w-full">
-                  {/* 3D Active Pill Background with Apple Vision Pro Specular Bevel */}
+                  {/* 3D Active Pill Background */}
                   {isActive && (
                     <motion.div
                       layoutId="activeTabPill"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      className="absolute inset-0 rounded-full bg-gradient-to-b from-[#890754] via-[#7d064c] to-[#65033d] shadow-[0_4px_14px_rgba(137,7,84,0.42),inset_0_1.5px_1px_rgba(255,255,255,0.5),inset_0_-1px_1.5px_rgba(0,0,0,0.3)]"
+                      className="absolute inset-0 rounded-full bg-gradient-to-b from-[#890754] via-[#7d064c] to-[#65033d] shadow-[0_3px_10px_rgba(137,7,84,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]"
                     />
                   )}
 
-                  {/* Sesi AI Glow Backdrop */}
+                  {/* Sesi AI Accent Background */}
                   {item.isSesi && (
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-amber-400/10 via-pink-500/15 to-purple-500/10 blur-xs pointer-events-none" />
+                    <div className="absolute inset-0 rounded-full bg-pink-50/80 border border-pink-200/50 pointer-events-none" />
                   )}
 
                   {/* Icon */}
                   <div
-                    className={`relative z-10 p-1 rounded-full transition-all duration-200 ${
+                    className={`relative z-10 p-0.5 rounded-full transition-all duration-200 ${
                       isActive
                         ? "text-white scale-105"
                         : item.isSesi
                         ? "text-[#890754] group-hover:scale-110"
-                        : "text-gray-600 group-hover:text-[#890754] group-active:scale-90"
+                        : "text-gray-700 group-hover:text-[#890754] group-active:scale-90"
                     }`}
                   >
-                    <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
+                    <Icon size={19} strokeWidth={isActive ? 2.5 : 2.2} />
 
                     {/* 3D Cart Notification Badge */}
                     {item.isCart && cartCount > 0 && (
-                      <span className="absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-rose-500 to-[#890754] text-white text-[9px] flex items-center justify-center font-black border-2 border-white shadow-[0_2px_8px_rgba(137,7,84,0.6),inset_0_1px_1px_rgba(255,255,255,0.7)] animate-pulse">
+                      <span className="absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-rose-500 to-[#890754] text-white text-[9px] flex items-center justify-center font-black border-2 border-white shadow-xs animate-pulse">
                         {cartCount > 9 ? "9+" : cartCount}
                       </span>
                     )}
                   </div>
 
-                  {/* Label */}
+                  {/* Label - High Contrast & Pixel-Crisp */}
                   <span
-                    className={`relative z-10 text-[9px] font-bold tracking-wider uppercase leading-none transition-colors duration-200 ${
+                    className={`relative z-10 text-[10px] font-black tracking-wider uppercase leading-none transition-colors duration-200 ${
                       isActive
-                        ? "text-white font-black"
+                        ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]"
                         : item.isSesi
-                        ? "text-[#890754] font-black"
-                        : "text-gray-600/80 group-hover:text-gray-900"
+                        ? "text-[#890754]"
+                        : "text-gray-800 group-hover:text-black"
                     }`}
+                    style={{ WebkitFontSmoothing: "antialiased" }}
                   >
                     {item.label}
                   </span>
