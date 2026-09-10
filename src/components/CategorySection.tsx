@@ -163,6 +163,33 @@ export function CategorySection({
 
   return (
     <section className="mx-auto max-w-[1440px] px-2 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 select-none overflow-hidden">
+      <style>{`
+        @keyframes catLineDash {
+          0% {
+            stroke-dashoffset: 300;
+          }
+          100% {
+            stroke-dashoffset: 0;
+          }
+        }
+        @keyframes catGlowPulse {
+          0%, 100% {
+            opacity: 0.85;
+            filter: drop-shadow(0 0 2px rgba(137, 7, 84, 0.3));
+          }
+          50% {
+            opacity: 1;
+            filter: drop-shadow(0 0 6px rgba(225, 29, 72, 0.75));
+          }
+        }
+        .cat-animated-beam {
+          stroke-dasharray: 45 255;
+          animation: catLineDash 3s linear infinite;
+        }
+        .cat-glow-line {
+          animation: catGlowPulse 2.6s ease-in-out infinite;
+        }
+      `}</style>
       {/* Header: Minimalist Architectural Infographic Title */}
       <div className="text-center mb-4 sm:mb-6">
         <div className="inline-flex items-center justify-center gap-2 sm:gap-3 text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-[0.2em] text-gray-900">
@@ -220,7 +247,7 @@ export function CategorySection({
                   {/* SVG Infographic Interconnected Track (viewBox 220x220, R=96, center 110,110) */}
                   <svg
                     viewBox="0 0 220 220"
-                    className="w-full h-full overflow-visible drop-shadow-sm pointer-events-none"
+                    className="w-full h-full overflow-visible drop-shadow-xs pointer-events-none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <defs>
@@ -229,56 +256,80 @@ export function CategorySection({
                         <stop offset="100%" stopColor={grad.end} />
                       </linearGradient>
 
-                      {/* Soft Glow Filter on Ribbon */}
+                      {/* Soft Ambient Glow Filter on Ribbon */}
                       <filter id={`glow-${idx}`} x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor={grad.start} floodOpacity="0.25" />
+                        <feDropShadow dx="0" dy="1" stdDeviation="2.5" floodColor={grad.start} floodOpacity="0.35" />
                       </filter>
                     </defs>
 
                     {/* Even Nodes: Top Arc Colored Ribbon, Bottom Arc Grey Track */}
                     {isEven ? (
                       <>
-                        {/* Subtle Recessed Grey Track on Bottom Half */}
+                        {/* Subtle Recessed Hairline Track on Bottom Half */}
                         <path
                           d="M 14,110 A 96,96 0 0,1 206,110"
                           fill="none"
-                          stroke="#e8eaed"
-                          strokeWidth="2.5"
+                          stroke="#e2e8f0"
+                          strokeWidth="1.5"
+                          strokeDasharray="3 3"
                           strokeLinecap="round"
+                          opacity="0.8"
                         />
 
-                        {/* Flowing Gradient Ribbon on Top Half */}
+                        {/* Slim Elegant Gradient Ribbon on Top Half */}
                         <path
                           d="M 14,110 A 96,96 0 0,0 206,110"
                           fill="none"
                           stroke={`url(#${gradId})`}
-                          strokeWidth="15"
-                          strokeLinecap="butt"
+                          strokeWidth="4"
+                          strokeLinecap="round"
                           filter={`url(#glow-${idx})`}
-                          className="transition-all duration-300 group-hover:brightness-110"
+                          className="cat-glow-line transition-all duration-300 group-hover:stroke-[5px]"
+                        />
+
+                        {/* Animated Flowing Light Beam along the Slim Border */}
+                        <path
+                          d="M 14,110 A 96,96 0 0,0 206,110"
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          className="cat-animated-beam opacity-90 group-hover:opacity-100"
                         />
                       </>
                     ) : (
                       /* Odd Nodes: Top Arc Grey Track, Bottom Arc Colored Ribbon */
                       <>
-                        {/* Subtle Recessed Grey Track on Top Half */}
+                        {/* Subtle Recessed Hairline Track on Top Half */}
                         <path
                           d="M 14,110 A 96,96 0 0,0 206,110"
                           fill="none"
-                          stroke="#e8eaed"
-                          strokeWidth="2.5"
+                          stroke="#e2e8f0"
+                          strokeWidth="1.5"
+                          strokeDasharray="3 3"
                           strokeLinecap="round"
+                          opacity="0.8"
                         />
 
-                        {/* Flowing Gradient Ribbon on Bottom Half */}
+                        {/* Slim Elegant Gradient Ribbon on Bottom Half */}
                         <path
                           d="M 14,110 A 96,96 0 0,1 206,110"
                           fill="none"
                           stroke={`url(#${gradId})`}
-                          strokeWidth="15"
-                          strokeLinecap="butt"
+                          strokeWidth="4"
+                          strokeLinecap="round"
                           filter={`url(#glow-${idx})`}
-                          className="transition-all duration-300 group-hover:brightness-110"
+                          className="cat-glow-line transition-all duration-300 group-hover:stroke-[5px]"
+                        />
+
+                        {/* Animated Flowing Light Beam along the Slim Border */}
+                        <path
+                          d="M 14,110 A 96,96 0 0,1 206,110"
+                          fill="none"
+                          stroke="#ffffff"
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          className="cat-animated-beam opacity-90 group-hover:opacity-100"
                         />
                       </>
                     )}

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLanguageStore } from "@/lib/language-store";
+import { Price } from "./Price";
 
 interface HexPinwheelShowcaseProps {
   products: any[];
@@ -163,127 +165,242 @@ export function HexPinwheelShowcase({
               ))}
             </defs>
 
-            {/* ── 6 Outer Radial Petal Cards ── */}
-            {petalProducts.map((product, i) => {
-              const isHovered = hoveredIdx === i + 1;
-              const angle = i * 60;
-              const center = PETAL_CENTERS[i];
-              const imgSrc = getImgSrc(product);
+            {/* ── Dynamic 3D Layer Ordering: Non-hovered elements fade back, hovered element scales up on top layer ── */}
+            {(() => {
+              const isAnyHovered = hoveredIdx !== null;
+              // Render hovered item last so it naturally renders on top of all neighbors in SVG
+              const renderOrder = [1, 2, 3, 4, 5, 6, 0].sort((a, b) => {
+                if (a === hoveredIdx) return 1;
+                if (b === hoveredIdx) return -1;
+                return 0;
+              });
 
-              return (
-                <g
-                  key={i}
-                  className="cursor-pointer"
-                  style={{
-                    transformOrigin: `${center.x}px ${center.y}px`,
-                    transform: isHovered ? "scale(1.05)" : "scale(1)",
-                    transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
-                  onMouseEnter={() => setHoveredIdx(i + 1)}
-                  onMouseLeave={() => setHoveredIdx(null)}
-                  onClick={() => handleProductClick(product)}
-                >
-                  {/* Physical 3D Porcelain Card Base */}
-                  <path
-                    d={BASE_PETAL_PATH}
-                    transform={`rotate(${angle}, 500, 500)`}
-                    fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#porcelain-grad)"}
-                    stroke={isHovered ? "#890754" : "rgba(255, 255, 255, 0.95)"}
-                    strokeWidth={isHovered ? "2.5" : "1.8"}
-                    strokeOpacity={isHovered ? 0.45 : 0.9}
-                    filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
-                    className="transition-colors duration-300"
-                  />
+              return renderOrder.map((itemIdx) => {
+                if (itemIdx === 0) {
+                  // Central Hexagon Hero Card
+                  if (!centerProduct) return null;
+                  const isHovered = hoveredIdx === 0;
+                  const centerImg = getImgSrc(centerProduct);
 
-                  {/* Clean Upright Product Image (No Text) clipped to Petal */}
-                  <g clipPath={`url(#clip-petal-${i})`}>
-                    <image
-                      href={imgSrc}
-                      x={center.x - 130}
-                      y={center.y - 130}
-                      width={260}
-                      height={260}
-                      preserveAspectRatio="xMidYMid meet"
-                      className="transition-transform duration-500"
-                      style={{
-                        transformOrigin: `${center.x}px ${center.y}px`,
-                        transform: isHovered ? "scale(1.08)" : "scale(1)",
-                        transition: "transform 0.4s ease-out",
-                      }}
-                    />
-
-                    {/* Specular Rim Light */}
-                    <path
-                      d={BASE_PETAL_PATH}
-                      transform={`rotate(${angle}, 500, 500)`}
-                      fill="none"
-                      stroke="rgba(255, 255, 255, 0.7)"
-                      strokeWidth="2.5"
-                      className="pointer-events-none"
-                    />
-                  </g>
-                </g>
-              );
-            })}
-
-            {/* ── Central Hexagon Hero Card ── */}
-            {centerProduct && (() => {
-              const isCenterHovered = hoveredIdx === 0;
-              const centerImg = getImgSrc(centerProduct);
-
-              return (
-                <g
-                  className="cursor-pointer"
-                  style={{
-                    transformOrigin: "500px 500px",
-                    transform: isCenterHovered ? "scale(1.06)" : "scale(1)",
-                    transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
-                  onMouseEnter={() => setHoveredIdx(0)}
-                  onMouseLeave={() => setHoveredIdx(null)}
-                  onClick={() => handleProductClick(centerProduct)}
-                >
-                  {/* Central Hexagon Porcelain 3D Base */}
-                  <path
-                    d={HEXAGON_PATH}
-                    fill={isCenterHovered ? "url(#porcelain-grad-hover)" : "url(#porcelain-grad)"}
-                    stroke={isCenterHovered ? "#890754" : "rgba(255, 255, 255, 0.95)"}
-                    strokeWidth={isCenterHovered ? "2.5" : "2"}
-                    strokeOpacity={isCenterHovered ? 0.5 : 0.9}
-                    filter={isCenterHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
-                    className="transition-colors duration-300"
-                  />
-
-                  {/* Clean Central Upright Product Image (No Text) clipped to Hexagon */}
-                  <g clipPath="url(#center-hex-clip)">
-                    <image
-                      href={centerImg}
-                      x="360"
-                      y="360"
-                      width={280}
-                      height={280}
-                      preserveAspectRatio="xMidYMid meet"
-                      className="transition-transform duration-500"
+                  return (
+                    <g
+                      key="center-hex"
+                      className="cursor-pointer select-none"
                       style={{
                         transformOrigin: "500px 500px",
-                        transform: isCenterHovered ? "scale(1.08)" : "scale(1)",
-                        transition: "transform 0.4s ease-out",
+                        transform: isHovered
+                          ? "scale(1.24)"
+                          : isAnyHovered
+                          ? "scale(0.95)"
+                          : "scale(1)",
+                        opacity: isHovered ? 1 : isAnyHovered ? 0.32 : 1,
+                        filter: !isHovered && isAnyHovered ? "grayscale(20%)" : "none",
+                        transition: "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1), filter 0.42s ease",
                       }}
-                    />
+                      onMouseEnter={() => setHoveredIdx(0)}
+                      onMouseLeave={() => setHoveredIdx(null)}
+                      onClick={() => handleProductClick(centerProduct)}
+                    >
+                      {/* Central Hexagon Porcelain 3D Base */}
+                      <path
+                        d={HEXAGON_PATH}
+                        fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#porcelain-grad)"}
+                        stroke={isHovered ? "#890754" : "rgba(255, 255, 255, 0.95)"}
+                        strokeWidth={isHovered ? "3.2" : "2"}
+                        strokeOpacity={isHovered ? 0.8 : 0.9}
+                        filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
+                        className="transition-colors duration-300"
+                      />
 
-                    {/* Specular Inner Glaze Ring */}
-                    <path
-                      d={HEXAGON_PATH}
-                      fill="none"
-                      stroke="rgba(255, 255, 255, 0.7)"
-                      strokeWidth="2.5"
-                      className="pointer-events-none"
-                    />
-                  </g>
-                </g>
-              );
+                      {/* Regular Clipped View (Active when not hovered) */}
+                      {!isHovered && (
+                        <g clipPath="url(#center-hex-clip)">
+                          <image
+                            href={centerImg}
+                            x="402"
+                            y="402"
+                            width="196"
+                            height="196"
+                            preserveAspectRatio="xMidYMid meet"
+                            className="transition-transform duration-500"
+                          />
+                          {/* Specular Inner Glaze Ring */}
+                          <path
+                            d={HEXAGON_PATH}
+                            fill="none"
+                            stroke="rgba(255, 255, 255, 0.7)"
+                            strokeWidth="2.5"
+                            className="pointer-events-none"
+                          />
+                        </g>
+                      )}
+
+                      {/* 3D Pop-out Unclipped View on Hover */}
+                      {isHovered && (
+                        <g className="pointer-events-none">
+                          {/* Soft Ambient Aura */}
+                          <circle
+                            cx="500"
+                            cy="500"
+                            r="105"
+                            fill="rgba(255, 255, 255, 0.92)"
+                            filter="blur(10px)"
+                          />
+                          <image
+                            href={centerImg}
+                            x="385"
+                            y="385"
+                            width="230"
+                            height="230"
+                            preserveAspectRatio="xMidYMid meet"
+                            style={{
+                              filter: "drop-shadow(0 16px 26px rgba(0,0,0,0.22))",
+                              transformOrigin: "500px 500px",
+                              transform: "scale(1.12) translateY(-4px)",
+                              transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                            }}
+                          />
+                        </g>
+                      )}
+                    </g>
+                  );
+                } else {
+                  // Outer Radial Petal (1 to 6)
+                  const i = itemIdx - 1;
+                  const product = petalProducts[i];
+                  if (!product) return null;
+                  const isHovered = hoveredIdx === itemIdx;
+                  const angle = i * 60;
+                  const center = PETAL_CENTERS[i];
+                  const imgSrc = getImgSrc(product);
+
+                  return (
+                    <g
+                      key={`petal-${i}`}
+                      className="cursor-pointer select-none"
+                      style={{
+                        transformOrigin: `${center.x}px ${center.y}px`,
+                        transform: isHovered
+                          ? "scale(1.28)"
+                          : isAnyHovered
+                          ? "scale(0.95)"
+                          : "scale(1)",
+                        opacity: isHovered ? 1 : isAnyHovered ? 0.32 : 1,
+                        filter: !isHovered && isAnyHovered ? "grayscale(20%)" : "none",
+                        transition: "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1), filter 0.42s ease",
+                      }}
+                      onMouseEnter={() => setHoveredIdx(itemIdx)}
+                      onMouseLeave={() => setHoveredIdx(null)}
+                      onClick={() => handleProductClick(product)}
+                    >
+                      {/* Physical 3D Porcelain Card Base */}
+                      <path
+                        d={BASE_PETAL_PATH}
+                        transform={`rotate(${angle}, 500, 500)`}
+                        fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#porcelain-grad)"}
+                        stroke={isHovered ? "#890754" : "rgba(255, 255, 255, 0.95)"}
+                        strokeWidth={isHovered ? "3.2" : "1.8"}
+                        strokeOpacity={isHovered ? 0.8 : 0.9}
+                        filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
+                        className="transition-colors duration-300"
+                      />
+
+                      {/* Regular Clipped View (Active when not hovered) */}
+                      {!isHovered && (
+                        <g clipPath={`url(#clip-petal-${i})`}>
+                          <image
+                            href={imgSrc}
+                            x={center.x - 85}
+                            y={center.y - 85}
+                            width={170}
+                            height={170}
+                            preserveAspectRatio="xMidYMid meet"
+                            className="transition-transform duration-500"
+                          />
+
+                          {/* Specular Rim Light */}
+                          <path
+                            d={BASE_PETAL_PATH}
+                            transform={`rotate(${angle}, 500, 500)`}
+                            fill="none"
+                            stroke="rgba(255, 255, 255, 0.7)"
+                            strokeWidth="2.5"
+                            className="pointer-events-none"
+                          />
+                        </g>
+                      )}
+
+                      {/* 3D Pop-out Unclipped View on Hover */}
+                      {isHovered && (
+                        <g className="pointer-events-none">
+                          {/* Soft Ambient Aura */}
+                          <circle
+                            cx={center.x}
+                            cy={center.y}
+                            r="82"
+                            fill="rgba(255, 255, 255, 0.92)"
+                            filter="blur(10px)"
+                          />
+                          <image
+                            href={imgSrc}
+                            x={center.x - 95}
+                            y={center.y - 95}
+                            width={190}
+                            height={190}
+                            preserveAspectRatio="xMidYMid meet"
+                            style={{
+                              filter: "drop-shadow(0 16px 26px rgba(0,0,0,0.22))",
+                              transformOrigin: `${center.x}px ${center.y}px`,
+                              transform: "scale(1.15) translateY(-5px)",
+                              transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                            }}
+                          />
+                        </g>
+                      )}
+                    </g>
+                  );
+                }
+              });
             })()}
           </svg>
+
+          {/* Interactive Floating Product Preview Pill on Hover */}
+          <AnimatePresence>
+            {hoveredIdx !== null && displayProducts[hoveredIdx] && (
+              <motion.div
+                initial={{ opacity: 0, y: 14, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.92 }}
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute -bottom-4 sm:-bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-white/95 backdrop-blur-xl px-4 sm:px-6 py-2 sm:py-2.5 rounded-full shadow-[0_16px_36px_rgba(137,7,84,0.18)] border border-pink-100/90 pointer-events-auto cursor-pointer hover:scale-105 active:scale-95 transition-transform select-none"
+                onClick={() => handleProductClick(displayProducts[hoveredIdx])}
+                title="Click to view product details"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-pink-50 relative shrink-0 border border-pink-100">
+                  <Image
+                    src={getImgSrc(displayProducts[hoveredIdx])}
+                    alt={displayProducts[hoveredIdx].name || "Product"}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-[#890754]">
+                    {displayProducts[hoveredIdx].brand?.name || displayProducts[hoveredIdx].brand || "Shafan Beauty"}
+                  </span>
+                  <span className="text-xs sm:text-sm font-extrabold text-gray-900 line-clamp-1 max-w-[160px] sm:max-w-[260px]">
+                    {displayProducts[hoveredIdx].name}
+                  </span>
+                </div>
+                <span className="shrink-0 text-xs sm:text-sm font-black text-gray-900 bg-pink-50/80 px-2.5 py-1 rounded-full border border-pink-100">
+                  <Price
+                    amount={displayProducts[hoveredIdx].salePrice || displayProducts[hoveredIdx].discountPrice || displayProducts[hoveredIdx].price}
+                    countryPrices={displayProducts[hoveredIdx].countryPrices}
+                  />
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </section>
