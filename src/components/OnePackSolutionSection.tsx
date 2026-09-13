@@ -10,95 +10,81 @@ import { useLanguageStore } from "@/lib/language-store";
 
 interface ProblemNode {
   id: string;
-  title: string;
-  solution: string;
-  textAnchor: "start" | "middle" | "end";
-  // Inner hexagon vertex (R = 145, Center 400, 340)
+  name: string;
+  nameAr: string;
+  badgeStyle: {
+    left: string;
+    top: string;
+    transform: string;
+  };
   hx: number;
   hy: number;
-  // Outer spider web ring point (R = 215)
   ox: number;
   oy: number;
-  // Label text anchor position
-  labelX: number;
-  labelY: number;
 }
 
-// 6 Core Skin Concerns Controlled by the One Pack Solution
+// 6 Core Skin Concerns Controlled by the One Pack Solution (Short, punchy one-word editorial labels)
 // Coordinate System: viewBox 0 0 800 680, Center (400, 340)
-// Hexagon radius R_hex = 145, Outer circle radius R_outer = 215
 const PROBLEM_NODES: ProblemNode[] = [
   {
     id: "acne",
-    title: "Acne & Breakouts",
-    solution: "Purifies deep pores & regulates oil",
-    textAnchor: "middle",
+    name: "Acne",
+    nameAr: "حب الشباب",
+    badgeStyle: { left: "50%", top: "14%", transform: "translate(-50%, -100%)" },
     hx: 400,
     hy: 195,
     ox: 400,
     oy: 125,
-    labelX: 400,
-    labelY: 72,
   },
   {
     id: "pigmentation",
-    title: "Dark Spots & Tone",
-    solution: "Fades hyperpigmentation & brightens",
-    textAnchor: "start",
+    name: "Dark Spots",
+    nameAr: "التصبغات",
+    badgeStyle: { left: "77%", top: "34.2%", transform: "translate(0%, -50%)" },
     hx: 525.57,
     hy: 267.5,
     ox: 586.2,
     oy: 232.5,
-    labelX: 604,
-    labelY: 228,
   },
   {
     id: "aging",
-    title: "Fine Lines & Wrinkles",
-    solution: "Boosts collagen & plumps elasticity",
-    textAnchor: "start",
+    name: "Wrinkles",
+    nameAr: "التجاعيد",
+    badgeStyle: { left: "77%", top: "65.8%", transform: "translate(0%, -50%)" },
     hx: 525.57,
     hy: 412.5,
     ox: 586.2,
     oy: 447.5,
-    labelX: 604,
-    labelY: 444,
   },
   {
     id: "dehydration",
-    title: "Dullness & Dehydration",
-    solution: "Locks 72H deep moisture & glow",
-    textAnchor: "middle",
+    name: "Hydration",
+    nameAr: "الترطيب",
+    badgeStyle: { left: "50%", top: "86%", transform: "translate(-50%, 0%)" },
     hx: 400,
     hy: 485,
     ox: 400,
     oy: 555,
-    labelX: 400,
-    labelY: 602,
   },
   {
     id: "barrier",
-    title: "Damaged Skin Barrier",
-    solution: "Replenishes ceramides & calms redness",
-    textAnchor: "end",
+    name: "Barrier",
+    nameAr: "حاجز البشرة",
+    badgeStyle: { left: "23%", top: "65.8%", transform: "translate(-100%, -50%)" },
     hx: 274.43,
     hy: 412.5,
     ox: 213.8,
     oy: 447.5,
-    labelX: 196,
-    labelY: 444,
   },
   {
     id: "pores",
-    title: "Enlarged Pores & Texture",
-    solution: "Tightens pores & smooths rough surface",
-    textAnchor: "end",
+    name: "Oil",
+    nameAr: "الدهون",
+    badgeStyle: { left: "23%", top: "34.2%", transform: "translate(-100%, -50%)" },
     hx: 274.43,
     hy: 267.5,
     ox: 213.8,
     oy: 232.5,
-    labelX: 196,
-    labelY: 228,
   },
 ];
 
@@ -177,7 +163,7 @@ export function OnePackSolutionSection({
   };
 
   return (
-    <section className="relative w-full max-w-[1440px] mx-auto px-2 sm:px-6 py-8 sm:py-16 overflow-hidden select-none">
+    <section className="relative w-full max-w-[1440px] mx-auto px-2 sm:px-6 py-4 sm:py-10 overflow-hidden select-none">
       <style>{`
         @keyframes onePackTextFlow {
           0% {
@@ -208,6 +194,17 @@ export function OnePackSolutionSection({
             opacity: 1;
           }
         }
+        @keyframes luxuryColorWave {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
         .one-pack-heading {
           background: linear-gradient(135deg, #540434 0%, #890754 38%, #d92982 70%, #890754 100%);
           background-size: 240% auto;
@@ -219,35 +216,38 @@ export function OnePackSolutionSection({
         .one-pack-line {
           animation: onePackLineExpand 3.8s ease-in-out infinite;
         }
+        .luxury-wave-text {
+          background: linear-gradient(
+            135deg,
+            #890754 0%,
+            #d92982 25%,
+            #ff758c 50%,
+            #890754 75%,
+            #d92982 100%
+          );
+          background-size: 250% 250%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: luxuryColorWave 4s ease-in-out infinite;
+        }
       `}</style>
 
-      {/* Subtle Ambient Radial Glow in Background */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-gradient-to-tr from-[#890754]/5 via-pink-400/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+      {/* Subtle Ambient Radial Glow in Background - Compact and restrained */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] bg-gradient-to-tr from-[#890754]/5 via-pink-400/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       {/* Section Header */}
-      <div className="text-center mb-6 sm:mb-10 relative z-10 px-2">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#890754]/6 border border-[#890754]/15 mb-2 shadow-2xs">
-          <span className="text-[10px] sm:text-[11px] font-black tracking-[0.22em] text-[#890754] uppercase">
-            {isAr ? "طقس عناية متكامل ٦ في ١" : "TARGETED ALL-IN-ONE RITUAL"}
-          </span>
-        </div>
-
+      <div className="text-center mb-5 sm:mb-7 relative z-10 px-2">
         <h2 className="one-pack-heading font-serif text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight pb-1">
           {isAr ? "حل الباقة الواحدة" : "One Pack Solution"}
         </h2>
 
         {/* Dynamic Expanding Horizon Brand Line */}
         <div className="one-pack-line mx-auto h-[2.5px] rounded-full bg-gradient-to-r from-transparent via-[#890754] to-transparent mt-1.5" />
-
-        <p className="text-xs sm:text-sm md:text-base text-gray-600 font-medium mt-2.5 max-w-xl mx-auto leading-relaxed">
-          {isAr
-            ? "تركيبة ذكية موحدة في باقة واحدة تتحكم في جميع مشاكل البشرة الست وتمنحك نتائج سريرية واضحة"
-            : "One comprehensive daily routine engineered to target, control, and prevent all 6 primary skin concerns without complex steps."}
-        </p>
       </div>
 
-      {/* Main Diagram Area (Spider Web / Hexagon Wireframe Identical on Mobile & Desktop) */}
-      <div className="relative w-full max-w-[500px] sm:max-w-[620px] md:max-w-[720px] aspect-[800/680] mx-auto flex items-center justify-center">
+      {/* Main Diagram Area (Spider Web / Hexagon Wireframe - Compact & perfectly proportioned on Mobile) */}
+      <div dir="ltr" className="relative w-full max-w-[360px] sm:max-w-[480px] md:max-w-[560px] aspect-[800/680] mx-auto flex items-center justify-center">
         {/* Responsive Full-Vector SVG containing the complete Diagram + Spider Web Points + Labels */}
         <svg
           viewBox="0 0 800 680"
@@ -256,20 +256,20 @@ export function OnePackSolutionSection({
           <defs>
             {/* Soft peach/rose shadow under center orb */}
             <radialGradient id="center-ambient-shadow-800" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#fbcfe8" stopOpacity="0.65" />
-              <stop offset="60%" stopColor="#f43f5e" stopOpacity="0.18" />
+              <stop offset="0%" stopColor="#fbcfe8" stopOpacity="0.45" />
+              <stop offset="60%" stopColor="#f43f5e" stopOpacity="0.12" />
               <stop offset="100%" stopColor="#890754" stopOpacity="0" />
             </radialGradient>
           </defs>
 
-          {/* Background Ambient Radial Glow */}
-          <circle cx="400" cy="340" r="130" fill="url(#center-ambient-shadow-800)" />
+          {/* Background Ambient Radial Glow - Scaled down so it never overpowers */}
+          <circle cx="400" cy="340" r="75" fill="url(#center-ambient-shadow-800)" />
 
           {/* Animated Spider Web Wireframe (Spin Entrance) */}
           <motion.g
             initial={{ rotate: -32, scale: 0.9, opacity: 0 }}
             whileInView={{ rotate: 0, scale: 1, opacity: 1 }}
-            viewport={{ once: true, margin: "-20px" }}
+            viewport={{ once: false, margin: "-20px" }}
             transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
             style={{ transformOrigin: "400px 340px" }}
           >
@@ -394,85 +394,69 @@ export function OnePackSolutionSection({
               );
             })}
           </motion.g>
-
-          {/* 6 Surrounding Problem / Solution Text Labels (Always Rendered on Spider Web on Mobile & Desktop) */}
-          {PROBLEM_NODES.map((node) => {
-            const isActive = activeProblem === node.id;
-            return (
-              <g
-                key={`label-${node.id}`}
-                className="cursor-pointer group"
-                onMouseEnter={() => setActiveProblem(node.id)}
-                onMouseLeave={() => setActiveProblem(null)}
-                onClick={() => setActiveProblem(activeProblem === node.id ? null : node.id)}
-              >
-                <text
-                  x={node.labelX}
-                  y={node.labelY}
-                  textAnchor={node.textAnchor}
-                  className="transition-all duration-200"
-                >
-                  {/* Primary Problem Title */}
-                  <tspan
-                    x={node.labelX}
-                    dy="0"
-                    className={`font-sans font-extrabold text-[14px] sm:text-[15px] transition-colors ${
-                      isActive ? "fill-[#890754]" : "fill-gray-900 group-hover:fill-[#890754]"
-                    }`}
-                  >
-                    {node.title}
-                  </tspan>
-                  {/* Controlled Solution Caption */}
-                  <tspan
-                    x={node.labelX}
-                    dy="16"
-                    className={`font-sans text-[11px] sm:text-[12px] font-medium transition-colors ${
-                      isActive ? "fill-[#890754]" : "fill-gray-500 group-hover:fill-[#890754]/80"
-                    }`}
-                  >
-                    {node.solution}
-                  </tspan>
-                </text>
-              </g>
-            );
-          })}
         </svg>
+
+        {/* 6 Luxury Minimal Concern Badges (One-word, sleek, crisp, animated wave text) */}
+        {PROBLEM_NODES.map((node, idx) => {
+          const isActive = activeProblem === node.id;
+          return (
+            <button
+              key={node.id}
+              type="button"
+              onClick={() => setActiveProblem(activeProblem === node.id ? null : node.id)}
+              onMouseEnter={() => setActiveProblem(node.id)}
+              onMouseLeave={() => setActiveProblem(null)}
+              style={node.badgeStyle}
+              className={`absolute z-30 inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full transition-all duration-300 select-none shadow-[0_4px_14px_rgba(137,7,84,0.08)] hover:shadow-[0_6px_20px_rgba(137,7,84,0.18)] hover:scale-105 active:scale-95 whitespace-nowrap border ${
+                isActive
+                  ? "bg-gradient-to-r from-[#540434] via-[#890754] to-[#d92982] border-transparent shadow-[0_6px_22px_rgba(137,7,84,0.35)] scale-105 text-white"
+                  : "bg-white/95 backdrop-blur-md border-pink-200/80 hover:border-[#890754]/40"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  isActive
+                    ? "bg-amber-300 animate-ping"
+                    : "bg-gradient-to-tr from-[#890754] to-pink-400"
+                }`}
+              />
+              <span
+                className={`font-serif text-[11.5px] xs:text-[13px] sm:text-[14.5px] font-bold tracking-wide transition-all ${
+                  isActive ? "text-white" : "luxury-wave-text"
+                }`}
+                style={!isActive ? { animationDelay: `${idx * 0.65}s` } : undefined}
+              >
+                {isAr ? node.nameAr : node.name}
+              </span>
+            </button>
+          );
+        })}
 
         {/* Central Circular Product Portal (Matching the Peach/Rose Glowing Hub in Reference Image) */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center justify-center pointer-events-auto">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{ duration: 0.8, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="group relative cursor-pointer"
             onClick={() => onQuickView(heroProduct)}
           >
-            {/* Glowing Peach/Rose Aura Drop Shadow */}
-            <div className="absolute -inset-2.5 rounded-full bg-gradient-to-b from-[#ffedd5] via-[#fecdd3] to-[#890754]/25 blur-md opacity-85 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* Glowing Peach/Rose Aura Drop Shadow - Restrained */}
+            <div className="absolute -inset-1.5 rounded-full bg-gradient-to-b from-[#ffedd5] via-[#fecdd3] to-[#890754]/20 blur-sm opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
 
             {/* Main Center Disc Container */}
-            <div className="relative w-[92px] h-[92px] sm:w-[124px] sm:h-[124px] md:w-[145px] md:h-[145px] rounded-full bg-gradient-to-b from-white via-[#fff7f5] to-[#fef2f2] border-2 sm:border-3 border-white shadow-[0_12px_28px_rgba(244,63,94,0.16),0_4px_10px_rgba(137,7,84,0.1)] group-hover:shadow-[0_16px_36px_rgba(137,7,84,0.25)] group-hover:scale-105 transition-all duration-500 overflow-hidden flex items-center justify-center">
+            <div className="relative w-[96px] h-[96px] sm:w-[124px] sm:h-[124px] md:w-[145px] md:h-[145px] rounded-full bg-gradient-to-b from-white via-[#fff7f5] to-[#fef2f2] border-2 sm:border-3 border-white shadow-[0_12px_28px_rgba(244,63,94,0.16),0_4px_10px_rgba(137,7,84,0.1)] group-hover:shadow-[0_16px_36px_rgba(137,7,84,0.25)] group-hover:scale-105 transition-all duration-500 overflow-hidden flex items-center justify-center">
               {/* Product Image Centered */}
-              <div className="relative w-[84%] h-[84%] flex items-center justify-center">
+              <div className="relative w-[86%] h-[86%] flex items-center justify-center">
                 <Image
                   src={productImg}
                   alt={heroProduct.name}
                   fill
                   unoptimized
-                  sizes="(max-width: 640px) 92px, 145px"
+                  sizes="(max-width: 640px) 96px, 145px"
                   className="object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-500 ease-out"
                 />
-              </div>
-
-              {/* Center Title Pill / Overlay (Matching Reference Image) */}
-              <div className="absolute inset-x-0 bottom-0 pb-1 sm:pb-2 pt-3 bg-gradient-to-t from-white via-white/92 to-transparent flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[8px] sm:text-[10px] md:text-[11px] font-black tracking-wider uppercase text-[#890754] group-hover:text-[#540434] transition-colors leading-none">
-                  {isAr ? "باقة شاملة" : "All-In-One Pack"}
-                </span>
-                <span className="text-[6.5px] sm:text-[8px] text-gray-500 font-bold tracking-tight mt-0.5">
-                  {isAr ? "طقس متكامل" : "Complete Ritual"}
-                </span>
               </div>
 
               {/* Quick View Hover Indicator */}

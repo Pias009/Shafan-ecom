@@ -194,7 +194,7 @@ export function BrandMarquee() {
           <div className="p-4 sm:p-7 md:p-8">
             {/* Header: Pure Heading ("Just the heading text") */}
             <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
-              <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+              <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#890754] tracking-tight">
                 Shop by Brand
               </h2>
               <Link

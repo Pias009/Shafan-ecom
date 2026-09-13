@@ -453,8 +453,8 @@ return sorted;
               }}
               className={`px-6 py-2.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border ${
                 selectedCategory === tab.category
-                  ? "bg-[#890754] text-white border-[#890754]"
-                  : "bg-white text-gray-800 hover:bg-pink-50 hover:text-[#890754] border-gray-200"
+                  ? "bg-white text-[#890754] border-[#890754]"
+                  : "bg-white text-gray-500 hover:bg-pink-50 hover:text-[#890754] border-gray-200"
               }`}
             >
               {tab.label}
@@ -629,11 +629,11 @@ return sorted;
 
                 return (
                   <section key={label}>
-                    <div className="flex items-center justify-between gap-3 md:gap-6 mb-6 md:mb-10 border-b border-white/30 pb-4 md:pb-6">
+                    <div className="flex items-center justify-between gap-3 md:gap-6 mb-6 md:mb-10 border-b border-[#890754]/20 pb-4 md:pb-6">
                       <div className="flex items-center gap-3 md:gap-6">
-                        <h2 className="font-serif text-3xl md:text-5xl font-medium tracking-tight text-white uppercase drop-shadow-sm">{label}</h2>
-                        <div className="h-px flex-1 bg-white/30 hidden md:block" />
-                        <span suppressHydrationWarning className="font-body text-[9px] md:text-xs font-black text-white/70 tracking-[0.2em] uppercase hidden md:inline">
+                        <h2 className="font-serif text-3xl md:text-5xl font-medium tracking-tight text-[#890754] uppercase drop-shadow-sm">{label}</h2>
+                        <div className="h-px flex-1 bg-[#890754]/20 hidden md:block" />
+                        <span suppressHydrationWarning className="font-body text-[9px] md:text-xs font-black text-[#890754]/70 tracking-[0.2em] uppercase hidden md:inline">
                           {productsInCat.length} {t.product.items}
                         </span>
                       </div>
@@ -651,7 +651,7 @@ return sorted;
                               return next;
                             });
                           }}
-                          className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/80 hover:text-white underline underline-offset-4 transition-colors"
+                          className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#890754] hover:text-[#540434] underline underline-offset-4 transition-colors"
                         >
                           {isExpanded ? 'Show Less' : 'See All'}
                         </button>
@@ -690,11 +690,11 @@ return sorted;
             {isRoutines ? (
               <>
                 <div className="text-6xl mb-6 opacity-30">✨</div>
-                <p className="font-serif text-3xl md:text-4xl text-white font-medium tracking-tight drop-shadow-sm">Curated Routines Coming Soon</p>
-                <p className="text-white/80 mt-2 font-medium">We're curating the best skincare routines for you</p>
+                <p className="font-serif text-3xl md:text-4xl text-[#890754] font-medium tracking-tight drop-shadow-sm">Curated Routines Coming Soon</p>
+                <p className="text-gray-600 mt-2 font-medium">We're curating the best skincare routines for you</p>
                 <button 
                     onClick={() => window.location.href = '/products'} 
-                    className="mt-6 text-white underline font-bold underline-offset-4 text-sm tracking-wider uppercase"
+                    className="mt-6 text-[#890754] hover:text-[#540434] underline font-bold underline-offset-4 text-sm tracking-wider uppercase"
                 >
                     Browse all products
                 </button>
@@ -702,8 +702,8 @@ return sorted;
             ) : (
               <>
                 <div className="text-6xl mb-6 opacity-30">🔍</div>
-                <p className="font-serif text-3xl md:text-4xl text-white font-medium tracking-tight drop-shadow-sm">{t.product.noProducts}</p>
-                <p className="text-white/80 mt-2 font-medium">{t.product.tryAdjusting}</p>
+                <p className="font-serif text-3xl md:text-4xl text-[#890754] font-medium tracking-tight drop-shadow-sm">{t.product.noProducts}</p>
+                <p className="text-gray-600 mt-2 font-medium">{t.product.tryAdjusting}</p>
                 <button 
                     onClick={() => { 
                       setSearchInput(""); 
@@ -713,7 +713,7 @@ return sorted;
                       setSelectedSkinTone('All');
                       setMaxPrice(100000); 
                     }} 
-                    className="mt-6 text-white underline font-bold underline-offset-4 text-sm tracking-wider uppercase"
+                    className="mt-6 text-[#890754] hover:text-[#540434] underline font-bold underline-offset-4 text-sm tracking-wider uppercase"
                 >
                     {t.product.resetFilters}
                 </button>

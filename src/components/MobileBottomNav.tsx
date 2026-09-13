@@ -106,19 +106,7 @@ export function MobileBottomNav() {
                     )}
                   </div>
 
-                  {/* Label - High Contrast & Pixel-Crisp */}
-                  <span
-                    className={`relative z-10 text-[10px] font-black tracking-wider uppercase leading-none transition-colors duration-200 ${
-                      isActive
-                        ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]"
-                        : item.isSesi
-                        ? "text-[#890754]"
-                        : "text-gray-800 group-hover:text-black"
-                    }`}
-                    style={{ WebkitFontSmoothing: "antialiased" }}
-                  >
-                    {item.label}
-                  </span>
+                  {/* Text label removed as requested */}
                 </div>
               );
 

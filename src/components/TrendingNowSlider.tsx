@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, ShoppingCart, Heart } from "lucide-react";
@@ -52,6 +52,7 @@ export function TrendingNowSlider({
   const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [windowWidth, setWindowWidth] = useState(1200);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -65,13 +66,21 @@ export function TrendingNowSlider({
   const total = products.length;
   const safeActiveIndex = total > 0 ? (activeIndex >= total ? Math.min(2, total - 1) : activeIndex) : 0;
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     setActiveIndex((prev) => (prev - 1 + total) % total);
-  };
+  }, [total]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % total);
-  };
+  }, [total]);
+
+  useEffect(() => {
+    if (total <= 1 || isPaused) return;
+    const timer = setInterval(() => {
+      handleNext();
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [total, isPaused, handleNext]);
 
   const toggleWishlist = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -127,7 +136,7 @@ export function TrendingNowSlider({
       <div className="max-w-[1536px] mx-auto">
         {/* 1. Header: Pure Luxury Animated Brand Heading (No Extra Text) */}
         <div className="flex flex-col items-center justify-center mb-6 sm:mb-8 text-center">
-          <h2 className="fancy-brand-heading font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight sm:tracking-normal select-none">
+          <h2 className="fancy-brand-heading font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#890754] tracking-tight sm:tracking-normal select-none">
             {isAr ? "المنتجات الأكثر رواجاً" : "Trending Now"}
           </h2>
           <div className="luxury-heading-line h-0.5 mt-2 sm:mt-2.5 bg-gradient-to-r from-transparent via-[#890754] to-transparent rounded-full" />
@@ -138,6 +147,8 @@ export function TrendingNowSlider({
           className="relative w-full h-[280px] sm:h-[310px] md:h-[330px] flex items-center justify-center"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
         >
           {/* Left Navigation Chevron */}
           <button

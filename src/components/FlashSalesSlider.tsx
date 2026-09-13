@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 
@@ -66,6 +66,7 @@ export function FlashSalesSlider({
   const [activeIndex, setActiveIndex] = useState(2);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [windowWidth, setWindowWidth] = useState(1200);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -79,13 +80,21 @@ export function FlashSalesSlider({
   const total = products.length;
   const safeActiveIndex = total > 0 ? (activeIndex >= total ? Math.min(2, total - 1) : activeIndex) : 0;
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     setActiveIndex((prev) => (prev - 1 + total) % total);
-  };
+  }, [total]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setActiveIndex((prev) => (prev + 1) % total);
-  };
+  }, [total]);
+
+  useEffect(() => {
+    if (total <= 1 || isPaused) return;
+    const timer = setInterval(() => {
+      handleNext();
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [total, isPaused, handleNext]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
@@ -115,6 +124,8 @@ export function FlashSalesSlider({
           className="relative w-full h-[255px] sm:h-[285px] md:h-[310px] flex items-center justify-center"
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
         >
           {/* Left Navigation Chevron */}
           <button

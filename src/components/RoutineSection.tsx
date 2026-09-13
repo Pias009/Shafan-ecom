@@ -309,11 +309,26 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
   const total = products.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   // "See All" expansion state & fade-out transition
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Retrigger handwriting stroke drawing animation every time user scrolls to this section
   const [animationKey, setAnimationKey] = useState(0);
+
+  // Auto-advance routine cards every 2 seconds like the other sections
+  useEffect(() => {
+    if (total <= 1 || isPaused || isExpanded) return;
+
+    timerRef.current = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % total);
+    }, 2000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [total, isPaused, isExpanded]);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -332,12 +347,14 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
     return () => observer.disconnect();
   }, []);
 
-  // Smoothly scroll the active step tab into center view
+  // Smoothly scroll the active step tab into center view without scrolling the page vertically
   useEffect(() => {
     if (!stepPillsRef.current || isExpanded) return;
     const activeBtn = stepPillsRef.current.children[activeIndex] as HTMLElement;
-    if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
-      activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    if (activeBtn) {
+      const container = stepPillsRef.current;
+      const scrollLeft = activeBtn.offsetLeft - (container.clientWidth / 2) + (activeBtn.clientWidth / 2);
+      container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
     }
   }, [activeIndex, isExpanded]);
 
@@ -384,13 +401,14 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
   const currentStepMeta = getRoutineStepForProduct(rawActive, activeIndex);
 
   return (
-    <section ref={sectionRef} className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-4">
+    <section
+      ref={sectionRef}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-4 select-none"
+    >
       {/* Centered Luxury Signature Editorial Section Header */}
       <div className="text-center mb-6 sm:mb-9 flex flex-col items-center justify-center">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#890754]/5 text-[#890754] text-[10px] sm:text-[11px] font-black uppercase tracking-[0.22em] border border-[#890754]/15 mb-2 shadow-2xs">
-          <span>STEP-BY-STEP SKIN REGIMEN</span>
-        </div>
-
         <div key={animationKey} className="relative inline-flex flex-col items-center justify-center py-1 select-none">
           <h2 className="routine-pen-draw font-['Great_Vibes','Alex_Brush',cursive] text-5xl sm:text-6xl md:text-7xl font-normal text-[#890754] leading-none px-2 sm:px-4">
             Routine
@@ -511,8 +529,14 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
             <div
               className="relative w-full h-[290px] sm:h-[350px] md:h-[400px] flex items-center justify-center overflow-hidden"
               style={{ perspective: "1200px" }}
-              onTouchStart={onTouchStart}
-              onTouchEnd={onTouchEnd}
+              onTouchStart={(e) => {
+                setIsPaused(true);
+                onTouchStart(e);
+              }}
+              onTouchEnd={(e) => {
+                setIsPaused(false);
+                onTouchEnd(e);
+              }}
             >
               {/* Left Navigation Chevron */}
               <button
@@ -608,7 +632,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                           setActiveIndex(i);
                         }
                       }}
-                      className="absolute w-[190px] h-[245px] sm:w-[250px] sm:h-[310px] md:w-[285px] md:h-[360px] rounded-3xl p-1 flex flex-col items-center justify-center cursor-pointer select-none transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
+                      className="absolute w-[155px] h-[240px] sm:w-[250px] sm:h-[310px] md:w-[285px] md:h-[360px] rounded-2xl sm:rounded-3xl p-1 flex flex-col items-center justify-center cursor-pointer select-none transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
                       style={{
                         transform: `translateX(${translateX}) translateY(${translateY}) translateZ(${translateZ}) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) scale(${scale})`,
                         zIndex,
@@ -627,9 +651,9 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                         }}
                       >
                         {/* Floating Step Badge */}
-                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-20 pointer-events-none">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-[#890754] text-[7.5px] sm:text-[9px] font-black uppercase tracking-wider border border-pink-200/80 shadow-xs">
-                            <Sparkles className="w-2.5 h-2.5 text-[#890754]" />
+                        <div className="absolute top-1.5 left-1.5 sm:top-3 sm:left-3 z-20 pointer-events-none">
+                          <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-[#890754] text-[7px] sm:text-[9px] font-black uppercase tracking-wider border border-pink-200/80 shadow-xs">
+                            <Sparkles className="w-2 sm:w-2.5 h-2 sm:h-2.5 text-[#890754]" />
                             {stepMeta.sub}
                           </span>
                         </div>
@@ -637,20 +661,20 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                         {/* Top Specular Glass Reflection */}
                         <div className="absolute inset-x-0 top-0 h-[35%] bg-gradient-to-b from-white/35 via-white/5 to-transparent pointer-events-none rounded-t-2xl sm:rounded-t-3xl z-10" />
 
-                        {/* Image Stage */}
-                        <div className="relative flex-1 w-full min-h-0 flex items-center justify-center p-2 sm:p-3">
+                        {/* Image Stage: Edge-to-edge on mobile so image size is maximized even with slim card */}
+                        <div className="relative flex-1 w-full min-h-0 flex items-center justify-center p-0 sm:p-3">
                           <Image
                             src={imgSrc}
                             alt={product.name || "Routine Step"}
                             fill
-                            className="object-contain p-2 sm:p-2.5 transition-transform duration-700 ease-out group-hover:scale-106"
+                            className="object-contain p-0.5 sm:p-2.5 transition-transform duration-700 ease-out group-hover:scale-106"
                             sizes="(max-width: 640px) 50vw, 30vw"
                             priority={isCenter}
                           />
                         </div>
 
-                        {/* Bottom Info Area: Title, Price, Cart Icon & Rating */}
-                        <div className="relative z-20 bg-gradient-to-t from-white via-[#fdfbfc] to-white/95 border-t border-pink-100/70 p-2 sm:p-2.5 flex flex-col gap-0.5">
+                        {/* Bottom Info Area: Title, Price, Cart Icon & Rating — No top border on mobile */}
+                        <div className="relative z-20 bg-gradient-to-t from-white via-[#fdfbfc] to-white/95 border-t-0 sm:border-t sm:border-pink-100/70 px-2 py-1.5 sm:p-2.5 flex flex-col gap-0.5">
                           {/* Brand & Rating Row */}
                           <div className="flex items-center justify-between gap-1 leading-none">
                             <span className="text-[7.5px] sm:text-[8px] font-bold uppercase tracking-wider text-[#890754]/80 truncate">

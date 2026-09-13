@@ -10,7 +10,15 @@ export default async function HomePage() {
   
   return (
     <Suspense fallback={null}>
-      <HomeClient initialProducts={data.products} newArrivals={data.newArrivals} flashSales={data.flashSales} hot={data.trending} routine={data.routine} bestSellers={data.bestSellers} />
+      <HomeClient
+        initialProducts={data.products}
+        newArrivals={data.newArrivals}
+        flashSales={data.flashSales}
+        hot={data.trending}
+        routine={data.routine}
+        bestSellers={data.bestSellers}
+        banners={data.banners}
+      />
     </Suspense>
   );
 }

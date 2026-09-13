@@ -188,19 +188,9 @@ export function GoogleReviewsSection() {
         {/* ── Top Header & Hero Scoreboard ── */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 sm:mb-10">
           <div>
-            {/* Section Tag */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#890754]/5 text-[#890754] text-[10px] sm:text-[11px] font-black uppercase tracking-[0.22em] border border-[#890754]/15 mb-2.5 shadow-2xs">
-              <GoogleLogo className="w-3.5 h-3.5" />
-              <span>VERIFIED GOOGLE REVIEWS</span>
-            </div>
-
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#890754] tracking-tight">
               What Our Customers Say
             </h2>
-
-            <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1.5 max-w-xl">
-              Real feedback from verified clients across Dubai, Abu Dhabi, and the GCC experiencing our skincare rituals
-            </p>
           </div>
 
           {/* Right: Live Google Rating Scoreboard & Action CTAs */}

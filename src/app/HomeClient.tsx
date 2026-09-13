@@ -13,7 +13,9 @@ import Link from "next/link";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { FlashSalesSlider } from "@/components/FlashSalesSlider";
 import { RoutineSection } from "@/components/RoutineSection";
+import RejuvenateBestProductsSection from "@/components/RejuvenateBestProductsSection";
 import { BestSellersSection } from "@/components/BestSellersSection";
+import HairCareSpotlightSection from "@/components/HairCareSpotlightSection";
 import { HexPinwheelShowcase } from "@/components/HexPinwheelShowcase";
 import { OnePackSolutionSection } from "@/components/OnePackSolutionSection";
 import { useCountryStore } from "@/lib/country-store";
@@ -93,7 +95,7 @@ const isDummyProduct = (p: any) => {
          DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
 };
 
-export default function HomeClient({ initialProducts, flashSales = [], hot: hotProducts = [], routine: routineProducts = [], bestSellers: bestSellerProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[], bestSellers?: any[] }) {
+export default function HomeClient({ initialProducts, flashSales = [], hot: hotProducts = [], routine: routineProducts = [], bestSellers: bestSellerProducts = [], banners = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[], bestSellers?: any[], banners?: any[] }) {
   const [products] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -246,7 +248,7 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
       </div>
 
       {/* Hero Section (Original Position at Top) */}
-      <HeroSlider />
+      <HeroSlider initialBanners={banners} />
 
       <main className="mx-auto max-w-[1536px] w-full px-2 sm:px-4 lg:px-6 pb-20 flex-1 overflow-x-hidden z-10">
 
@@ -310,6 +312,16 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
             orderNow={orderNow}
           />
         )}
+
+        {/* 3.5 Rejuvenate & Catch The Best Products Section */}
+        <RejuvenateBestProductsSection
+          routineProducts={filteredRoutine}
+          bestProducts={bestSearchedProducts.length > 0 ? bestSearchedProducts : filteredBestSellers}
+          onQuickView={setQuickView}
+          addToCart={addToCart}
+          orderNow={orderNow}
+        />
+
         {/* 4. Best Sellers Section */}
         {filteredBestSellers.length > 0 && (
           <BestSellersSection
@@ -329,6 +341,14 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
             onOrderNow={(pp) => orderNow(pp)}
           />
         </div>
+
+        {/* 5.2 Herbal Haircare & Scalp Therapy Spotlight (Methi & Rosemary) */}
+        <HairCareSpotlightSection
+          products={products}
+          onQuickView={setQuickView}
+          addToCart={addToCart}
+          orderNow={orderNow}
+        />
 
         {/* 5.5 One Pack Solution Routine Promotion Section */}
         <OnePackSolutionSection

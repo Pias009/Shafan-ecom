@@ -144,31 +144,47 @@ export function HexPinwheelShowcase({
         .pinwheel-drift {
           animation: pinwheel-ambient-drift 18s ease-in-out infinite;
         }
+        @keyframes border-flow-travel {
+          0% {
+            stroke-dashoffset: 680;
+          }
+          100% {
+            stroke-dashoffset: 0;
+          }
+        }
+        @keyframes border-flow-travel-hex {
+          0% {
+            stroke-dashoffset: 600;
+          }
+          100% {
+            stroke-dashoffset: 0;
+          }
+        }
+        .shape-color-flow-beam {
+          stroke-dasharray: 230 450;
+          animation: border-flow-travel 10s linear infinite;
+        }
+        .shape-color-flow-hex {
+          stroke-dasharray: 200 400;
+          animation: border-flow-travel-hex 10s linear infinite;
+        }
       `}</style>
 
       <div className="w-full max-w-[1600px] mx-auto flex flex-col items-center justify-center">
         {/* Header: Unified Luxury Editorial Architecture */}
-        <div className="text-center mb-6 sm:mb-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#890754]/5 text-[#890754] text-[10px] sm:text-[11px] font-black uppercase tracking-[0.22em] border border-[#890754]/15 mb-2 shadow-2xs">
-            <span>{isAr ? "الأكثر طلباً بالبحث" : "COMMUNITY FAVORITES"}</span>
-          </div>
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#890754] tracking-tight">
             {isAr ? "المنتجات الأكثر بحثاً" : "Most Searched Formulas"}
           </h2>
-          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1.5 max-w-md mx-auto">
-            {isAr
-              ? "التركيبات الأكثر بحثاً ومشاركة بين رواد العناية بالبشرة"
-              : "Iconic formulas receiving the highest search interest and community praise"}
-          </p>
         </div>
 
-        {/* Radial Interactive Flower / Pinwheel Canvas — Slower Luxury Unfolding (3.2s) & Gentle Ambient Drift */}
+        {/* Radial Interactive Flower / Pinwheel Canvas — Luxury Unfolding Every Time on Screen */}
         <motion.div
           initial={{ scale: 0.35, rotate: -25, opacity: 0 }}
           whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
-          viewport={{ once: true, amount: 0.1 }}
+          viewport={{ once: false, amount: 0.15 }}
           transition={{
-            duration: 3.2,
+            duration: 2.2,
             ease: [0.16, 1, 0.3, 1],
           }}
           className="relative w-full max-w-[98vw] sm:max-w-[760px] md:max-w-[960px] lg:max-w-[1200px] xl:max-w-[1400px] 2xl:max-w-[1550px] aspect-square flex items-center justify-center will-change-transform pinwheel-drift"
@@ -207,20 +223,30 @@ export function HexPinwheelShowcase({
                 <stop offset="100%" stopColor="#ffffff" stopOpacity="0.65" />
               </linearGradient>
 
-              {/* Traveling Glass Light Beam (Diamond White & Pink Luster) */}
-              <linearGradient id="glass-beam-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
-                <stop offset="30%" stopColor="#ffffff" stopOpacity="0.4" />
-                <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-                <stop offset="65%" stopColor="#ffd9ed" stopOpacity="1" />
-                <stop offset="85%" stopColor="#ffffff" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              {/* Ultra-Vibrant Multi-Color Flow Gradient — Slow Luxury Chromatic Shift */}
+              <linearGradient id="laser-flow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#890754">
+                  <animate attributeName="stop-color" values="#890754;#d92982;#ff2a85;#9333ea;#890754" dur="12s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="25%" stopColor="#d92982">
+                  <animate attributeName="stop-color" values="#d92982;#ff2a85;#ff758c;#890754;#d92982" dur="12s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="50%" stopColor="#ff2a85">
+                  <animate attributeName="stop-color" values="#ff2a85;#ff758c;#f43f5e;#ff4081;#ff2a85" dur="12s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="75%" stopColor="#ff758c">
+                  <animate attributeName="stop-color" values="#ff758c;#d92982;#890754;#ff758c;#ff758c" dur="12s" repeatCount="indefinite" />
+                </stop>
+                <stop offset="100%" stopColor="#890754">
+                  <animate attributeName="stop-color" values="#890754;#9333ea;#d92982;#ff2a85;#890754" dur="12s" repeatCount="indefinite" />
+                </stop>
               </linearGradient>
 
-              {/* Glass Edge Soft Glow Filter */}
-              <filter id="glass-edge-glow" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
+              {/* Glowing Laser Rim Filter */}
+              <filter id="laser-glow-filter" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="3.5" result="blur" />
                 <feMerge>
+                  <feMergeNode in="blur" />
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
@@ -300,9 +326,9 @@ export function HexPinwheelShowcase({
                       <path
                         d={HEXAGON_PATH}
                         fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#glass-card-grad)"}
-                        stroke={isHovered ? "#890754" : "rgba(255, 255, 255, 0.95)"}
+                        stroke={isHovered ? "#890754" : "rgba(137, 7, 84, 0.25)"}
                         strokeWidth={isHovered ? "3.2" : "2"}
-                        strokeOpacity={isHovered ? 0.85 : 0.95}
+                        strokeOpacity={isHovered ? 0.9 : 0.65}
                         filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
                         className="transition-colors duration-300"
                       />
@@ -312,26 +338,6 @@ export function HexPinwheelShowcase({
                         d={HEXAGON_PATH}
                         fill="url(#glass-specular-glaze)"
                         className="pointer-events-none glass-edge-glaze"
-                      />
-
-                      {/* Ambient Glass Rim Luster */}
-                      <path
-                        d={HEXAGON_PATH}
-                        fill="none"
-                        stroke="rgba(255, 255, 255, 0.85)"
-                        strokeWidth="2.2"
-                        className="pointer-events-none glass-rim-pulsing"
-                      />
-
-                      {/* Traveling Glossy Glass Light Edge Beam */}
-                      <path
-                        d={HEXAGON_PATH}
-                        fill="none"
-                        stroke="url(#glass-beam-grad)"
-                        strokeWidth="3.2"
-                        strokeLinecap="round"
-                        filter="url(#glass-edge-glow)"
-                        className="pointer-events-none glass-edge-beam-hex"
                       />
 
                       {/* Regular Clipped View (Active when not hovered) */}
@@ -356,6 +362,17 @@ export function HexPinwheelShowcase({
                           />
                         </g>
                       )}
+
+                      {/* Flowing Laser Color-Border on Outside Contour */}
+                      <path
+                        d={HEXAGON_PATH}
+                        fill="none"
+                        stroke="url(#laser-flow-grad)"
+                        strokeWidth="3.6"
+                        strokeLinecap="round"
+                        filter="url(#laser-glow-filter)"
+                        className="pointer-events-none shape-color-flow-hex"
+                      />
 
                       {/* 3D Pop-out Unclipped View on Hover */}
                       {isHovered && (
@@ -420,9 +437,9 @@ export function HexPinwheelShowcase({
                         d={BASE_PETAL_PATH}
                         transform={`rotate(${angle}, 500, 500)`}
                         fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#glass-card-grad)"}
-                        stroke={isHovered ? "#890754" : "rgba(255, 255, 255, 0.95)"}
-                        strokeWidth={isHovered ? "3.2" : "1.8"}
-                        strokeOpacity={isHovered ? 0.85 : 0.95}
+                        stroke={isHovered ? "#890754" : "rgba(137, 7, 84, 0.25)"}
+                        strokeWidth={isHovered ? "3.2" : "2"}
+                        strokeOpacity={isHovered ? 0.9 : 0.65}
                         filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
                         className="transition-colors duration-300"
                       />
@@ -433,29 +450,6 @@ export function HexPinwheelShowcase({
                         transform={`rotate(${angle}, 500, 500)`}
                         fill="url(#glass-specular-glaze)"
                         className="pointer-events-none glass-edge-glaze"
-                      />
-
-                      {/* Ambient Glass Rim Luster */}
-                      <path
-                        d={BASE_PETAL_PATH}
-                        transform={`rotate(${angle}, 500, 500)`}
-                        fill="none"
-                        stroke="rgba(255, 255, 255, 0.85)"
-                        strokeWidth="2"
-                        className="pointer-events-none glass-rim-pulsing"
-                      />
-
-                      {/* Traveling Glossy Glass Light Edge Beam with Staggered Delays */}
-                      <path
-                        d={BASE_PETAL_PATH}
-                        transform={`rotate(${angle}, 500, 500)`}
-                        fill="none"
-                        stroke="url(#glass-beam-grad)"
-                        strokeWidth="3.2"
-                        strokeLinecap="round"
-                        filter="url(#glass-edge-glow)"
-                        className="pointer-events-none glass-edge-beam"
-                        style={{ animationDelay: `${i * 1.15}s` }}
                       />
 
                       {/* Regular Clipped View (Active when not hovered) */}
@@ -482,6 +476,19 @@ export function HexPinwheelShowcase({
                           />
                         </g>
                       )}
+
+                      {/* Flowing Animated Color Border on Outside Contour */}
+                      <path
+                        d={BASE_PETAL_PATH}
+                        transform={`rotate(${angle}, 500, 500)`}
+                        fill="none"
+                        stroke="url(#laser-flow-grad)"
+                        strokeWidth="3.6"
+                        strokeLinecap="round"
+                        filter="url(#laser-glow-filter)"
+                        className="pointer-events-none shape-color-flow-beam"
+                        style={{ animationDelay: `${i * 1.6}s` }}
+                      />
 
                       {/* 3D Pop-out Unclipped View on Hover */}
                       {isHovered && (

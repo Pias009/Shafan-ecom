@@ -189,40 +189,13 @@ export function CategorySection({
       `}</style>
       {/* Header: Unified Luxury Editorial Architecture */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#890754]/5 text-[#890754] text-[10px] sm:text-[11px] font-black uppercase tracking-[0.22em] border border-[#890754]/15 mb-2 shadow-2xs">
-          <span>{isAr ? "تسوق حسب الفئة" : "EXPLORE THE COLLECTION"}</span>
-        </div>
-        <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+        <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#890754] tracking-tight">
           {isAr ? "الفئات الرئيسية" : "Shop By Category"}
         </h2>
-        <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1.5 max-w-md mx-auto">
-          {isAr
-            ? "تركيبات نقية موجهة لكل خطوة من خطوات العناية اليومية"
-            : "Targeted botanical formulas crafted for every stage of your ritual"}
-        </p>
       </div>
 
       {/* Main Flowing Ribbon Chain Container */}
       <div className="relative w-full">
-        {/* Navigation Chevrons for Mobile/Tablet Overflow */}
-        {canScrollLeft && (
-          <button
-            onClick={() => handleScroll("left")}
-            aria-label="Scroll Left"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md shadow-md border border-gray-200/80 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 transition-all lg:hidden"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-        )}
-        {canScrollRight && (
-          <button
-            onClick={() => handleScroll("right")}
-            aria-label="Scroll Right"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md shadow-md border border-gray-200/80 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 transition-all lg:hidden"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        )}
 
         {/* Scrollable Track that Centers on Desktop */}
         <div

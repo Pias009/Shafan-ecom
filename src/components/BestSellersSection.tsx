@@ -12,6 +12,8 @@ interface BestSellersSectionProps {
   orderNow?: (p: any) => void;
 }
 
+import { motion } from "framer-motion";
+
 export function BestSellersSection({
   products,
   onQuickView,
@@ -34,7 +36,7 @@ export function BestSellersSection({
     setActiveIndex((prev) => (prev - 1 + count) % count);
   }, [count]);
 
-  // Auto-advance every 2 seconds ("stay 2 s animation then again move")
+  // Auto-advance every 2 seconds
   useEffect(() => {
     if (count <= 1 || isPaused) return;
 
@@ -58,8 +60,12 @@ export function BestSellersSection({
     activeProduct.discountPrice || activeProduct.salePrice || activeProduct.price || 0;
 
   return (
-    <section
-      className="relative w-full py-12 sm:py-20 px-3 sm:px-6 overflow-hidden select-none bg-transparent my-4 sm:my-6"
+    <motion.section
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: false, margin: "-100px" }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="relative w-full py-12 sm:py-20 px-3 sm:px-6 overflow-hidden select-none bg-transparent my-4 sm:my-6 hover:scale-[1.02] transition-transform duration-500 hover:shadow-[0_0_30px_rgba(137,7,84,0.15)] rounded-3xl"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onTouchStart={() => setIsPaused(true)}
@@ -73,8 +79,8 @@ export function BestSellersSection({
       <div className="max-w-[1400px] mx-auto flex flex-col items-center">
         {/* ── 1. Pure Luxury Animated Brand Heading (No Extra Text) ── */}
         <div className="flex flex-col items-center justify-center mb-6 sm:mb-8 text-center">
-          <h2 className="fancy-brand-heading font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight sm:tracking-normal select-none">
-            Best Sellers
+          <h2 className="fancy-brand-heading font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight sm:tracking-normal select-none text-[#890754]">
+            Best Arrived
           </h2>
           <div className="luxury-heading-line h-0.5 mt-2 sm:mt-2.5 bg-gradient-to-r from-transparent via-[#890754] to-transparent rounded-full" />
         </div>
@@ -243,7 +249,7 @@ export function BestSellersSection({
               className="group inline-flex items-center gap-3 pl-5 pr-2 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-[#540434] via-[#890754] to-[#540434] text-white hover:from-[#65033d] hover:to-[#65033d] transition-all duration-300 shadow-[0_4px_16px_rgba(137,7,84,0.3)] hover:scale-105 active:scale-95 select-none"
             >
               <span className="text-xs sm:text-sm font-bold tracking-tight text-white">
-                Explore Best Sellers
+                Explore Best Arrived
               </span>
               <div className="w-6 h-6 rounded-full bg-white text-[#890754] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 shadow-xs">
                 <ArrowRight size={12} />
@@ -261,6 +267,6 @@ export function BestSellersSection({
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }
