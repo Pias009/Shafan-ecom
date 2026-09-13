@@ -10,7 +10,6 @@ import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import { useUserCountry } from "@/lib/country-detection";
-import { hasValidPrice } from "@/lib/product-utils";
 import { fbEvent } from "@/lib/fpixel";
 import toast from "react-hot-toast";
 
@@ -223,7 +222,7 @@ export function OffersClient({
             shipping = addressData;
           }
         }
-      } catch (e) {}
+      } catch {}
 
       if (!billing) {
         const guestStr = localStorage.getItem('guest_address');
@@ -232,7 +231,7 @@ export function OffersClient({
             const guestData = JSON.parse(guestStr);
             billing = guestData;
             shipping = guestData;
-          } catch (e) {}
+          } catch {}
         }
       }
 

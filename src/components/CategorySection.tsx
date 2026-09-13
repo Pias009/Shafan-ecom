@@ -25,12 +25,12 @@ const defaultCategories: CategoryItem[] = [
 ];
 
 const NODE_GRADIENTS = [
-  { id: "grad-0", start: "#F59E0B", end: "#F97316" }, // 0: Amber -> Tangerine
-  { id: "grad-1", start: "#F97316", end: "#E11D48" }, // 1: Tangerine -> Coral Red
-  { id: "grad-2", start: "#E11D48", end: "#BE123C" }, // 2: Coral Red -> Crimson
-  { id: "grad-3", start: "#BE123C", end: "#890754" }, // 3: Crimson -> Shafan Berry
-  { id: "grad-4", start: "#890754", end: "#6B0542" }, // 4: Shafan Berry -> Deep Wine
-  { id: "grad-5", start: "#6B0542", end: "#F59E0B" }, // 5: Deep Wine -> Sunset Amber
+  { id: "grad-0", start: "#540434", end: "#890754" }, // 0: Deep Plum -> Shafan Berry
+  { id: "grad-1", start: "#890754", end: "#b8176e" }, // 1: Shafan Berry -> Vivid Orchid
+  { id: "grad-2", start: "#b8176e", end: "#e11d48" }, // 2: Vivid Orchid -> Rose Carmine
+  { id: "grad-3", start: "#e11d48", end: "#c01874" }, // 3: Rose Carmine -> Radiant Rose
+  { id: "grad-4", start: "#c01874", end: "#890754" }, // 4: Radiant Rose -> Shafan Berry
+  { id: "grad-5", start: "#890754", end: "#540434" }, // 5: Shafan Berry -> Deep Plum
 ];
 
 // Strictly format category name to exactly one word uppercase
@@ -66,12 +66,9 @@ function CategoryCircleCard({
   onClick: () => void;
 }) {
   const fallback = getCategoryFallbackImage(category.name, idx);
-  const [imgSrc, setImgSrc] = useState(category.image || fallback);
+  const [hasError, setHasError] = useState(false);
   const oneWordTitle = getOneWordTitle(category.name);
-
-  useEffect(() => {
-    setImgSrc(category.image || fallback);
-  }, [category.image, fallback]);
+  const imgSrc = !hasError && category.image ? category.image : fallback;
 
   return (
     <div
@@ -84,14 +81,14 @@ function CategoryCircleCard({
         alt={oneWordTitle}
         fill
         unoptimized
-        onError={() => setImgSrc(fallback)}
+        onError={() => setHasError(true)}
         className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500 ease-out"
         sizes="(max-width: 640px) 25vw, 15vw"
       />
 
-      {/* Subtle Legibility Gradient Vignette with One-Word Text */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent flex items-end justify-center pb-2 sm:pb-2.5 px-1.5 transition-opacity">
-        <span className="font-black text-[9.5px] sm:text-[10.5px] md:text-[11.5px] lg:text-xs tracking-wider text-white uppercase drop-shadow-md text-center line-clamp-1">
+      {/* Elegant Frosted Porcelain Underlay with Signature Brand Color Text */}
+      <div className="absolute inset-x-0 bottom-0 pt-5 pb-2 sm:pb-2.5 px-1 bg-gradient-to-t from-white via-white/92 to-transparent flex items-end justify-center pointer-events-none">
+        <span className="font-extrabold text-[9.5px] sm:text-[10.5px] md:text-[11.5px] lg:text-xs tracking-wider text-[#890754] group-hover:text-[#540434] uppercase text-center line-clamp-1 transition-colors drop-shadow-2xs">
           {oneWordTitle}
         </span>
       </div>
@@ -164,41 +161,45 @@ export function CategorySection({
   return (
     <section className="mx-auto max-w-[1440px] px-2 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 select-none overflow-hidden">
       <style>{`
-        @keyframes catLineDash {
+        @keyframes catSingleFlow {
           0% {
-            stroke-dashoffset: 300;
+            stroke-dashoffset: 75;
           }
           100% {
-            stroke-dashoffset: 0;
+            stroke-dashoffset: -1735;
           }
         }
         @keyframes catGlowPulse {
           0%, 100% {
             opacity: 0.85;
-            filter: drop-shadow(0 0 2px rgba(137, 7, 84, 0.3));
+            filter: drop-shadow(0 0 2px rgba(137, 7, 84, 0.25));
           }
           50% {
             opacity: 1;
-            filter: drop-shadow(0 0 6px rgba(225, 29, 72, 0.75));
+            filter: drop-shadow(0 0 5px rgba(225, 29, 72, 0.5));
           }
         }
         .cat-animated-beam {
-          stroke-dasharray: 45 255;
-          animation: catLineDash 3s linear infinite;
+          stroke-dasharray: 75 1735;
+          animation: catSingleFlow 12s linear infinite;
         }
         .cat-glow-line {
-          animation: catGlowPulse 2.6s ease-in-out infinite;
+          animation: catGlowPulse 3.5s ease-in-out infinite;
         }
       `}</style>
-      {/* Header: Minimalist Architectural Infographic Title */}
-      <div className="text-center mb-4 sm:mb-6">
-        <div className="inline-flex items-center justify-center gap-2 sm:gap-3 text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-[0.2em] text-gray-900">
-          <span className="h-px w-6 sm:w-10 bg-gradient-to-r from-transparent to-[#890754]/40" />
-          <span className="text-[#890754] font-bold">
-            {isAr ? "تسوق حسب الفئة" : "SHOP BY CATEGORY"}
-          </span>
-          <span className="h-px w-6 sm:w-10 bg-gradient-to-l from-transparent to-[#890754]/40" />
+      {/* Header: Unified Luxury Editorial Architecture */}
+      <div className="text-center mb-6 sm:mb-8">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#890754]/5 text-[#890754] text-[10px] sm:text-[11px] font-black uppercase tracking-[0.22em] border border-[#890754]/15 mb-2 shadow-2xs">
+          <span>{isAr ? "تسوق حسب الفئة" : "EXPLORE THE COLLECTION"}</span>
         </div>
+        <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+          {isAr ? "الفئات الرئيسية" : "Shop By Category"}
+        </h2>
+        <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1.5 max-w-md mx-auto">
+          {isAr
+            ? "تركيبات نقية موجهة لكل خطوة من خطوات العناية اليومية"
+            : "Targeted botanical formulas crafted for every stage of your ritual"}
+        </p>
       </div>
 
       {/* Main Flowing Ribbon Chain Container */}
@@ -234,6 +235,9 @@ export function CategorySection({
               const isEven = idx % 2 === 0;
               const grad = NODE_GRADIENTS[idx % NODE_GRADIENTS.length];
               const gradId = `cat-ribbon-grad-${idx}`;
+              const totalNodes = itemsToRender.length || 6;
+              const totalDuration = 12; // 12 seconds total for a slow, continuous single pulse
+              const delaySeconds = -((totalNodes - (idx % totalNodes)) % totalNodes) * (totalDuration / totalNodes);
 
               return (
                 <motion.div
@@ -294,7 +298,11 @@ export function CategorySection({
                           stroke="#ffffff"
                           strokeWidth="3.5"
                           strokeLinecap="round"
-                          className="cat-animated-beam opacity-90 group-hover:opacity-100"
+                          className="cat-animated-beam opacity-95 group-hover:opacity-100"
+                          style={{
+                            animationDelay: `${delaySeconds}s`,
+                            filter: "drop-shadow(0 0 3px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 6px rgba(225, 29, 72, 0.6))",
+                          }}
                         />
                       </>
                     ) : (
@@ -329,7 +337,11 @@ export function CategorySection({
                           stroke="#ffffff"
                           strokeWidth="3.5"
                           strokeLinecap="round"
-                          className="cat-animated-beam opacity-90 group-hover:opacity-100"
+                          className="cat-animated-beam opacity-95 group-hover:opacity-100"
+                          style={{
+                            animationDelay: `${delaySeconds}s`,
+                            filter: "drop-shadow(0 0 3px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 6px rgba(225, 29, 72, 0.6))",
+                          }}
                         />
                       </>
                     )}

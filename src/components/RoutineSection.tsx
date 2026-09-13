@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, ChevronLeft, ChevronRight, Layers, Sparkles, ShoppingCart } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Layers, Sparkles, ShoppingCart, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ProductCard } from './ProductCard';
 import { Price } from './Price';
@@ -31,7 +31,6 @@ function HorizontalRoutineComboBanner({
   combo,
   onQuickView,
   onAddToCart,
-  onOrderNow,
 }: {
   combo: any;
   onQuickView: (p: any) => void;
@@ -290,7 +289,6 @@ function transformRoutineProduct(product: any) {
 }
 
 export function RoutineSection({ products, banners = [], onQuickView, addToCart, orderNow }: Props) {
-  const router = useRouter();
   const sectionRef = useRef<HTMLElement>(null);
   const stepPillsRef = useRef<HTMLDivElement>(null);
   const [activeBanner, setActiveBanner] = useState(0);
@@ -311,20 +309,11 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
   const total = products.length;
   const [activeIndex, setActiveIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [windowWidth, setWindowWidth] = useState(1200);
-
   // "See All" expansion state & fade-out transition
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Retrigger handwriting stroke drawing animation every time user scrolls to this section
   const [animationKey, setAnimationKey] = useState(0);
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -391,46 +380,43 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
 
   if (products.length === 0) return null;
 
-  const isMobile = windowWidth < 640;
-  const isTablet = windowWidth >= 640 && windowWidth < 1024;
-  const step = isMobile ? 128 : isTablet ? 165 : 205;
-  const currentStepMeta = getRoutineStepForProduct(products[activeIndex] || {}, activeIndex);
+  const rawActive = products[activeIndex] || products[0];
+  const currentStepMeta = getRoutineStepForProduct(rawActive, activeIndex);
 
   return (
     <section ref={sectionRef} className="pt-6 md:pt-10 pb-6 md:pb-10 px-1 sm:px-4">
-      {/* Centered Luxury Signature Calligraphy Section Header with Pen Stroke Writing Animation */}
-      <div className="text-center mb-6 sm:mb-10 flex flex-col items-center justify-center">
-        <div className="inline-flex items-center justify-center gap-3 sm:gap-6 w-full max-w-4xl px-2">
-          <span className="h-px flex-1 max-w-[40px] sm:max-w-[80px] md:max-w-[120px] bg-gradient-to-r from-transparent to-[#890754]/30" />
-          
-          {/* Animated Calligraphy Title "Routine" — Extra Large Statement Hero in Brand Velvet Plum */}
-          <div key={animationKey} className="relative inline-flex flex-col items-center justify-center py-1 select-none">
-            <h2
-              className="routine-pen-draw font-['Great_Vibes','Alex_Brush',cursive] text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-normal tracking-wide text-[#890754] leading-none drop-shadow-xs px-2 sm:px-4"
-            >
-              Routine
-            </h2>
-
-            {/* Hand-drawn luxury calligraphy underline swash */}
-            <svg
-              viewBox="0 0 300 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-48 sm:w-64 md:w-80 lg:w-96 h-3.5 sm:h-5 -mt-1 sm:-mt-2 overflow-visible pointer-events-none"
-              aria-hidden="true"
-            >
-              <path
-                d="M8 14 C 60 18, 140 4, 210 10 C 255 14, 280 11, 295 11"
-                stroke="#890754"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                className="routine-swash-draw"
-              />
-            </svg>
-          </div>
-
-          <span className="h-px flex-1 max-w-[40px] sm:max-w-[80px] md:max-w-[120px] bg-gradient-to-l from-transparent to-[#890754]/30" />
+      {/* Centered Luxury Signature Editorial Section Header */}
+      <div className="text-center mb-6 sm:mb-9 flex flex-col items-center justify-center">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#890754]/5 text-[#890754] text-[10px] sm:text-[11px] font-black uppercase tracking-[0.22em] border border-[#890754]/15 mb-2 shadow-2xs">
+          <span>STEP-BY-STEP SKIN REGIMEN</span>
         </div>
+
+        <div key={animationKey} className="relative inline-flex flex-col items-center justify-center py-1 select-none">
+          <h2 className="routine-pen-draw font-['Great_Vibes','Alex_Brush',cursive] text-5xl sm:text-6xl md:text-7xl font-normal text-[#890754] leading-none px-2 sm:px-4">
+            Routine
+          </h2>
+
+          {/* Hand-drawn luxury calligraphy underline swash */}
+          <svg
+            viewBox="0 0 300 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-40 sm:w-52 md:w-60 h-3.5 sm:h-4.5 -mt-1 overflow-visible pointer-events-none"
+            aria-hidden="true"
+          >
+            <path
+              d="M8 14 C 60 18, 140 4, 210 10 C 255 14, 280 11, 295 11"
+              stroke="#890754"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              className="routine-swash-draw"
+            />
+          </svg>
+        </div>
+
+        <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1.5 max-w-md mx-auto">
+          Clinically structured rituals formulated to cleanse, balance, treat, and protect your skin
+        </p>
       </div>
 
       {/* Admin banner — shown only when one is active */}
@@ -521,9 +507,9 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
               </div>
             </div>
 
-            {/* 2. 3D Coverflow Stepper Carousel Stage */}
+            {/* 2. 3D Convex Arc Coverflow Stepper Carousel Stage (Harmonized with Best Sellers) */}
             <div
-              className="relative w-full h-[285px] sm:h-[320px] md:h-[355px] flex items-center justify-center overflow-hidden"
+              className="relative w-full h-[290px] sm:h-[350px] md:h-[400px] flex items-center justify-center overflow-hidden"
               style={{ perspective: "1200px" }}
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
@@ -533,10 +519,10 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                 type="button"
                 onClick={handlePrev}
                 aria-label="Previous routine step"
-                className="no-min-size absolute left-1 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-40 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-[0_4px_16px_rgba(137,7,84,0.16)] border border-pink-100 flex items-center justify-center text-[#890754] hover:bg-gradient-to-r hover:from-[#540434] hover:to-[#890754] hover:text-white hover:scale-110 active:scale-95 transition-all"
+                className="no-min-size absolute left-1 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-40 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-white shadow-[0_4px_16px_rgba(137,7,84,0.16)] border border-pink-100 flex items-center justify-center text-[#890754] hover:bg-gradient-to-r hover:from-[#540434] hover:to-[#890754] hover:text-white hover:scale-110 active:scale-95 transition-all"
                 style={{ minWidth: 0, minHeight: 0 }}
               >
-                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+                <ChevronLeft className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.2]" />
               </button>
 
               {/* Right Navigation Chevron */}
@@ -544,80 +530,175 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                 type="button"
                 onClick={handleNext}
                 aria-label="Next routine step"
-                className="no-min-size absolute right-1 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-40 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-[0_4px_16px_rgba(137,7,84,0.16)] border border-pink-100 flex items-center justify-center text-[#890754] hover:bg-gradient-to-r hover:from-[#540434] hover:to-[#890754] hover:text-white hover:scale-110 active:scale-95 transition-all"
+                className="no-min-size absolute right-1 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-40 w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-white shadow-[0_4px_16px_rgba(137,7,84,0.16)] border border-pink-100 flex items-center justify-center text-[#890754] hover:bg-gradient-to-r hover:from-[#540434] hover:to-[#890754] hover:text-white hover:scale-110 active:scale-95 transition-all"
                 style={{ minWidth: 0, minHeight: 0 }}
               >
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+                <ChevronRight className="w-3.5 h-3.5 sm:w-5 sm:h-5 stroke-[2.2]" />
               </button>
 
-              {/* Cards Stage with Inward 3D Vanity Perspective */}
+              {/* Cards Stage with Symmetrical 3D Convex Arc Horizon */}
               <div className="relative w-full h-full flex items-center justify-center overflow-visible">
                 {products.map((rawProduct, i) => {
                   let diff = (i - activeIndex) % total;
                   if (diff > total / 2) diff -= total;
                   if (diff < -total / 2) diff += total;
 
-                  const isVisible = Math.abs(diff) <= (isMobile ? 1 : 2);
+                  const isVisible = Math.abs(diff) <= 2;
                   if (!isVisible) return null;
 
-                  const isActive = diff === 0;
-                  const isNeighbor = Math.abs(diff) === 1;
+                  let translateX = "0%";
+                  let translateY = "0px";
+                  let translateZ = "0px";
+                  let rotateY = 0;
+                  let rotateZ = 0;
+                  let scale = 1.06;
+                  let zIndex = 30;
+                  let opacity = 1;
 
-                  const scale = isActive ? 1.06 : isNeighbor ? 0.88 : 0.72;
-                  const zIndex = isActive ? 30 : isNeighbor ? 20 : 10;
-                  const opacity = isActive ? 1 : isNeighbor ? (isMobile ? 0.65 : 0.85) : 0.45;
-                  const rotateY = diff === 0 ? 0 : diff > 0 ? 12 : -12;
-                  const offsetX = diff * step;
+                  if (diff === 1) {
+                    translateX = "68%";
+                    translateY = "18px";
+                    translateZ = "-30px";
+                    rotateY = -24;
+                    rotateZ = 3.5;
+                    scale = 0.88;
+                    zIndex = 20;
+                    opacity = 0.96;
+                  } else if (diff === 2) {
+                    translateX = "132%";
+                    translateY = "38px";
+                    translateZ = "-120px";
+                    rotateY = -38;
+                    rotateZ = 7;
+                    scale = 0.72;
+                    zIndex = 10;
+                    opacity = 0.65;
+                  } else if (diff === -1) {
+                    translateX = "-68%";
+                    translateY = "18px";
+                    translateZ = "-30px";
+                    rotateY = 24;
+                    rotateZ = -3.5;
+                    scale = 0.88;
+                    zIndex = 20;
+                    opacity = 0.96;
+                  } else if (diff === -2) {
+                    translateX = "-132%";
+                    translateY = "38px";
+                    translateZ = "-120px";
+                    rotateY = 38;
+                    rotateZ = -7;
+                    scale = 0.72;
+                    zIndex = 10;
+                    opacity = 0.65;
+                  }
 
+                  const isCenter = diff === 0;
                   const product = transformRoutineProduct(rawProduct);
                   const stepMeta = getRoutineStepForProduct(product, i);
+                  const imgSrc = product.imageUrl || product.mainImage || "/placeholder-product.png";
 
                   return (
                     <div
                       key={product.id || i}
-                      onClickCapture={(e) => {
-                        if (diff !== 0) {
-                          e.stopPropagation();
-                          e.preventDefault();
+                      onClick={() => {
+                        if (isCenter) {
+                          onQuickView(product);
+                        } else {
                           setActiveIndex(i);
                         }
                       }}
+                      className="absolute w-[190px] h-[245px] sm:w-[250px] sm:h-[310px] md:w-[285px] md:h-[360px] rounded-3xl p-1 flex flex-col items-center justify-center cursor-pointer select-none transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]"
                       style={{
-                        transform: `translate(calc(-50% + ${offsetX}px), -50%) scale(${scale}) rotateY(${rotateY}deg)`,
+                        transform: `translateX(${translateX}) translateY(${translateY}) translateZ(${translateZ}) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) scale(${scale})`,
                         zIndex,
                         opacity,
-                        transition: "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease-out",
+                        transformStyle: "preserve-3d",
+                        willChange: "transform, opacity",
                       }}
-                      className={`absolute top-1/2 left-1/2 w-[145px] xs:w-[155px] sm:w-[175px] md:w-[205px] cursor-pointer select-none transition-shadow ${
-                        isActive ? "ring-2 ring-[#890754]/30 rounded-2xl shadow-[0_20px_45px_rgba(137,7,84,0.22)]" : ""
-                      }`}
                     >
-                      {/* Floating Step Badge */}
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-30 pointer-events-none whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[8px] sm:text-[9.5px] font-black uppercase tracking-wider transition-all duration-300 ${
-                            isActive
-                              ? "bg-gradient-to-r from-[#540434] via-[#890754] to-[#a80b67] text-white border border-pink-200/50 shadow-[0_4px_12px_rgba(137,7,84,0.25)] scale-105"
-                              : "bg-white/95 text-[#890754] border border-pink-200/80 shadow-xs"
-                          }`}
-                        >
-                          <Sparkles
-                            className={`w-2 sm:w-2.5 h-2 sm:h-2.5 ${
-                              isActive ? "text-amber-300 animate-pulse" : "text-[#890754]"
-                            }`}
-                          />
-                          {stepMeta.sub}
-                        </span>
-                      </div>
+                      {/* 3D Card Shell — Matches Best Sellers Section Vibes with Title, Price, Cart & Rating */}
+                      <div
+                        className="relative w-full h-full rounded-2xl sm:rounded-3xl bg-white border border-gray-200/90 overflow-hidden shadow-xl transition-transform duration-300 group flex flex-col justify-between"
+                        style={{
+                          boxShadow: isCenter
+                            ? "0 20px 48px -8px rgba(137,7,84,0.22), 0 8px 24px rgba(0,0,0,0.08), inset 0 1.5px 2px rgba(255,255,255,0.9)"
+                            : "0 10px 28px rgba(20,5,15,0.08), inset 0 1px 1.5px rgba(255,255,255,0.6)",
+                        }}
+                      >
+                        {/* Floating Step Badge */}
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-20 pointer-events-none">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-[#890754] text-[7.5px] sm:text-[9px] font-black uppercase tracking-wider border border-pink-200/80 shadow-xs">
+                            <Sparkles className="w-2.5 h-2.5 text-[#890754]" />
+                            {stepMeta.sub}
+                          </span>
+                        </div>
 
-                      <ProductCard
-                        product={product}
-                        onQuickView={onQuickView}
-                        onAddToCart={addToCart}
-                        onOrderNow={orderNow}
-                        compact={true}
-                        priority={isActive}
-                      />
+                        {/* Top Specular Glass Reflection */}
+                        <div className="absolute inset-x-0 top-0 h-[35%] bg-gradient-to-b from-white/35 via-white/5 to-transparent pointer-events-none rounded-t-2xl sm:rounded-t-3xl z-10" />
+
+                        {/* Image Stage */}
+                        <div className="relative flex-1 w-full min-h-0 flex items-center justify-center p-2 sm:p-3">
+                          <Image
+                            src={imgSrc}
+                            alt={product.name || "Routine Step"}
+                            fill
+                            className="object-contain p-2 sm:p-2.5 transition-transform duration-700 ease-out group-hover:scale-106"
+                            sizes="(max-width: 640px) 50vw, 30vw"
+                            priority={isCenter}
+                          />
+                        </div>
+
+                        {/* Bottom Info Area: Title, Price, Cart Icon & Rating */}
+                        <div className="relative z-20 bg-gradient-to-t from-white via-[#fdfbfc] to-white/95 border-t border-pink-100/70 p-2 sm:p-2.5 flex flex-col gap-0.5">
+                          {/* Brand & Rating Row */}
+                          <div className="flex items-center justify-between gap-1 leading-none">
+                            <span className="text-[7.5px] sm:text-[8px] font-bold uppercase tracking-wider text-[#890754]/80 truncate">
+                              {product.brand}
+                            </span>
+                            <div className="flex items-center gap-0.5 shrink-0">
+                              <Star size={7.5} className="text-amber-400 fill-amber-400 sm:w-2 sm:h-2" />
+                              <span className="text-[7.5px] sm:text-[8px] font-extrabold text-gray-500">
+                                {product.averageRating || 4.9}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Title Row */}
+                          <h4 className="font-sans font-bold text-[10.5px] sm:text-[12px] text-gray-900 leading-[1.2] truncate group-hover:text-[#890754] transition-colors">
+                            {product.name}
+                          </h4>
+
+                          {/* Price & Cart Icon Row */}
+                          <div className="flex items-center justify-between gap-1 pt-0.5 mt-0.5">
+                            <div className="flex items-baseline gap-1 min-w-0">
+                              <Price
+                                amount={product.discountPrice || product.price}
+                                className="text-[11px] sm:text-xs font-black text-[#890754] tracking-tight leading-none"
+                                countryPrices={product.countryPrices}
+                              />
+                              {product.discountPrice && (
+                                <span className="text-[8.5px] sm:text-[9.5px] text-gray-400 line-through font-semibold leading-none">
+                                  <Price amount={product.price} countryPrices={product.countryPrices} />
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Cart Icon Button */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(product);
+                              }}
+                              className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#890754] hover:bg-[#540434] text-white flex items-center justify-center shadow-xs transition-all active:scale-90 shrink-0"
+                              title="Add to Cart"
+                            >
+                              <ShoppingCart className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}

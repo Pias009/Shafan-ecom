@@ -5,8 +5,6 @@ import Image from "next/image";
 import { ShoppingCart, Flame, Star, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { Price } from "./Price";
-import { useLanguageStore } from "@/lib/language-store";
-import { translations } from "@/lib/translations";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
@@ -44,7 +42,7 @@ interface ProductCardProps {
     freeDelivery?: boolean;
     countryPrices?: CountryPrice[] | Record<string, unknown>[] | unknown[];
   };
-  onQuickView: (product: unknown) => void;
+  onQuickView?: (product: unknown) => void;
   onAddToCart: (product: unknown) => void;
   onOrderNow?: (product: unknown) => void;
   compact?: boolean;
@@ -53,36 +51,33 @@ interface ProductCardProps {
 
 const ProductCardComponent = function ProductCard({
   product,
-  onQuickView,
   onAddToCart,
-  onOrderNow,
   compact = false,
   priority = false,
 }: ProductCardProps) {
   const router = useRouter();
-  const { currentLanguage } = useLanguageStore();
-  const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
   const hasHydrated = useCountryStoreReady();
   const [justAdded, setJustAdded] = useState(false);
-  const [rotate, setRotate] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setRotate({ x: -y * 10, y: x * 10 });
+    e.currentTarget.style.transform = `rotateX(${-y * 10}deg) rotateY(${x * 10}deg) translateY(-8px)`;
   };
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
     setIsHovered(true);
     router.prefetch(`/products/${product.slug || product.id}`);
+    e.currentTarget.style.transition = "transform 0.1s ease-out, box-shadow 0.25s ease-out";
   };
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     setIsHovered(false);
-    setRotate({ x: 0, y: 0 });
+    e.currentTarget.style.transition = "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1)";
+    e.currentTarget.style.transform = "rotateX(0deg) rotateY(0deg) translateY(0px)";
   };
 
   if (!hasHydrated) {
@@ -152,15 +147,12 @@ const ProductCardComponent = function ProductCard({
         }}
         style={{
           transformStyle: "preserve-3d",
-          transform: isHovered
-            ? `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) translateY(-8px)`
-            : "rotateX(0deg) rotateY(0deg) translateY(0px)",
-          transition: isHovered ? "transform 0.12s ease-out, box-shadow 0.25s ease-out" : "transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+          willChange: "transform",
           boxShadow: isHovered
-            ? "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 7px 0 0 #ded7cd, 0 8px 3px 0 rgba(60, 40, 50, 0.08), 0 24px 44px -6px rgba(40, 20, 30, 0.16), 0 40px 70px -14px rgba(20, 10, 15, 0.18)"
-            : "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 4.5px 0 0 #e8e3dc, 0 5.5px 2px 0 rgba(60, 40, 50, 0.06), 0 16px 32px -4px rgba(40, 20, 30, 0.10), 0 30px 52px -12px rgba(20, 10, 15, 0.12)",
+            ? "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 6px 0 0 #ebd8e4, 0 8px 3px 0 rgba(137, 7, 84, 0.05), 0 24px 44px -6px rgba(84, 4, 52, 0.12), 0 36px 64px -14px rgba(40, 5, 25, 0.14)"
+            : "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 4px 0 0 #f0e6ec, 0 5.5px 2px 0 rgba(137, 7, 84, 0.03), 0 16px 32px -4px rgba(84, 4, 52, 0.07), 0 28px 48px -12px rgba(40, 5, 25, 0.09)",
         }}
-        className="group relative bg-gradient-to-b from-white via-[#fbfaf9] to-[#f2ede6] hover:from-white hover:via-[#f8f6f4] hover:to-[#ede6dd] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-black/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden transition-all duration-300"
+        className="group relative bg-gradient-to-b from-white via-[#fcfbfb] to-[#fbf5f8] hover:from-white hover:via-[#faf6f8] hover:to-[#f5e9f1] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-pink-900/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden transition-all duration-300"
       >
         {/* ── Image Stage (Full Product Fit, No Border, Seamless Card Integration) ── */}
         <div

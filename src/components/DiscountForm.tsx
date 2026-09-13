@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { X, Plus, Search, Check, Loader2 } from "lucide-react";
+import { X, Search, Check, Loader2 } from "lucide-react";
 
 interface Category {
   id: string;
@@ -61,7 +61,6 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [searchProduct, setSearchProduct] = useState("");
-  const [showProductSearch, setShowProductSearch] = useState(false);
 
   const [form, setForm] = useState<DiscountFormData>({
     code: (initialData?.code || '') as string,
@@ -130,7 +129,6 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
       }));
     }
     setSearchProduct("");
-    setShowProductSearch(false);
   };
 
   const handleRemoveProduct = (productId: string) => {

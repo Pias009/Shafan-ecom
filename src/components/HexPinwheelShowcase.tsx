@@ -91,33 +91,92 @@ export function HexPinwheelShowcase({
 
   return (
     <section className="w-full py-8 sm:py-14 md:py-20 lg:py-24 px-2 sm:px-6 select-none overflow-hidden my-4 sm:my-6">
+      {/* Embedded 60FPS Hardware-Accelerated Glass Edge Light & Slow Render Keyframes */}
+      <style jsx global>{`
+        @keyframes glass-rim-travel {
+          0% {
+            stroke-dashoffset: 720;
+          }
+          100% {
+            stroke-dashoffset: 0;
+          }
+        }
+        @keyframes glass-specular-shimmer {
+          0%, 100% {
+            opacity: 0.6;
+          }
+          50% {
+            opacity: 0.95;
+          }
+        }
+        @keyframes glass-rim-glow {
+          0%, 100% {
+            stroke-opacity: 0.45;
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+          }
+          50% {
+            stroke-opacity: 0.95;
+            filter: drop-shadow(0 0 9px rgba(255, 215, 235, 0.9));
+          }
+        }
+        @keyframes pinwheel-ambient-drift {
+          0%, 100% {
+            transform: scale(1) rotate(0deg);
+          }
+          50% {
+            transform: scale(1.018) rotate(1.5deg);
+          }
+        }
+        .glass-edge-beam {
+          stroke-dasharray: 140 540;
+          animation: glass-rim-travel 8s linear infinite;
+        }
+        .glass-edge-beam-hex {
+          stroke-dasharray: 160 590;
+          animation: glass-rim-travel 9s linear infinite;
+        }
+        .glass-edge-glaze {
+          animation: glass-specular-shimmer 4s ease-in-out infinite;
+        }
+        .glass-rim-pulsing {
+          animation: glass-rim-glow 3.5s ease-in-out infinite;
+        }
+        .pinwheel-drift {
+          animation: pinwheel-ambient-drift 18s ease-in-out infinite;
+        }
+      `}</style>
+
       <div className="w-full max-w-[1600px] mx-auto flex flex-col items-center justify-center">
-        {/* Sleek Minimalist Section Title */}
+        {/* Header: Unified Luxury Editorial Architecture */}
         <div className="text-center mb-6 sm:mb-10">
-          <div className="inline-flex items-center justify-center gap-2.5 sm:gap-3 text-xs sm:text-sm font-black uppercase tracking-[0.25em] text-gray-900">
-            <span className="h-px w-8 sm:w-14 bg-gradient-to-r from-transparent to-[#890754]/40" />
-            <span className="text-[#890754] font-bold">
-              {isAr ? "المنتجات الأكثر بحثاً" : "BEST SEARCHED PRODUCTS"}
-            </span>
-            <span className="h-px w-8 sm:w-14 bg-gradient-to-l from-transparent to-[#890754]/40" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#890754]/5 text-[#890754] text-[10px] sm:text-[11px] font-black uppercase tracking-[0.22em] border border-[#890754]/15 mb-2 shadow-2xs">
+            <span>{isAr ? "الأكثر طلباً بالبحث" : "COMMUNITY FAVORITES"}</span>
           </div>
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+            {isAr ? "المنتجات الأكثر بحثاً" : "Most Searched Formulas"}
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1.5 max-w-md mx-auto">
+            {isAr
+              ? "التركيبات الأكثر بحثاً ومشاركة بين رواد العناية بالبشرة"
+              : "Iconic formulas receiving the highest search interest and community praise"}
+          </p>
         </div>
 
-        {/* Radial Interactive Flower / Pinwheel Canvas with Enlarged Geometry & Elements */}
+        {/* Radial Interactive Flower / Pinwheel Canvas — Slower Luxury Unfolding (3.2s) & Gentle Ambient Drift */}
         <motion.div
-          initial={{ scale: 0.15, rotate: -40, opacity: 0 }}
+          initial={{ scale: 0.35, rotate: -25, opacity: 0 }}
           whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
-          viewport={{ once: true, amount: 0.15 }}
+          viewport={{ once: true, amount: 0.1 }}
           transition={{
-            duration: 1.3,
+            duration: 3.2,
             ease: [0.16, 1, 0.3, 1],
           }}
-          className="relative w-full max-w-[98vw] sm:max-w-[760px] md:max-w-[960px] lg:max-w-[1200px] xl:max-w-[1400px] 2xl:max-w-[1550px] aspect-square flex items-center justify-center will-change-transform"
+          className="relative w-full max-w-[98vw] sm:max-w-[760px] md:max-w-[960px] lg:max-w-[1200px] xl:max-w-[1400px] 2xl:max-w-[1550px] aspect-square flex items-center justify-center will-change-transform pinwheel-drift"
         >
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute inset-2 sm:inset-6 rounded-full bg-gradient-to-tr from-[#890754]/10 via-pink-400/8 to-amber-200/12 blur-3xl pointer-events-none" />
 
-          {/* SVG Vector Canvas with Tightly Framed 760x760 ViewBox so Elements are 32% Bigger */}
+          {/* SVG Vector Canvas with Tightly Framed 760x760 ViewBox */}
           <svg
             viewBox="120 120 760 760"
             className="w-full h-full drop-shadow-xl overflow-visible"
@@ -127,15 +186,51 @@ export function HexPinwheelShowcase({
               {/* Luxury Porcelain Alabaster Material Gradient */}
               <linearGradient id="porcelain-grad" x1="0%" y1="0%" x2="40%" y2="100%">
                 <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="65%" stopColor="#fdfbfa" />
-                <stop offset="100%" stopColor="#f3ede6" />
+                <stop offset="65%" stopColor="#fcfbfb" />
+                <stop offset="100%" stopColor="#f7edf3" />
               </linearGradient>
+
+              {/* Luxury Frosted Crystal Glass Material Gradient */}
+              <linearGradient id="glass-card-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.97" />
+                <stop offset="35%" stopColor="#fefafc" stopOpacity="0.93" />
+                <stop offset="70%" stopColor="#fbf0f6" stopOpacity="0.95" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0.98" />
+              </linearGradient>
+
+              {/* Glossy Diagonal Specular Surface Glaze */}
+              <linearGradient id="glass-specular-glaze" x1="15%" y1="0%" x2="85%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+                <stop offset="28%" stopColor="#ffffff" stopOpacity="0.35" />
+                <stop offset="55%" stopColor="#ffffff" stopOpacity="0.04" />
+                <stop offset="80%" stopColor="#ffffff" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0.65" />
+              </linearGradient>
+
+              {/* Traveling Glass Light Beam (Diamond White & Pink Luster) */}
+              <linearGradient id="glass-beam-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+                <stop offset="30%" stopColor="#ffffff" stopOpacity="0.4" />
+                <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
+                <stop offset="65%" stopColor="#ffd9ed" stopOpacity="1" />
+                <stop offset="85%" stopColor="#ffffff" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              </linearGradient>
+
+              {/* Glass Edge Soft Glow Filter */}
+              <filter id="glass-edge-glow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="3" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
 
               {/* Hover Highlight Gradient */}
               <linearGradient id="porcelain-grad-hover" x1="0%" y1="0%" x2="50%" y2="100%">
                 <stop offset="0%" stopColor="#ffffff" />
-                <stop offset="50%" stopColor="#faf6f8" />
-                <stop offset="100%" stopColor="#ede2eb" />
+                <stop offset="50%" stopColor="#fcf4f8" />
+                <stop offset="100%" stopColor="#f0dfea" />
               </linearGradient>
 
               {/* Multi-Layered 3D Ambient Occlusion Drop Shadows */}
@@ -201,15 +296,42 @@ export function HexPinwheelShowcase({
                       onMouseLeave={() => setHoveredIdx(null)}
                       onClick={() => handleProductClick(centerProduct)}
                     >
-                      {/* Central Hexagon Porcelain 3D Base */}
+                      {/* Central Hexagon Glass 3D Base */}
                       <path
                         d={HEXAGON_PATH}
-                        fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#porcelain-grad)"}
+                        fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#glass-card-grad)"}
                         stroke={isHovered ? "#890754" : "rgba(255, 255, 255, 0.95)"}
                         strokeWidth={isHovered ? "3.2" : "2"}
-                        strokeOpacity={isHovered ? 0.8 : 0.9}
+                        strokeOpacity={isHovered ? 0.85 : 0.95}
                         filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
                         className="transition-colors duration-300"
+                      />
+
+                      {/* Glossy Specular Glass Surface Glaze */}
+                      <path
+                        d={HEXAGON_PATH}
+                        fill="url(#glass-specular-glaze)"
+                        className="pointer-events-none glass-edge-glaze"
+                      />
+
+                      {/* Ambient Glass Rim Luster */}
+                      <path
+                        d={HEXAGON_PATH}
+                        fill="none"
+                        stroke="rgba(255, 255, 255, 0.85)"
+                        strokeWidth="2.2"
+                        className="pointer-events-none glass-rim-pulsing"
+                      />
+
+                      {/* Traveling Glossy Glass Light Edge Beam */}
+                      <path
+                        d={HEXAGON_PATH}
+                        fill="none"
+                        stroke="url(#glass-beam-grad)"
+                        strokeWidth="3.2"
+                        strokeLinecap="round"
+                        filter="url(#glass-edge-glow)"
+                        className="pointer-events-none glass-edge-beam-hex"
                       />
 
                       {/* Regular Clipped View (Active when not hovered) */}
@@ -293,16 +415,47 @@ export function HexPinwheelShowcase({
                       onMouseLeave={() => setHoveredIdx(null)}
                       onClick={() => handleProductClick(product)}
                     >
-                      {/* Physical 3D Porcelain Card Base */}
+                      {/* Physical 3D Glass Card Base */}
                       <path
                         d={BASE_PETAL_PATH}
                         transform={`rotate(${angle}, 500, 500)`}
-                        fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#porcelain-grad)"}
+                        fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#glass-card-grad)"}
                         stroke={isHovered ? "#890754" : "rgba(255, 255, 255, 0.95)"}
                         strokeWidth={isHovered ? "3.2" : "1.8"}
-                        strokeOpacity={isHovered ? 0.8 : 0.9}
+                        strokeOpacity={isHovered ? 0.85 : 0.95}
                         filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
                         className="transition-colors duration-300"
+                      />
+
+                      {/* Glossy Specular Glass Surface Glaze */}
+                      <path
+                        d={BASE_PETAL_PATH}
+                        transform={`rotate(${angle}, 500, 500)`}
+                        fill="url(#glass-specular-glaze)"
+                        className="pointer-events-none glass-edge-glaze"
+                      />
+
+                      {/* Ambient Glass Rim Luster */}
+                      <path
+                        d={BASE_PETAL_PATH}
+                        transform={`rotate(${angle}, 500, 500)`}
+                        fill="none"
+                        stroke="rgba(255, 255, 255, 0.85)"
+                        strokeWidth="2"
+                        className="pointer-events-none glass-rim-pulsing"
+                      />
+
+                      {/* Traveling Glossy Glass Light Edge Beam with Staggered Delays */}
+                      <path
+                        d={BASE_PETAL_PATH}
+                        transform={`rotate(${angle}, 500, 500)`}
+                        fill="none"
+                        stroke="url(#glass-beam-grad)"
+                        strokeWidth="3.2"
+                        strokeLinecap="round"
+                        filter="url(#glass-edge-glow)"
+                        className="pointer-events-none glass-edge-beam"
+                        style={{ animationDelay: `${i * 1.15}s` }}
                       />
 
                       {/* Regular Clipped View (Active when not hovered) */}

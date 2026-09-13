@@ -7,7 +7,7 @@ import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
+import { hasValidPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
 import { fbEvent } from "@/lib/fpixel";
 import { Flame } from "lucide-react";

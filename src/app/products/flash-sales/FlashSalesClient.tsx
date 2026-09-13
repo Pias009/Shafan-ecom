@@ -6,10 +6,8 @@ import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { useLanguageStore } from "@/lib/language-store";
-import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
+import { hasValidPrice } from "@/lib/product-utils";
 import { fbEvent } from "@/lib/fpixel";
 import { Zap } from "lucide-react";
 import { useLoadingStore } from "@/lib/loading-store";
@@ -36,8 +34,6 @@ interface FlashSalesClientProps {
 export default function FlashSalesClient({ products }: FlashSalesClientProps) {
   const router = useRouter();
   const { addItem, hasAddress } = useCartStore();
-  const { currentLanguage } = useLanguageStore();
-  const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
   const [quickView, setQuickView] = useState<any | null>(null);
 

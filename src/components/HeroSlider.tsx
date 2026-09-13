@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Leaf, Droplets, FlaskConical } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Price } from "./Price";
 
 interface SliderBanner {
   id: string;
@@ -17,20 +16,6 @@ interface SliderBanner {
   link?: string | null;
   backgroundColor?: string | null;
   textColor?: string | null;
-}
-
-// Custom Bunny Icon SVG for Cruelty Free feature matching reference screenshot
-function BunnyIcon({ className = "w-5 h-5" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
-      <path d="M9 10a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
-      <path d="M15 10a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
-      <path d="M9.5 15a3.5 3.5 0 0 0 5 0" />
-      <path d="M7 3L5.5 8" />
-      <path d="M17 3l1.5 5" />
-    </svg>
-  );
 }
 
 function normalizeLink(url?: string | null): string {
@@ -74,12 +59,10 @@ const slideVariants = {
 
 export function HeroSlider() {
   const [banners, setBanners] = useState<SliderBanner[]>([]);
-  const [glowProducts, setGlowProducts] = useState<any[]>([]);
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loaded, setLoaded] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const productScrollRef = useRef<HTMLDivElement>(null);
 
   // Touch swipe support for mobile
   const touchStartX = useRef<number | null>(null);
@@ -96,14 +79,6 @@ export function HeroSlider() {
       })
       .catch(() => setBanners(FALLBACK_BANNERS))
       .finally(() => setLoaded(true));
-
-    fetch("/api/products?limit=12")
-      .then((r) => (r.ok ? r.json() : { products: [] }))
-      .then((d) => {
-        const prods = Array.isArray(d) ? d : d.products || [];
-        if (prods.length > 0) setGlowProducts(prods);
-      })
-      .catch(() => {});
   }, []);
 
   const activeBanners = loaded ? banners : FALLBACK_BANNERS;

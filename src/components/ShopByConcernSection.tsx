@@ -12,7 +12,6 @@ import {
   CircleDot,
   ChevronLeft,
   ChevronRight,
-  ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -202,17 +201,20 @@ export function ShopByConcernSection() {
   return (
     <section className="w-full py-6 sm:py-10 px-3 sm:px-6 select-none my-2 sm:my-4">
       <div className="max-w-[1280px] mx-auto">
-        {/* Infographic Element Header with Luxury Skincare Accent */}
+        {/* Header: Unified Luxury Editorial Architecture */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-block relative">
-            <h2 className="font-serif text-xl sm:text-2xl md:text-3xl font-extrabold uppercase tracking-widest text-gray-900 relative z-10">
-              {isAr ? "تسوق حسب مشكلة البشرة" : "SHOP BY SKIN CONCERN"}
-            </h2>
-            {/* Elegant luxury brand stroke underline */}
-            <div className="h-1.5 sm:h-2 w-full bg-gradient-to-r from-transparent via-[#890754]/25 to-transparent -mt-1 sm:-mt-1.5 rounded-full" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#890754]/5 text-[#890754] text-[10px] sm:text-[11px] font-black uppercase tracking-[0.22em] border border-[#890754]/15 mb-2 shadow-2xs">
+            <span>✦</span>
+            <span>{isAr ? "حلول علاجية موجهة" : "TARGETED CLINICAL DERMA"}</span>
           </div>
-          <p className="text-[10px] sm:text-xs text-[#890754]/85 uppercase tracking-[0.22em] font-bold mt-1.5">
-            {isAr ? "حلول علاجية موجهة لجميع مشاكل البشرة" : "TARGETED CLINICAL SOLUTIONS FOR EVERY SKIN CONCERN"}
+          <div className="inline-block relative">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight relative z-10">
+              {isAr ? "تسوق حسب مشكلة البشرة" : "Shop By Skin Concern"}
+            </h2>
+            <div className="h-1.5 sm:h-2 w-full bg-gradient-to-r from-transparent via-[#890754]/20 to-transparent -mt-1 sm:-mt-1.5 rounded-full" />
+          </div>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1.5 max-w-md mx-auto">
+            {isAr ? "حلول علاجية موجهة لجميع مشاكل البشرة" : "Scientifically tailored active ingredients targeted to your specific skin needs"}
           </p>
         </div>
 

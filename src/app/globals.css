@@ -534,6 +534,62 @@ body {
     animation: spin-slow 3s linear infinite;
   }
 
+  /* Chromatic Rainbow Conic Rotating Border (Apple Vision Pro / Video Frame Style) */
+  @keyframes chromatic-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .rainbow-border-ring {
+    background: conic-gradient(
+      from 0deg,
+      #00f0ff 0deg,
+      #0055ff 45deg,
+      #9900ff 90deg,
+      #ff0077 135deg,
+      #ff5500 170deg,
+      #ffee00 200deg,
+      #ffffff 215deg,
+      #00ff66 250deg,
+      #00f0ff 290deg,
+      #0055ff 330deg,
+      #00f0ff 360deg
+    );
+    animation: chromatic-spin 3.2s linear infinite;
+    will-change: transform;
+  }
+
+  .rainbow-border-aura {
+    background: conic-gradient(
+      from 0deg,
+      #00f0ff 0deg,
+      #0055ff 45deg,
+      #9900ff 90deg,
+      #ff0077 135deg,
+      #ff5500 170deg,
+      #ffee00 200deg,
+      #ffffff 215deg,
+      #00ff66 250deg,
+      #00f0ff 290deg,
+      #0055ff 330deg,
+      #00f0ff 360deg
+    );
+    filter: blur(4px);
+    opacity: 0.8;
+    animation: chromatic-spin 3.2s linear infinite;
+    will-change: transform;
+  }
+
+  .group:hover .rainbow-border-ring,
+  .group:hover .rainbow-border-aura {
+    animation-duration: 1.8s;
+  }
+
+
   /* Additional animation styles for logo */
   @keyframes bounce {
 
@@ -1473,4 +1529,57 @@ body {
 @keyframes bs-enter-up {
   0% { transform: translate3d(0, 100%, 0); }
   100% { transform: translate3d(0, 0, 0); }
+}
+
+/* Luxury Animated Brand Heading (Fluid Gradient Flow & Radiant Sheen) */
+@keyframes luxury-text-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes luxury-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 2px 10px rgba(137, 7, 84, 0.18));
+  }
+  50% {
+    filter: drop-shadow(0 4px 18px rgba(217, 41, 130, 0.35));
+  }
+}
+
+.fancy-brand-heading {
+  background: linear-gradient(
+    90deg,
+    #540434 0%,
+    #890754 25%,
+    #d92982 50%,
+    #890754 75%,
+    #540434 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: luxury-text-flow 6s ease-in-out infinite, luxury-glow-pulse 4s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes luxury-line-expand {
+  0%, 100% {
+    width: 48px;
+    opacity: 0.6;
+  }
+  50% {
+    width: 96px;
+    opacity: 1;
+  }
+}
+
+.luxury-heading-line {
+  animation: luxury-line-expand 4s ease-in-out infinite;
 }

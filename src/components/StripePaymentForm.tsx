@@ -8,7 +8,6 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { Loader2 } from "lucide-react";
-import toast from "react-hot-toast";
 
 export default function StripePaymentForm({ orderId, order }: { orderId: string; order?: any }) {
   const stripe = useStripe();

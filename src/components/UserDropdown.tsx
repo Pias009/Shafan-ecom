@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { User, ShoppingCart, Package, LogOut, Shield, LayoutDashboard } from "lucide-react";
+import { User, ShoppingCart, Package, LogOut, LayoutDashboard } from "lucide-react";
 
 export function UserDropdown({
   open,
@@ -13,7 +13,6 @@ export function UserDropdown({
   onClose: () => void;
 }) {
   const { data } = useSession();
-  const userName = data?.user?.name?.split(" ")[0] || data?.user?.email?.split("@")[0] || "User";
 
   return (
     <AnimatePresence>

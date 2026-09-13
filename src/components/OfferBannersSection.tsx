@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Zap, ShieldCheck, Truck, Lock, ArrowRight, Sparkles } from "lucide-react";
-import { useLanguageStore } from "@/lib/language-store";
-import { translations } from "@/lib/translations";
+import { Zap, ShieldCheck, Truck, Lock, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface EnhancedOfferBanner {
@@ -34,8 +32,6 @@ interface EnhancedOfferBanner {
 export function OfferBannersSection() {
   const [banners, setBanners] = useState<EnhancedOfferBanner[]>([]);
   const [active, setActive] = useState(0);
-  const { currentLanguage } = useLanguageStore();
-  const t = translations[currentLanguage.code as keyof typeof translations];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -155,11 +151,10 @@ export function OfferBannersSection() {
 
               {/* Main Display Headline */}
               <div className="space-y-1 sm:space-y-2">
-                <div className="flex items-center justify-center lg:justify-start gap-2">
+                <div className="flex items-center justify-center lg:justify-start">
                   <h2 className="font-serif font-bold text-3xl sm:text-5xl lg:text-6xl leading-tight text-white tracking-tight">
                     FLASH SALE
                   </h2>
-                  <Zap size={38} className="text-amber-400 fill-amber-400 animate-bounce hidden sm:inline-block" />
                 </div>
                 
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1">

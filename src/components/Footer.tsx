@@ -8,35 +8,31 @@ import {
   Facebook,
   Instagram,
   Mail,
-  Phone,
   MessageCircle,
   Linkedin,
-  ShieldCheck,
-  Truck,
-  RotateCcw,
   Sparkles,
   Lock,
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Logo } from "./Logo";
 
 export function Footer() {
   const { currentLanguage } = useLanguageStore();
-  const [mounted, setMounted] = useState(false);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const t = translations[(isClient ? currentLanguage.code : "en") as keyof typeof translations];
 
-  const t = translations[(mounted ? currentLanguage.code : "en") as keyof typeof translations];
-
-  if (!mounted) return null;
+  if (!isClient) return null;
 
   const sections = [
     {

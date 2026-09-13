@@ -13,39 +13,10 @@ import { useSearchParams } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useSearchStore } from "@/lib/search-store";
 import { trackAddToCart } from "@/lib/datalayer";
 
-const DUMMY_PRODUCT_NAMES = [
-  "Icy Gel Cleanser",
-  "Glass Skin Serum",
-  "Mint Cloud Mist",
-  "Silk Glass Shampoo",
-  "Mirror Gloss Conditioner",
-  "Violet Night Eau",
-  "Vitamin C Brightening Serum",
-  "Velvet Matte Lipstick",
-  "Glow Foundation SPF 15",
-  "Crystal Musk",
-  "Amber Glow",
-  "Silver Cedar Intense"
-];
-
-const DUMMY_BRANDS = [
-  "HEALTH",
-  "MAKEUP",
-  "VIOLET LAB",
-  "SKYPEARL"
-];
-
-const isDummyProduct = (p: any) => {
-  const name = (p.name || "").trim().toLowerCase();
-  const brand = (typeof (p.brandName || p.brand) === 'string' ? (p.brandName || p.brand) : p.brand?.name || "").trim().toLowerCase();
-  
-  return DUMMY_PRODUCT_NAMES.some(dn => name.includes(dn.toLowerCase())) || 
-         DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
-};
+const MAINTAINED_CATEGORIES = ["Skin Care", "Body Care", "Hair Care"];
 
 export default function ProductsClient({
   initialProducts,
@@ -86,9 +57,8 @@ export default function ProductsClient({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { query: q, clearQuery } = useSearchStore();
+  const { query: q } = useSearchStore();
   const isRoutines = isRoutinesPage;
-  const [mounted, setMounted] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   const { addItem, hasAddress } = useCartStore();
@@ -116,7 +86,6 @@ export default function ProductsClient({
 
   // Initialize filters from URL params on mount
   useEffect(() => {
-    setMounted(true);
     setHydrated(true);
     const params = new URLSearchParams(window.location.search);
     const urlBrand = params.get("brand");
@@ -240,7 +209,6 @@ export default function ProductsClient({
   }, [products, filterOptions]);
 
   // All Products page is restricted to these categories only (client requirement).
-  const MAINTAINED_CATEGORIES = ["Skin Care", "Body Care", "Hair Care"];
   const CATEGORY_TABS = [
     { label: "Routine", category: "Routine" },
     { label: "Skincare", category: "Skin Care" },
@@ -412,7 +380,7 @@ return sorted;
             shipping = addressData;
           }
         }
-      } catch (e) {}
+      } catch {}
 
       if (!billing) {
         const guestStr = localStorage.getItem('guest_address');
@@ -421,7 +389,7 @@ return sorted;
             const guestData = JSON.parse(guestStr);
             billing = guestData;
             shipping = guestData;
-          } catch (e) {}
+          } catch {}
         }
       }
 

@@ -1,20 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, UserRound, Menu, X, Tag, Sparkles, Search, CheckCircle, ArrowRight } from "lucide-react";
+import { ShoppingBag, UserRound, Menu, X, Sparkles, Search, CheckCircle, ArrowRight } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useMemo, useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthModal } from "./AuthModal";
-import { UserDropdown } from "./UserDropdown";
 import { LanguageSelector } from "./LanguageSelector";
 import { CountrySelector } from "./CountrySelector";
 import { useCartStore } from "@/lib/cart-store";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { Logo } from "./Logo";
-import { useCountryStore } from "@/lib/country-store";
 import { SearchOverlay } from "./SearchOverlay";
 import { createPortal } from "react-dom";
 
@@ -43,17 +41,20 @@ export function Navbar() {
     if (typeof window !== 'undefined') {
       const recentOrder = localStorage.getItem('recent_order');
       if (recentOrder) {
-        setOrderNotification(recentOrder);
-        
-        // Remove from storage immediately so it only shows once
         localStorage.removeItem('recent_order');
+        const timer = setTimeout(() => {
+          setOrderNotification(recentOrder);
+        }, 0);
         
         // Auto hide after 3 seconds
-        const timer = setTimeout(() => {
+        const hideTimer = setTimeout(() => {
           setOrderNotification(null);
         }, 3000);
         
-        return () => clearTimeout(timer);
+        return () => {
+          clearTimeout(timer);
+          clearTimeout(hideTimer);
+        };
       }
     }
   }, []);
@@ -109,7 +110,6 @@ export function Navbar() {
   );
   const items = useCartStore((state) => state.items);
   const { currentLanguage } = useLanguageStore();
-  const { selectedCountry, detectedCountry, setDetectedCountry } = useCountryStore();
 
   const t = translations[(isClient ? currentLanguage.code : "en") as keyof typeof translations];
 
@@ -179,7 +179,6 @@ export function Navbar() {
 
   // Sync address status
   const setHasAddress = useCartStore((state) => state.setHasAddress);
-  const hasAddress = useCartStore((state) => state.hasAddress);
   const isUserAuthenticated = status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPERADMIN";
   
   useEffect(() => {
@@ -193,9 +192,16 @@ export function Navbar() {
   }, [isUserAuthenticated, setHasAddress]);
 
   // Close menus on navigation and lock scroll
+  const prevPathnameRef = useRef(safePathname);
   useEffect(() => {
-    setUserMenuOpen(false);
-    setMobileOpen(false);
+    if (prevPathnameRef.current !== safePathname) {
+      prevPathnameRef.current = safePathname;
+      const t = setTimeout(() => {
+        setUserMenuOpen(false);
+        setMobileOpen(false);
+      }, 0);
+      return () => clearTimeout(t);
+    }
   }, [safePathname]);
 
   useEffect(() => {
@@ -226,8 +232,6 @@ export function Navbar() {
     }
   }
 
-  const isHomePage = safePathname === "/";
-  
   return (
     <>
       <header
@@ -339,6 +343,49 @@ export function Navbar() {
                   {navLinks.map((link) => {
                     const isOffers = link.href === "/offers";
                     const isActive = safePathname === link.href;
+
+                    if (link.href === "/") {
+                      if (isActive) {
+                        return (
+                          <Link
+                            key={link.href}
+                            href={link.href}
+                            prefetch={true}
+                            onMouseEnter={() => router.prefetch(link.href)}
+                            className="group relative inline-flex rounded-full p-[2px] overflow-hidden select-none shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-transform duration-300 hover:scale-105 active:scale-95"
+                          >
+                            {/* Rotating Chromatic Rainbow Beam Border around Active Pill */}
+                            <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] rainbow-border-spin pointer-events-none" />
+                            {/* Blooming Chromatic Aura */}
+                            <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] rainbow-border-aura pointer-events-none" />
+                            {/* Dark Frosted Inner Pill */}
+                            <div className="relative z-10 w-full h-full rounded-full bg-[#180413]/90 backdrop-blur-md px-3.5 py-1.5 flex items-center gap-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35)]">
+                              <svg className="w-3.5 h-3.5 fill-white text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] shrink-0" viewBox="0 0 24 24">
+                                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                              </svg>
+                              <span className="text-xs font-black tracking-widest uppercase text-white drop-shadow-xs">
+                                {link.label}
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          prefetch={true}
+                          onMouseEnter={() => router.prefetch(link.href)}
+                          className="px-3.5 py-1.5 text-xs font-black tracking-widest uppercase transition-all duration-300 rounded-full text-white/90 hover:text-white hover:bg-white/20 inline-flex items-center gap-1.5"
+                        >
+                          <svg className="w-3.5 h-3.5 fill-white/80 text-white/80 shrink-0" viewBox="0 0 24 24">
+                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                          </svg>
+                          <span>{link.label}</span>
+                        </Link>
+                      );
+                    }
                     
                     if (link.label === "CATEGORIES") {
                       return (
@@ -508,7 +555,7 @@ export function Navbar() {
                   <div className="space-y-6 mb-12">
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/20 px-1">Shop Collections</p>
                     <div className="flex flex-col gap-1">
-                      {navLinks.map((link, idx) => {
+                      {navLinks.map((link) => {
                         const isOffers = link.href === "/offers";
                         
                         if (link.label === "CATEGORIES") {

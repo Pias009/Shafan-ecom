@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Search, ShoppingBag, UserRound, Sparkles } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useLanguageStore } from "@/lib/language-store";
@@ -18,25 +18,19 @@ export function MobileBottomNav() {
   const { currentLanguage } = useLanguageStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
   
-  const [mounted, setMounted] = useState(false);
-  const [visible, setVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+  const [visible] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    // Keep bottom navigation comfortably accessible while browsing
-    setVisible(true);
-  }, []);
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
   const sesiEnabled = useSesi((s) => s.enabled);
   const openSesi = useSesi((s) => s.setOpen);
 
-  if (!mounted) return null;
+  if (!isClient) return null;
 
   const navItems = [
     { href: "/", icon: Home, label: t.nav.home },
@@ -72,11 +66,19 @@ export function MobileBottomNav() {
                 <div className="flex flex-col items-center justify-center gap-0.5 relative py-1 px-2 sm:px-2.5 w-full">
                   {/* 3D Active Pill Background */}
                   {isActive && (
-                    <motion.div
-                      layoutId="activeTabPill"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      className="absolute inset-0 rounded-full bg-gradient-to-b from-[#890754] via-[#7d064c] to-[#65033d] shadow-[0_3px_10px_rgba(137,7,84,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]"
-                    />
+                    item.href === "/" ? (
+                      <div className="absolute inset-0 rounded-full p-[1.8px] overflow-hidden shadow-[0_4px_16px_rgba(137,7,84,0.4)] pointer-events-none">
+                        <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] rainbow-border-spin pointer-events-none" />
+                        <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] rainbow-border-aura pointer-events-none" />
+                        <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-b from-[#890754] via-[#7d064c] to-[#65033d] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]" />
+                      </div>
+                    ) : (
+                      <motion.div
+                        layoutId="activeTabPill"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                        className="absolute inset-0 rounded-full bg-gradient-to-b from-[#890754] via-[#7d064c] to-[#65033d] shadow-[0_3px_10px_rgba(137,7,84,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]"
+                      />
+                    )
                   )}
 
                   {/* Sesi AI Accent Background */}

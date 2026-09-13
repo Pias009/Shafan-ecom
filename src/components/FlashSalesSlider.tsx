@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 
@@ -64,7 +63,6 @@ export function FlashSalesSlider({
   addToCart,
   orderNow,
 }: FlashSalesSliderProps) {
-  const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(2);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [windowWidth, setWindowWidth] = useState(1200);
@@ -76,15 +74,10 @@ export function FlashSalesSlider({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    if (products.length > 0 && activeIndex >= products.length) {
-      setActiveIndex(Math.min(2, products.length - 1));
-    }
-  }, [products.length, activeIndex]);
-
   if (!products || products.length === 0) return null;
 
   const total = products.length;
+  const safeActiveIndex = total > 0 ? (activeIndex >= total ? Math.min(2, total - 1) : activeIndex) : 0;
 
   const handlePrev = () => {
     setActiveIndex((prev) => (prev - 1 + total) % total);
@@ -146,7 +139,7 @@ export function FlashSalesSlider({
           {/* Cards Stage */}
           <div className="relative w-full h-full flex items-center justify-center overflow-visible">
             {products.map((product, i) => {
-              let diff = (i - activeIndex) % total;
+              let diff = (i - safeActiveIndex) % total;
               if (diff > total / 2) diff -= total;
               if (diff < -total / 2) diff -= total;
 
@@ -198,7 +191,7 @@ export function FlashSalesSlider({
         {/* Bottom Pagination Dots */}
         <div className="flex items-center justify-center gap-1.5 mt-3 select-none">
           {Array.from({ length: Math.min(5, total) }).map((_, dotIdx) => {
-            const isCurrent = dotIdx === activeIndex % Math.min(5, total);
+            const isCurrent = dotIdx === safeActiveIndex % Math.min(5, total);
             return (
               <button
                 key={dotIdx}

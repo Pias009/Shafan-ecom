@@ -21,13 +21,14 @@ export default function TamaraWidget({ price, currency, country }: TamaraWidgetP
 
   const publicKey = process.env.NEXT_PUBLIC_TAMARA_PUBLIC_KEY || "a5e7eb67-561b-479c-84f1-a5a44d5fce1d";
   const lang = isArabic ? "ar" : "en";
+  const widgetCountry = country || "AE";
 
   // Set the configuration synchronously so the script always has it when it evaluates
   if (typeof window !== "undefined") {
     window.tamaraWidgetConfig = {
       lang: lang,
-      country: "AE",
-      publicKey: "a5e7eb67-561b-479c-84f1-a5a44d5fce1d",
+      country: widgetCountry,
+      publicKey: publicKey,
     };
   }
 
@@ -48,6 +49,7 @@ export default function TamaraWidget({ price, currency, country }: TamaraWidgetP
     }
 
     widget.setAttribute("amount", currentPrice.toFixed(2));
+    if (currency) widget.setAttribute("currency", currency);
 
     // Force a refresh of the Tamara widget whenever the amount or language changes
     if (window.TamaraWidgetV2 && typeof window.TamaraWidgetV2.refresh === "function") {
@@ -56,7 +58,7 @@ export default function TamaraWidget({ price, currency, country }: TamaraWidgetP
       }
       window.TamaraWidgetV2.refresh();
     }
-  }, [currentPrice, lang]);
+  }, [currentPrice, lang, currency]);
 
   if (isNaN(currentPrice) || currentPrice <= 0) return null;
 
@@ -66,7 +68,7 @@ export default function TamaraWidget({ price, currency, country }: TamaraWidgetP
     <>
       <script
         dangerouslySetInnerHTML={{
-          __html: `window.tamaraWidgetConfig = { lang: "${lang}", country: "AE", publicKey: "a5e7eb67-561b-479c-84f1-a5a44d5fce1d" };`,
+          __html: `window.tamaraWidgetConfig = { lang: "${lang}", country: "${widgetCountry}", publicKey: "${publicKey}" };`,
         }}
       />
       <Script

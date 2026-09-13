@@ -1,24 +1,21 @@
 "use client";
 
-import { useMemo, useState, useEffect, Suspense, useRef, memo } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import { CategorySection } from "@/components/CategorySection";
 import { HeroSlider } from "@/components/HeroSlider";
-import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { OfferBannersSection } from "@/components/OfferBannersSection";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Sparkles, Zap, ChevronLeft, ChevronRight, ShieldCheck, Flame, Truck, Shield, RefreshCw, Headset } from "lucide-react";
+import { ArrowRight, Zap, ShieldCheck, Truck, RefreshCw, Headset } from "lucide-react";
 import Link from "next/link";
 import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { FlashSalesSlider } from "@/components/FlashSalesSlider";
 import { RoutineSection } from "@/components/RoutineSection";
 import { BestSellersSection } from "@/components/BestSellersSection";
 import { HexPinwheelShowcase } from "@/components/HexPinwheelShowcase";
-import { useLanguageStore } from "@/lib/language-store";
-import { translations } from "@/lib/translations";
-import { useCurrencyStore } from "@/lib/currency-store";
+import { OnePackSolutionSection } from "@/components/OnePackSolutionSection";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
@@ -27,57 +24,8 @@ import { ShopByConcernSection } from "@/components/ShopByConcernSection";
 import { WhatsAppConciergeButton } from "@/components/WhatsAppConciergeButton";
 
 import dynamic from "next/dynamic";
-const BlogShowcase = dynamic(() => import("@/components/BlogShowcase").then(m => m.BlogShowcase), { ssr: false });
 const GoogleReviewsSection = dynamic(() => import("@/components/GoogleReviewsSection").then(m => m.GoogleReviewsSection), { ssr: false });
 const BrandMarquee = dynamic(() => import("@/components/BrandMarquee").then(m => m.BrandMarquee), { ssr: false });
-
-function transformProduct(product: any) {
-  return {
-    id: product.id,
-    name: product.name,
-    slug: product.slug,
-    price: product.price || product.priceCents || 0,
-    discountPrice: product.discountPrice || product.salePrice || product.salePriceCents,
-    salePrice: product.discountPrice || product.salePrice || product.salePriceCents,
-    salePriceCents: product.salePriceCents,
-    imageUrl: product.imageUrl || product.mainImage || "/placeholder-product.png",
-    mainImage: product.mainImage || product.imageUrl,
-    brand: product.brandName || (typeof product.brand === "string" ? product.brand : product.brand?.name) || "Generic",
-    averageRating: product.averageRating,
-    ratingCount: product.ratingCount,
-    stockQuantity: product.stockQuantity,
-    totalSales: product.totalSales,
-    countryPrices: product.countryPrices,
-    hot: product.hot,
-    trending: product.trending,
-    freeDelivery: product.freeDelivery,
-  };
-}
-
-const ProductCardItem = memo(function ProductCardItem({ 
-  product, 
-  onQuickView, 
-  addToCart, 
-  orderNow, 
-  priority 
-}: { 
-  product: any; 
-  onQuickView: (p: unknown) => void; 
-  addToCart: (p: unknown) => void; 
-  orderNow: (p: unknown) => void; 
-  priority: boolean;
-}) {
-  const transformed = useMemo(() => transformProduct(product), [product]);
-  return (
-    <ProductCard
-      product={transformed}
-      onQuickView={onQuickView}
-      onAddToCart={addToCart}
-      onOrderNow={orderNow}
-      priority={priority}
-    />
-  );
-});
 
 function FlashSaleCountdown() {
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 28, seconds: 45 });
@@ -115,54 +63,6 @@ function FlashSaleCountdown() {
   );
 }
 
-function NewArrivalsSlider({ products, onQuickView, addToCart, orderNow }: { products: any[]; onQuickView: (p: any) => void; addToCart: (p: any) => void; orderNow: (p: any) => void }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const amount = scrollRef.current.clientWidth;
-      scrollRef.current.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
-    }
-  };
-
-  return (
-    <div className="py-2 sm:py-3 relative">
-      <button
-        onClick={() => scroll('left')}
-        className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-
-      <button
-        onClick={() => scroll('right')}
-        className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 items-center justify-center bg-white shadow-xl rounded-full border border-pink-100 text-[#890754] hover:bg-[#890754] hover:text-white transition-all active:scale-95"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
-
-      <div 
-        ref={scrollRef}
-        className="flex overflow-x-auto pb-3 md:pb-5 scrollbar-hide snap-x snap-mandatory px-1.5 sm:px-2 gap-2 sm:gap-3 lg:gap-4"
-      >
-        {products.map((product, idx) => (
-          <div key={product.id} className="flex-shrink-0 snap-start w-[calc(38%-6px)] sm:w-[calc(28%-8px)] md:w-[calc(22%-10px)] lg:w-[calc(19%-12px)]">
-            <ProductCardItem
-              product={product}
-              onQuickView={onQuickView}
-              addToCart={addToCart}
-              orderNow={orderNow}
-              priority={idx < 4}
-            />
-          </div>
-        ))}
-      </div>
-      
-
-    </div>
-  );
-}
-
 const DUMMY_PRODUCT_NAMES = [
   "Icy Gel Cleanser",
   "Glass Skin Serum",
@@ -193,9 +93,7 @@ const isDummyProduct = (p: any) => {
          DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
 };
 
-
-
-export default function HomeClient({ initialProducts, newArrivals = [], flashSales = [], hot: hotProducts = [], routine: routineProducts = [], bestSellers: bestSellerProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[], bestSellers?: any[] }) {
+export default function HomeClient({ initialProducts, flashSales = [], hot: hotProducts = [], routine: routineProducts = [], bestSellers: bestSellerProducts = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[], bestSellers?: any[] }) {
   const [products] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -209,25 +107,21 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
 
   const hot = useMemo(() => hotProducts.length > 0 ? hotProducts : products.filter((p) => p.hot), [products, hotProducts]);
 
-  const filteredNewArrivals = useMemo(() => {
-    return newArrivals.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
-  }, [newArrivals, selectedCountry, selectedCurrency]);
-
   const filteredFlashSales = useMemo(() => {
     return flashSales.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
-  }, [flashSales, selectedCountry, selectedCurrency]);
+  }, [flashSales, selectedCountry]);
 
   const filteredHot = useMemo(() => {
     return hot.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
-  }, [hot, selectedCountry, selectedCurrency]);
+  }, [hot, selectedCountry]);
 
   const filteredRoutine = useMemo(() => {
     return routineProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
-  }, [routineProducts, selectedCountry, selectedCurrency]);
+  }, [routineProducts, selectedCountry]);
 
   const filteredBestSellers = useMemo(() => {
     return bestSellerProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
-  }, [bestSellerProducts, selectedCountry, selectedCurrency]);
+  }, [bestSellerProducts, selectedCountry]);
 
   const bestSearchedProducts = useMemo(() => {
     const valid = products.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
@@ -236,7 +130,7 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
       const scoreB = (b.trending ? 100 : 0) + (b.hot ? 50 : 0) + (b.totalSales || 0) * 5 + (b.ratingCount || 0) * 2;
       return scoreB - scoreA;
     });
-  }, [products, selectedCountry, selectedCurrency]);
+  }, [products, selectedCountry]);
 
   function addToCart(product: any) {
     const cartItem = {
@@ -293,7 +187,7 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
             shipping = addressData;
           }
         }
-      } catch (e) {}
+      } catch {}
 
       if (!billing) {
         const guestStr = localStorage.getItem('guest_address');
@@ -302,7 +196,7 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
             const guestData = JSON.parse(guestStr);
             billing = guestData;
             shipping = guestData;
-          } catch (e) {}
+          } catch {}
         }
       }
 
@@ -342,9 +236,6 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
     }
   }
 
-  const { currentLanguage } = useLanguageStore();
-  const t = translations[currentLanguage.code as keyof typeof translations];
-
   return (
     <div className="min-h-screen relative z-0 flex flex-col overflow-x-hidden w-full max-w-full bg-transparent text-gray-900 selection:bg-[#890754] selection:text-white" suppressHydrationWarning>
       
@@ -381,7 +272,6 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
               <div className="relative flex items-center justify-between gap-2 sm:gap-4">
                 {/* Left: Title + Mini LIVE Badge */}
                 <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                  <span className="text-base sm:text-xl text-amber-400">⚡</span>
                   <h2 className="font-serif text-sm sm:text-lg md:text-xl font-black tracking-tight text-white uppercase whitespace-nowrap">
                     Flash Sales
                   </h2>
@@ -439,6 +329,15 @@ export default function HomeClient({ initialProducts, newArrivals = [], flashSal
             onOrderNow={(pp) => orderNow(pp)}
           />
         </div>
+
+        {/* 5.5 One Pack Solution Routine Promotion Section */}
+        <OnePackSolutionSection
+          routineProducts={filteredRoutine}
+          allProducts={products}
+          onQuickView={setQuickView}
+          addToCart={addToCart}
+          orderNow={orderNow}
+        />
 
         {/* 6. Geometric Hex-Pinwheel Showcase (Best Searched Products Only) */}
         {bestSearchedProducts.length > 0 && (

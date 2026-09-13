@@ -6,7 +6,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLanguageStore } from "@/lib/language-store";
-import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
+import { useCurrencyStore } from "@/lib/currency-store";
 import { translations } from "@/lib/translations";
 import { fbEvent } from "@/lib/fpixel";
 
@@ -34,7 +34,7 @@ export function AuthModal({
 }) {
   const { data: session, status } = useSession();
   const { currentLanguage } = useLanguageStore();
-  const { currentCurrency, setCurrency } = useCurrencyStore();
+  const { currentCurrency } = useCurrencyStore();
   const t = translations[currentLanguage.code as keyof typeof translations];
 
   const [mode, setMode] = useState<Mode>(defaultMode);
