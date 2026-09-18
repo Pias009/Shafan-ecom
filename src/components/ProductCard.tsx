@@ -82,12 +82,12 @@ const ProductCardComponent = function ProductCard({
 
   if (!hasHydrated) {
     return (
-      <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 w-full animate-pulse overflow-hidden">
-        <div className="aspect-square bg-white/5 w-full mb-3" />
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm w-full animate-pulse overflow-hidden">
+        <div className="aspect-square bg-gray-50 w-full mb-3" />
         <div className="space-y-2 px-3 pb-3">
-          <div className="h-2.5 bg-white/20 rounded w-1/3" />
-          <div className="h-4 bg-white/20 rounded" />
-          <div className="h-4 bg-white/30 rounded w-1/2" />
+          <div className="h-2.5 bg-gray-100 rounded w-1/3" />
+          <div className="h-4 bg-gray-100 rounded" />
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
         </div>
       </div>
     );
@@ -122,9 +122,9 @@ const ProductCardComponent = function ProductCard({
 
   const badge = (() => {
     if (isNotAvailable) return { label: "OUT OF STOCK", color: "bg-black/40 backdrop-blur-sm text-white" };
-    if (product.hot || product.trending) return { label: "BEST SELLER", color: "bg-white text-[#890754] shadow-xs", icon: true };
+    if (product.hot || product.trending) return { label: "BEST SELLER", color: "bg-[#890754] text-white shadow-xs", icon: true };
     if (hasDiscount) return { label: `-${discountPct}%`, color: "bg-[#890754] text-white shadow-xs" };
-    return { label: "NEW", color: "bg-white text-[#890754] shadow-xs" };
+    return { label: "NEW", color: "bg-[#890754] text-white shadow-xs" };
   })();
 
   const imgSrc = isValidImageUrl(product.imageUrl || product.mainImage)
@@ -134,8 +134,8 @@ const ProductCardComponent = function ProductCard({
   return (
     <div style={{ perspective: "1000px" }} className="w-full h-full">
       <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        whileInView={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-20px" }}
         transition={{ duration: 0.35, ease: "easeOut" }}
         onMouseEnter={handleMouseEnter}
@@ -149,23 +149,23 @@ const ProductCardComponent = function ProductCard({
           transformStyle: "preserve-3d",
           willChange: "transform",
           boxShadow: isHovered
-            ? "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 6px 0 0 #ebd8e4, 0 8px 3px 0 rgba(137, 7, 84, 0.05), 0 24px 44px -6px rgba(84, 4, 52, 0.12), 0 36px 64px -14px rgba(40, 5, 25, 0.14)"
-            : "inset 0 2px 2px 0 rgba(255, 255, 255, 1), inset 0 -2px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 1px 0 rgba(255, 255, 255, 0.9), 0 4px 0 0 #f0e6ec, 0 5.5px 2px 0 rgba(137, 7, 84, 0.03), 0 16px 32px -4px rgba(84, 4, 52, 0.07), 0 28px 48px -12px rgba(40, 5, 25, 0.09)",
+            ? "0 22px 45px -10px rgba(137, 7, 84, 0.18), 0 12px 24px -6px rgba(0, 0, 0, 0.06), 0 0 0 1.5px rgba(137, 7, 84, 0.2)"
+            : "0 6px 24px -4px rgba(0, 0, 0, 0.05), 0 2px 8px -2px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.07)",
         }}
-        className="group relative bg-gradient-to-b from-white via-[#fcfbfb] to-[#fbf5f8] hover:from-white hover:via-[#faf6f8] hover:to-[#f5e9f1] rounded-xl sm:rounded-2xl border border-white/95 ring-1 ring-pink-900/[0.04] w-full h-full flex flex-col cursor-pointer select-none overflow-hidden transition-all duration-300"
+        className="group relative bg-white rounded-xl sm:rounded-2xl w-full h-full flex flex-col cursor-pointer select-none overflow-hidden transition-all duration-300"
       >
-        {/* ── Image Stage (Full Product Fit, No Border, Seamless Card Integration) ── */}
+        {/* ── Image Stage (Full Product Fit, Pure White Background, 3D Layering) ── */}
         <div
           style={{ transformStyle: "preserve-3d" }}
-          className="relative aspect-square w-full bg-transparent flex items-center justify-center overflow-hidden"
+          className="relative aspect-square w-full bg-white flex items-center justify-center overflow-hidden"
         >
           {/* Badge (Top-Left) */}
           <div
-            style={{ transform: "translateZ(24px)" }}
+            style={{ transform: "translateZ(28px)" }}
             className="absolute top-2 left-2 z-20 pointer-events-none"
           >
             <span
-              className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full shadow-2xs`}
+              className={`inline-flex items-center gap-0.5 ${badge.color} text-[7px] xs:text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm`}
             >
               {"icon" in badge && badge.icon && (
                 <Flame size={7} className="fill-amber-400 text-amber-400 shrink-0 sm:w-2 sm:h-2" />
@@ -176,28 +176,28 @@ const ProductCardComponent = function ProductCard({
 
           {/* 3D Realistic Grounding Shadow beneath product bottle */}
           <div
-            style={{ transform: "translateZ(6px)" }}
-            className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-3/4 h-1.5 bg-[#890754]/15 rounded-[100%] blur-xs opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
+            style={{ transform: "translateZ(8px)" }}
+            className="absolute bottom-2 left-1/2 -translate-x-1/2 w-3/4 h-2 bg-[#890754]/20 rounded-[100%] blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
           />
 
-          {/* Product Image — Fits card edge-to-edge with zero border */}
+          {/* Product Image — Fits card edge-to-edge with 3D pop effect */}
           <div
             style={{
               transform: isHovered
-                ? "translateZ(26px) scale(1.04)"
-                : "translateZ(10px) scale(1)",
+                ? "translateZ(36px) scale(1.07)"
+                : "translateZ(12px) scale(1)",
               transition: isHovered
                 ? "transform 0.15s ease-out"
                 : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
             }}
-            className="relative w-full h-full pointer-events-none flex items-center justify-center"
+            className="relative w-full h-full pointer-events-none flex items-center justify-center p-2"
           >
             <Image
               src={imgSrc}
               alt={product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-contain object-center drop-shadow-sm group-hover:scale-105 transition-all duration-300"
+              className="object-contain object-center drop-shadow-md group-hover:scale-105 transition-all duration-300"
               priority={priority}
             />
           </div>

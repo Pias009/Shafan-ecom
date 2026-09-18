@@ -146,6 +146,17 @@ export function AdminSidebar() {
                    <Sparkles size={18} /> Routine
                 </Link>
                 <Link
+                   href="/ueadmin/rejuvenate-section"
+                   prefetch={true}
+                   className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
+                     pathname === '/ueadmin/rejuvenate-section'
+                       ? 'bg-[#890754] text-white shadow-xl shadow-[#890754]/25 scale-105 border border-[#890754]/20'
+                       : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
+                   }`}
+                >
+                   <Sparkles size={18} className="text-pink-400" /> Refresh Your Mind
+                </Link>
+                <Link
                    href="/ueadmin/trending"
                    prefetch={true}
                    className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"

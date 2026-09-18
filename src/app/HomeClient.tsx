@@ -17,7 +17,8 @@ import RejuvenateBestProductsSection from "@/components/RejuvenateBestProductsSe
 import { BestSellersSection } from "@/components/BestSellersSection";
 import HairCareSpotlightSection from "@/components/HairCareSpotlightSection";
 import { HexPinwheelShowcase } from "@/components/HexPinwheelShowcase";
-import { OnePackSolutionSection } from "@/components/OnePackSolutionSection";
+import MakeupSpotlightSection from "@/components/MakeupSpotlightSection";
+import FragranceSpotlightSection from "@/components/FragranceSpotlightSection";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
@@ -53,14 +54,14 @@ function FlashSaleCountdown() {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div className="flex items-center gap-1 sm:gap-1.5 bg-black/40 backdrop-blur-md px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full border border-pink-400/30 text-pink-200 text-[9.5px] sm:text-[11px] font-black tracking-wider shadow-xs select-none shrink-0 whitespace-nowrap">
-      <Zap size={11} className="text-amber-400 fill-amber-400 animate-pulse shrink-0" />
-      <span className="hidden xs:inline text-[9px] sm:text-[10px] text-pink-300">ENDS:</span>
-      <span className="bg-black/50 px-1 py-0.2 rounded text-white font-mono">{pad(timeLeft.hours)}h</span>
+    <div className="flex items-center gap-1.5 sm:gap-2 bg-black/40 backdrop-blur-md px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-pink-400/30 text-pink-200 text-[10px] sm:text-xs font-medium tracking-wider shadow-xs select-none shrink-0 whitespace-nowrap">
+      <Zap size={13} className="text-amber-400 fill-amber-400 animate-pulse shrink-0" />
+      <span className="hidden xs:inline text-[10px] sm:text-xs text-pink-300 font-semibold">ENDS IN:</span>
+      <span className="bg-black/50 px-1.5 py-0.5 rounded text-white font-mono font-bold">{pad(timeLeft.hours)}h</span>
       <span>:</span>
-      <span className="bg-black/50 px-1 py-0.2 rounded text-white font-mono">{pad(timeLeft.minutes)}m</span>
+      <span className="bg-black/50 px-1.5 py-0.5 rounded text-white font-mono font-bold">{pad(timeLeft.minutes)}m</span>
       <span>:</span>
-      <span className="bg-black/50 px-1 py-0.2 rounded text-pink-300 font-mono">{pad(timeLeft.seconds)}s</span>
+      <span className="bg-black/50 px-1.5 py-0.5 rounded text-pink-300 font-mono font-bold">{pad(timeLeft.seconds)}s</span>
     </div>
   );
 }
@@ -95,7 +96,28 @@ const isDummyProduct = (p: any) => {
          DUMMY_BRANDS.some(db => brand.includes(db.toLowerCase()));
 };
 
-export default function HomeClient({ initialProducts, flashSales = [], hot: hotProducts = [], routine: routineProducts = [], bestSellers: bestSellerProducts = [], banners = [] }: { initialProducts: any[], newArrivals?: any[], flashSales?: any[], hot?: any[], routine?: any[], bestSellers?: any[], banners?: any[] }) {
+export default function HomeClient({
+  initialProducts,
+  flashSales = [],
+  hot: hotProducts = [],
+  routine: routineProducts = [],
+  bestSellers: bestSellerProducts = [],
+  makeupProducts: initialMakeupProducts = [],
+  fragranceProducts: initialFragranceProducts = [],
+  banners = [],
+  rejuvenateSection = null
+}: {
+  initialProducts: any[],
+  newArrivals?: any[],
+  flashSales?: any[],
+  hot?: any[],
+  routine?: any[],
+  bestSellers?: any[],
+  makeupProducts?: any[],
+  fragranceProducts?: any[],
+  banners?: any[],
+  rejuvenateSection?: any
+}) {
   const [products] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -124,6 +146,26 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
   const filteredBestSellers = useMemo(() => {
     return bestSellerProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [bestSellerProducts, selectedCountry]);
+
+  const filteredMakeup = useMemo(() => {
+    const list = (initialMakeupProducts && initialMakeupProducts.length > 0)
+      ? initialMakeupProducts
+      : products.filter(p =>
+          p.categories?.some((c: string) => c.toLowerCase() === 'makeup') ||
+          (p.categoryName || '').toLowerCase() === 'makeup'
+        );
+    return list.filter((p) => hasValidPrice(p, selectedCountry));
+  }, [initialMakeupProducts, products, selectedCountry]);
+
+  const filteredFragrances = useMemo(() => {
+    const list = (initialFragranceProducts && initialFragranceProducts.length > 0)
+      ? initialFragranceProducts
+      : products.filter(p =>
+          p.categories?.some((c: string) => c.toLowerCase().includes('fragran')) ||
+          (p.categoryName || '').toLowerCase().includes('fragran')
+        );
+    return list.filter((p) => hasValidPrice(p, selectedCountry));
+  }, [initialFragranceProducts, products, selectedCountry]);
 
   const bestSearchedProducts = useMemo(() => {
     const valid = products.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
@@ -264,20 +306,20 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
 
         {/* 1. Flash Sales Section */}
         {filteredFlashSales.length > 0 && (
-          <section className="pt-2 md:pt-4 pb-4 md:pb-6 px-1 sm:px-2">
+          <section className="relative w-full py-4 sm:py-6 md:py-8 select-none">
             {/* Ultra-Slim Section Header Bar */}
-            <div className="mb-3 sm:mb-4 relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#4a032d] via-[#540434] to-[#360220] backdrop-blur-xl border border-pink-500/20 px-3 py-2 sm:px-5 sm:py-2.5 shadow-[0_6px_24px_rgba(84,4,52,0.18)]">
+            <div className="mb-4 sm:mb-6 md:mb-8 relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#3e0325] via-[#540434] to-[#3e0325] backdrop-blur-xl border border-pink-500/20 px-4 py-3 sm:px-6 sm:py-3.5 shadow-[0_8px_32px_rgba(84,4,52,0.2)]">
               {/* Glow accent */}
-              <div className="absolute -top-8 -left-8 w-32 h-32 bg-pink-500/15 rounded-full blur-xl pointer-events-none" />
-              <div className="absolute -bottom-6 right-10 w-28 h-28 bg-amber-400/10 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/15 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-8 right-12 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="relative flex items-center justify-between gap-2 sm:gap-4">
+              <div className="relative flex items-center justify-between gap-3 sm:gap-6">
                 {/* Left: Title + Mini LIVE Badge */}
-                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                  <h2 className="font-serif text-sm sm:text-lg md:text-xl font-black tracking-tight text-white uppercase whitespace-nowrap">
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                  <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase whitespace-nowrap">
                     Flash Sales
                   </h2>
-                  <span className="hidden md:inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full animate-pulse">
+                  <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
                     LIVE
                   </span>
                 </div>
@@ -288,10 +330,10 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
                 {/* Right: Slim See All Deals CTA */}
                 <Link
                   href="/products/flash-sales"
-                  className="inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white/20 hover:border-pink-300/60 hover:scale-105 transition-all text-[9.5px] sm:text-xs font-black uppercase tracking-wider shadow-xs active:scale-95 text-white shrink-0 whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
                 >
                   <span>See All</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
@@ -317,6 +359,7 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
         <RejuvenateBestProductsSection
           routineProducts={filteredRoutine}
           bestProducts={bestSearchedProducts.length > 0 ? bestSearchedProducts : filteredBestSellers}
+          sectionData={rejuvenateSection}
           onQuickView={setQuickView}
           addToCart={addToCart}
           orderNow={orderNow}
@@ -326,6 +369,16 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
         {filteredBestSellers.length > 0 && (
           <BestSellersSection
             products={filteredBestSellers}
+            onQuickView={setQuickView}
+            addToCart={addToCart}
+            orderNow={orderNow}
+          />
+        )}
+
+        {/* 4.5 The Luxury Makeup Edit Spotlight Section */}
+        {filteredMakeup.length > 0 && (
+          <MakeupSpotlightSection
+            products={filteredMakeup}
             onQuickView={setQuickView}
             addToCart={addToCart}
             orderNow={orderNow}
@@ -350,14 +403,17 @@ export default function HomeClient({ initialProducts, flashSales = [], hot: hotP
           orderNow={orderNow}
         />
 
-        {/* 5.5 One Pack Solution Routine Promotion Section */}
-        <OnePackSolutionSection
-          routineProducts={filteredRoutine}
-          allProducts={products}
-          onQuickView={setQuickView}
-          addToCart={addToCart}
-          orderNow={orderNow}
-        />
+        {/* 5.3 Haute Parfumerie / Fragrance Sanctuary Spotlight Section */}
+        {filteredFragrances.length > 0 && (
+          <FragranceSpotlightSection
+            products={filteredFragrances}
+            onQuickView={setQuickView}
+            addToCart={addToCart}
+            orderNow={orderNow}
+          />
+        )}
+
+
 
         {/* 6. Geometric Hex-Pinwheel Showcase (Best Searched Products Only) */}
         {bestSearchedProducts.length > 0 && (

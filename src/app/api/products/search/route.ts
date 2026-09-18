@@ -37,12 +37,33 @@ export async function GET(req: Request) {
               },
             },
           },
+          {
+            productCategories: {
+              some: {
+                category: {
+                  name: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
+          },
         ],
       },
       include: {
         brand: {
           select: {
             name: true,
+          },
+        },
+        productCategories: {
+          include: {
+            category: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
         subCategory: {

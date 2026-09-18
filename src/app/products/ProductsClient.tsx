@@ -16,7 +16,7 @@ import { useCountryStore } from "@/lib/country-store";
 import { useSearchStore } from "@/lib/search-store";
 import { trackAddToCart } from "@/lib/datalayer";
 
-const MAINTAINED_CATEGORIES = ["Skin Care", "Body Care", "Hair Care"];
+const MAINTAINED_CATEGORIES = ["Skin Care", "Makeup", "Fragrances", "Hair Care", "Body Care"];
 
 export default function ProductsClient({
   initialProducts,
@@ -208,18 +208,22 @@ export default function ProductsClient({
     return ["All", ...Array.from(set).sort()];
   }, [products, filterOptions]);
 
-  // All Products page is restricted to these categories only (client requirement).
+  // Category tabs with Makeup and Fragrances support
   const CATEGORY_TABS = [
+    { label: "All", category: "All" },
     { label: "Routine", category: "Routine" },
     { label: "Skincare", category: "Skin Care" },
-    { label: "Body care", category: "Body Care" },
+    { label: "Makeup", category: "Makeup" },
+    { label: "Fragrances", category: "Fragrances" },
     { label: "Hair care", category: "Hair Care" },
+    { label: "Body care", category: "Body Care" },
   ];
 
   const categoriesList = useMemo(() => {
     const available = filterOptions?.categories || Array.from(new Set(products.map(p => p.categoryName).filter(Boolean)));
     const maintained = MAINTAINED_CATEGORIES.filter(c => available.includes(c));
-    return ["All", ...maintained];
+    const others = available.filter(c => !MAINTAINED_CATEGORIES.includes(c) && c !== "Routine");
+    return ["All", ...maintained, ...others];
   }, [products, filterOptions]);
 
   const subCategories = useMemo(() => {
@@ -430,47 +434,55 @@ return sorted;
 
   return (
     <div className="min-h-screen bg-transparent text-gray-900 selection:bg-[#890754] selection:text-white">
-      <div className="max-w-[1536px] mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
+      <div className="max-w-[1536px] mx-auto px-3 sm:px-4 md:px-6 pt-16 sm:pt-20 md:pt-24 pb-16">
         {isTrending && (
-          <div className="mb-8">
-            <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-3 w-fit">
+          <div className="mb-4 sm:mb-6">
+            <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-2 w-fit">
               <Flame className="text-orange-500 fill-orange-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-black/60">Trending Now</span>
               <Flame className="text-red-500 fill-red-400 w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-gray-900 font-normal tracking-tight">Most Loved Products</h1>
-            <p className="text-gray-600 mt-2 text-sm sm:text-lg max-w-xl font-medium">Discover our customers' absolute favorites that everyone's raving about.</p>
+            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl text-gray-900 font-medium tracking-tight">Most Loved Products</h1>
+            <p className="text-gray-600 mt-1 text-xs sm:text-sm max-w-xl font-medium">Discover our customers' absolute favorites that everyone's raving about.</p>
           </div>
         )}
         
-        <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-12">
-          {CATEGORY_TABS.map((tab) => (
-            <button
-              key={tab.label}
-              onClick={() => {
-                setSelectedCategory(tab.category);
-                setSelectedSubCategory("All");
-              }}
-              className={`px-6 py-2.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all active:scale-95 shadow-sm border ${
-                selectedCategory === tab.category
-                  ? "bg-white text-[#890754] border-[#890754]"
-                  : "bg-white text-gray-500 hover:bg-pink-50 hover:text-[#890754] border-gray-200"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Category Filter Ribbon & Compact Filter Toggle */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mt-2 sm:mt-3 mb-4 sm:mb-6 pb-2">
+          {/* Category Pills (Horizontal smooth scroll on mobile, wrap on desktop) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-1 px-0.5 flex-1 min-w-0">
+            {CATEGORY_TABS.map((tab) => {
+              const isSelected = selectedCategory === tab.category;
+              return (
+                <button
+                  key={tab.label}
+                  onClick={() => {
+                    setSelectedCategory(tab.category);
+                    setSelectedSubCategory("All");
+                  }}
+                  className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all active:scale-95 whitespace-nowrap shrink-0 ${
+                    isSelected
+                      ? "bg-gradient-to-r from-[#540434] via-[#750648] to-[#890754] text-white shadow-sm shadow-[#890754]/25 border border-pink-400/30 scale-[1.02]"
+                      : "bg-white/95 text-slate-700 hover:text-[#540434] hover:bg-pink-50/70 border border-slate-200/80 hover:border-pink-200 shadow-2xs font-semibold"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="flex justify-center mt-6 mb-8">
+          {/* Compact Filter Toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-md border active:scale-95 ${
-              showFilters ? "bg-[#890754] text-white border-[#890754]" : "bg-white text-gray-800 border-gray-200 hover:bg-pink-50 hover:text-[#890754]"
+            className={`self-end sm:self-auto inline-flex items-center gap-1.5 px-4 py-2 sm:py-2.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-2xs shrink-0 border whitespace-nowrap ${
+              showFilters
+                ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            {showFilters ? <X size={14} /> : <Filter size={14} />}
-            {showFilters ? t.product.hideFilters : t.product.showFilters}
+            {showFilters ? <X size={13} /> : <Filter size={13} />}
+            <span>{showFilters ? t.product.hideFilters : t.product.showFilters}</span>
           </button>
         </div>
 
@@ -603,7 +615,7 @@ return sorted;
           )}
         </AnimatePresence>
 
-          <div className="mt-12 md:mt-20 space-y-12 md:space-y-24">
+          <div className="mt-4 sm:mt-6 md:mt-8 space-y-8 md:space-y-16">
             {(() => {
               const routineProducts = filtered.filter(p => p.routine);
               const isRoutineOnly = selectedCategory === "Routine";

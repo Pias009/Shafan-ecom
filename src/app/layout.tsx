@@ -18,7 +18,7 @@ import ReferralTracker from "@/components/ReferralTracker";
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
   display: 'swap',
 });
@@ -26,7 +26,8 @@ const playfairDisplay = Playfair_Display({
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
   display: 'swap',
 });
 

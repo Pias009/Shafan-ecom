@@ -33,8 +33,7 @@ const NODE_GRADIENTS = [
   { id: "grad-5", start: "#890754", end: "#540434" }, // 5: Shafan Berry -> Deep Plum
 ];
 
-// Strictly format category name to exactly one word uppercase
-function getOneWordTitle(name: string): string {
+function getCategoryTitle(name: string): string {
   if (!name) return "";
   const trimmed = name.trim();
   if (/^eye\s*care$/i.test(trimmed)) return "EYECARE";
@@ -42,7 +41,9 @@ function getOneWordTitle(name: string): string {
   if (/^skin\s*care$/i.test(trimmed)) return "SKINCARE";
   if (/^hair\s*care$/i.test(trimmed)) return "HAIRCARE";
   if (/^body\s*care$/i.test(trimmed)) return "BODYCARE";
-  return trimmed.split(/\s+/)[0].toUpperCase();
+  if (/^makeup$/i.test(trimmed)) return "MAKEUP";
+  if (/^fragrance[s]?$/i.test(trimmed)) return "FRAGRANCES";
+  return trimmed.toUpperCase();
 }
 
 function getCategoryFallbackImage(name: string, idx: number): string {
@@ -53,6 +54,12 @@ function getCategoryFallbackImage(name: string, idx: number): string {
   if (n.includes("toner")) return "/images/categories/toners.jpg";
   if (n.includes("eye")) return "/images/categories/eyecare.jpg";
   if (n.includes("sun") || n.includes("spf")) return "/images/categories/suncare.jpg";
+  if (n.includes("makeup") || n.includes("lipstick") || n.includes("cosmetic")) {
+    return "https://res.cloudinary.com/dvdyut9xh/image/upload/v1789661808/ecommerce/products/r8xcvbpksnxxootik6j4_d5d541.jpg";
+  }
+  if (n.includes("fragran") || n.includes("perfume") || n.includes("scent")) {
+    return "https://res.cloudinary.com/dvdyut9xh/image/upload/v1789308549/ecommerce/products/ovcphgu3uyhi95tzq27u_grkjov_bdu49j.jpg";
+  }
   return defaultCategories[idx % defaultCategories.length]?.image || "/images/categories/serums.jpg";
 }
 
@@ -67,29 +74,29 @@ function CategoryCircleCard({
 }) {
   const fallback = getCategoryFallbackImage(category.name, idx);
   const [hasError, setHasError] = useState(false);
-  const oneWordTitle = getOneWordTitle(category.name);
+  const displayTitle = getCategoryTitle(category.name);
   const imgSrc = !hasError && category.image ? category.image : fallback;
 
   return (
     <div
       onClick={onClick}
-      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[88px] h-[88px] sm:w-[100px] sm:h-[100px] md:w-[112px] md:h-[112px] lg:w-[122px] lg:h-[122px] rounded-full overflow-hidden border-2 border-white shadow-[0_8px_20px_rgba(0,0,0,0.1),0_2px_6px_rgba(0,0,0,0.04)] group-hover:shadow-[0_16px_32px_rgba(137,7,84,0.22)] group-hover:scale-105 group-hover:border-pink-200 transition-all duration-300 ease-out cursor-pointer z-10 select-none"
+      className="absolute inset-[2px] rounded-full overflow-hidden border-2 border-white shadow-[0_8px_24px_rgba(0,0,0,0.1),0_2px_6px_rgba(0,0,0,0.04)] group-hover:shadow-[0_16px_32px_rgba(137,7,84,0.22)] group-hover:scale-[1.02] transition-all duration-300 ease-out cursor-pointer z-10 select-none bg-white"
     >
       {/* Full-Bleed Category Image Covering the Full Circle */}
       <Image
         src={imgSrc}
-        alt={oneWordTitle}
+        alt={displayTitle}
         fill
         unoptimized
         onError={() => setHasError(true)}
         className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500 ease-out"
-        sizes="(max-width: 640px) 25vw, 15vw"
+        sizes="(max-width: 640px) 35vw, 25vw"
       />
 
       {/* Elegant Frosted Porcelain Underlay with Signature Brand Color Text */}
-      <div className="absolute inset-x-0 bottom-0 pt-5 pb-2 sm:pb-2.5 px-1 bg-gradient-to-t from-white via-white/92 to-transparent flex items-end justify-center pointer-events-none">
-        <span className="font-extrabold text-[9.5px] sm:text-[10.5px] md:text-[11.5px] lg:text-xs tracking-wider text-[#890754] group-hover:text-[#540434] uppercase text-center line-clamp-1 transition-colors drop-shadow-2xs">
-          {oneWordTitle}
+      <div className="absolute inset-x-0 bottom-0 pt-6 pb-2.5 px-1 bg-gradient-to-t from-white via-white/94 to-transparent flex items-end justify-center pointer-events-none">
+        <span className="font-extrabold text-[10px] sm:text-[11px] md:text-[11.5px] lg:text-xs tracking-tight sm:tracking-normal text-[#890754] group-hover:text-[#540434] uppercase text-center line-clamp-1 transition-colors drop-shadow-2xs px-0.5">
+          {displayTitle}
         </span>
       </div>
     </div>
@@ -158,15 +165,22 @@ export function CategorySection({
     });
   };
 
+  const totalNodes = itemsToRender.length || 6;
+  const arcLength = 314.16; // π * 100 for semicircle with R=100
+  const beamLength = 75;
+  const totalLength = totalNodes * arcLength;
+  const blankLength = Math.round(totalLength - beamLength);
+  const totalDuration = 12; // 12 seconds total cycle time across all nodes
+
   return (
     <section className="mx-auto max-w-[1440px] px-2 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 select-none overflow-hidden">
       <style>{`
         @keyframes catSingleFlow {
           0% {
-            stroke-dashoffset: 75;
+            stroke-dashoffset: ${beamLength};
           }
           100% {
-            stroke-dashoffset: -1735;
+            stroke-dashoffset: -${blankLength};
           }
         }
         @keyframes catGlowPulse {
@@ -180,8 +194,8 @@ export function CategorySection({
           }
         }
         .cat-animated-beam {
-          stroke-dasharray: 75 1735;
-          animation: catSingleFlow 12s linear infinite;
+          stroke-dasharray: ${beamLength} ${blankLength};
+          animation: catSingleFlow ${totalDuration}s linear infinite;
         }
         .cat-glow-line {
           animation: catGlowPulse 3.5s ease-in-out infinite;
@@ -208,23 +222,21 @@ export function CategorySection({
               const isEven = idx % 2 === 0;
               const grad = NODE_GRADIENTS[idx % NODE_GRADIENTS.length];
               const gradId = `cat-ribbon-grad-${idx}`;
-              const totalNodes = itemsToRender.length || 6;
-              const totalDuration = 12; // 12 seconds total for a slow, continuous single pulse
               const delaySeconds = -((totalNodes - (idx % totalNodes)) % totalNodes) * (totalDuration / totalNodes);
 
               return (
                 <motion.div
                   key={category.id || idx}
-                  initial={{ opacity: 0, y: isEven ? -12 : 12 }}
+                  initial={{ opacity: 0, y: isEven ? -10 : 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-10px" }}
                   transition={{ duration: 0.45, delay: idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                  className="group relative shrink-0 w-[124px] h-[124px] sm:w-[140px] sm:h-[140px] md:w-[155px] md:h-[155px] lg:w-[165px] lg:h-[165px] -ml-[16px] sm:-ml-[18px] md:-ml-[20px] lg:-ml-[21px] first:ml-0"
+                  className="group relative shrink-0 w-[136px] h-[136px] sm:w-[152px] sm:h-[152px] md:w-[168px] md:h-[168px] lg:w-[180px] lg:h-[180px] xl:w-[190px] xl:h-[190px]"
                 >
-                  {/* SVG Infographic Interconnected Track (viewBox 220x220, R=96, center 110,110) */}
+                  {/* SVG Infographic Interconnected Track (viewBox 200x200, R=100, center 100,100) */}
                   <svg
-                    viewBox="0 0 220 220"
-                    className="w-full h-full overflow-visible drop-shadow-xs pointer-events-none"
+                    viewBox="0 0 200 200"
+                    className="absolute inset-0 w-full h-full overflow-visible pointer-events-none z-20"
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <defs>
@@ -239,12 +251,12 @@ export function CategorySection({
                       </filter>
                     </defs>
 
-                    {/* Even Nodes: Top Arc Colored Ribbon, Bottom Arc Grey Track */}
+                    {/* Even Nodes: Top Arc Subtle Dashed Guide, Bottom Arc Colored Ribbon */}
                     {isEven ? (
                       <>
-                        {/* Subtle Recessed Hairline Track on Bottom Half */}
+                        {/* Subtle Recessed Hairline Track on Top Half */}
                         <path
-                          d="M 14,110 A 96,96 0 0,1 206,110"
+                          d="M 0,100 A 100,100 0 0,1 200,100"
                           fill="none"
                           stroke="#e2e8f0"
                           strokeWidth="1.5"
@@ -253,9 +265,9 @@ export function CategorySection({
                           opacity="0.8"
                         />
 
-                        {/* Slim Elegant Gradient Ribbon on Top Half */}
+                        {/* Slim Elegant Gradient Ribbon on Bottom Half */}
                         <path
-                          d="M 14,110 A 96,96 0 0,0 206,110"
+                          d="M 0,100 A 100,100 0 0,0 200,100"
                           fill="none"
                           stroke={`url(#${gradId})`}
                           strokeWidth="4"
@@ -266,7 +278,7 @@ export function CategorySection({
 
                         {/* Animated Flowing Light Beam along the Slim Border */}
                         <path
-                          d="M 14,110 A 96,96 0 0,0 206,110"
+                          d="M 0,100 A 100,100 0 0,0 200,100"
                           fill="none"
                           stroke="#ffffff"
                           strokeWidth="3.5"
@@ -279,11 +291,11 @@ export function CategorySection({
                         />
                       </>
                     ) : (
-                      /* Odd Nodes: Top Arc Grey Track, Bottom Arc Colored Ribbon */
+                      /* Odd Nodes: Bottom Arc Subtle Dashed Guide, Top Arc Colored Ribbon */
                       <>
-                        {/* Subtle Recessed Hairline Track on Top Half */}
+                        {/* Subtle Recessed Hairline Track on Bottom Half */}
                         <path
-                          d="M 14,110 A 96,96 0 0,0 206,110"
+                          d="M 0,100 A 100,100 0 0,0 200,100"
                           fill="none"
                           stroke="#e2e8f0"
                           strokeWidth="1.5"
@@ -292,9 +304,9 @@ export function CategorySection({
                           opacity="0.8"
                         />
 
-                        {/* Slim Elegant Gradient Ribbon on Bottom Half */}
+                        {/* Slim Elegant Gradient Ribbon on Top Half */}
                         <path
-                          d="M 14,110 A 96,96 0 0,1 206,110"
+                          d="M 0,100 A 100,100 0 0,1 200,100"
                           fill="none"
                           stroke={`url(#${gradId})`}
                           strokeWidth="4"
@@ -305,7 +317,7 @@ export function CategorySection({
 
                         {/* Animated Flowing Light Beam along the Slim Border */}
                         <path
-                          d="M 14,110 A 96,96 0 0,1 206,110"
+                          d="M 0,100 A 100,100 0 0,1 200,100"
                           fill="none"
                           stroke="#ffffff"
                           strokeWidth="3.5"

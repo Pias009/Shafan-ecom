@@ -17,7 +17,10 @@ export default async function HomePage() {
         hot={data.trending}
         routine={data.routine}
         bestSellers={data.bestSellers}
+        makeupProducts={data.makeupProducts}
+        fragranceProducts={data.fragranceProducts}
         banners={data.banners}
+        rejuvenateSection={data.rejuvenateSection}
       />
     </Suspense>
   );

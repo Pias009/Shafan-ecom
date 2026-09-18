@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store, Plus, Scale, ChevronDown } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Package, X, Globe, Box, Hash, Search, Store, Plus, Scale, ChevronDown, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -1057,6 +1057,26 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-black/5 rounded-xl"><ImageIcon size={16} /></div>
               <h3 className="font-bold">Media Assets</h3>
+            </div>
+
+            {/* Image Ratio Recommendation & Perfect Display Control */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-pink-50/90 via-purple-50/80 to-emerald-50/90 rounded-2xl border border-pink-200/80 shadow-2xs flex items-start gap-3.5">
+              <div className="p-2 bg-white rounded-xl text-[#890754] shadow-xs shrink-0 mt-0.5 border border-pink-100">
+                <Sparkles size={18} />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#890754]">
+                    Recommended Product Image Ratio for Perfect Framing
+                  </h4>
+                  <span className="text-[10px] font-black uppercase bg-[#890754] text-white px-2 py-0.5 rounded-full">
+                    1:1 Square (1000 × 1000 px)
+                  </span>
+                </div>
+                <p className="text-xs text-gray-700 font-medium leading-relaxed">
+                  For crystal-clear product display in the geometric pinwheel, routine coverflow, and product cards, upload high-resolution <strong>1:1 Square (1000 × 1000 px)</strong> images with a transparent PNG background or clean white studio backdrop.
+                </p>
+              </div>
             </div>
             
             <div className="space-y-6">

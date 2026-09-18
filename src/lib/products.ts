@@ -79,7 +79,7 @@ export async function getHomePageData(storeCode?: string) {
       };
     };
 
-    const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers, banners] = await Promise.all([
+    const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers, makeupProducts, fragranceProducts, banners, rejuvenateSetting] = await Promise.all([
       prisma.product.findMany({
         where: { active: true },
         select: selectFields,
@@ -116,6 +116,36 @@ export async function getHomePageData(storeCode?: string) {
         orderBy: { totalSales: 'desc' },
         take: 12,
       }),
+      prisma.product.findMany({
+        where: {
+          active: true,
+          productCategories: {
+            some: {
+              category: {
+                name: { equals: 'Makeup', mode: 'insensitive' }
+              }
+            }
+          }
+        },
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+      }),
+      prisma.product.findMany({
+        where: {
+          active: true,
+          productCategories: {
+            some: {
+              category: {
+                name: { contains: 'Fragran', mode: 'insensitive' }
+              }
+            }
+          }
+        },
+        select: selectFields,
+        orderBy: { createdAt: 'desc' },
+        take: 12,
+      }),
       prisma.enhancedOfferBanner.findMany({
         where: { active: true },
         orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
@@ -131,6 +161,9 @@ export async function getHomePageData(storeCode?: string) {
           textColor: true,
         },
       }),
+      (prisma as any).appSettings.findUnique({
+        where: { type: 'rejuvenate_section' },
+      }).catch(() => null),
     ]);
 
     const data = {
@@ -140,14 +173,17 @@ export async function getHomePageData(storeCode?: string) {
       trending: trending.map(mapProduct),
       routine: routineProducts.map(mapProduct),
       bestSellers: bestSellers.map(mapProduct),
+      makeupProducts: makeupProducts.map(mapProduct),
+      fragranceProducts: fragranceProducts.map(mapProduct),
       banners: (banners || []).filter((b: any) => b.imageUrl && b.imageUrl.trim() !== ""),
+      rejuvenateSection: (rejuvenateSetting?.data as any) || null,
     };
 
     homepageCache = { data, timestamp: Date.now() };
     return data;
   } catch (error) {
     console.error("HomePage data fetch error:", error);
-    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [], banners: [] };
+    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [], makeupProducts: [], fragranceProducts: [], banners: [] };
   }
 }
 

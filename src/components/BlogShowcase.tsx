@@ -150,7 +150,7 @@ export function BlogShowcase() {
         >
           <ChevronLeft size={14} className="text-black/60" />
         </button>
-        <div className="flex gap-1.5">
+        <div className="hidden sm:flex gap-1.5">
           {posts.slice(0, Math.min(posts.length, 6)).map((_, i) => (
             <div
               key={i}

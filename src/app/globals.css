@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Great+Vibes&family=Italiana&family=Cinzel+Decorative:wght@700&family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
@@ -29,9 +29,9 @@
   --glass-heavy-bg: hsla(0, 0%, 100%, 0.95);
   --glass-nav-bg: hsla(325, 90%, 17%, 0.96);
 
-  /* Font families - clean and professional */
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  /* Unified Modern Sans-Serif Font System Across Entire Website */
+  --font-display: 'DM Sans', var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: 'DM Sans', var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --radius: 0.75rem;
 }
@@ -40,8 +40,10 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
-  --font-display: var(--font-display);
-  --font-serif: var(--font-display);
+  --font-body: var(--font-body);
+  --font-display: var(--font-body);
+  --font-serif: var(--font-body);
+  --font-mono: var(--font-body);
 }
 
 /* Background: pristine, crisp luxury alabaster with zero tint clashing */
@@ -176,13 +178,36 @@ body {
   }
 }
 
-/* Doctor Sasi brand utilities */
+/* Doctor Sasi brand utilities & Strict 2-Font Enforcement */
 .font-playfair {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: var(--font-display) !important;
 }
 
 .bg-gradient-radial {
   background-image: radial-gradient(var(--tw-gradient-stops));
+}
+
+/* Global Hard Typography Rules - Exactly 2 Fonts Across Entire Website */
+html, body, button, input, select, textarea, p, span, a, label, li, td, th, div, section, main, header, footer, form, option {
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6,
+.font-serif,
+.font-display,
+.font-playfair,
+.font-heading {
+  font-family: var(--font-display) !important;
+}
+
+.font-sans,
+.font-body {
+  font-family: var(--font-body) !important;
+}
+
+.font-mono {
+  font-family: var(--font-body) !important;
+  font-variant-numeric: tabular-nums;
 }
 
 @layer base {
@@ -197,7 +222,7 @@ body {
   h4,
   h5,
   h6 {
-    font-family: var(--font-display);
+    font-family: var(--font-display) !important;
     font-weight: 600;
     letter-spacing: -0.02em;
   }
@@ -207,7 +232,9 @@ body {
   label,
   input,
   select,
-  textarea {
+  textarea,
+  button,
+  a {
     font-family: var(--font-body);
   }
 
@@ -1137,7 +1164,7 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  font-family: "Arial", sans-serif;
+  font-family: var(--font-body);
   transition: all 0.3s ease;
   z-index: 50;
   border: 1px solid transparent;

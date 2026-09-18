@@ -40,6 +40,8 @@ export function Footer() {
       title: t.footer.shop || "Shop",
       links: [
         { label: t.footer.skinCare || "Skin Care", href: "/products?category=Skin+Care" },
+        { label: "Makeup", href: "/products?category=Makeup" },
+        { label: "Fragrances", href: "/products?category=Fragrances" },
         { label: t.footer.hairCare || "Hair Care", href: "/products?category=Hair+Care" },
         { label: t.footer.routines || "Daily Routines", href: "/products/routine" },
         { label: t.footer.newArrivals || "New Arrivals", href: "/products?sort=new" },

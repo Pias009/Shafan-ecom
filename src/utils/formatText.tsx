@@ -15,17 +15,17 @@ export function formatDescription(text: string | undefined | null): React.ReactN
     if (listItems.length > 0) {
       if (listType === 'ol') {
         elements.push(
-          <ol key={`ol-${elements.length}`} className="list-decimal ml-5 space-y-1 my-2">
+          <ol key={`ol-${elements.length}`} className="list-decimal ml-5 space-y-1.5 my-3 text-slate-700">
             {listItems.map((item, idx) => (
-              <li key={idx} className="text-sm leading-relaxed text-black/70">{formatInline(item)}</li>
+              <li key={idx} className="text-sm sm:text-base leading-relaxed sm:leading-loose text-slate-700">{formatInline(item)}</li>
             ))}
           </ol>
         );
       } else {
         elements.push(
-          <ul key={`ul-${elements.length}`} className="list-disc ml-5 space-y-1 my-2">
+          <ul key={`ul-${elements.length}`} className="list-disc ml-5 space-y-1.5 my-3 text-slate-700">
             {listItems.map((item, idx) => (
-              <li key={idx} className="text-sm leading-relaxed text-black/70">{formatInline(item)}</li>
+              <li key={idx} className="text-sm sm:text-base leading-relaxed sm:leading-loose text-slate-700">{formatInline(item)}</li>
             ))}
           </ul>
         );
@@ -38,8 +38,8 @@ export function formatDescription(text: string | undefined | null): React.ReactN
 
   const formatInline = (line: string): React.ReactNode => {
     const formatted = line
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/__(.+?)__/g, '<strong>$1</strong>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
+      .replace(/__(.+?)__/g, '<strong class="font-bold text-slate-900">$1</strong>')
       .replace(/_(.+?)_/g, '<em>$1</em>')
       .replace(/<u>(.+?)<\/u>/g, '<u>$1</u>');
     
@@ -55,20 +55,20 @@ export function formatDescription(text: string | undefined | null): React.ReactN
     if (trimmed.startsWith('## ')) {
       addListItems();
       elements.push(
-        <h2 key={idx} className="text-lg font-bold mt-4 mb-2 text-black">
+        <h2 key={idx} className="text-base sm:text-lg font-bold mt-5 mb-2 text-slate-900">
           {trimmed.replace('## ', '')}
         </h2>
       );
     } else if (trimmed.startsWith('### ')) {
       addListItems();
       elements.push(
-        <h3 key={idx} className="text-base font-semibold mt-3 mb-1 text-black">
+        <h3 key={idx} className="text-sm sm:text-base font-semibold mt-4 mb-1.5 text-slate-900">
           {trimmed.replace('### ', '')}
         </h3>
       );
     } else if (trimmed === '---') {
       addListItems();
-      elements.push(<hr key={idx} className="my-4 border-t border-black/20" />);
+      elements.push(<hr key={idx} className="my-4 border-t border-slate-200" />);
     } else if (/^1\.\s/.test(trimmed)) {
       if (!inList || listType !== 'ol') {
         addListItems();
@@ -86,14 +86,14 @@ export function formatDescription(text: string | undefined | null): React.ReactN
     } else if (trimmed.startsWith('> ')) {
       addListItems();
       elements.push(
-        <blockquote key={idx} className="border-l-4 border-black/30 pl-3 py-1 my-2 italic text-black/70">
+        <blockquote key={idx} className="border-l-4 border-[#890754]/40 pl-3.5 py-1.5 my-3 italic text-slate-600 bg-slate-50/60 rounded-r-lg">
           {trimmed.replace('> ', '')}
         </blockquote>
       );
     } else if (trimmed) {
       addListItems();
       elements.push(
-        <p key={idx} className="text-sm leading-relaxed text-black/70 my-2">
+        <p key={idx} className="text-sm sm:text-base leading-relaxed sm:leading-loose text-slate-700 my-2.5">
           {formatInline(trimmed)}
         </p>
       );
@@ -151,33 +151,12 @@ function AnimatedSection({ children, index }: { children: React.ReactNode; index
 }
 
 export function VisualDescription({ description }: { description: string | undefined | null }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   if (!description) return null;
 
-  if (!mounted) return null;
-
-  const lines = description.split('\n').filter(l => l.trim());
-
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-      className="relative p-6 md:p-8 rounded-3xl border border-black/5 bg-white shadow-sm"
-    >
-      <div className="relative leading-[1.8] tracking-tight text-black/80">
-        {lines.map((line, idx) => (
-          <AnimatedSection key={idx} index={idx}>
-            <HighlightedText text={line} />
-          </AnimatedSection>
-        ))}
-      </div>
-    </motion.div>
+    <div className="w-full text-slate-700 text-sm sm:text-base leading-relaxed sm:leading-loose max-w-none">
+      {formatDescription(description)}
+    </div>
   );
 }
 

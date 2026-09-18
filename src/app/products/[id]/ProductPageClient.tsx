@@ -380,13 +380,13 @@ export default function ProductPageClient({
         </nav>
 
         {/* Hero Product Card (Porcelain & Brand Architecture) */}
-        <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-pink-200/80 shadow-[0_12px_40px_-10px_rgba(137,7,84,0.08)] p-4 sm:p-8 lg:p-10 mb-12 sm:mb-16">
+        <div className="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-[0_4px_25px_-5px_rgba(0,0,0,0.05)] p-4 sm:p-8 lg:p-10 mb-12 sm:mb-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
             {/* Gallery Column (6 cols on Desktop) */}
             <div className="lg:col-span-6 space-y-3.5 sm:space-y-4">
               {/* Main Image Stage */}
               <div
-                className="relative aspect-square sm:aspect-[4/3] lg:aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-gradient-to-b from-[#fdf9fb] via-white to-[#fbf2f7] border border-pink-100/90 group cursor-zoom-in shadow-xs flex items-center justify-center p-3 sm:p-6 select-none"
+                className="relative aspect-square sm:aspect-[4/3] lg:aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-white group cursor-zoom-in flex items-center justify-center select-none"
                 onClick={() => setIsEnlarged(true)}
               >
                 {/* Brand Category Badge */}
@@ -417,7 +417,7 @@ export default function ProductPageClient({
                       alt={product.name}
                       fill
                       priority
-                      className="object-contain p-2 sm:p-4 drop-shadow-sm group-hover:scale-105 transition-transform duration-500 ease-out"
+                      className="object-contain p-2 group-hover:scale-105 transition-transform duration-500 ease-out"
                     />
                   </motion.div>
                 </AnimatePresence>
@@ -432,7 +432,7 @@ export default function ProductPageClient({
                           (p) => (p - 1 + allImages.length) % allImages.length
                         );
                       }}
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md shadow-md border border-pink-100 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 active:scale-90 transition-all z-10"
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md shadow-md border border-slate-100 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 active:scale-90 transition-all z-10"
                       aria-label="Previous image"
                     >
                       <ChevronLeft size={18} />
@@ -442,7 +442,7 @@ export default function ProductPageClient({
                         e.stopPropagation();
                         setCurrentImageIndex((p) => (p + 1) % allImages.length);
                       }}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md shadow-md border border-pink-100 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 active:scale-90 transition-all z-10"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md shadow-md border border-slate-100 flex items-center justify-center text-gray-700 hover:text-[#890754] hover:scale-110 active:scale-90 transition-all z-10"
                       aria-label="Next image"
                     >
                       <ChevronRight size={18} />
@@ -457,7 +457,7 @@ export default function ProductPageClient({
                       {currentImageIndex + 1} / {allImages.length}
                     </span>
                   ) : <span />}
-                  <span className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-md shadow-xs border border-pink-100 flex items-center justify-center text-gray-600">
+                  <span className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-md shadow-2xs border border-slate-100 flex items-center justify-center text-gray-600">
                     <Maximize2 size={13} />
                   </span>
                 </div>
@@ -473,7 +473,7 @@ export default function ProductPageClient({
                       className={`relative w-16 h-16 sm:w-18 sm:h-18 bg-white rounded-xl sm:rounded-2xl overflow-hidden shrink-0 transition-all border-2 ${
                         currentImageIndex === idx
                           ? "border-[#890754] scale-105 shadow-sm"
-                          : "border-pink-100 opacity-60 hover:opacity-100 hover:border-pink-300"
+                          : "border-slate-100 opacity-60 hover:opacity-100 hover:border-slate-300"
                       }`}
                       aria-label={`View image ${idx + 1}`}
                     >
@@ -554,8 +554,8 @@ export default function ProductPageClient({
                 </a>
               </div>
 
-              {/* Price Block */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#faf4f8] via-white to-[#fbf1f7] border border-pink-200/80 shadow-2xs space-y-2">
+              {/* Price Block — Clean without extra background card border */}
+              <div className="space-y-2.5 py-1">
                 <div className="flex items-baseline gap-2.5 flex-wrap">
                   {isAvailable ? (
                     <>
@@ -597,10 +597,10 @@ export default function ProductPageClient({
                     : "Prices inclusive of VAT. Free express shipping on eligible orders."}
                 </p>
 
-                {/* Tabby & Tamara Installment Badges */}
+                {/* Tabby & Tamara Installment Badges — Just the widget cards with no extra background border */}
                 {!isOutOfStock && isAvailable && (
-                  <div className="pt-2 border-t border-pink-100/70 space-y-1.5">
-                    <div className="px-3 py-1.5 bg-white/90 rounded-xl border border-pink-100 shadow-2xs overflow-hidden">
+                  <div className="pt-2 space-y-2">
+                    <div className="w-full overflow-hidden">
                       <TabbyPromo
                         price={displayPrice}
                         currency={priceInfo.currency?.toUpperCase() || "AED"}
@@ -610,7 +610,7 @@ export default function ProductPageClient({
                         }
                       />
                     </div>
-                    <div className="px-3 py-1.5 bg-white/90 rounded-xl border border-pink-100 shadow-2xs overflow-hidden">
+                    <div className="w-full overflow-hidden">
                       <TamaraWidget
                         price={displayPrice}
                         currency={priceInfo.currency?.toUpperCase() || "AED"}
@@ -771,16 +771,17 @@ export default function ProductPageClient({
 
           {/* Editorial Accordion / Description Tabs */}
           {availableTabs.length > 0 && (
-            <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-pink-100 space-y-4">
-              <div className="flex gap-1.5 p-1 bg-pink-50/70 rounded-2xl overflow-x-auto scrollbar-none max-w-xl">
+            <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-slate-200/70 space-y-4">
+              {/* Upper Button Row: Clean without container background */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-none w-full">
                 {availableTabs.map((tab) => (
                   <button
                     key={tab.key}
                     onClick={() => setShowDescription(tab.key)}
-                    className={`flex-1 min-w-[95px] py-2 px-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all text-center whitespace-nowrap ${
+                    className={`px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider rounded-xl sm:rounded-2xl transition-all text-center whitespace-nowrap ${
                       showDescription === tab.key
-                        ? "bg-[#890754] text-white shadow-sm"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-white/80"
+                        ? "bg-slate-900 text-white shadow-xs hover:bg-black"
+                        : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80"
                     }`}
                   >
                     {tab.label}
@@ -788,15 +789,16 @@ export default function ProductPageClient({
                 ))}
               </div>
 
+              {/* Description Content: Full width, no background, no card border, clean & nice to read */}
               <AnimatePresence mode="wait">
                 {showDescription && (product as any)[showDescription] && (
                   <motion.div
                     key={showDescription}
-                    initial={{ opacity: 0, y: 6 }}
+                    initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    transition={{ duration: 0.2 }}
-                    className="p-5 sm:p-7 bg-gradient-to-br from-[#fdfbfd] via-white to-[#faf4f8] rounded-2xl border border-pink-100 shadow-2xs text-xs sm:text-sm leading-relaxed text-gray-700"
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="w-full pt-2 text-sm sm:text-base leading-relaxed sm:leading-loose text-slate-700 max-w-none"
                   >
                     <VisualDescription
                       description={(product as any)[showDescription] as string}

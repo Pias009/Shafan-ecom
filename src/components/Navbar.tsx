@@ -123,8 +123,6 @@ export function Navbar() {
     { href: "#", label: "CATEGORIES" },
     { href: "/products/routine", label: "ROUTINE" },
     { href: "/offers", label: "🎉 OFFERS" },
-    { href: "/about", label: "ABOUT US" },
-    { href: "/blog", label: "BLOG" },
   ];
 
   const [visible, setVisible] = useState(true);
@@ -394,12 +392,14 @@ export function Navbar() {
                             CATEGORIES
                           </button>
                           <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300">
-                            <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-2 w-48 flex flex-col">
-                              <Link href="/products?category=Skin+Care" className="px-4 py-2.5 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Skin Care</Link>
-                              <Link href="/products?category=Body+Care" className="px-4 py-2.5 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Body Care</Link>
-                              <Link href="/products?category=Hair+Care" className="px-4 py-2.5 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Hair Care</Link>
+                            <div className="bg-white rounded-2xl shadow-xl border border-black/5 p-2 w-52 flex flex-col">
+                              <Link href="/products?category=Skin+Care" className="px-4 py-2 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Skin Care</Link>
+                              <Link href="/products?category=Makeup" className="px-4 py-2 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Makeup</Link>
+                              <Link href="/products?category=Fragrances" className="px-4 py-2 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Fragrances</Link>
+                              <Link href="/products?category=Hair+Care" className="px-4 py-2 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Hair Care</Link>
+                              <Link href="/products?category=Body+Care" className="px-4 py-2 text-xs font-bold text-[#540434]/70 hover:text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">Body Care</Link>
                               <div className="border-t border-black/5 my-1" />
-                              <Link href="/products" className="px-4 py-2.5 text-xs font-black text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">All Categories</Link>
+                              <Link href="/products" className="px-4 py-2 text-xs font-black text-[#890754] hover:bg-pink-50 rounded-xl transition-colors">All Categories</Link>
                             </div>
                           </div>
                         </div>
@@ -556,32 +556,19 @@ export function Navbar() {
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/20 px-1">Shop Collections</p>
                     <div className="flex flex-col gap-1">
                       {navLinks.map((link) => {
-                        const isOffers = link.href === "/offers";
-                        
-                        if (link.label === "CATEGORIES") {
-                          return (
-                            <div key="mobile-cats" className="py-2 pl-4">
-                              <span className="text-2xl font-black tracking-tighter text-black">Categories</span>
-                              <div className="flex flex-col gap-2 mt-3 pl-4 border-l-2 border-black/10">
-                                <Link href="/products?category=Skin+Care" onClick={() => setMobileOpen(false)} className="text-lg font-bold text-black/60">Skin Care</Link>
-                                <Link href="/products?category=Body+Care" onClick={() => setMobileOpen(false)} className="text-lg font-bold text-black/60">Body Care</Link>
-                                <Link href="/products?category=Hair+Care" onClick={() => setMobileOpen(false)} className="text-lg font-bold text-black/60">Hair Care</Link>
-                              </div>
-                            </div>
-                          );
-                        }
+                        const cleanLabel = link.label.replace("🎉 ", "").toUpperCase();
 
                         return (
                           <Link
                             key={link.href}
                             href={link.href}
                             onClick={() => setMobileOpen(false)}
-                            className="flex items-center justify-between group py-2"
+                            className="flex items-center justify-between py-2.5 px-4 group"
                           >
-                            <span className={`text-2xl pl-4 font-black tracking-tighter transition-all duration-300 ${isOffers ? "text-emerald-700 italic" : "text-black group-hover:pl-8"}`}>
-                              {link.label.replace("🎉 ", "")}
+                            <span className="text-xl font-extrabold uppercase tracking-wider text-black transition-all duration-200 group-hover:translate-x-1">
+                              {cleanLabel}
                             </span>
-                            <span className={`w-8 h-px transition-all duration-300 ${isOffers ? "bg-emerald-700 opacity-50" : "bg-black/10 group-hover:w-16 group-hover:bg-black"}`} />
+                            <span className="w-8 h-px bg-black/10 group-hover:w-12 group-hover:bg-black transition-all duration-300" />
                           </Link>
                         );
                       })}

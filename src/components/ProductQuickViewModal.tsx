@@ -238,9 +238,9 @@ export function ProductQuickViewModal({
                 </div>
               )}
 
-              {/* Dot indicator */}
+              {/* Dot indicator (Hidden on mobile) */}
               {allImages.length > 1 && (
-                <div className="absolute bottom-[4.5rem] inset-x-0 flex justify-center gap-1.5 z-20">
+                <div className="hidden sm:flex absolute bottom-[4.5rem] inset-x-0 justify-center gap-1.5 z-20">
                   {allImages.slice(0, 5).map((_, idx) => (
                     <span key={idx} className={`rounded-full transition-all ${currentImageIndex === idx ? "w-4 h-1.5 bg-[#0c433a]" : "w-1.5 h-1.5 bg-[#0c433a]/30"}`} />
                   ))}

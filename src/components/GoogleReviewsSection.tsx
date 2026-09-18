@@ -185,99 +185,11 @@ export function GoogleReviewsSection() {
       </div>
 
       <div className="max-w-[1440px] mx-auto px-3 sm:px-6">
-        {/* ── Top Header & Hero Scoreboard ── */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 sm:mb-10">
-          <div>
-            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#890754] tracking-tight">
-              What Our Customers Say
-            </h2>
-          </div>
-
-          {/* Right: Live Google Rating Scoreboard & Action CTAs */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 shrink-0">
-            {/* Google Rating Pillar */}
-            <div className="flex items-center gap-3 bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-pink-200/70 shadow-xs">
-              <GoogleLogo className="w-7 h-7 shrink-0" />
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5 leading-none">
-                  <span className="text-xl sm:text-2xl font-black text-gray-900 font-mono">
-                    {rating.average.toFixed(1)}
-                  </span>
-                  <Stars count={Math.round(rating.average)} size={14} />
-                </div>
-                <span className="text-[10px] sm:text-[11px] text-gray-500 font-bold mt-1">
-                  Based on {rating.total}+ verified reviews
-                </span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              <a
-                href={mapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2.5 rounded-full border border-pink-200/80 bg-white hover:bg-pink-50 text-gray-800 text-xs font-bold shadow-2xs transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-              >
-                <span>View on Maps</span>
-                <ExternalLink className="w-3 h-3 text-[#890754]" />
-              </a>
-
-              <a
-                href={mapsLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full bg-gradient-to-r from-[#540434] via-[#890754] to-[#a80b67] text-white text-xs font-black uppercase tracking-wider shadow-md hover:shadow-lg hover:shadow-pink-900/25 transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                <span>Write Review</span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Sub-bar: Trust Metrics Chips + Play/Pause & Chevron Controls ── */}
-        <div className="flex items-center justify-between gap-2 mb-6 pb-2 border-b border-pink-100/60">
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-gray-600 bg-white px-2.5 py-1 rounded-full border border-pink-100 shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#890754]" />
-              100% Genuine Reviews
-            </span>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] sm:text-xs font-bold text-gray-600 bg-white px-2.5 py-1 rounded-full border border-pink-100 shadow-2xs">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              Verified GCC Orders
-            </span>
-            <button
-              onClick={() => setIsPaused(!isPaused)}
-              className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-[#890754] bg-pink-50/90 hover:bg-pink-100/80 px-2.5 py-1 rounded-full border border-pink-200/70 transition-colors"
-            >
-              {isPaused ? <Play size={11} className="fill-[#890754]" /> : <Pause size={11} className="fill-[#890754]" />}
-              <span>{isPaused ? "Paused (Click to Resume)" : "Auto 2.5s Cycle"}</span>
-            </button>
-          </div>
-
-          {/* Active Counter & Navigation Chevrons */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-mono font-bold text-gray-400">
-              {String(activeIndex + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={prevCard}
-                aria-label="Previous review"
-                className="w-8 h-8 rounded-full bg-white shadow-xs border border-pink-200/70 text-[#890754] flex items-center justify-center hover:bg-[#890754] hover:text-white hover:scale-110 active:scale-95 transition-all"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                onClick={nextCard}
-                aria-label="Next review"
-                className="w-8 h-8 rounded-full bg-white shadow-xs border border-pink-200/70 text-[#890754] flex items-center justify-center hover:bg-[#890754] hover:text-white hover:scale-110 active:scale-95 transition-all"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+        {/* Section Header */}
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#890754] tracking-tight">
+            What Our Customers Say
+          </h2>
         </div>
       </div>
 

@@ -21,14 +21,18 @@ export const OFFICIAL_BRANDS = [
   "Skin 1004",
   "Some by mi",
   "The Ordinary",
-  "Timeless"
+  "Timeless",
+  "Giorgio Armani",
+  "Lancome",
+  "Lattafa"
 ] as const;
 
 export const OFFICIAL_CATEGORIES = [
   "Skin Care",
   "Body Care",
   "Hair Care",
-  "Fragrances"
+  "Fragrances",
+  "Makeup"
 ] as const;
 
 export const OFFICIAL_SUBCATEGORIES = [
@@ -50,7 +54,11 @@ export const OFFICIAL_SUBCATEGORIES = [
   "Hair conditioner",
   "Hair mask",
   "Fragrances for Men",
-  "Fragrances for Women"
+  "Fragrances for Women",
+  "Lipstick",
+  "Lip Gloss",
+  "Foundation",
+  "Mascara"
 ] as const;
 
 export const OFFICIAL_SKIN_TYPES = [

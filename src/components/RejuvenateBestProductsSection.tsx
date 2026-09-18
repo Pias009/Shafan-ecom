@@ -4,14 +4,16 @@ import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ShoppingBag, Eye, ArrowRight, Check } from "lucide-react";
+import { ShoppingBag, ArrowRight, Check } from "lucide-react";
 import { Price } from "./Price";
 import { CountryPrice } from "./ProductCard";
 import { useLanguageStore } from "@/lib/language-store";
+import { DEFAULT_REJUVENATE_SECTION, RejuvenateSectionConfig } from "@/lib/rejuvenate-section";
 
 interface RejuvenateBestProductsSectionProps {
   routineProducts?: any[];
   bestProducts?: any[];
+  sectionData?: RejuvenateSectionConfig | null;
   onQuickView: (product: any) => void;
   addToCart: (product: any) => void;
   orderNow?: (product: any) => void;
@@ -20,59 +22,57 @@ interface RejuvenateBestProductsSectionProps {
 export default function RejuvenateBestProductsSection({
   routineProducts = [],
   bestProducts = [],
+  sectionData,
   onQuickView,
   addToCart,
-  orderNow,
 }: RejuvenateBestProductsSectionProps) {
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
 
   const [addedId, setAddedId] = useState<string | null>(null);
 
-  // Pick 3 best matching products related to routine & wellness
+  // Merge saved section config with defaults
+  const section = useMemo<RejuvenateSectionConfig>(() => {
+    return {
+      ...DEFAULT_REJUVENATE_SECTION,
+      ...(sectionData || {}),
+    };
+  }, [sectionData]);
+
+  // Build the 3 cards data dynamically from section configuration
   const cardsData = useMemo(() => {
     const pool = routineProducts.length > 0 ? routineProducts : bestProducts;
-    
-    const product1 = pool[0] || null;
-    const product2 = pool[1] || pool[0] || null;
-    const product3 = pool[2] || pool[1] || pool[0] || null;
+    const cardsConfig =
+      section.cards && section.cards.length > 0
+        ? section.cards
+        : DEFAULT_REJUVENATE_SECTION.cards;
 
-    return [
-      {
-        id: "serum",
-        tabTitle: isAr ? "سينتلاري" : "Sentlary\nSinville",
-        categoryTag: isAr ? "سيروم النضارة" : "Radiance Elixir",
-        bgHex: "#fbe8df",
-        bgStep: "#fbe8df",
-        accentHex: "#d87a63",
-        imageSrc: "/images/rejuvenate/card-serum.jpg",
-        imageAlt: "Luxury face serum with coral flower",
-        product: product1,
-      },
-      {
-        id: "cream",
-        tabTitle: isAr ? "جيبيلاري" : "Gpelari",
-        categoryTag: isAr ? "كريم الترميم" : "Velvet Cream",
-        bgHex: "#f4c7bf",
-        bgStep: "#f4c7bf",
-        accentHex: "#cf6d68",
-        imageSrc: "/images/rejuvenate/card-cream.jpg",
-        imageAlt: "Handmade ceramic bowls with botanical whipped cream",
-        product: product2,
-      },
-      {
-        id: "candle",
-        tabTitle: isAr ? "سيوتي" : "Seoty\nSeciac",
-        categoryTag: isAr ? "طقس التهدئة" : "Zen Calming",
-        bgHex: "#cde2d6",
-        bgStep: "#cde2d6",
-        accentHex: "#5c9176",
-        imageSrc: "/images/rejuvenate/card-candle.jpg",
-        imageAlt: "White aromatherapy scented candle with fern leaves",
-        product: product3,
-      },
-    ];
-  }, [routineProducts, bestProducts, isAr]);
+    return cardsConfig.slice(0, 3).map((c, idx) => {
+      // If an explicit product was chosen in admin controller, look for it in pool or bestProducts
+      const explicitProduct = c.productId
+        ? (pool.find((p) => p.id === c.productId) ||
+           bestProducts.find((p) => p.id === c.productId) ||
+           null)
+        : null;
+
+      const fallbackProduct = pool[idx] || pool[0] || null;
+      const product = explicitProduct || fallbackProduct;
+
+      return {
+        id: c.id || `card-${idx}`,
+        tabTitle: isAr ? (c.tabTitleAr || c.tabTitle) : c.tabTitle,
+        categoryTag: isAr ? (c.categoryTagAr || c.categoryTag) : c.categoryTag,
+        bgHex: c.bgHex || "#fbe8df",
+        bgStep: c.bgHex || "#fbe8df",
+        accentHex: c.accentHex || "#d87a63",
+        imageSrc:
+          c.imageSrc ||
+          `/images/rejuvenate/card-${idx === 0 ? "serum" : idx === 1 ? "cream" : "candle"}.jpg`,
+        imageAlt: c.imageAlt || c.categoryTag,
+        product,
+      };
+    });
+  }, [section, routineProducts, bestProducts, isAr]);
 
   const handleAddToCart = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
@@ -82,14 +82,8 @@ export default function RejuvenateBestProductsSection({
     setTimeout(() => setAddedId(null), 1800);
   };
 
-  const handleQuickView = (e: React.MouseEvent, product: any) => {
-    e.stopPropagation();
-    if (!product) return;
-    onQuickView(product);
-  };
-
   return (
-    <section className="relative my-6 sm:my-14 px-1 sm:px-2 md:px-4">
+    <section id="refresh-your-mind" className="relative my-6 sm:my-14 px-1 sm:px-2 md:px-4">
       {/* Outer Shell Wrapper with Luxury Border & Soft Shadow */}
       <div className="relative rounded-[22px] sm:rounded-[40px] overflow-hidden border border-amber-900/10 shadow-[0_16px_50px_rgba(137,7,84,0.06)] bg-white">
         
@@ -101,21 +95,19 @@ export default function RejuvenateBestProductsSection({
           {/* Header Texts */}
           <div className="text-center max-w-xl mx-auto mb-6 sm:mb-12 px-2">
             <div className="inline-block text-[8.5px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.25em] text-[#890754] mb-1 sm:mb-2">
-              {isAr ? "طقوس الصفاء والنقاء :" : "SEAL SIP :"}
+              {isAr ? (section.badgeTextAr || section.badgeText) : section.badgeText}
             </div>
             
             <h3 className="font-serif text-xl xs:text-2xl sm:text-4xl md:text-5xl font-bold text-gray-950 tracking-tight mb-1.5 sm:mb-2.5">
-              {isAr ? "انعشي حواسك وبشرتك" : "Refresh Your Mind"}
+              {isAr ? (section.headingAr || section.heading) : section.heading}
             </h3>
             
             <p className="text-gray-600 text-[9.5px] sm:text-xs md:text-sm leading-relaxed font-medium line-clamp-2 sm:line-clamp-none">
-              {isAr
-                ? "اعتني بجمالك وصفاء روحك مع أفضل مستحضرات العناية الطبيعية المنتقاة بعناية فائقة لتمنحك إشراقة استثنائية."
-                : "Nourish your skin and soul with pure botanical essentials crafted for profound radiance, clarity, and tranquility."}
+              {isAr ? (section.descriptionAr || section.description) : section.description}
             </p>
           </div>
 
-          {/* 3 Step-Tabbed Product Cards (STRICTLY 3-COLUMNS on Mobile and Desktop, Same-to-Same) */}
+          {/* 3 Step-Tabbed Product Cards (STRICTLY 3-COLUMNS on Mobile and Desktop) */}
           <div className="grid grid-cols-3 gap-2 sm:gap-5 md:gap-8 max-w-5xl mx-auto">
             {cardsData.map((card, idx) => {
               const p = card.product;
@@ -149,7 +141,7 @@ export default function RejuvenateBestProductsSection({
 
                     {/* Smooth S-curve transition from tab to lower shelf */}
                     <svg 
-                      className="w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 shrink-0 -ml-[0.5px]" 
+                      className="w-3 h-3 sm:w-5 sm:h-5 md:w-6 md:h-6 shrink-0 -ml-[0.5px] rtl:-mr-[0.5px] rtl:scale-x-[-1]" 
                       viewBox="0 0 24 24" 
                       fill="none" 
                       xmlns="http://www.w3.org/2000/svg"
@@ -161,12 +153,12 @@ export default function RejuvenateBestProductsSection({
                     </svg>
                   </div>
 
-                  {/* Main Card Body (Same-to-Same Aesthetic as Reference Image) */}
+                  {/* Main Card Body */}
                   <div 
                     style={{ backgroundColor: card.bgHex }}
                     className="flex-1 rounded-b-xl sm:rounded-b-[28px] rounded-tr-lg sm:rounded-tr-[22px] p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between shadow-[0_8px_24px_rgba(0,0,0,0.05)] group-hover:shadow-[0_16px_36px_rgba(0,0,0,0.1)] group-hover:-translate-y-1 transition-all duration-300 ease-out"
                   >
-                    {/* Studio Photograph matching the reference composition */}
+                    {/* Studio Photograph */}
                     <div className="relative w-full aspect-square rounded-lg sm:rounded-2xl overflow-hidden bg-white/40 shadow-2xs">
                       <Image
                         src={card.imageSrc}
@@ -223,10 +215,12 @@ export default function RejuvenateBestProductsSection({
           {/* Bottom Call to Action Link */}
           <div className="text-center mt-6 sm:mt-10">
             <Link
-              href="/products?category=Routine"
+              href={section.bottomLinkUrl || "/products?category=Routine"}
               className="inline-flex items-center gap-1 sm:gap-2 text-[9.5px] sm:text-xs md:text-sm font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] text-[#890754] hover:text-[#540434] underline underline-offset-4 sm:underline-offset-8 transition-all"
             >
-              <span>{isAr ? "اكتشفي كافة مستحضرات الروتين" : "Explore All Routine Essentials"}</span>
+              <span>
+                {isAr ? (section.bottomLinkTextAr || section.bottomLinkText) : section.bottomLinkText}
+              </span>
               <ArrowRight size={12} className="rtl:rotate-180" />
             </Link>
           </div>

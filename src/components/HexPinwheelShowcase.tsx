@@ -3,9 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useLanguageStore } from "@/lib/language-store";
-import { Price } from "./Price";
 
 interface HexPinwheelShowcaseProps {
   products: any[];
@@ -90,7 +89,7 @@ export function HexPinwheelShowcase({
     p?.imageUrl || p?.mainImage || "/placeholder-product.png";
 
   return (
-    <section className="w-full py-8 sm:py-14 md:py-20 lg:py-24 px-2 sm:px-6 select-none overflow-hidden my-4 sm:my-6">
+    <section className="w-full py-6 sm:py-10 md:py-12 px-2 sm:px-6 select-none overflow-hidden my-2 sm:my-4">
       {/* Embedded 60FPS Hardware-Accelerated Glass Edge Light & Slow Render Keyframes */}
       <style jsx global>{`
         @keyframes glass-rim-travel {
@@ -170,32 +169,32 @@ export function HexPinwheelShowcase({
         }
       `}</style>
 
-      <div className="w-full max-w-[1600px] mx-auto flex flex-col items-center justify-center">
-        {/* Header: Unified Luxury Editorial Architecture */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#890754] tracking-tight">
+      <div className="w-full max-w-[1536px] mx-auto flex flex-col items-center justify-center">
+        {/* Header: Clean Modern Sans-Serif */}
+        <div className="text-center mb-4 sm:mb-6">
+          <h2 className="font-sans text-2xl sm:text-3xl md:text-4xl font-medium tracking-tight text-slate-900 select-none">
             {isAr ? "المنتجات الأكثر بحثاً" : "Most Searched Formulas"}
           </h2>
         </div>
 
-        {/* Radial Interactive Flower / Pinwheel Canvas — Luxury Unfolding Every Time on Screen */}
+        {/* Compact Radial Flower / Pinwheel Canvas — Scaled Down for Clean Proportions */}
         <motion.div
-          initial={{ scale: 0.35, rotate: -25, opacity: 0 }}
-          whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
+          initial={{ scale: 0.8, opacity: 0 }}
+          whileInView={{ scale: 1, opacity: 1 }}
           viewport={{ once: false, amount: 0.15 }}
           transition={{
-            duration: 2.2,
+            duration: 1.2,
             ease: [0.16, 1, 0.3, 1],
           }}
-          className="relative w-full max-w-[98vw] sm:max-w-[760px] md:max-w-[960px] lg:max-w-[1200px] xl:max-w-[1400px] 2xl:max-w-[1550px] aspect-square flex items-center justify-center will-change-transform pinwheel-drift"
+          className="relative w-full max-w-[280px] sm:max-w-[360px] md:max-w-[430px] lg:max-w-[480px] xl:max-w-[520px] aspect-square flex items-center justify-center will-change-transform pinwheel-drift"
         >
           {/* Subtle Ambient Radial Glow */}
-          <div className="absolute inset-2 sm:inset-6 rounded-full bg-gradient-to-tr from-[#890754]/10 via-pink-400/8 to-amber-200/12 blur-3xl pointer-events-none" />
+          <div className="absolute inset-2 sm:inset-4 rounded-full bg-gradient-to-tr from-[#890754]/8 via-pink-400/5 to-amber-200/8 blur-2xl pointer-events-none" />
 
           {/* SVG Vector Canvas with Tightly Framed 760x760 ViewBox */}
           <svg
             viewBox="120 120 760 760"
-            className="w-full h-full drop-shadow-xl overflow-visible"
+            className="w-full h-full drop-shadow-md overflow-visible"
             xmlns="http://www.w3.org/2000/svg"
           >
             <defs>
@@ -261,13 +260,13 @@ export function HexPinwheelShowcase({
 
               {/* Multi-Layered 3D Ambient Occlusion Drop Shadows */}
               <filter id="petal-shadow" x="-30%" y="-30%" width="170%" height="170%">
-                <feDropShadow dx="0" dy="10" stdDeviation="14" floodColor="rgba(40, 15, 30, 0.16)" />
-                <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="rgba(0, 0, 0, 0.07)" />
+                <feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="rgba(40, 15, 30, 0.12)" />
+                <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="rgba(0, 0, 0, 0.05)" />
               </filter>
 
               <filter id="petal-shadow-active" x="-40%" y="-40%" width="190%" height="190%">
-                <feDropShadow dx="0" dy="18" stdDeviation="22" floodColor="rgba(137, 7, 84, 0.28)" />
-                <feDropShadow dx="0" dy="4" stdDeviation="7" floodColor="rgba(30, 10, 20, 0.12)" />
+                <feDropShadow dx="0" dy="12" stdDeviation="16" floodColor="rgba(137, 7, 84, 0.22)" />
+                <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="rgba(30, 10, 20, 0.08)" />
               </filter>
 
               {/* Central Hexagon Clip Path */}
@@ -286,281 +285,161 @@ export function HexPinwheelShowcase({
               ))}
             </defs>
 
-            {/* ── Dynamic 3D Layer Ordering: Non-hovered elements fade back, hovered element scales up on top layer ── */}
-            {(() => {
-              const isAnyHovered = hoveredIdx !== null;
-              // Render hovered item last so it naturally renders on top of all neighbors in SVG
-              const renderOrder = [1, 2, 3, 4, 5, 6, 0].sort((a, b) => {
-                if (a === hoveredIdx) return 1;
-                if (b === hoveredIdx) return -1;
-                return 0;
-              });
+            {/* ── Render Elements: Center Hexagon + 6 Outer Petals ── */}
+            {[0, 1, 2, 3, 4, 5, 6].map((itemIdx) => {
+              if (itemIdx === 0) {
+                // Central Hexagon Hero Card
+                if (!centerProduct) return null;
+                const isHovered = hoveredIdx === 0;
+                const centerImg = getImgSrc(centerProduct);
 
-              return renderOrder.map((itemIdx) => {
-                if (itemIdx === 0) {
-                  // Central Hexagon Hero Card
-                  if (!centerProduct) return null;
-                  const isHovered = hoveredIdx === 0;
-                  const centerImg = getImgSrc(centerProduct);
+                return (
+                  <g
+                    key="center-hex"
+                    className="cursor-pointer select-none"
+                    style={{
+                      transformOrigin: "500px 500px",
+                      transform: isHovered ? "scale(1.03)" : "scale(1)",
+                      transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
+                    onMouseEnter={() => setHoveredIdx(0)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    onClick={() => handleProductClick(centerProduct)}
+                  >
+                    {/* Central Hexagon Glass 3D Base */}
+                    <path
+                      d={HEXAGON_PATH}
+                      fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#glass-card-grad)"}
+                      stroke={isHovered ? "#890754" : "rgba(137, 7, 84, 0.25)"}
+                      strokeWidth={isHovered ? "2.8" : "1.8"}
+                      strokeOpacity={isHovered ? 0.9 : 0.65}
+                      filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
+                      className="transition-colors duration-300"
+                    />
 
-                  return (
-                    <g
-                      key="center-hex"
-                      className="cursor-pointer select-none"
-                      style={{
-                        transformOrigin: "500px 500px",
-                        transform: isHovered
-                          ? "scale(1.24)"
-                          : isAnyHovered
-                          ? "scale(0.95)"
-                          : "scale(1)",
-                        opacity: isHovered ? 1 : isAnyHovered ? 0.32 : 1,
-                        filter: !isHovered && isAnyHovered ? "grayscale(20%)" : "none",
-                        transition: "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1), filter 0.42s ease",
-                      }}
-                      onMouseEnter={() => setHoveredIdx(0)}
-                      onMouseLeave={() => setHoveredIdx(null)}
-                      onClick={() => handleProductClick(centerProduct)}
-                    >
-                      {/* Central Hexagon Glass 3D Base */}
-                      <path
-                        d={HEXAGON_PATH}
-                        fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#glass-card-grad)"}
-                        stroke={isHovered ? "#890754" : "rgba(137, 7, 84, 0.25)"}
-                        strokeWidth={isHovered ? "3.2" : "2"}
-                        strokeOpacity={isHovered ? 0.9 : 0.65}
-                        filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
-                        className="transition-colors duration-300"
+                    {/* Glossy Specular Glass Surface Glaze */}
+                    <path
+                      d={HEXAGON_PATH}
+                      fill="url(#glass-specular-glaze)"
+                      className="pointer-events-none glass-edge-glaze"
+                    />
+
+                    {/* Always Clipped Cleanly Inside Hexagon */}
+                    <g clipPath="url(#center-hex-clip)">
+                      <image
+                        href={centerImg}
+                        x="392"
+                        y="392"
+                        width="216"
+                        height="216"
+                        preserveAspectRatio="xMidYMid meet"
+                        className="transition-transform duration-500"
                       />
-
-                      {/* Glossy Specular Glass Surface Glaze */}
-                      <path
-                        d={HEXAGON_PATH}
-                        fill="url(#glass-specular-glaze)"
-                        className="pointer-events-none glass-edge-glaze"
-                      />
-
-                      {/* Regular Clipped View (Active when not hovered) */}
-                      {!isHovered && (
-                        <g clipPath="url(#center-hex-clip)">
-                          <image
-                            href={centerImg}
-                            x="402"
-                            y="402"
-                            width="196"
-                            height="196"
-                            preserveAspectRatio="xMidYMid meet"
-                            className="transition-transform duration-500"
-                          />
-                          {/* Specular Inner Glaze Ring */}
-                          <path
-                            d={HEXAGON_PATH}
-                            fill="none"
-                            stroke="rgba(255, 255, 255, 0.7)"
-                            strokeWidth="2.5"
-                            className="pointer-events-none"
-                          />
-                        </g>
-                      )}
-
-                      {/* Flowing Laser Color-Border on Outside Contour */}
+                      {/* Specular Inner Glaze Ring */}
                       <path
                         d={HEXAGON_PATH}
                         fill="none"
-                        stroke="url(#laser-flow-grad)"
-                        strokeWidth="3.6"
-                        strokeLinecap="round"
-                        filter="url(#laser-glow-filter)"
-                        className="pointer-events-none shape-color-flow-hex"
+                        stroke="rgba(255, 255, 255, 0.7)"
+                        strokeWidth="2"
+                        className="pointer-events-none"
                       />
-
-                      {/* 3D Pop-out Unclipped View on Hover */}
-                      {isHovered && (
-                        <g className="pointer-events-none">
-                          {/* Soft Ambient Aura */}
-                          <circle
-                            cx="500"
-                            cy="500"
-                            r="105"
-                            fill="rgba(255, 255, 255, 0.92)"
-                            filter="blur(10px)"
-                          />
-                          <image
-                            href={centerImg}
-                            x="385"
-                            y="385"
-                            width="230"
-                            height="230"
-                            preserveAspectRatio="xMidYMid meet"
-                            style={{
-                              filter: "drop-shadow(0 16px 26px rgba(0,0,0,0.22))",
-                              transformOrigin: "500px 500px",
-                              transform: "scale(1.12) translateY(-4px)",
-                              transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                            }}
-                          />
-                        </g>
-                      )}
                     </g>
-                  );
-                } else {
-                  // Outer Radial Petal (1 to 6)
-                  const i = itemIdx - 1;
-                  const product = petalProducts[i];
-                  if (!product) return null;
-                  const isHovered = hoveredIdx === itemIdx;
-                  const angle = i * 60;
-                  const center = PETAL_CENTERS[i];
-                  const imgSrc = getImgSrc(product);
 
-                  return (
-                    <g
-                      key={`petal-${i}`}
-                      className="cursor-pointer select-none"
-                      style={{
-                        transformOrigin: `${center.x}px ${center.y}px`,
-                        transform: isHovered
-                          ? "scale(1.28)"
-                          : isAnyHovered
-                          ? "scale(0.95)"
-                          : "scale(1)",
-                        opacity: isHovered ? 1 : isAnyHovered ? 0.32 : 1,
-                        filter: !isHovered && isAnyHovered ? "grayscale(20%)" : "none",
-                        transition: "transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1), filter 0.42s ease",
-                      }}
-                      onMouseEnter={() => setHoveredIdx(itemIdx)}
-                      onMouseLeave={() => setHoveredIdx(null)}
-                      onClick={() => handleProductClick(product)}
-                    >
-                      {/* Physical 3D Glass Card Base */}
-                      <path
-                        d={BASE_PETAL_PATH}
-                        transform={`rotate(${angle}, 500, 500)`}
-                        fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#glass-card-grad)"}
-                        stroke={isHovered ? "#890754" : "rgba(137, 7, 84, 0.25)"}
-                        strokeWidth={isHovered ? "3.2" : "2"}
-                        strokeOpacity={isHovered ? 0.9 : 0.65}
-                        filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
-                        className="transition-colors duration-300"
+                    {/* Flowing Laser Color-Border on Outside Contour */}
+                    <path
+                      d={HEXAGON_PATH}
+                      fill="none"
+                      stroke="url(#laser-flow-grad)"
+                      strokeWidth="3.2"
+                      strokeLinecap="round"
+                      filter="url(#laser-glow-filter)"
+                      className="pointer-events-none shape-color-flow-hex"
+                    />
+                  </g>
+                );
+              } else {
+                // Outer Radial Petal (1 to 6)
+                const i = itemIdx - 1;
+                const product = petalProducts[i];
+                if (!product) return null;
+                const isHovered = hoveredIdx === itemIdx;
+                const angle = i * 60;
+                const center = PETAL_CENTERS[i];
+                const imgSrc = getImgSrc(product);
+
+                return (
+                  <g
+                    key={`petal-${i}`}
+                    className="cursor-pointer select-none"
+                    style={{
+                      transformOrigin: `${center.x}px ${center.y}px`,
+                      transform: isHovered ? "scale(1.03)" : "scale(1)",
+                      transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
+                    onMouseEnter={() => setHoveredIdx(itemIdx)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    onClick={() => handleProductClick(product)}
+                  >
+                    {/* Physical 3D Glass Card Base */}
+                    <path
+                      d={BASE_PETAL_PATH}
+                      transform={`rotate(${angle}, 500, 500)`}
+                      fill={isHovered ? "url(#porcelain-grad-hover)" : "url(#glass-card-grad)"}
+                      stroke={isHovered ? "#890754" : "rgba(137, 7, 84, 0.25)"}
+                      strokeWidth={isHovered ? "2.8" : "1.8"}
+                      strokeOpacity={isHovered ? 0.9 : 0.65}
+                      filter={isHovered ? "url(#petal-shadow-active)" : "url(#petal-shadow)"}
+                      className="transition-colors duration-300"
+                    />
+
+                    {/* Glossy Specular Glass Surface Glaze */}
+                    <path
+                      d={BASE_PETAL_PATH}
+                      transform={`rotate(${angle}, 500, 500)`}
+                      fill="url(#glass-specular-glaze)"
+                      className="pointer-events-none glass-edge-glaze"
+                    />
+
+                    {/* Always Clipped Cleanly Inside Petal */}
+                    <g clipPath={`url(#clip-petal-${i})`}>
+                      <image
+                        href={imgSrc}
+                        x={center.x - 102}
+                        y={center.y - 102}
+                        width={204}
+                        height={204}
+                        preserveAspectRatio="xMidYMid meet"
+                        className="transition-transform duration-500"
                       />
 
-                      {/* Glossy Specular Glass Surface Glaze */}
-                      <path
-                        d={BASE_PETAL_PATH}
-                        transform={`rotate(${angle}, 500, 500)`}
-                        fill="url(#glass-specular-glaze)"
-                        className="pointer-events-none glass-edge-glaze"
-                      />
-
-                      {/* Regular Clipped View (Active when not hovered) */}
-                      {!isHovered && (
-                        <g clipPath={`url(#clip-petal-${i})`}>
-                          <image
-                            href={imgSrc}
-                            x={center.x - 85}
-                            y={center.y - 85}
-                            width={170}
-                            height={170}
-                            preserveAspectRatio="xMidYMid meet"
-                            className="transition-transform duration-500"
-                          />
-
-                          {/* Specular Rim Light */}
-                          <path
-                            d={BASE_PETAL_PATH}
-                            transform={`rotate(${angle}, 500, 500)`}
-                            fill="none"
-                            stroke="rgba(255, 255, 255, 0.7)"
-                            strokeWidth="2.5"
-                            className="pointer-events-none"
-                          />
-                        </g>
-                      )}
-
-                      {/* Flowing Animated Color Border on Outside Contour */}
+                      {/* Specular Rim Light */}
                       <path
                         d={BASE_PETAL_PATH}
                         transform={`rotate(${angle}, 500, 500)`}
                         fill="none"
-                        stroke="url(#laser-flow-grad)"
-                        strokeWidth="3.6"
-                        strokeLinecap="round"
-                        filter="url(#laser-glow-filter)"
-                        className="pointer-events-none shape-color-flow-beam"
-                        style={{ animationDelay: `${i * 1.6}s` }}
+                        stroke="rgba(255, 255, 255, 0.7)"
+                        strokeWidth="2"
+                        className="pointer-events-none"
                       />
-
-                      {/* 3D Pop-out Unclipped View on Hover */}
-                      {isHovered && (
-                        <g className="pointer-events-none">
-                          {/* Soft Ambient Aura */}
-                          <circle
-                            cx={center.x}
-                            cy={center.y}
-                            r="82"
-                            fill="rgba(255, 255, 255, 0.92)"
-                            filter="blur(10px)"
-                          />
-                          <image
-                            href={imgSrc}
-                            x={center.x - 95}
-                            y={center.y - 95}
-                            width={190}
-                            height={190}
-                            preserveAspectRatio="xMidYMid meet"
-                            style={{
-                              filter: "drop-shadow(0 16px 26px rgba(0,0,0,0.22))",
-                              transformOrigin: `${center.x}px ${center.y}px`,
-                              transform: "scale(1.15) translateY(-5px)",
-                              transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                            }}
-                          />
-                        </g>
-                      )}
                     </g>
-                  );
-                }
-              });
-            })()}
+
+                    {/* Flowing Animated Color Border on Outside Contour */}
+                    <path
+                      d={BASE_PETAL_PATH}
+                      transform={`rotate(${angle}, 500, 500)`}
+                      fill="none"
+                      stroke="url(#laser-flow-grad)"
+                      strokeWidth="3.2"
+                      strokeLinecap="round"
+                      filter="url(#laser-glow-filter)"
+                      className="pointer-events-none shape-color-flow-beam"
+                      style={{ animationDelay: `${i * 1.6}s` }}
+                    />
+                  </g>
+                );
+              }
+            })}
           </svg>
-
-          {/* Interactive Floating Product Preview Pill on Hover */}
-          <AnimatePresence>
-            {hoveredIdx !== null && displayProducts[hoveredIdx] && (
-              <motion.div
-                initial={{ opacity: 0, y: 14, scale: 0.92 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.92 }}
-                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute -bottom-4 sm:-bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-white/95 backdrop-blur-xl px-4 sm:px-6 py-2 sm:py-2.5 rounded-full shadow-[0_16px_36px_rgba(137,7,84,0.18)] border border-pink-100/90 pointer-events-auto cursor-pointer hover:scale-105 active:scale-95 transition-transform select-none"
-                onClick={() => handleProductClick(displayProducts[hoveredIdx])}
-                title="Click to view product details"
-              >
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-pink-50 relative shrink-0 border border-pink-100">
-                  <Image
-                    src={getImgSrc(displayProducts[hoveredIdx])}
-                    alt={displayProducts[hoveredIdx].name || "Product"}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-[#890754]">
-                    {displayProducts[hoveredIdx].brand?.name || displayProducts[hoveredIdx].brand || "Shafan Beauty"}
-                  </span>
-                  <span className="text-xs sm:text-sm font-extrabold text-gray-900 line-clamp-1 max-w-[160px] sm:max-w-[260px]">
-                    {displayProducts[hoveredIdx].name}
-                  </span>
-                </div>
-                <span className="shrink-0 text-xs sm:text-sm font-black text-gray-900 bg-pink-50/80 px-2.5 py-1 rounded-full border border-pink-100">
-                  <Price
-                    amount={displayProducts[hoveredIdx].salePrice || displayProducts[hoveredIdx].discountPrice || displayProducts[hoveredIdx].price}
-                    countryPrices={displayProducts[hoveredIdx].countryPrices}
-                  />
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       </div>
     </section>

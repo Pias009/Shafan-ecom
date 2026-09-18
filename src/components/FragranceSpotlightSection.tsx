@@ -2,77 +2,38 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, ShoppingCart, Star, Flame } from "lucide-react";
-import { Price } from "@/components/Price";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, ShoppingCart, Star, Heart, Sparkles, ArrowRight } from "lucide-react";
+import { Price } from "./Price";
+import { useLanguageStore } from "@/lib/language-store";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
-interface FlashSaleProduct {
-  id: string;
-  name: string;
-  slug?: string;
-  price?: number;
-  priceCents?: number;
-  discountPrice?: number;
-  salePrice?: number;
-  salePriceCents?: number;
-  imageUrl?: string;
-  mainImage?: string;
-  brandName?: string;
-  brand?: { name: string } | string;
-  averageRating?: number;
-  ratingCount?: number;
-  stockQuantity?: number;
-  totalSales?: number;
-  countryPrices?: any[];
-  hot?: boolean;
-  trending?: boolean;
-  freeDelivery?: boolean;
-}
-
-interface FlashSalesSliderProps {
-  products: FlashSaleProduct[];
+interface FragranceSpotlightSectionProps {
+  products?: any[];
   onQuickView: (product: any) => void;
   addToCart: (product: any) => void;
-  orderNow: (product: any) => void;
+  orderNow?: (product: any) => void;
 }
 
-function transformProduct(product: any) {
-  const price = product.price || product.priceCents || 0;
-  const salePrice = product.discountPrice || product.salePrice || product.salePriceCents || 0;
-  return {
-    id: product.id,
-    name: product.name,
-    slug: product.slug,
-    price: price,
-    discountPrice: salePrice > 0 ? salePrice : undefined,
-    salePrice: salePrice > 0 ? salePrice : undefined,
-    imageUrl: product.imageUrl || product.mainImage || "/placeholder-product.png",
-    mainImage: product.mainImage || product.imageUrl,
-    brand: product.brandName || (typeof product.brand === "string" ? product.brand : product.brand?.name) || "Shafan",
-    averageRating: product.averageRating,
-    ratingCount: product.ratingCount,
-    stockQuantity: product.stockQuantity,
-    totalSales: product.totalSales,
-    countryPrices: product.countryPrices,
-    hot: product.hot,
-    trending: product.trending,
-    freeDelivery: product.freeDelivery,
-  };
-}
+const BADGES = ["PARFUM", "EXCLUSIVE", "OUD LUXE", "SIGNATURE", "ROYAL"];
 
-export function FlashSalesSlider({
-  products,
+export default function FragranceSpotlightSection({
+  products = [],
   onQuickView,
   addToCart,
-  orderNow,
-}: FlashSalesSliderProps) {
+}: FragranceSpotlightSectionProps) {
+  const { currentLanguage } = useLanguageStore();
+  const isAr = currentLanguage?.code === "ar";
   const [activeIndex, setActiveIndex] = useState(2);
+  const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
 
-  if (!products || products.length === 0) return null;
+  const fragranceProducts = products.length > 0 ? products : [];
 
-  const total = products.length;
+  if (!fragranceProducts || fragranceProducts.length === 0) return null;
+
+  const total = fragranceProducts.length;
   const safeActiveIndex = total > 0 ? (activeIndex >= total ? Math.min(2, total - 1) : activeIndex) : 0;
 
   const handlePrev = useCallback(() => {
@@ -90,6 +51,11 @@ export function FlashSalesSlider({
     }, 3500);
     return () => clearInterval(timer);
   }, [total, isPaused, handleNext]);
+
+  const toggleWishlist = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setWishlist((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const onTouchStart = (e: React.TouchEvent) => {
     setIsPaused(true);
@@ -110,22 +76,58 @@ export function FlashSalesSlider({
   };
 
   return (
-    <div className="w-full py-2 select-none overflow-hidden">
-      <div className="w-full max-w-[1536px] mx-auto">
-        {/* 3D Cylindrical Arc Coverflow Stage */}
+    <section
+      id="fragrances"
+      className="relative w-full py-8 sm:py-12 md:py-16 px-2 sm:px-6 lg:px-8 select-none overflow-hidden"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Soft Ambient Illumination */}
+      <div className="absolute inset-0 pointer-events-none -z-10 flex items-center justify-center">
+        <div className="w-[1100px] h-[500px] bg-gradient-to-r from-amber-500/5 via-[#890754]/5 to-pink-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-[1536px] mx-auto flex flex-col items-center">
+        {/* 1. Ultra-Slim Section Header Bar (Matching Flash Sales style) */}
+        <div className="w-full mb-4 sm:mb-6 md:mb-8 relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#3e0325] via-[#540434] to-[#3e0325] backdrop-blur-xl border border-pink-500/20 px-4 py-3 sm:px-6 sm:py-3.5 shadow-[0_8px_32px_rgba(84,4,52,0.2)]">
+          {/* Glow accent */}
+          <div className="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/15 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-8 right-12 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative flex items-center justify-between gap-3 sm:gap-6">
+            {/* Left: Title + Mini Badge */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase whitespace-nowrap">
+                {isAr ? "العطور الفاخرة" : "Fragrances"}
+              </h2>
+              <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                {isAr ? "حصري" : "EXCLUSIVE"}
+              </span>
+            </div>
+
+            {/* Right: Slim See All CTA */}
+            <Link
+              href="/products?category=Fragrances"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
+            >
+              <span>{isAr ? "عرض الكل" : "See All"}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* 2. 3D Cylindrical Arc Card Carousel (Spacious Full-Width Fan) */}
         <div
           className="relative w-full h-[280px] sm:h-[360px] md:h-[430px] lg:h-[490px] xl:h-[530px] flex items-center justify-center overflow-hidden"
           style={{ perspective: "1400px" }}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
         >
           {/* Left Navigation Chevron */}
           <button
             type="button"
             onClick={handlePrev}
-            aria-label="Previous flash deal"
+            aria-label="Previous fragrance"
             className="no-min-size absolute left-2 sm:left-6 lg:left-10 top-1/2 -translate-y-1/2 z-40 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:scale-105 active:scale-95 transition-all"
             style={{ minWidth: 0, minHeight: 0 }}
           >
@@ -136,7 +138,7 @@ export function FlashSalesSlider({
           <button
             type="button"
             onClick={handleNext}
-            aria-label="Next flash deal"
+            aria-label="Next fragrance"
             className="no-min-size absolute right-2 sm:right-6 lg:right-10 top-1/2 -translate-y-1/2 z-40 w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.08)] border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:scale-105 active:scale-95 transition-all"
             style={{ minWidth: 0, minHeight: 0 }}
           >
@@ -145,7 +147,7 @@ export function FlashSalesSlider({
 
           {/* Cards Stage with Symmetrical 3D Convex Arc Horizon */}
           <div className="relative w-full h-full flex items-center justify-center overflow-visible">
-            {products.map((rawProduct, i) => {
+            {fragranceProducts.map((product, i) => {
               let diff = (i - safeActiveIndex) % total;
               if (diff > total / 2) diff -= total;
               if (diff < -total / 2) diff += total;
@@ -201,16 +203,18 @@ export function FlashSalesSlider({
               }
 
               const isCenter = diff === 0;
-              const product = transformProduct(rawProduct);
-              const regularPrice = product.price || 0;
-              const effectivePrice = product.discountPrice || product.salePrice || 0;
-              const discountPct =
-                effectivePrice > 0 && regularPrice > effectivePrice
-                  ? Math.round(((regularPrice - effectivePrice) / regularPrice) * 100)
-                  : 0;
-
-              const rawImg = product.imageUrl || product.mainImage || "/placeholder-product.png";
+              const badge = BADGES[i % BADGES.length];
+              const isLiked = !!wishlist[product.id];
+              const rawImg = product.imageUrl || product.mainImage || (product.images && product.images[0]) || "/placeholder-product.png";
               const imgSrc = getOptimizedUrl(rawImg, 800);
+              const brandName =
+                typeof product.brand === "string"
+                  ? product.brand
+                  : product.brand?.name || product.brandName || "Shafan Fragrance";
+              const regularPrice = product.price || product.priceCents || 0;
+              const effectivePrice = product.discountPrice || product.salePrice || 0;
+              const displayPrice = effectivePrice > 0 ? effectivePrice : regularPrice;
+              const originalPrice = effectivePrice > 0 && regularPrice > effectivePrice ? regularPrice : null;
 
               return (
                 <div
@@ -231,7 +235,7 @@ export function FlashSalesSlider({
                     willChange: "transform, opacity",
                   }}
                 >
-                  {/* 3D Card Shell — Clean Modern Luxury Aesthetic */}
+                  {/* 3D Card Shell */}
                   <div
                     className="relative w-full h-full rounded-2xl sm:rounded-3xl bg-white border border-slate-200/80 overflow-hidden shadow-lg transition-transform duration-300 group flex flex-col justify-between"
                     style={{
@@ -240,26 +244,33 @@ export function FlashSalesSlider({
                         : "0 10px 28px rgba(20,5,15,0.08), inset 0 1px 1.5px rgba(255,255,255,0.6)",
                     }}
                   >
-                    {/* Floating Badge (Top-Left) */}
-                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-20 pointer-events-none">
-                      <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 backdrop-blur-md text-[#890754] text-[7.5px] sm:text-[9.5px] lg:text-[10px] font-semibold uppercase tracking-wider border border-pink-100 shadow-xs">
-                        <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#890754] fill-[#890754]" />
-                        {discountPct > 0
-                          ? `-${discountPct}%`
-                          : product.hot || product.trending
-                          ? "BEST SELLER"
-                          : "FLASH DEAL"}
+                    {/* Top Floating Bar: Badge & Wishlist Heart */}
+                    <div className="absolute top-2 inset-x-2 sm:top-3 sm:inset-x-3 z-20 flex items-center justify-between pointer-events-none">
+                      <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 backdrop-blur-md text-[#890754] text-[7.5px] sm:text-[9.5px] lg:text-[10px] font-semibold uppercase tracking-wider border border-pink-100 shadow-xs pointer-events-auto">
+                        <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#890754]" />
+                        {badge}
                       </span>
+                      <button
+                        type="button"
+                        onClick={(e) => toggleWishlist(e, product.id)}
+                        aria-label="Save to wishlist"
+                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/90 backdrop-blur-md border border-slate-100 flex items-center justify-center hover:bg-pink-50 transition-colors shadow-2xs pointer-events-auto"
+                      >
+                        <Heart
+                          size={12}
+                          className={isLiked ? "text-rose-500 fill-rose-500" : "text-slate-400 hover:text-rose-500"}
+                        />
+                      </button>
                     </div>
 
                     {/* Top Specular Soft Reflection */}
                     <div className="absolute inset-x-0 top-0 h-[35%] bg-gradient-to-b from-white/35 via-white/5 to-transparent pointer-events-none rounded-t-2xl sm:rounded-t-3xl z-10" />
 
-                    {/* Image Stage: Clean centered product presentation */}
+                    {/* Image Stage */}
                     <div className="relative flex-1 w-full min-h-0 flex items-center justify-center p-1 sm:p-4">
                       <Image
                         src={imgSrc}
-                        alt={product.name || "Flash Sale Product"}
+                        alt={product.name || "Fragrance"}
                         fill
                         className="object-contain p-1 sm:p-3 transition-transform duration-700 ease-out group-hover:scale-105"
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -267,17 +278,17 @@ export function FlashSalesSlider({
                       />
                     </div>
 
-                    {/* Bottom Info Area: Clean Brand, Title, Price, Cart & Rating */}
+                    {/* Bottom Info Area */}
                     <div className="relative z-20 bg-white border-t border-slate-100 px-2.5 py-2 sm:px-4 sm:py-3 flex flex-col gap-1">
                       {/* Brand & Rating Row */}
                       <div className="flex items-center justify-between gap-1 leading-none">
                         <span className="text-[8px] sm:text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-[#890754] truncate">
-                          {product.brand}
+                          {brandName}
                         </span>
                         <div className="flex items-center gap-0.5 shrink-0">
                           <Star size={10} className="text-amber-400 fill-amber-400 sm:w-3 sm:h-3" />
                           <span className="text-[8.5px] sm:text-[10px] lg:text-xs font-semibold text-slate-600">
-                            {product.averageRating || 4.9}
+                            {product.averageRating || 5.0}
                           </span>
                           {product.ratingCount && (
                             <span className="text-[8px] sm:text-[9.5px] text-slate-400 font-normal">
@@ -296,7 +307,7 @@ export function FlashSalesSlider({
                       <div className="flex items-center justify-between gap-2 pt-0.5 mt-0.5">
                         <div className="flex items-baseline min-w-0">
                           <Price
-                            amount={product.discountPrice || product.salePrice || product.price}
+                            amount={displayPrice}
                             className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
                             countryPrices={product.countryPrices}
                           />
@@ -324,8 +335,8 @@ export function FlashSalesSlider({
           </div>
         </div>
 
-        {/* Bottom Pagination Dots (Hidden on mobile) */}
-        <div className="hidden sm:flex items-center justify-center gap-2 mt-4 sm:mt-6 select-none">
+        {/* 3. Bottom Pagination Dots (Hidden on mobile) */}
+        <div className="hidden sm:flex items-center justify-center gap-2 mt-6 sm:mt-8 select-none">
           {Array.from({ length: Math.min(6, total) }).map((_, dotIdx) => {
             const isCurrent = dotIdx === safeActiveIndex % Math.min(6, total);
             return (
@@ -343,6 +354,6 @@ export function FlashSalesSlider({
           })}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

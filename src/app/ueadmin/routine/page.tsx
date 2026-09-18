@@ -54,6 +54,14 @@ export default async function RoutinePage() {
             Manage routine products &amp; banner
           </p>
         </div>
+        <div>
+          <a
+            href="/ueadmin/rejuvenate-section"
+            className="px-5 py-2.5 rounded-2xl bg-[#890754] hover:bg-[#540434] text-white font-black text-xs uppercase tracking-wider inline-flex items-center gap-2 shadow-sm transition-all"
+          >
+            <span>✨ Edit &quot;Refresh Your Mind&quot; Section</span>
+          </a>
+        </div>
       </div>
       <RoutineClient initialProducts={products} initialBanners={banners} />
     </div>

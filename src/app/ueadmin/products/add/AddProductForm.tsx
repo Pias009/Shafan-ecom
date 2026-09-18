@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box, Scale, ChevronDown } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box, Scale, ChevronDown, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -1074,6 +1074,26 @@ export function AddProductForm({
             <h3 className="text-sm font-black uppercase tracking-widest text-black/50 flex items-center gap-2">
               <ImageIcon size={14} /> Media Assets
             </h3>
+            
+            {/* Image Ratio Recommendation & Perfect Display Control */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-pink-50/90 via-purple-50/80 to-emerald-50/90 rounded-2xl border border-pink-200/80 shadow-2xs flex items-start gap-3.5">
+              <div className="p-2 bg-white rounded-xl text-[#890754] shadow-xs shrink-0 mt-0.5 border border-pink-100">
+                <Sparkles size={18} />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#890754]">
+                    Recommended Product Image Ratio for Perfect Framing
+                  </h4>
+                  <span className="text-[10px] font-black uppercase bg-[#890754] text-white px-2 py-0.5 rounded-full">
+                    1:1 Square (1000 × 1000 px)
+                  </span>
+                </div>
+                <p className="text-xs text-gray-700 font-medium leading-relaxed">
+                  For crystal-clear product display in the geometric pinwheel, routine coverflow, and product cards, upload high-resolution <strong>1:1 Square (1000 × 1000 px)</strong> images with a transparent PNG background or clean white studio backdrop.
+                </p>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Main Image */}

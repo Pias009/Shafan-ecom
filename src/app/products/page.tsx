@@ -16,8 +16,8 @@ function getCountryCodeFromStore(storeCode: string | null): string {
 
 function getPriceFromCountryPrices(countryPrices: any[], countryCode: string) {
   if (!countryPrices || countryPrices.length === 0) return null;
-  const cp = countryPrices.find(c => c.country === countryCode);
-  return cp?.priceCents || null;
+  const cp = countryPrices.find(c => c.country === countryCode && c.active !== false);
+  return cp ? (cp.price ?? cp.priceCents ?? null) : null;
 }
 
 export default async function ProductsPage({
