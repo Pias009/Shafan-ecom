@@ -6,7 +6,7 @@ import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Filter, X, Flame } from "lucide-react";
+import { Filter, X, Flame, Search } from "lucide-react";
 import { Price } from "@/components/Price";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
@@ -63,6 +63,7 @@ export default function ProductsClient({
 
   const { addItem, hasAddress } = useCartStore();
   const { currentLanguage } = useLanguageStore();
+  const isAr = currentLanguage?.code === "ar";
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
 
@@ -434,7 +435,7 @@ return sorted;
 
   return (
     <div className="min-h-screen bg-transparent text-gray-900 selection:bg-[#890754] selection:text-white">
-      <div className="max-w-[1536px] mx-auto px-3 sm:px-4 md:px-6 pt-16 sm:pt-20 md:pt-24 pb-16">
+      <div className="max-w-[1536px] mx-auto px-3 sm:px-4 md:px-6 pt-12 sm:pt-14 md:pt-16 pb-16">
         {isTrending && (
           <div className="mb-4 sm:mb-6">
             <div className="inline-flex items-center gap-1.5 glass-panel rounded-full px-2.5 py-1 sm:px-3 sm:py-1.5 mb-2 w-fit">
@@ -446,9 +447,38 @@ return sorted;
             <p className="text-gray-600 mt-1 text-xs sm:text-sm max-w-xl font-medium">Discover our customers' absolute favorites that everyone's raving about.</p>
           </div>
         )}
-        
+
+        {/* Top Prominent Search Bar — Fills upper section gap */}
+        <div className="w-full max-w-2xl mx-auto mb-3 sm:mb-4">
+          <div className="relative flex items-center">
+            <Search className="absolute start-4 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={isAr ? "ابحث عن منتج، ماركة، أو قسم..." : "Search products, brands, categories..."}
+              className="w-full h-10 sm:h-11 ps-10 pe-24 bg-white/95 backdrop-blur-md rounded-full border border-slate-200/90 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 shadow-2xs focus:ring-2 focus:ring-[#890754]/20 focus:border-[#890754] outline-none transition-all"
+            />
+            <div className="absolute end-2 flex items-center gap-1.5">
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput("")}
+                  className="w-5 h-5 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X size={12} />
+                </button>
+              )}
+              <span className="px-2 py-0.5 rounded-full bg-pink-50 text-[#890754] text-[10px] font-bold shrink-0">
+                {filtered.length} {isAr ? "منتج" : "items"}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* Category Filter Ribbon & Compact Filter Toggle */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mt-2 sm:mt-3 mb-4 sm:mb-6 pb-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 mb-4 sm:mb-6 pb-2">
           {/* Category Pills (Horizontal smooth scroll on mobile, wrap on desktop) */}
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-1 px-0.5 flex-1 min-w-0">
             {CATEGORY_TABS.map((tab) => {
