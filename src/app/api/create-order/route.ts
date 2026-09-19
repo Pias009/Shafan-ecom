@@ -466,10 +466,10 @@ export async function POST(req: Request) {
       subtotal += itemTotal;
 
       // Delivery & VAT settings for this product
-      if (product.deliveryFeeOption !== "FREE") {
+      if ((product as any).deliveryFeeOption !== "FREE") {
         allItemsFreeDelivery = false;
       }
-      if (product.vatOption !== "EXEMPT") {
+      if ((product as any).vatOption !== "EXEMPT") {
         taxableProductSubtotal += itemTotal;
       }
 

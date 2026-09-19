@@ -208,6 +208,8 @@ model Product {
   promotion     Boolean  @default(false)
   freshFromShelf Boolean  @default(false)
   routine       Boolean  @default(false)
+  deliveryFeeOption String? @default("DEFAULT")
+  vatOption         String? @default("DEFAULT")
   sku           String?
   currency      String   @default("AED")
   averageRating Float    @default(0)
