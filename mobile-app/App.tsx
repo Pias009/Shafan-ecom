@@ -39,11 +39,29 @@ const SOUND_URLS = {
 // Available order statuses in database
 const ORDER_STATUSES = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 
+// Helper to base64 encode strings reliably in React Native Hermes
+function simpleBase64(str: string): string {
+  if (typeof btoa === 'function') {
+    try {
+      return btoa(str);
+    } catch (_) {}
+  }
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  let output = '';
+  for (let block = 0, charCode, i = 0, map = chars;
+       str.charAt(i | 0) || (map = '=', i % 1);
+       output += map.charAt(63 & block >> 8 - i % 1 * 8)) {
+    charCode = str.charCodeAt(i += 3/4);
+    block = block << 8 | charCode;
+  }
+  return output;
+}
+
 export default function App() {
   // Session & Config state
   const [token, setToken] = useState<string | null>(null);
   const [adminUser, setAdminUser] = useState<any>(null);
-  const [baseUrl, setBaseUrl] = useState<string>('https://shanafaglobal.com');
+  const [baseUrl, setBaseUrl] = useState<string>('https://www.shanfaglobal.com');
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
   // Login form state
@@ -347,33 +365,40 @@ export default function App() {
   // ACTIONS: LOGIN, LOGOUT, STATUS, TOGGLE
   // ------------------------------------------
   const handleLogin = async () => {
-    if (!loginEmail.trim() || !loginPassword.trim()) {
+    const cleanEmail = loginEmail.trim().toLowerCase();
+    const cleanPassword = loginPassword.trim();
+
+    if (!cleanEmail || !cleanPassword) {
       Alert.alert('Required Fields', 'Please enter both your admin email and password.');
       return;
     }
 
     setLoginLoading(true);
     try {
-      const url = `${baseUrl.replace(/\/+$/, '')}/api/admin/login`;
+      const cleanBase = baseUrl.trim().replace(/\/+$/, '');
+      const url = `${cleanBase}/api/admin/login`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail.trim(), password: loginPassword }),
+        body: JSON.stringify({ email: cleanEmail, password: cleanPassword }),
       });
 
       const data = await res.json();
-      if (data.success && data.token) {
-        setToken(data.token);
-        setAdminUser(data.admin);
-        await AsyncStorage.setItem('SHANFA_AUTH_TOKEN', data.token);
-        await AsyncStorage.setItem('SHANFA_ADMIN_USER', JSON.stringify(data.admin));
-        await AsyncStorage.setItem('SHANFA_BASE_URL', baseUrl);
+      const userObj = data.admin || data.user;
+      const authToken = data.token || (userObj?.id ? simpleBase64(`${userObj.id}:${Date.now()}:admin`) : null);
+
+      if (data.success && userObj && authToken) {
+        setToken(authToken);
+        setAdminUser(userObj);
+        await AsyncStorage.setItem('SHANFA_AUTH_TOKEN', authToken);
+        await AsyncStorage.setItem('SHANFA_ADMIN_USER', JSON.stringify(userObj));
+        await AsyncStorage.setItem('SHANFA_BASE_URL', cleanBase);
         setLoginPassword('');
       } else {
-        Alert.alert('Login Failed', data.error || 'Invalid credentials.');
+        Alert.alert('Login Failed', data.error || 'Invalid credentials or access denied.');
       }
     } catch (err: any) {
-      Alert.alert('Connection Error', `Unable to reach ${baseUrl}. Please check your server address and network.`);
+      Alert.alert('Connection Error', `Unable to reach server. Please check your network and server URL (${baseUrl}).`);
     } finally {
       setLoginLoading(false);
     }

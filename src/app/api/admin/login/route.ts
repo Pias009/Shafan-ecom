@@ -12,25 +12,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and password required" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const cleanEmail = email.trim().toLowerCase();
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email: { equals: cleanEmail, mode: "insensitive" },
+      },
     });
 
     if (!user || !user.passwordHash) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "No account found with this email" }, { status: 401 });
     }
 
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      return NextResponse.json({ error: "Incorrect password. Please verify and try again." }, { status: 401 });
     }
 
     // Must be admin
     if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
-      return NextResponse.json({ error: "Not an admin account" }, { status: 401 });
+      return NextResponse.json({ error: "Access denied. This account does not have Admin privileges." }, { status: 403 });
     }
 
-    // Generate token for admin session (simple approach)
+    // Generate token for admin session
     const token = Buffer.from(`${user.id}:${Date.now()}:admin`).toString('base64');
 
     // Send admin login alert
@@ -44,15 +48,18 @@ export async function POST(req: Request) {
       ).catch(console.error);
     } catch {}
 
+    const adminData = { 
+      id: user.id, 
+      email: user.email, 
+      name: user.name || "Admin", 
+      role: user.role 
+    };
+
     const response = NextResponse.json({ 
       success: true, 
       token,
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        name: user.name, 
-        role: user.role 
-      }
+      admin: adminData,
+      user: adminData
     });
 
     // Set admin session cookie
