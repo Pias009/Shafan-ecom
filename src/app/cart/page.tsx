@@ -241,6 +241,17 @@ function CartPageContent() {
         value: total,
         currency: getCurrencyForCountry(selectedCountry),
       });
+
+      fetch("/api/events/checkout-entered", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemCount: items.length,
+          total: total,
+          currency: getCurrencyForCountry(selectedCountry),
+          country: selectedCountry,
+        }),
+      }).catch(() => {});
     }
   }, [items, selectedCountry]);
 
@@ -255,11 +266,21 @@ function CartPageContent() {
   const discount = couponMaxLimit ? Math.min(rawDiscount, couponMaxLimit) : rawDiscount;
 
   const deliveryConfig = COUNTRY_CONFIG[selectedCountry.toUpperCase()] || COUNTRY_CONFIG["AE"];
-  const shipping = subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee;
+  const allItemsFreeDelivery = items.length > 0 && items.every((i) => i.deliveryFeeOption === "FREE");
+  const shipping = allItemsFreeDelivery ? 0 : (subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee);
+
+  const countryTaxRate = deliveryConfig.taxRate || 0;
+  const taxableSubtotal = items.reduce((acc, item) => {
+    if (item.vatOption === "EXEMPT") return acc;
+    const { price: itemPrice } = getDisplayPrice(item, selectedCountry);
+    return acc + (Number(itemPrice) * item.quantity);
+  }, 0);
+
+  const discountRatio = subtotal > 0 ? Math.max(0, 1 - (discount / subtotal)) : 1;
+  const taxableBase = Math.max(0, (taxableSubtotal * discountRatio) + shipping);
+  const taxAmount = Math.round(taxableBase * countryTaxRate * 100) / 100;
   const preTaxTotal = subtotal - discount + shipping;
-  const taxRate = deliveryConfig.taxRate || 0;
-  const taxAmount = Math.round(preTaxTotal * taxRate * 100) / 100;
-  const total = preTaxTotal + taxAmount;
+  const total = Number((preTaxTotal + taxAmount).toFixed(2));
 
 
   async function handleApplyCoupon() {
@@ -387,16 +408,23 @@ function CartPageContent() {
 
       const calculatedSubtotal = Number(orderItems.reduce((sum: number, i: { productId: string; quantity: number; price: number }) => sum + (i.price * i.quantity), 0));
 
-      const deliveryConfigLocal = COUNTRY_CONFIG[selectedCountry.toUpperCase()];
+      const deliveryConfigLocal = COUNTRY_CONFIG[selectedCountry.toUpperCase()] || COUNTRY_CONFIG["AE"];
+      const allItemsFree = items.length > 0 && items.every((i: CartItem) => i.deliveryFeeOption === "FREE");
       const freeDeliveryThreshold = deliveryConfigLocal?.freeDelivery || 150;
-      const shippingFee = calculatedSubtotal >= freeDeliveryThreshold ? 0 : (deliveryConfigLocal?.deliveryFee || 10);
+      const shippingFee = allItemsFree ? 0 : (calculatedSubtotal >= freeDeliveryThreshold ? 0 : (deliveryConfigLocal?.deliveryFee || 10));
 
       const discountAmount = Math.min(calculatedSubtotal * couponDiscount, couponMaxLimit ?? Infinity);
 
-      const preTaxTotalLocal = calculatedSubtotal - discountAmount + shippingFee;
       const taxRateLocal = deliveryConfigLocal?.taxRate || 0;
-      const taxAmountLocal = Math.round(preTaxTotalLocal * taxRateLocal * 100) / 100;
-      const totalLocal = Number((preTaxTotalLocal + taxAmountLocal).toFixed(2));
+      const taxableSub = items.reduce((acc, item: CartItem) => {
+        if (item.vatOption === "EXEMPT") return acc;
+        const { price: itemPrice } = getDisplayPrice(item, selectedCountry);
+        return acc + (Number(itemPrice) * item.quantity);
+      }, 0);
+
+      const discRatio = calculatedSubtotal > 0 ? Math.max(0, 1 - (discountAmount / calculatedSubtotal)) : 1;
+      const taxAmountLocal = Math.round(Math.max(0, (taxableSub * discRatio) + shippingFee) * taxRateLocal * 100) / 100;
+      const totalLocal = Number((calculatedSubtotal - discountAmount + shippingFee + taxAmountLocal).toFixed(2));
 
       const minOrderValue = deliveryConfigLocal?.minOrder || 80;
       if (calculatedSubtotal < minOrderValue) {
@@ -1015,7 +1043,19 @@ function CartPageContent() {
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-black/30">{item.brand}</span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-black/30">{item.brand}</span>
+                              {item.deliveryFeeOption === "FREE" && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Free Delivery
+                                </span>
+                              )}
+                              {item.vatOption === "EXEMPT" && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                  VAT Exempt
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center gap-2 sm:gap-3">
                               <Price
                                 amount={Number(itemDisplayPrice) * item.quantity}
@@ -1114,10 +1154,10 @@ function CartPageContent() {
                     </span>
                   </div>
 
-                  {taxRate > 0 && (
+                  {taxAmount > 0 && (
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-orange-600">
-                        VAT ({(taxRate * 100).toFixed(0)}%)
+                        VAT {countryTaxRate > 0 ? `(${(countryTaxRate * 100).toFixed(0)}%)` : ""}
                       </span>
                       <Price amount={taxAmount} className="font-black text-sm md:text-base text-orange-600" />
                     </div>

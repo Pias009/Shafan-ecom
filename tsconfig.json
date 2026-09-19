@@ -40,6 +40,7 @@
   "exclude": [
     "node_modules",
     "tmp-radiant-skin",
-    ".gemini"
+    ".gemini",
+    "mobile-app"
   ]
 }

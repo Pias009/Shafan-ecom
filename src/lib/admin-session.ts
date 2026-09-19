@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 export type AdminStoreAccess = {
   storeIds: string[];
@@ -11,15 +11,30 @@ export type AdminStoreAccess = {
 };
 
 export async function getAdminSession() {
-  const cookieStore = await cookies();
-  const adminCookie = cookieStore.get('admin-session');
+  let tokenStr: string | null = null;
 
-  if (!adminCookie) {
+  try {
+    const headerStore = await headers();
+    const authHeader = headerStore.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      tokenStr = authHeader.substring(7).trim();
+    }
+  } catch {}
+
+  if (!tokenStr) {
+    try {
+      const cookieStore = await cookies();
+      const adminCookie = cookieStore.get('admin-session');
+      if (adminCookie) tokenStr = adminCookie.value;
+    } catch {}
+  }
+
+  if (!tokenStr) {
     return null;
   }
 
   try {
-    const token = Buffer.from(adminCookie.value, 'base64').toString();
+    const token = Buffer.from(tokenStr, 'base64').toString();
     const [userId] = token.split(':');
 
     if (!userId) {
@@ -98,12 +113,27 @@ export async function getAccessibleStoreIds(): Promise<string[]> {
 }
 
 export async function getAdminApiSession() {
-  const cookieStore = await cookies();
-  const adminCookie = cookieStore.get('admin-session');
+  let tokenStr: string | null = null;
 
-  if (adminCookie) {
+  try {
+    const headerStore = await headers();
+    const authHeader = headerStore.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      tokenStr = authHeader.substring(7).trim();
+    }
+  } catch {}
+
+  if (!tokenStr) {
     try {
-      const token = Buffer.from(adminCookie.value, 'base64').toString();
+      const cookieStore = await cookies();
+      const adminCookie = cookieStore.get('admin-session');
+      if (adminCookie) tokenStr = adminCookie.value;
+    } catch {}
+  }
+
+  if (tokenStr) {
+    try {
+      const token = Buffer.from(tokenStr, 'base64').toString();
       const [userId] = token.split(':');
 
       if (userId) {

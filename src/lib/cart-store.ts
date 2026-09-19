@@ -16,6 +16,8 @@ export interface ProductSummary {
     price: number;
     currency: string;
   }>;
+  deliveryFeeOption?: string;
+  vatOption?: string;
 }
 
 export interface CartItem extends ProductSummary {
@@ -57,6 +59,21 @@ export const useCartStore = create<CartState>()(
           const validPrice = getPriceForCountry(product, selectedCountry);
           
           if (validPrice <= 0) return state;
+
+          try {
+            if (typeof window !== "undefined") {
+              fetch("/api/events/cart-added", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  productId: product.id,
+                  name: product.name,
+                  price: validPrice,
+                  country: selectedCountry,
+                }),
+              }).catch(() => {});
+            }
+          } catch {}
           
           // Preserve all product data including countryPrices for live price calculation
           const cartItem = {

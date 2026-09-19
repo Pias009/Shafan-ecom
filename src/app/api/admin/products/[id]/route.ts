@@ -35,6 +35,8 @@ const UpdateSchema = z.object({
   tags: z.array(z.string()).optional(),
   weight: z.number().optional(),
   weightUnit: z.string().optional(),
+  deliveryFeeOption: z.string().optional(),
+  vatOption: z.string().optional(),
   countryPrices: z.array(z.object({
     country: z.string(),
     price: z.number(),
@@ -240,6 +242,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // Handle tags
     if (parsed.data.tags !== undefined) {
       updates.tags = parsed.data.tags;
+    }
+
+    if (parsed.data.deliveryFeeOption !== undefined) {
+      updates.deliveryFeeOption = parsed.data.deliveryFeeOption;
+    }
+
+    if (parsed.data.vatOption !== undefined) {
+      updates.vatOption = parsed.data.vatOption;
     }
 
     // Handle country prices

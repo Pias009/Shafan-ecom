@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "ShanFa Admin Live Mobile App Blueprint",
+  "version": "1.0.0",
+  "purpose": "Autonomous production build specification for Shanfa Group Ecommerce Admin Companion & Real-Time Customer Tracking Mobile Application. Built with 100% live database connectivity and zero dummy data.",
+  "theme": {
+    "style": "Minimal Pure White (Apple Human Interface Guidelines & Material 3)",
+    "palette": {
+      "background": "#FFFFFF",
+      "surface": "#F8FAFC",
+      "card": "#FFFFFF",
+      "cardBorder": "#E2E8F0",
+      "textPrimary": "#0F172A",
+      "textSecondary": "#64748B",
+      "textTertiary": "#94A3B8",
+      "accentSuccess": "#10B981",
+      "accentWarning": "#F59E0B",
+      "accentDanger": "#EF4444",
+      "accentInfo": "#3B82F6",
+      "accentLive": "#6366F1",
+      "badgeBackground": "#F1F5F9"
+    },
+    "typography": {
+      "fontFamily": "System",
+      "titleSize": 22,
+      "headerSize": 18,
+      "bodySize": 14,
+      "captionSize": 12
+    }
+  },
+  "backend_integration": {
+    "baseUrlDefault": "https://shanafaglobal.com",
+    "authentication": {
+      "type": "Bearer Token",
+      "storageKey": "SHANFA_ADMIN_AUTH_TOKEN",
+      "loginEndpoint": {
+        "path": "/api/admin/login",
+        "method": "POST",
+        "requestBody": {
+          "email": "admin@example.com",
+          "password": "your-secure-password"
+        },
+        "response": {
+          "success": true,
+          "token": "<base64_encoded_credentials_token>",
+          "admin": {
+            "id": "string",
+            "email": "string",
+            "name": "string",
+            "role": "ADMIN"
+          }
+        }
+      },
+      "headerFormat": "Authorization: Bearer <token>"
+    },
+    "realtime_websockets": {
+      "provider": "Pusher",
+      "appKey": "1f774a5bbab3fae7abac",
+      "cluster": "ap2",
+      "channel": "admin-notifications",
+      "events": [
+        {
+          "name": "cart-added",
+          "description": "Triggered in real-time when any online visitor adds an item to cart",
+          "payload": {
+            "type": "cart-added",
+            "title": "Item Added to Cart",
+            "message": "A customer added {productName} ({qty}x) to their cart",
+            "productName": "string",
+            "price": "number",
+            "currency": "string",
+            "country": "string",
+            "timestamp": "ISO8601 string"
+          },
+          "audio": {
+            "type": "soft_chime",
+            "url": "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3",
+            "haptic": "light"
+          }
+        },
+        {
+          "name": "checkout-entered",
+          "description": "Triggered in real-time when any online customer opens the checkout/cart page",
+          "payload": {
+            "type": "checkout-entered",
+            "title": "Customer at Checkout",
+            "message": "Customer with {itemCount} items ({totalAmount} {currency}) is on checkout",
+            "itemCount": "number",
+            "totalAmount": "number",
+            "currency": "string",
+            "country": "string",
+            "timestamp": "ISO8601 string"
+          },
+          "audio": {
+            "type": "ling_chime",
+            "url": "https://assets.mixkit.co/active_storage/sfx/2874/2874-preview.mp3",
+            "haptic": "medium"
+          }
+        },
+        {
+          "name": "new-order",
+          "description": "Triggered in real-time when a customer completes payment or places a COD/Stripe/Tabby/Tamara order",
+          "payload": {
+            "type": "new-order",
+            "title": "New Order Received!",
+            "orderNumber": "number",
+            "amount": "number",
+            "currency": "string",
+            "customerName": "string",
+            "paymentMethod": "string",
+            "timestamp": "ISO8601 string"
+          },
+          "audio": {
+            "type": "cash_register_celebration",
+            "url": "https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3",
+            "haptic": "heavy_pattern"
+          },
+          "onReceived": "trigger_refetch_dashboard_and_orders"
+        }
+      ]
+    },
+    "database_apis": [
+      {
+        "id": "get_dashboard_metrics",
+        "path": "/api/admin/mobile/dashboard",
+        "method": "GET",
+        "authRequired": true,
+        "purpose": "Fetches real-time financial stats, status counts, and latest 10 orders directly from DB",
+        "responseSchema": {
+          "success": true,
+          "summary": {
+            "todayRevenue": "number",
+            "todayOrders": "number",
+            "totalOrders": "number",
+            "pendingOrders": "number",
+            "processingOrders": "number",
+            "shippedOrders": "number",
+            "deliveredOrders": "number",
+            "cancelledOrders": "number"
+          },
+          "recentOrders": "Order[]"
+        }
+      },
+      {
+        "id": "get_orders_list",
+        "path": "/api/admin/orders",
+        "method": "GET",
+        "queryParams": {
+          "status": "ALL | PENDING | PROCESSING | SHIPPED | DELIVERED | CANCELLED",
+          "limit": "number (default 50)"
+        },
+        "authRequired": true,
+        "purpose": "Retrieves live orders from MongoDB with full customer info, item details, shipping address, and phone"
+      },
+      {
+        "id": "update_order_status",
+        "path": "/api/admin/orders",
+        "method": "PATCH",
+        "authRequired": true,
+        "body": {
+          "id": "orderId_string",
+          "status": "PENDING | PROCESSING | SHIPPED | DELIVERED | CANCELLED"
+        },
+        "purpose": "Directly updates the order fulfillment status in MongoDB database"
+      },
+      {
+        "id": "get_products_list",
+        "path": "/api/admin/products",
+        "method": "GET",
+        "authRequired": true,
+        "purpose": "Fetches all products with images, price, stock, active status, VAT option, delivery option"
+      },
+      {
+        "id": "toggle_product_status",
+        "path": "/api/admin/products/{id}/toggle-active",
+        "method": "POST",
+        "authRequired": true,
+        "purpose": "1-tap mobile toggle to instantly activate or deactivate a product in the live database"
+      }
+    ]
+  },
+  "app_screens": [
+    {
+      "name": "Dashboard",
+      "icon": "layout-dashboard",
+      "features": [
+        "Live Connection Status Pill (Green when Pusher WebSocket is connected)",
+        "Financial metrics cards: Today's Revenue, Today's Orders, Total Orders",
+        "Interactive Status Badges (Pending, Processing, Shipped, Delivered)",
+        "Live Visitor Activity Ticker (Shows recent cart-added, checkout-entered, new-order events in real-time)",
+        "Recent 5 orders list with tap to open order modal",
+        "Pull-to-refresh to fetch latest DB metrics instantly"
+      ]
+    },
+    {
+      "name": "Orders",
+      "icon": "shopping-bag",
+      "features": [
+        "Status filter tabs (All, Pending, Processing, Shipped, Delivered, Cancelled)",
+        "Real-time Search by customer name, phone number, or order ID",
+        "Full order details card: Customer name, phone, address, city, country, payment method, payment status, item quantity and prices",
+        "1-tap status selector bottom sheet (Updates database immediately without reloading)"
+      ]
+    },
+    {
+      "name": "Products",
+      "icon": "package",
+      "features": [
+        "Product catalog directly from MongoDB",
+        "Search products by title or SKU",
+        "Display product image, price, stock count, and badges (Free Delivery, VAT Exempt)",
+        "1-tap Switch toggle to instantly toggle isActive true/false in DB"
+      ]
+    },
+    {
+      "name": "Live Events",
+      "icon": "activity",
+      "features": [
+        "Live chronological event stream",
+        "Customer cart additions (with item names and prices)",
+        "Checkout entries (with cart item counts and currency totals)",
+        "Completed purchases (celebratory card with payment method)",
+        "Clear feed or filter by event type"
+      ]
+    },
+    {
+      "name": "Settings",
+      "icon": "settings",
+      "features": [
+        "API Base URL input field (defaults to https://shanafaglobal.com or custom domain/IP)",
+        "Admin Account details display",
+        "Audio and Haptic alerts toggle (Sound On/Off, Vibration On/Off)",
+        "Pusher reconnect button",
+        "Secure Log Out (clears local token and resets state)"
+      ]
+    }
+  ],
+  "build_and_deployment": {
+    "engine": "Expo Application Services (EAS) Cloud Build / React Native",
+    "cloud_provider": "Google Cloud / Expo Cloud Builder",
+    "output_format": "Standalone Android APK (.apk) ready to install on any Android phone directly",
+    "steps": [
+      "1. Open terminal inside mobile-app directory: cd mobile-app",
+      "2. Install dependencies: npm install",
+      "3. Install EAS CLI globally if not present: npm install -g eas-cli",
+      "4. Log in to Expo account: npx eas login",
+      "5. Run cloud build for APK: npx eas build -p android --profile preview",
+      "6. Wait 3-5 minutes: Google/Expo cloud automatically compiles the native APK",
+      "7. Click the provided download link or scan the QR code directly on your mobile device to download and install the app!"
+    ]
+  }
+}

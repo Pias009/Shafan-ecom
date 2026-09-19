@@ -58,6 +58,8 @@ const ProductCreateSchema = z.object({
   tags: z.array(z.string()).optional().default([]),
   weight: z.number().optional().default(0),
   weightUnit: z.string().optional().default('kg'),
+  deliveryFeeOption: z.string().optional().default('DEFAULT'),
+  vatOption: z.string().optional().default('DEFAULT'),
   countryPrices: z.array(CountryPriceSchema)
     .optional()
     .default([])
@@ -422,6 +424,8 @@ export async function POST(req: Request) {
       tags: productData.tags ?? [],
       weight: productData.weight ?? 0,
       weightUnit: productData.weightUnit ?? 'kg',
+      deliveryFeeOption: productData.deliveryFeeOption || 'DEFAULT',
+      vatOption: productData.vatOption || 'DEFAULT',
     };
 
     // Use upsert to handle existing products atomically

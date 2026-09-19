@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box, Scale, ChevronDown, Sparkles } from 'lucide-react';
+import { Save, Loader2, ArrowLeft, Image as ImageIcon, Tag, Hash, Package, TrendingUp, X, Store, Globe, Plus, Trash2, Layers, Search, Box, Scale, ChevronDown, Sparkles, Truck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -129,6 +129,8 @@ export function AddProductForm({
     tags: [] as string[],
     weight: 0,
     weightUnit: 'kg',
+    deliveryCharge: true,
+    vatCharge: true,
   });
 
   const [showAddBrand, setShowAddBrand] = useState(false);
@@ -335,6 +337,8 @@ export function AddProductForm({
         tags: formData.tags,
         weight: formData.weight,
         weightUnit: formData.weightUnit,
+        deliveryFeeOption: formData.deliveryCharge ? 'DEFAULT' : 'FREE',
+        vatOption: formData.vatCharge ? 'DEFAULT' : 'EXEMPT',
       };
 
       console.log("Submitting payload:", JSON.stringify(payload, null, 2));
@@ -1008,6 +1012,105 @@ export function AddProductForm({
                     <span className="text-sm font-bold">Kilogram (kg)</span>
                   </label>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          {/* VAT & Delivery Section */}
+          <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-black/5 rounded-2xl text-black">
+                <Truck size={18} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-widest text-black/80">
+                  VAT &amp; Delivery Settings
+                </h3>
+                <p className="text-xs text-black/40 font-medium">
+                  Toggle delivery charge and VAT on or off for this product (Default is ON)
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              {/* Delivery Charge Toggle */}
+              <div className="p-6 rounded-2xl bg-black/[0.02] border border-black/5 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-black">
+                      Delivery Charge
+                    </span>
+                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                      formData.deliveryCharge 
+                        ? 'bg-black text-white' 
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {formData.deliveryCharge ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-black/50 leading-relaxed">
+                    {formData.deliveryCharge 
+                      ? 'Standard delivery charge applies when ordering this product.' 
+                      : 'This product will NOT get delivery charge (Free Delivery).'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.deliveryCharge}
+                  onClick={() => setFormData(prev => ({ ...prev, deliveryCharge: !prev.deliveryCharge }))}
+                  className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    formData.deliveryCharge ? 'bg-black' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      formData.deliveryCharge ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* VAT Toggle */}
+              <div className="p-6 rounded-2xl bg-black/[0.02] border border-black/5 flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider text-black">
+                      VAT
+                    </span>
+                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                      formData.vatCharge 
+                        ? 'bg-black text-white' 
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {formData.vatCharge ? 'ON' : 'OFF'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-black/50 leading-relaxed">
+                    {formData.vatCharge 
+                      ? 'Standard VAT applies when ordering this product.' 
+                      : 'This product will NOT get VAT charge (Tax Exempt).'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.vatCharge}
+                  onClick={() => setFormData(prev => ({ ...prev, vatCharge: !prev.vatCharge }))}
+                  className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    formData.vatCharge ? 'bg-black' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      formData.vatCharge ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
             </div>
           </section>

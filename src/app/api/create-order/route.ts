@@ -361,6 +361,8 @@ export async function POST(req: Request) {
     // Calculate totals with improved price lookup
     let subtotal = 0;
     let totalWeight = 0;
+    let allItemsFreeDelivery = true;
+    let taxableProductSubtotal = 0;
     const orderItemsData = [];
     let orderStoreId: string | null = null;
     let orderStoreCode: string | null | undefined = null;
@@ -462,6 +464,14 @@ export async function POST(req: Request) {
       const itemTotal = unitPrice * itemQuantity;
       subtotal += itemTotal;
 
+      // Delivery & VAT settings for this product
+      if (product.deliveryFeeOption !== "FREE") {
+        allItemsFreeDelivery = false;
+      }
+      if (product.vatOption !== "EXEMPT") {
+        taxableProductSubtotal += itemTotal;
+      }
+
       // Calculate weight contributions
       if (product.weight) {
         const itemWeight = Number(product.weight) * itemQuantity;
@@ -511,6 +521,10 @@ export async function POST(req: Request) {
 
     // Calculate delivery fee based on country
     let { fee: shippingFee, freeDelivery } = calculateDeliveryFee(countryCode, subtotal);
+    if (allItemsFreeDelivery && orderItemsData.length > 0) {
+      shippingFee = 0;
+      freeDelivery = true;
+    }
     
     // Check if minimum order requirement is met (Skip for Admins to allow manual order flexibility)
     const deliveryConfig = (DELIVERY_CONFIG as any)[countryCode.toUpperCase()];
@@ -555,10 +569,13 @@ export async function POST(req: Request) {
     const effectiveShipping = (isUserAdmin && typeof clientShippingFee === 'number') ? clientShippingFee : shippingFee;
     const effectiveDiscount = (isUserAdmin && typeof clientDiscount === 'number') ? clientDiscount : discount;
 
-    // Tax calculation
+    // Tax calculation: respect products exempt from VAT
     const countryTaxRate = (COUNTRY_CONFIG[countryCode]?.taxRate) || 0;
+    const discountRatio = subtotal > 0 ? Math.max(0, 1 - (effectiveDiscount / subtotal)) : 1;
+    const taxableProductBase = taxableProductSubtotal * discountRatio;
+    const taxableShipping = effectiveShipping;
     const preTaxTotal = effectiveSubtotal + effectiveShipping - effectiveDiscount;
-    const taxAmount = Math.round(preTaxTotal * countryTaxRate * 100) / 100;
+    const taxAmount = Math.round((taxableProductBase + taxableShipping) * countryTaxRate * 100) / 100;
 
     let effectiveTotal = (isUserAdmin && typeof clientTotal === 'number' && clientTotal > 0) 
       ? clientTotal 
