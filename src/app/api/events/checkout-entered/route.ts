@@ -6,8 +6,9 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     await triggerNotification("admin-notifications", "checkout-entered", {
       itemCount: body.itemCount || 1,
-      total: body.total || 0,
-      currency: body.currency || "AED",
+      total: body.total ?? body.totalAmount ?? 0,
+      totalAmount: body.totalAmount ?? body.total ?? 0,
+      currency: (body.currency || "AED").toUpperCase(),
       country: body.country || "AE",
       timestamp: new Date().toISOString(),
     });

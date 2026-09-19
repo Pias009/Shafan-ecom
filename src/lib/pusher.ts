@@ -24,17 +24,25 @@ export async function triggerNotification(channel: string, event: string, data: 
 
 export async function notifyNewOrder(order: {
   id: string;
+  orderNumber?: number | string;
   total: number;
+  amount?: number;
   currency: string;
   userName?: string;
+  customerName?: string;
   email?: string;
+  paymentMethod?: string;
 }) {
   return triggerNotification("admin-notifications", "new-order", {
     id: order.id,
+    orderNumber: order.orderNumber || order.id,
     total: order.total,
+    amount: order.amount ?? order.total,
     currency: order.currency,
-    userName: order.userName,
+    userName: order.userName || order.customerName || "Customer",
+    customerName: order.customerName || order.userName || "Customer",
     email: order.email,
+    paymentMethod: order.paymentMethod || "Confirmed",
     timestamp: new Date().toISOString(),
   });
 }

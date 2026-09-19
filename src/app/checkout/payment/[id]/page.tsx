@@ -189,7 +189,20 @@ function PaymentPageContent() {
         if (orderData?.error) throw new Error(orderData.error);
         setOrder(orderData);
 
-        // If returned with cancel/reject param, update order status in DB
+        // Alert admin mobile app immediately that customer is actively on checkout payment page
+        try {
+          fetch("/api/events/checkout-entered", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: id,
+              itemCount: orderData.items?.length || 1,
+              total: orderData.total || orderData.totalAmount || 0,
+              currency: (orderData.currency || "AED").toUpperCase(),
+              country: orderData.shippingAddress?.country || "AE",
+            }),
+          }).catch(() => {});
+        } catch {}
         const canceled = searchParams?.get("canceled");
         const failed = searchParams?.get("failed");
         const rejected = searchParams?.get("rejected");

@@ -7,6 +7,7 @@ export async function POST(req: Request) {
     await triggerNotification("admin-notifications", "cart-added", {
       productId: body.productId || "",
       productName: body.name || body.productName || "Product",
+      quantity: body.quantity || 1,
       price: body.price || 0,
       currency: body.currency || "AED",
       country: body.country || "AE",

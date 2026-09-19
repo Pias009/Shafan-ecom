@@ -17,6 +17,8 @@ import {
   Image,
   Vibration,
   Platform,
+  AppState,
+  Animated,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
@@ -98,8 +100,42 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [vibrationEnabled, setVibrationEnabled] = useState<boolean>(true);
 
+  // In-App Heads-up Instant Alert Toast
+  const [toastBanner, setToastBanner] = useState<{
+    id: string;
+    type: 'cartAdded' | 'checkoutEntered' | 'newOrder';
+    title: string;
+    message: string;
+  } | null>(null);
+  const toastAnim = useRef(new Animated.Value(-150)).current;
+  const toastTimeoutRef = useRef<any>(null);
+
   // Sound references
   const soundsRef = useRef<{ [key: string]: Audio.Sound }>({});
+
+  const showNotificationToast = (
+    type: 'cartAdded' | 'checkoutEntered' | 'newOrder',
+    title: string,
+    message: string
+  ) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastBanner({ id: String(Date.now()), type, title, message });
+
+    Animated.spring(toastAnim, {
+      toValue: Platform.OS === 'ios' ? 44 : 20,
+      useNativeDriver: true,
+      friction: 7,
+      tension: 40,
+    }).start();
+
+    toastTimeoutRef.current = setTimeout(() => {
+      Animated.timing(toastAnim, {
+        toValue: -150,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setToastBanner(null));
+    }, 5000);
+  };
 
   // ------------------------------------------
   // AUDIO & NOTIFICATION ENGINE
@@ -110,28 +146,20 @@ export default function App() {
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
-          shouldDuckAndroid: true,
+          shouldDuckAndroid: false, // Don't duck, play immediately at full volume!
+          playThroughEarpieceAndroid: false,
         });
 
-        // Preload sounds
-        const { sound: cartSound } = await Audio.Sound.createAsync(
-          { uri: SOUND_URLS.cartAdded },
-          { shouldPlay: false }
-        );
-        const { sound: checkoutSound } = await Audio.Sound.createAsync(
-          { uri: SOUND_URLS.checkoutEntered },
-          { shouldPlay: false }
-        );
-        const { sound: orderSound } = await Audio.Sound.createAsync(
-          { uri: SOUND_URLS.newOrder },
-          { shouldPlay: false }
-        );
+        // Preload sounds for instant zero-latency playback
+        const [cartRes, checkoutRes, orderRes] = await Promise.allSettled([
+          Audio.Sound.createAsync({ uri: SOUND_URLS.cartAdded }, { shouldPlay: false, volume: 1.0 }),
+          Audio.Sound.createAsync({ uri: SOUND_URLS.checkoutEntered }, { shouldPlay: false, volume: 1.0 }),
+          Audio.Sound.createAsync({ uri: SOUND_URLS.newOrder }, { shouldPlay: false, volume: 1.0 }),
+        ]);
 
-        soundsRef.current = {
-          cartAdded: cartSound,
-          checkoutEntered: checkoutSound,
-          newOrder: orderSound,
-        };
+        if (cartRes.status === 'fulfilled') soundsRef.current.cartAdded = cartRes.value.sound;
+        if (checkoutRes.status === 'fulfilled') soundsRef.current.checkoutEntered = checkoutRes.value.sound;
+        if (orderRes.status === 'fulfilled') soundsRef.current.newOrder = orderRes.value.sound;
       } catch (e) {
         console.log('Audio init error:', e);
       }
@@ -149,31 +177,39 @@ export default function App() {
   }, []);
 
   const triggerAlertSound = async (type: 'cartAdded' | 'checkoutEntered' | 'newOrder') => {
+    // 1. Instant tactile feedback (0ms latency, runs immediately in parallel)
     if (vibrationEnabled) {
       if (type === 'newOrder') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Vibration.vibrate([0, 200, 100, 300]);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        Vibration.vibrate([0, 150, 100, 250, 100, 400]);
       } else if (type === 'checkoutEntered') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        Vibration.vibrate(150);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+        Vibration.vibrate(180);
       } else {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        Vibration.vibrate(80);
       }
     }
 
     if (!soundEnabled) return;
 
+    // 2. Play sound with 0ms latency
     try {
       const soundObj = soundsRef.current[type];
       if (soundObj) {
-        await soundObj.replayAsync();
+        await soundObj.stopAsync().catch(() => {});
+        await soundObj.setPositionAsync(0).catch(() => {});
+        await soundObj.setVolumeAsync(1.0).catch(() => {});
+        await soundObj.playAsync().catch(() => {});
       } else {
-        // Fallback on-demand load
-        const { sound } = await Audio.Sound.createAsync({ uri: SOUND_URLS[type] });
-        await sound.playAsync();
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: SOUND_URLS[type] },
+          { shouldPlay: true, volume: 1.0 }
+        );
+        soundsRef.current[type] = sound;
       }
     } catch (e) {
-      console.log('Sound play error:', e);
+      console.log('Audio play error:', e);
     }
   };
 
@@ -242,65 +278,135 @@ export default function App() {
     const pusher = new Pusher(PUSHER_KEY, {
       cluster: PUSHER_CLUSTER,
       forceTLS: true,
+      activityTimeout: 10000, // 10s active heartbeat ping
+      pongTimeout: 4000,      // 4s pong timeout to detect drop immediately
+      enableStats: false,
     });
 
-    pusher.connection.bind('connected', () => setPusherConnected(true));
-    pusher.connection.bind('disconnected', () => setPusherConnected(false));
-    pusher.connection.bind('error', () => setPusherConnected(false));
+    pusher.connection.bind('connected', () => {
+      console.log('⚡ Pusher WebSocket is ACTIVE & CONNECTED');
+      setPusherConnected(true);
+    });
+    pusher.connection.bind('connecting', () => {
+      console.log('Pusher connecting...');
+    });
+    pusher.connection.bind('disconnected', () => {
+      setPusherConnected(false);
+      setTimeout(() => pusher.connect(), 500);
+    });
+    pusher.connection.bind('unavailable', () => {
+      setPusherConnected(false);
+      setTimeout(() => pusher.connect(), 500);
+    });
+    pusher.connection.bind('error', () => {
+      setPusherConnected(false);
+      setTimeout(() => pusher.connect(), 1000);
+    });
+
+    // Handle AppState (when admin returns to app or wakes screen)
+    const appStateSub = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        if (pusher.connection.state !== 'connected') {
+          pusher.connect();
+        }
+      }
+    });
+
+    // Active heartbeat check every 12 seconds
+    const heartbeat = setInterval(() => {
+      if (pusher.connection.state !== 'connected') {
+        pusher.connect();
+      }
+    }, 12000);
 
     const channel = pusher.subscribe(PUSHER_CHANNEL);
 
-    // 1. User added product to cart
+    // 1. User added product to cart (Instant ping sound + heads-up toast)
     channel.bind('cart-added', (data: any) => {
       triggerAlertSound('cartAdded');
+      const prodName = data.productName || data.name || 'Product';
+      const qty = data.quantity || 1;
+      const price = data.price || 0;
+      const currency = data.currency || 'AED';
+
+      showNotificationToast(
+        'cartAdded',
+        '🛒 Cart Notification',
+        `Customer added "${prodName}" (${qty}x) • ${currency} ${price}`
+      );
+
       const newEvent = {
         id: `cart-${Date.now()}`,
         type: 'cart-added',
         title: 'Product Added to Cart',
-        message: data.productName ? `${data.productName} added (${data.quantity || 1}x)` : 'Customer added an item to cart',
-        price: data.price,
-        currency: data.currency || 'AED',
+        message: `${prodName} added (${qty}x) • ${currency} ${price}`,
+        price,
+        currency,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       };
       setLiveEvents((prev) => [newEvent, ...prev.slice(0, 49)]);
     });
 
-    // 2. User opened checkout page
+    // 2. User opened checkout page (Instant "ling" sound + heads-up toast)
     channel.bind('checkout-entered', (data: any) => {
       triggerAlertSound('checkoutEntered');
+      const count = data.itemCount || 1;
+      const amount = data.totalAmount ?? data.total ?? 0;
+      const currency = data.currency || 'AED';
+
+      showNotificationToast(
+        'checkoutEntered',
+        '⚡ Checkout Alert',
+        `Customer is on Checkout with ${count} items • Total: ${currency} ${amount}`
+      );
+
       const newEvent = {
         id: `checkout-${Date.now()}`,
         type: 'checkout-entered',
         title: 'Customer at Checkout',
-        message: `${data.itemCount || 1} items (${data.totalAmount || 0} ${data.currency || 'AED'})`,
+        message: `${count} item(s) • ${currency} ${amount} (Ready to purchase)`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       };
       setLiveEvents((prev) => [newEvent, ...prev.slice(0, 49)]);
     });
 
-    // 3. New Order completed
+    // 3. New Order completed (Instant celebration sound + heavy vibration + heads-up toast)
     channel.bind('new-order', (data: any) => {
       triggerAlertSound('newOrder');
+      const ordNum = data.orderNumber || data.id || 'NEW';
+      const cust = data.customerName || data.userName || 'Customer';
+      const amount = data.amount ?? data.total ?? 0;
+      const currency = data.currency || 'AED';
+      const method = data.paymentMethod || 'Confirmed';
+
+      showNotificationToast(
+        'newOrder',
+        `🎉 NEW ORDER #${ordNum}!`,
+        `${cust} placed order for ${currency} ${amount} (${method})`
+      );
+
       const newEvent = {
         id: `order-${Date.now()}`,
         type: 'new-order',
-        title: `NEW ORDER #${data.orderNumber || ''}!`,
-        message: `${data.customerName || 'Customer'} • ${data.amount || 0} ${data.currency || 'AED'} (${data.paymentMethod || 'Paid'})`,
+        title: `NEW ORDER #${ordNum}!`,
+        message: `${cust} • ${currency} ${amount} (${method})`,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       };
       setLiveEvents((prev) => [newEvent, ...prev.slice(0, 49)]);
 
-      // Instantly refresh live DB data
+      // Instantly refresh live DB metrics and orders list
       fetchDashboardData();
       fetchOrdersData();
     });
 
     return () => {
+      clearInterval(heartbeat);
+      appStateSub.remove();
       channel.unbind_all();
       channel.unsubscribe();
       pusher.disconnect();
     };
-  }, [token, soundEnabled, vibrationEnabled]);
+  }, [token, soundEnabled, vibrationEnabled, fetchDashboardData, fetchOrdersData]);
 
   // ------------------------------------------
   // DATA FETCHING (NO DUMMY DATA)
@@ -540,6 +646,88 @@ export default function App() {
   return (
     <SafeAreaView style={styles.appContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* INSTANT HEADS-UP NOTIFICATION BANNER */}
+      {toastBanner && (
+        <Animated.View
+          style={[
+            styles.toastContainer,
+            {
+              transform: [{ translateY: toastAnim }],
+              borderColor:
+                toastBanner.type === 'newOrder'
+                  ? '#10B981'
+                  : toastBanner.type === 'checkoutEntered'
+                  ? '#F59E0B'
+                  : '#3B82F6',
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.toastInner}
+            activeOpacity={0.9}
+            onPress={() => {
+              if (toastBanner.type === 'newOrder') setActiveTab('orders');
+              else setActiveTab('events');
+            }}
+          >
+            <View
+              style={[
+                styles.toastBadge,
+                {
+                  backgroundColor:
+                    toastBanner.type === 'newOrder'
+                      ? '#DCFCE7'
+                      : toastBanner.type === 'checkoutEntered'
+                      ? '#FEF3C7'
+                      : '#DBEAFE',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.toastBadgeText,
+                  {
+                    color:
+                      toastBanner.type === 'newOrder'
+                        ? '#166534'
+                        : toastBanner.type === 'checkoutEntered'
+                        ? '#92400E'
+                        : '#1E40AF',
+                  },
+                ]}
+              >
+                {toastBanner.type === 'newOrder'
+                  ? 'ORDER'
+                  : toastBanner.type === 'checkoutEntered'
+                  ? 'CHECKOUT'
+                  : 'CART'}
+              </Text>
+            </View>
+
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.toastTitle}>{toastBanner.title}</Text>
+              <Text style={styles.toastMessage} numberOfLines={2}>
+                {toastBanner.message}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.toastCloseBtn}
+              onPress={() => {
+                if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+                Animated.timing(toastAnim, {
+                  toValue: -150,
+                  duration: 200,
+                  useNativeDriver: true,
+                }).start(() => setToastBanner(null));
+              }}
+            >
+              <Text style={styles.toastCloseText}>✕</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
       {/* TOP HEADER */}
       <View style={styles.topHeader}>
@@ -1900,5 +2088,57 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#10B981',
+  },
+
+  // Heads-Up Alert Toast Styles
+  toastContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    right: 16,
+    zIndex: 99999,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  toastInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+  },
+  toastBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  toastBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  toastTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  toastMessage: {
+    fontSize: 12,
+    color: '#475569',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  toastCloseBtn: {
+    padding: 6,
+    marginLeft: 6,
+  },
+  toastCloseText: {
+    fontSize: 13,
+    color: '#94A3B8',
+    fontWeight: '700',
   },
 });

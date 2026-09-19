@@ -67,7 +67,8 @@ export const useCartStore = create<CartState>()(
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   productId: product.id,
-                  name: product.name,
+                  name: product.name || (product as any).title || "Product",
+                  quantity,
                   price: validPrice,
                   country: selectedCountry,
                 }),

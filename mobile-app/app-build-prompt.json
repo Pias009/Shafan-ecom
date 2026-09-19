@@ -58,6 +58,13 @@
       "appKey": "1f774a5bbab3fae7abac",
       "cluster": "ap2",
       "channel": "admin-notifications",
+      "tuning": {
+        "activityTimeout": 10000,
+        "pongTimeout": 4000,
+        "autoReconnect": true,
+        "appStateWakeup": true,
+        "heartbeatIntervalMs": 12000
+      },
       "events": [
         {
           "name": "cart-added",

@@ -7,6 +7,7 @@ import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { cookies } from "next/headers";
 import { createPendingCheckout } from "@/services/checkout/pending-checkout";
 import { convertCurrency } from "@/lib/currency-rates";
+import { notifyNewOrder } from "@/lib/pusher";
 
 // Delivery fee configuration by country (Using global config)
 const DELIVERY_CONFIG = COUNTRY_CONFIG;
@@ -665,6 +666,19 @@ export async function POST(req: Request) {
           });
         }
       }
+
+      // Real-time instant notification to admin mobile app
+      notifyNewOrder({
+        id: order.id,
+        orderNumber: (order as any).orderNumber || order.id.slice(-6).toUpperCase(),
+        total: finalTotal,
+        amount: finalTotal,
+        currency: currency.toUpperCase(),
+        customerName: (finalShipping as any)?.fullName || (finalShipping as any)?.name || customerEmail || "Customer",
+        userName: (finalShipping as any)?.fullName || (finalShipping as any)?.name || customerEmail || "Customer",
+        email: customerEmail || session?.user?.email,
+        paymentMethod: payment_method_title || payment_method || "Confirmed",
+      }).catch((err) => console.error("Pusher notify error in create-order:", err));
 
       return NextResponse.json({
         success: true,
