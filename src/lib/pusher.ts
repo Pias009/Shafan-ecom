@@ -1,14 +1,15 @@
 import Pusher from "pusher";
 
-if (!process.env.PUSHER_APP_ID || !process.env.PUSHER_KEY || !process.env.PUSHER_SECRET || !process.env.PUSHER_CLUSTER) {
-  console.warn("Pusher environment variables not set - notifications will be disabled");
-}
+const PUSHER_APP_ID = process.env.PUSHER_APP_ID || "2145513";
+const PUSHER_KEY = process.env.PUSHER_KEY || process.env.NEXT_PUBLIC_PUSHER_KEY || "1f774a5bbab3fae7abac";
+const PUSHER_SECRET = process.env.PUSHER_SECRET || "20f78fcba81376802077";
+const PUSHER_CLUSTER = process.env.PUSHER_CLUSTER || process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "ap2";
 
 export const pusherServer = new Pusher({
-  appId: process.env.PUSHER_APP_ID || "",
-  key: process.env.PUSHER_KEY || "",
-  secret: process.env.PUSHER_SECRET || "",
-  cluster: process.env.PUSHER_CLUSTER || "",
+  appId: PUSHER_APP_ID,
+  key: PUSHER_KEY,
+  secret: PUSHER_SECRET,
+  cluster: PUSHER_CLUSTER,
   useTLS: true,
 });
 

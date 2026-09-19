@@ -23,7 +23,10 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
-import Pusher from 'pusher-js';
+import PusherJS from 'pusher-js';
+
+// Resilient Pusher constructor resolution across ESM, CJS, Hermes, and Metro
+const PusherClient: any = (PusherJS as any)?.default || (PusherJS as any)?.Pusher || PusherJS;
 
 // ==========================================
 // CONSTANTS & SOUND ASSETS
@@ -31,6 +34,12 @@ import Pusher from 'pusher-js';
 const PUSHER_KEY = '1f774a5bbab3fae7abac';
 const PUSHER_CLUSTER = 'ap2';
 const PUSHER_CHANNEL = 'admin-notifications';
+
+const LOCAL_SOUNDS: Record<string, any> = {
+  cartAdded: require('./assets/sounds/cart.mp3'),
+  checkoutEntered: require('./assets/sounds/checkout.mp3'),
+  newOrder: require('./assets/sounds/order.mp3'),
+};
 
 const SOUND_URLS = {
   cartAdded: 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3', // Soft chime ping
@@ -150,16 +159,36 @@ export default function App() {
           playThroughEarpieceAndroid: false,
         });
 
-        // Preload sounds for instant zero-latency playback
-        const [cartRes, checkoutRes, orderRes] = await Promise.allSettled([
-          Audio.Sound.createAsync({ uri: SOUND_URLS.cartAdded }, { shouldPlay: false, volume: 1.0 }),
-          Audio.Sound.createAsync({ uri: SOUND_URLS.checkoutEntered }, { shouldPlay: false, volume: 1.0 }),
-          Audio.Sound.createAsync({ uri: SOUND_URLS.newOrder }, { shouldPlay: false, volume: 1.0 }),
+        // Preload sounds from local assets with network fallback
+        const loadSoundAsset = async (type: 'cartAdded' | 'checkoutEntered' | 'newOrder') => {
+          try {
+            const { sound } = await Audio.Sound.createAsync(
+              LOCAL_SOUNDS[type],
+              { shouldPlay: false, volume: 1.0 }
+            );
+            return sound;
+          } catch (_) {
+            try {
+              const { sound } = await Audio.Sound.createAsync(
+                { uri: SOUND_URLS[type] },
+                { shouldPlay: false, volume: 1.0 }
+              );
+              return sound;
+            } catch (err) {
+              return null;
+            }
+          }
+        };
+
+        const [cartSnd, checkoutSnd, orderSnd] = await Promise.all([
+          loadSoundAsset('cartAdded'),
+          loadSoundAsset('checkoutEntered'),
+          loadSoundAsset('newOrder'),
         ]);
 
-        if (cartRes.status === 'fulfilled') soundsRef.current.cartAdded = cartRes.value.sound;
-        if (checkoutRes.status === 'fulfilled') soundsRef.current.checkoutEntered = checkoutRes.value.sound;
-        if (orderRes.status === 'fulfilled') soundsRef.current.newOrder = orderRes.value.sound;
+        if (cartSnd) soundsRef.current.cartAdded = cartSnd;
+        if (checkoutSnd) soundsRef.current.checkoutEntered = checkoutSnd;
+        if (orderSnd) soundsRef.current.newOrder = orderSnd;
       } catch (e) {
         console.log('Audio init error:', e);
       }
@@ -193,17 +222,19 @@ export default function App() {
 
     if (!soundEnabled) return;
 
-    // 2. Play sound with 0ms latency
+    // 2. Play sound with zero latency
     try {
       const soundObj = soundsRef.current[type];
       if (soundObj) {
-        await soundObj.stopAsync().catch(() => {});
-        await soundObj.setPositionAsync(0).catch(() => {});
-        await soundObj.setVolumeAsync(1.0).catch(() => {});
-        await soundObj.playAsync().catch(() => {});
+        await soundObj.replayAsync().catch(async () => {
+          await soundObj.setPositionAsync(0).catch(() => {});
+          await soundObj.setVolumeAsync(1.0).catch(() => {});
+          await soundObj.playAsync().catch(() => {});
+        });
       } else {
+        const source = LOCAL_SOUNDS[type] || { uri: SOUND_URLS[type] };
         const { sound } = await Audio.Sound.createAsync(
-          { uri: SOUND_URLS[type] },
+          source,
           { shouldPlay: true, volume: 1.0 }
         );
         soundsRef.current[type] = sound;
@@ -273,9 +304,7 @@ export default function App() {
   // PUSHER REAL-TIME WEBSOCKET SUBSCRIPTION
   // ------------------------------------------
   useEffect(() => {
-    if (!token) return;
-
-    const pusher = new Pusher(PUSHER_KEY, {
+    const pusher = new PusherClient(PUSHER_KEY, {
       cluster: PUSHER_CLUSTER,
       forceTLS: true,
       activityTimeout: 10000, // 10s active heartbeat ping
@@ -394,9 +423,11 @@ export default function App() {
       };
       setLiveEvents((prev) => [newEvent, ...prev.slice(0, 49)]);
 
-      // Instantly refresh live DB metrics and orders list
-      fetchDashboardData();
-      fetchOrdersData();
+      // Instantly refresh live DB metrics and orders list if logged in
+      if (token) {
+        fetchDashboardData();
+        fetchOrdersData();
+      }
     });
 
     return () => {
@@ -563,6 +594,95 @@ export default function App() {
   };
 
   // ------------------------------------------
+  // RENDER: NOTIFICATION BANNER COMPONENT
+  // ------------------------------------------
+  const renderNotificationToast = () => {
+    if (!toastBanner) return null;
+    return (
+      <Animated.View
+        style={[
+          styles.toastContainer,
+          {
+            transform: [{ translateY: toastAnim }],
+            borderColor:
+              toastBanner.type === 'newOrder'
+                ? '#10B981'
+                : toastBanner.type === 'checkoutEntered'
+                ? '#F59E0B'
+                : '#3B82F6',
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.toastInner}
+          activeOpacity={0.9}
+          onPress={() => {
+            if (token) {
+              if (toastBanner.type === 'newOrder') setActiveTab('orders');
+              else setActiveTab('events');
+            }
+          }}
+        >
+          <View
+            style={[
+              styles.toastBadge,
+              {
+                backgroundColor:
+                  toastBanner.type === 'newOrder'
+                    ? '#DCFCE7'
+                    : toastBanner.type === 'checkoutEntered'
+                    ? '#FEF3C7'
+                    : '#DBEAFE',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.toastBadgeText,
+                {
+                  color:
+                    toastBanner.type === 'newOrder'
+                      ? '#166534'
+                      : toastBanner.type === 'checkoutEntered'
+                      ? '#92400E'
+                      : '#1E40AF',
+                },
+              ]}
+            >
+              {toastBanner.type === 'newOrder'
+                ? 'ORDER'
+                : toastBanner.type === 'checkoutEntered'
+                ? 'CHECKOUT'
+                : 'CART'}
+            </Text>
+          </View>
+
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={styles.toastTitle}>{toastBanner.title}</Text>
+            <Text style={styles.toastMessage} numberOfLines={2}>
+              {toastBanner.message}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.toastCloseBtn}
+            onPress={() => {
+              if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+              Animated.timing(toastAnim, {
+                toValue: -150,
+                duration: 200,
+                useNativeDriver: true,
+              }).start(() => setToastBanner(null));
+            }}
+          >
+            <Text style={styles.toastCloseText}>✕</Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  // ------------------------------------------
   // RENDER: LOADING SCREEN
   // ------------------------------------------
   if (isInitializing) {
@@ -580,6 +700,8 @@ export default function App() {
     return (
       <SafeAreaView style={styles.loginContainer}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        {renderNotificationToast()}
+
         <ScrollView contentContainerStyle={styles.loginContent} keyboardShouldPersistTaps="handled">
           <View style={styles.loginHeader}>
             <View style={styles.logoBadge}>
@@ -587,6 +709,66 @@ export default function App() {
             </View>
             <Text style={styles.loginTitle}>ShanFa Admin Live</Text>
             <Text style={styles.loginSubtitle}>Real-Time Tracking & Order Command Center</Text>
+
+            {/* Real-time WebSocket connection status badge */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: pusherConnected ? '#F0FDF4' : '#FFFBEB',
+                paddingVertical: 6,
+                paddingHorizontal: 14,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: pusherConnected ? '#BBF7D0' : '#FDE68A',
+                marginTop: 12,
+                marginBottom: 6,
+              }}
+            >
+              <View
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: pusherConnected ? '#22C55E' : '#F59E0B',
+                  marginRight: 8,
+                }}
+              />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: pusherConnected ? '#15803D' : '#B45309' }}>
+                {pusherConnected ? '⚡ Live WebSocket: ACTIVE' : '⚡ WebSocket: Connecting...'}
+              </Text>
+            </View>
+
+            {/* Quick Audio & Vibration Test buttons on Login screen */}
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12, width: '100%' }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
+                onPress={() => {
+                  triggerAlertSound('cartAdded');
+                  showNotificationToast('cartAdded', '🛒 Test Cart Alert', 'Customer added item to cart • AED 120');
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#1D4ED8' }}>🔊 Cart</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
+                onPress={() => {
+                  triggerAlertSound('checkoutEntered');
+                  showNotificationToast('checkoutEntered', '⚡ Test Checkout', 'Customer on Checkout with 2 items');
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#B45309' }}>🔔 Ling</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
+                onPress={() => {
+                  triggerAlertSound('newOrder');
+                  showNotificationToast('newOrder', '🎉 Test Order!', 'Sample Order #9999 • AED 450 (Paid)');
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#15803D' }}>💰 Order</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.loginCard}>
@@ -648,86 +830,7 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* INSTANT HEADS-UP NOTIFICATION BANNER */}
-      {toastBanner && (
-        <Animated.View
-          style={[
-            styles.toastContainer,
-            {
-              transform: [{ translateY: toastAnim }],
-              borderColor:
-                toastBanner.type === 'newOrder'
-                  ? '#10B981'
-                  : toastBanner.type === 'checkoutEntered'
-                  ? '#F59E0B'
-                  : '#3B82F6',
-            },
-          ]}
-        >
-          <TouchableOpacity
-            style={styles.toastInner}
-            activeOpacity={0.9}
-            onPress={() => {
-              if (toastBanner.type === 'newOrder') setActiveTab('orders');
-              else setActiveTab('events');
-            }}
-          >
-            <View
-              style={[
-                styles.toastBadge,
-                {
-                  backgroundColor:
-                    toastBanner.type === 'newOrder'
-                      ? '#DCFCE7'
-                      : toastBanner.type === 'checkoutEntered'
-                      ? '#FEF3C7'
-                      : '#DBEAFE',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.toastBadgeText,
-                  {
-                    color:
-                      toastBanner.type === 'newOrder'
-                        ? '#166534'
-                        : toastBanner.type === 'checkoutEntered'
-                        ? '#92400E'
-                        : '#1E40AF',
-                  },
-                ]}
-              >
-                {toastBanner.type === 'newOrder'
-                  ? 'ORDER'
-                  : toastBanner.type === 'checkoutEntered'
-                  ? 'CHECKOUT'
-                  : 'CART'}
-              </Text>
-            </View>
-
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={styles.toastTitle}>{toastBanner.title}</Text>
-              <Text style={styles.toastMessage} numberOfLines={2}>
-                {toastBanner.message}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.toastCloseBtn}
-              onPress={() => {
-                if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-                Animated.timing(toastAnim, {
-                  toValue: -150,
-                  duration: 200,
-                  useNativeDriver: true,
-                }).start(() => setToastBanner(null));
-              }}
-            >
-              <Text style={styles.toastCloseText}>✕</Text>
-            </TouchableOpacity>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
+      {renderNotificationToast()}
 
       {/* TOP HEADER */}
       <View style={styles.topHeader}>
@@ -805,6 +908,37 @@ export default function App() {
                 </Text>
                 <Text style={[styles.statusGridLabel, { color: '#10B981' }]}>Delivered</Text>
               </View>
+            </View>
+
+            {/* QUICK SOUND & ALERT TEST ROW */}
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE', paddingVertical: 8, borderRadius: 8, alignItems: 'center' }}
+                onPress={() => {
+                  triggerAlertSound('cartAdded');
+                  showNotificationToast('cartAdded', '🛒 Test Cart Alert', 'Sample product added to cart • AED 120');
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#1D4ED8' }}>🔊 Test Cart</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', paddingVertical: 8, borderRadius: 8, alignItems: 'center' }}
+                onPress={() => {
+                  triggerAlertSound('checkoutEntered');
+                  showNotificationToast('checkoutEntered', '⚡ Test Checkout', 'Customer on Checkout with 2 items');
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#B45309' }}>🔔 Test Ling</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0', paddingVertical: 8, borderRadius: 8, alignItems: 'center' }}
+                onPress={() => {
+                  triggerAlertSound('newOrder');
+                  showNotificationToast('newOrder', '🎉 Test Order!', 'Sample Order #9999 • AED 450 (Paid)');
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#15803D' }}>💰 Test Order</Text>
+              </TouchableOpacity>
             </View>
 
             {/* RECENT LIVE ACTIVITY STRIP */}
