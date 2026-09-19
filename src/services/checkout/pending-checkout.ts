@@ -97,9 +97,9 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
     throw new Error(`PendingCheckout not found: ${pendingCheckoutId}`);
   }
 
-  // Atomic claim — only one caller can move OPEN -> CONSUMED.
+  // Atomic claim — only one caller can move OPEN/EXPIRED -> CONSUMED.
   const claim = await (prisma as any).pendingCheckout.updateMany({
-    where: { id: pendingCheckoutId, status: "OPEN" },
+    where: { id: pendingCheckoutId, status: { in: ["OPEN", "EXPIRED"] } },
     data: { status: "CONSUMED" },
   });
 

@@ -15,6 +15,7 @@ export async function createPaymentIntent(amount: number, orderId: string, custo
       receipt_email: customerEmail,
       metadata: {
         orderId: orderId,
+        pendingCheckoutId: orderId,
       },
       payment_method_types: ['card'],
     });

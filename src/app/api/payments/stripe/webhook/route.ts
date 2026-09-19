@@ -68,7 +68,19 @@ export async function POST(req: Request) {
       // (pre-cutover in-flight checkouts). New shape: metadata.pendingCheckoutId
       // points at a PendingCheckout that must be promoted to a real Order now.
       const legacyOrderId = metadata?.orderId;
-      const pendingCheckoutId = metadata?.pendingCheckoutId;
+      let pendingCheckoutId = metadata?.pendingCheckoutId;
+
+      // Fallback: if pendingCheckoutId is missing but orderId is present,
+      // check if this ID belongs to a PendingCheckout record that hasn't been promoted yet.
+      if (!pendingCheckoutId && legacyOrderId) {
+        const pc = await (prisma as any).pendingCheckout.findUnique({
+          where: { id: legacyOrderId },
+          select: { id: true },
+        });
+        if (pc) {
+          pendingCheckoutId = legacyOrderId;
+        }
+      }
 
       if (!legacyOrderId && !pendingCheckoutId) {
         console.warn(`[Stripe Webhook] ${event.type} missing orderId/pendingCheckoutId in metadata`);
