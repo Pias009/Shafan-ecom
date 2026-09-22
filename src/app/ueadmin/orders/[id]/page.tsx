@@ -10,7 +10,6 @@ import { OrderStatus } from '@prisma/client';
 import RequestAlerts from './RequestAlerts';
 import OrderEditor from './_components/OrderEditor';
 import TamaraRefundAction from './_components/TamaraRefundAction';
-import InvoicePreview from './_components/InvoicePreview';
 import { formatOrderNumber } from '@/lib/order-number';
 
 function formatPrice(amount: number, currency: string): string {
@@ -74,7 +73,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const billing = order.billingAddress as Record<string, unknown> | null;
   const shipping = order.shippingAddress as Record<string, unknown> | null;
-  const customerName = order.user?.name || (billing?.first_name ? `${billing.first_name} ${billing.last_name || ''}`.trim() : 'Guest') || 'Guest';
+  const customerName = order.user?.name
+    || (billing?.fullName as string)
+    || (billing?.first_name ? `${billing.first_name} ${billing.last_name || ''}`.trim() : 'Guest')
+    || 'Guest';
   const customerEmail = order.user?.email || (billing?.email as string) || 'No email';
   const customerPhone = (billing?.phone as string) || (shipping?.phone as string) || 'No phone';
 
@@ -128,10 +130,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      {/* Main Content - Grid with Left Order Details and Right Live Invoice Preview */}
+      {/* Main Content */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
         {/* Left Column */}
-        <div className="xl:col-span-7 space-y-6">
+        <div className="xl:col-span-12 space-y-6">
         
         {/* Cancellation/Return Requests */}
         <RequestAlerts 
@@ -426,11 +428,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             totalWeight={order.totalWeight}
           />
         </section>
-        </div>
-
-        {/* Right Column: Live Invoice Preview */}
-        <div className="xl:col-span-5 space-y-6 xl:sticky xl:top-6">
-          <InvoicePreview order={order} />
         </div>
       </div>
     </div>

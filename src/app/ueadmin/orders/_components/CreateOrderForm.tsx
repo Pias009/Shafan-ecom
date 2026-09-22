@@ -51,6 +51,9 @@ export function CreateOrderForm() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [paymentStatus, setPaymentStatus] = useState<"PAID" | "PENDING">("PENDING");
   const [shippingFee, setShippingFee] = useState(0);
+  const [shippingCustom, setShippingCustom] = useState(false);
+  const [vatRateCustom, setVatRateCustom] = useState<number | null>(null);
+  const [vatAmountCustom, setVatAmountCustom] = useState<number | null>(null);
   const [couponCode, setCouponCode] = useState("");
   const [discountInfo, setDiscountInfo] = useState<{ code: string; type: string; discount: number; maxLimitAmount?: number } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
@@ -145,10 +148,20 @@ export function CreateOrderForm() {
     }));
   };
 
+  const updatePrice = (productId: string, price: number) => {
+    setSelectedItems(selectedItems.map(item => {
+      if (item.product.id === productId) {
+        return { ...item, price: Math.max(0, isNaN(price) ? 0 : Number(price)) };
+      }
+      return item;
+    }));
+  };
+
   const subtotal = selectedItems.reduce((acc, item) => acc + ((item.price || 0) * item.quantity), 0);
   
-  // Automate shipping fee based on subtotal and country config
+  // Automate shipping fee based on subtotal and country config (only when admin hasn't overridden it)
   useEffect(() => {
+    if (shippingCustom) return;
     const config = getChargeConfig(selectedCountry);
     if (config) {
       if (subtotal >= config.freeDelivery) {
@@ -157,7 +170,7 @@ export function CreateOrderForm() {
         setShippingFee(config.deliveryFee);
       }
     }
-  }, [subtotal, selectedCountry, countryCharges]);
+  }, [subtotal, selectedCountry, countryCharges, shippingCustom]);
 
   const discountAmount = useMemo(() => {
     if (!discountInfo) return 0;
@@ -176,8 +189,10 @@ export function CreateOrderForm() {
   }, [subtotal, discountInfo]);
 
   const preTaxTotal = subtotal + (discountInfo?.type === "FREE_SHIPPING" ? 0 : Number(shippingFee)) - discountAmount;
-  const taxRate = getChargeConfig(selectedCountry).taxRate || 0;
-  const taxAmount = Math.round(preTaxTotal * taxRate * 100) / 100;
+  const defaultTaxRate = getChargeConfig(selectedCountry).taxRate || 0;
+  const taxRate = vatRateCustom !== null ? vatRateCustom : defaultTaxRate;
+  const autoTaxAmount = Math.round(preTaxTotal * taxRate * 100) / 100;
+  const taxAmount = vatAmountCustom !== null ? Math.max(0, vatAmountCustom) : autoTaxAmount;
   const finalTotal = preTaxTotal + taxAmount;
 
   const totalWeight = selectedItems.reduce((acc, item) => {
@@ -226,6 +241,8 @@ export function CreateOrderForm() {
         })),
         billing: {
           fullName: `${customer.firstName} ${customer.lastName}`.trim(),
+          first_name: customer.firstName,
+          last_name: customer.lastName,
           email: customer.email,
           phone: customer.phone,
           address1: customer.address1,
@@ -237,6 +254,8 @@ export function CreateOrderForm() {
         },
         shipping: {
           fullName: `${customer.firstName} ${customer.lastName}`.trim(),
+          first_name: customer.firstName,
+          last_name: customer.lastName,
           email: customer.email,
           phone: customer.phone,
           address1: customer.address1,
@@ -261,6 +280,8 @@ export function CreateOrderForm() {
         shippingFee: Number(shippingFee),
         discountAmount: discountAmount,
         couponCode: discountInfo?.code || null,
+        taxRate: vatRateCustom !== null ? vatRateCustom : undefined,
+        taxAmount: vatAmountCustom !== null ? taxAmount : undefined,
         // Admin-created orders (e.g. phone orders) are real orders immediately —
         // they don't go through a payment webhook, so they must bypass the
         // PendingCheckout indirection used by customer-facing checkout.
@@ -540,9 +561,21 @@ export function CreateOrderForm() {
                         <Plus size={14} />
                       </button>
                     </div>
-                    <div className="text-right min-w-[80px]">
-                      <div className="text-sm font-black">{selectedCountry} {((item.price || 0) * item.quantity).toFixed(2)}</div>
-                      <div className="text-[9px] font-bold text-black/40">{(item.price || 0).toFixed(2)} / unit</div>
+                    <div className="text-right min-w-[120px]">
+                      <div className="flex items-center gap-1 justify-end">
+                        <span className="text-[10px] font-bold text-black/40">{selectedCountry}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={(item.price || 0).toFixed(2)}
+                          onChange={e => updatePrice(item.product.id, parseFloat(e.target.value) || 0)}
+                          className="w-20 bg-white border border-black/10 rounded-lg px-2 py-1 text-sm font-black text-right focus:ring-2 focus:ring-black outline-none transition-all"
+                        />
+                      </div>
+                      <div className="text-[10px] font-black text-black/70 mt-1">
+                        {selectedCountry} {((item.price || 0) * item.quantity).toFixed(2)}
+                      </div>
                     </div>
                     <button 
                       onClick={() => removeItem(item.product.id)}
@@ -621,17 +654,51 @@ export function CreateOrderForm() {
               </div>
             )}
             <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-black/40">
-              <span>Shipping</span>
-              <span className={Number(shippingFee) === 0 ? "text-green-600" : "text-black"}>
-                {Number(shippingFee) === 0 ? "FREE" : `${selectedCountry} ${Number(shippingFee).toFixed(2)}`}
+              <span className="flex items-center gap-1.5">
+                Shipping
+                {shippingCustom && (
+                  <button onClick={() => { setShippingCustom(false); }} className="text-[9px] font-black text-blue-600 hover:underline">Auto</button>
+                )}
               </span>
-            </div>
-            {taxAmount > 0 && (
-              <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-orange-600">
-                <span>VAT ({(taxRate * 100).toFixed(0)}%)</span>
-                <span>{selectedCountry} {taxAmount.toFixed(2)}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-black/30">{selectedCountry}</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={Number(shippingFee)}
+                  onChange={e => {
+                    setShippingCustom(true);
+                    const v = parseFloat(e.target.value);
+                    setShippingFee(isNaN(v) ? 0 : v);
+                  }}
+                  className="w-20 bg-white border border-black/10 rounded-lg px-2 py-1 text-xs font-black text-black text-right focus:ring-2 focus:ring-black outline-none"
+                />
               </div>
-            )}
+            </div>
+            <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-orange-600">
+              <span className="flex items-center gap-1.5">
+                VAT ({(taxRate * 100).toFixed(1)}%)
+                {vatRateCustom !== null && (
+                  <button onClick={() => setVatRateCustom(null)} className="text-[9px] font-black text-blue-600 hover:underline">Auto</button>
+                )}
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-black/30">{selectedCountry}</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={Number(taxAmount)}
+                  onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setVatRateCustom(taxRate);
+                    setVatAmountCustom(isNaN(v) ? 0 : v);
+                  }}
+                  className="w-20 bg-white border border-orange-200 rounded-lg px-2 py-1 text-xs font-black text-black text-right focus:ring-2 focus:ring-orange-300 outline-none"
+                />
+              </div>
+            </div>
             <div className="pt-4 border-t border-black/5 flex justify-between items-center">
               <span className="text-sm font-black uppercase tracking-widest">Total</span>
               <span className="text-2xl font-black">{selectedCountry} {(finalTotal || 0).toFixed(2)}</span>

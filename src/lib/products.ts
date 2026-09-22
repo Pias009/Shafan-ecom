@@ -79,7 +79,7 @@ export async function getHomePageData(storeCode?: string) {
       };
     };
 
-    const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers, makeupProducts, fragranceProducts, banners, rejuvenateSetting] = await Promise.all([
+    const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers, makeupProducts, fragranceProducts, banners, rejuvenateSetting, haircareSetting] = await Promise.all([
       prisma.product.findMany({
         where: { active: true },
         select: selectFields,
@@ -164,6 +164,9 @@ export async function getHomePageData(storeCode?: string) {
       (prisma as any).appSettings.findUnique({
         where: { type: 'rejuvenate_section' },
       }).catch(() => null),
+      (prisma as any).appSettings.findUnique({
+        where: { type: 'haircare_section' },
+      }).catch(() => null),
     ]);
 
     const data = {
@@ -177,13 +180,14 @@ export async function getHomePageData(storeCode?: string) {
       fragranceProducts: fragranceProducts.map(mapProduct),
       banners: (banners || []).filter((b: any) => b.imageUrl && b.imageUrl.trim() !== ""),
       rejuvenateSection: (rejuvenateSetting?.data as any) || null,
+      haircareSection: (haircareSetting?.data as any) || null,
     };
 
     homepageCache = { data, timestamp: Date.now() };
     return data;
   } catch (error) {
     console.error("HomePage data fetch error:", error);
-    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [], makeupProducts: [], fragranceProducts: [], banners: [] };
+    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [], makeupProducts: [], fragranceProducts: [], banners: [], haircareSection: null };
   }
 }
 

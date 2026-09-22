@@ -105,7 +105,8 @@ export default function HomeClient({
   makeupProducts: initialMakeupProducts = [],
   fragranceProducts: initialFragranceProducts = [],
   banners = [],
-  rejuvenateSection = null
+  rejuvenateSection = null,
+  haircareSection = null
 }: {
   initialProducts: any[],
   newArrivals?: any[],
@@ -116,7 +117,8 @@ export default function HomeClient({
   makeupProducts?: any[],
   fragranceProducts?: any[],
   banners?: any[],
-  rejuvenateSection?: any
+  rejuvenateSection?: any,
+  haircareSection?: any
 }) {
   const [products] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
@@ -313,10 +315,10 @@ export default function HomeClient({
               <div className="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/15 rounded-full blur-2xl pointer-events-none" />
               <div className="absolute -bottom-8 right-12 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="relative flex items-center justify-between gap-3 sm:gap-6">
+              <div className="relative flex flex-wrap items-center justify-between gap-2 sm:gap-3 md:gap-6">
                 {/* Left: Title + Mini LIVE Badge */}
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase whitespace-nowrap">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase min-w-0 truncate">
                     Flash Sales
                   </h2>
                   <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
@@ -398,6 +400,7 @@ export default function HomeClient({
         {/* 5.2 Herbal Haircare & Scalp Therapy Spotlight (Methi & Rosemary) */}
         <HairCareSpotlightSection
           products={products}
+          sectionConfig={haircareSection}
           onQuickView={setQuickView}
           addToCart={addToCart}
           orderNow={orderNow}

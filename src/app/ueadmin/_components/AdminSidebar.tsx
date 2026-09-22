@@ -8,7 +8,7 @@ import {
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
   Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers
+  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers, Palette
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -168,6 +168,17 @@ export function AdminSidebar() {
                    className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
                 >
                    <Flame size={18} /> Trending Now
+                </Link>
+                <Link
+                   href="/ueadmin/haircare-section"
+                   prefetch={true}
+                   className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
+                     pathname === '/ueadmin/haircare-section'
+                       ? 'bg-[#890754] text-white shadow-xl shadow-[#890754]/25 scale-105 border border-[#890754]/20'
+                       : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
+                   }`}
+                >
+                   <Palette size={18} className="text-pink-400" /> Herbal Haircare
                 </Link>
                <Link
                   href="/ueadmin/banners"

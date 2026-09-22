@@ -274,6 +274,8 @@ export async function POST(req: Request) {
       subtotal: clientSubtotal,
       shippingFee: clientShippingFee,
       discountAmount: clientDiscount,
+      taxRate: clientTaxRate,
+      taxAmount: clientTaxAmount,
       isAdminCreated,
     } = body;
 
@@ -459,7 +461,10 @@ export async function POST(req: Request) {
         console.warn(`[PRICE_MISMATCH] Item: ${product.name} | Request: ${item.price} | DB: ${canonicalPrice}. USING DB PRICE.`);
       }
       
-      const unitPrice = canonicalPrice;
+      // Admin-created orders can override the unit price (e.g. custom/discounted pricing, phone orders)
+      const unitPrice = isUserAdmin && typeof item.price === 'number' && item.price > 0
+        ? Number(item.price)
+        : canonicalPrice;
       
       if (unitPrice <= 0) {
         throw new Error(`Invalid price for product ${product.name}. Please contact support.`);
@@ -577,12 +582,17 @@ export async function POST(req: Request) {
     const effectiveDiscount = (isUserAdmin && typeof clientDiscount === 'number') ? clientDiscount : discount;
 
     // Tax calculation: respect products exempt from VAT
-    const countryTaxRate = charges[countryCode.toUpperCase()]?.taxRate || 0;
+    // Admins can override both the VAT rate and the VAT amount for custom orders
+    const countryTaxRate = (isUserAdmin && typeof clientTaxRate === 'number' && clientTaxRate >= 0)
+      ? clientTaxRate
+      : (charges[countryCode.toUpperCase()]?.taxRate || 0);
     const discountRatio = subtotal > 0 ? Math.max(0, 1 - (effectiveDiscount / subtotal)) : 1;
     const taxableProductBase = taxableProductSubtotal * discountRatio;
     const taxableShipping = effectiveShipping;
     const preTaxTotal = effectiveSubtotal + effectiveShipping - effectiveDiscount;
-    const taxAmount = Math.round((taxableProductBase + taxableShipping) * countryTaxRate * 100) / 100;
+    const taxAmount = (isUserAdmin && typeof clientTaxAmount === 'number' && clientTaxAmount >= 0)
+      ? clientTaxAmount
+      : (Math.round((taxableProductBase + taxableShipping) * countryTaxRate * 100) / 100);
 
     let effectiveTotal = (isUserAdmin && typeof clientTotal === 'number' && clientTotal > 0) 
       ? clientTotal 

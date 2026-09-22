@@ -245,14 +245,13 @@ export function OfferBannersSection() {
 
 function BannerCard({ banner }: { banner: EnhancedOfferBanner }) {
   return (
-    <div className="relative w-full max-w-4xl xl:max-w-6xl mx-auto overflow-hidden rounded-2xl md:rounded-3xl min-h-[200px] md:min-h-[340px] group shadow-xl">
-      <Image
+    <div className="relative w-full max-w-4xl xl:max-w-6xl mx-auto group">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={banner.imageUrl}
         alt={banner.title || "promotional banner"}
-        fill
-        className="object-contain"
+        className="w-full h-auto object-contain"
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 70vw, 60vw"
-        priority={true}
       />
       {banner.link ? (
         <Link

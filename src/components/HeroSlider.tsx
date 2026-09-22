@@ -171,14 +171,6 @@ export function HeroSlider({ initialBanners = [] }: { initialBanners?: SliderBan
                 priority={current === 0}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1536px"
               />
-
-              {/* Optional custom bg color tint */}
-              {slide.backgroundColor && (
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ backgroundColor: slide.backgroundColor, opacity: 0.25 }}
-                />
-              )}
             </Link>
           </motion.div>
         </AnimatePresence>

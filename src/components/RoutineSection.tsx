@@ -214,10 +214,10 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
           <div className="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/15 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -bottom-8 right-12 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="relative flex items-center justify-between gap-3 sm:gap-6">
+          <div className="relative flex flex-wrap items-center justify-between gap-2 sm:gap-6">
             {/* Left: Title + Mini Badge */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase whitespace-nowrap">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase min-w-0 truncate">
                 {isAr ? "العناية اليومية" : "Routine"}
               </h2>
               <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
@@ -552,23 +552,8 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
             </motion.div>
           )}
 
-          {/* Bottom Centered "See All Routine" / "Back to Slider" Toggle Button */}
-          <div className="mt-8 sm:mt-10 flex justify-center items-center">
-            <button
-              type="button"
-              onClick={() => setIsExpanded((prev) => !prev)}
-              className="group inline-flex items-center gap-2.5 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full border border-slate-200 bg-white hover:border-[#890754]/30 hover:bg-slate-50 text-slate-800 hover:text-slate-900 text-xs sm:text-sm font-sans font-medium tracking-wide transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
-              title={isExpanded ? "Collapse to Routine Slider" : "See All Routine Products in a Grid"}
-            >
-              <Layers className="w-4 h-4 text-[#890754]" />
-              <span>
-                {isExpanded ? "See Routine Slider" : `See All Routine (${products.length} Products)`}
-              </span>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#890754] group-hover:translate-x-0.5 transition-all" />
-            </button>
           </div>
         </div>
-      </div>
     </section>
   );
 }

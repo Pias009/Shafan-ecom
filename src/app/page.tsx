@@ -21,6 +21,7 @@ export default async function HomePage() {
         fragranceProducts={data.fragranceProducts}
         banners={data.banners}
         rejuvenateSection={data.rejuvenateSection}
+        haircareSection={data.haircareSection}
       />
     </Suspense>
   );

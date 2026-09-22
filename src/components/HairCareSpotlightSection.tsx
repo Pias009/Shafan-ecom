@@ -1,17 +1,16 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import Image from "next/image";
+import React, { useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Sparkles, Palette } from "lucide-react";
 import { motion } from "framer-motion";
-import { ShoppingBag, Eye, Star, Zap, Check } from "lucide-react";
-import { Price } from "./Price";
-import { CountryPrice } from "./ProductCard";
+import { ProductCard } from "./ProductCard";
 import { useLanguageStore } from "@/lib/language-store";
-import { useCountryStore } from "@/lib/country-store";
-import { resolveProductPrice } from "@/lib/product-utils";
+import { DEFAULT_HAIRCARE_SECTION } from "@/lib/haircare-section";
 
 interface HairCareSpotlightSectionProps {
   products?: any[];
+  sectionConfig?: any;
   onQuickView: (product: any) => void;
   addToCart: (product: any) => void;
   orderNow?: (product: any) => void;
@@ -19,177 +18,167 @@ interface HairCareSpotlightSectionProps {
 
 export default function HairCareSpotlightSection({
   products = [],
+  sectionConfig = null,
   onQuickView,
   addToCart,
   orderNow,
 }: HairCareSpotlightSectionProps) {
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
-  const { selectedCountry } = useCountryStore();
 
-  const [isAdded, setIsAdded] = useState(false);
+  const config = { ...DEFAULT_HAIRCARE_SECTION, ...(sectionConfig || {}) };
 
-  // Pick accurate hair care / shampoo product from database
-  const matchedProduct = useMemo(() => {
-    if (!products || products.length === 0) return null;
-    
-    // First priority: specific shampoo product
-    const shampoo = products.find((p: any) => {
-      const name = (p.name || "").toLowerCase();
-      return name.includes("shampoo") && !name.includes("parfum");
-    });
-    if (shampoo) return shampoo;
+  // Pick hair care products from the pool (config order first, then smart matching)
+  const featuredProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
 
-    // Second priority: hair oil or hair care
-    const hair = products.find((p: any) => {
-      const name = (p.name || "").toLowerCase();
-      const cat = (p.category?.name || p.category || "").toLowerCase();
-      return (name.includes("hair") || cat.includes("hair") || name.includes("rosemary")) && 
-             !name.includes("parfum") && !name.includes("eau de");
-    });
-    if (hair) return hair;
+    const configIds: string[] = Array.isArray(config.productIds)
+      ? config.productIds.filter(Boolean)
+      : [];
 
-    return products[0];
-  }, [products]);
-
-  const resolvedHairPrice = matchedProduct
-    ? resolveProductPrice(matchedProduct, selectedCountry)
-    : null;
-  const displayPrice = resolvedHairPrice
-    ? (resolvedHairPrice.displayPrice || 49)
-    : 49;
-  const originalPrice = resolvedHairPrice && resolvedHairPrice.hasDiscount
-    ? (resolvedHairPrice.originalPrice || null)
-    : null;
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!matchedProduct) return;
-    addToCart(matchedProduct);
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000);
-  };
-
-  const handleOrderNow = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!matchedProduct) return;
-    if (orderNow) {
-      orderNow(matchedProduct);
-    } else {
-      addToCart(matchedProduct);
+    if (configIds.length > 0) {
+      const byId = new Map(products.map((p: any) => [p.id, p]));
+      const selected = configIds.map((id) => byId.get(id)).filter(Boolean);
+      if (selected.length > 0) return selected;
     }
-  };
+
+    // Smart fallback: hair / shampoo / rosemary products first
+    const isHair = (p: any) => {
+      const name = (p.name || "").toLowerCase();
+      const cat = (
+        p.category?.name ||
+        (typeof p.category === "string" ? p.category : "") ||
+        p.brandName ||
+        ""
+      ).toLowerCase();
+      return (
+        (name.includes("hair") ||
+          name.includes("shampoo") ||
+          name.includes("rosemary") ||
+          name.includes("methi") ||
+          name.includes("oil") ||
+          name.includes("scalp") ||
+          cat.includes("hair") ||
+          cat.includes("shampoo")) &&
+        !name.includes("parfum") &&
+        !name.includes("eau de")
+      );
+    };
+
+    const hairProducts = products.filter(isHair);
+    if (hairProducts.length > 0) return hairProducts;
+
+    return products.slice(0, 2);
+  }, [products, config.productIds]);
+
+  if (config.enabled === false) return null;
+  if (featuredProducts.length === 0) return null;
+
+  const title = isAr ? config.headingAr || config.heading : config.heading;
+  const badge = isAr ? config.badgeAr || config.badge : config.badge;
 
   return (
-    <section className="relative my-8 sm:my-14 px-2 sm:px-4">
-      {/* Centered Slim Visual Showcase with Floating Order Now Button */}
-      <motion.div 
-        initial={{ opacity: 0, y: 30, scale: 0.98 }}
-        whileInView={{ opacity: 1, y: 0, scale: 1 }}
-        viewport={{ once: false, amount: 0.2 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative max-w-xl mx-auto rounded-3xl sm:rounded-[36px] overflow-hidden border border-amber-900/10 shadow-[0_20px_50px_rgba(78,42,20,0.12)] bg-[#f5ede3] group cursor-pointer"
-        onClick={() => matchedProduct && onQuickView(matchedProduct)}
-      >
-        {/* Poster Visual (Contains the bottle, seeds, and 4 circular benefits) */}
-        <div className="relative w-full aspect-[9/14] sm:aspect-[9/13] overflow-hidden">
-          <Image
-            src="/images/showcase/methi-shampoo.png"
-            alt="Methi Fenugreek Hair Therapy Formula"
-            fill
-            sizes="(max-width: 768px) 100vw, 580px"
-            className="object-cover object-center group-hover:scale-103 transition-transform duration-700 ease-out"
-            priority={false}
-          />
+    <section id="haircare" className="relative w-full py-8 sm:py-12 md:py-16 px-2 sm:px-6 lg:px-8 select-none overflow-hidden">
+      {/* Soft Ambient Depth Illumination */}
+      <div className="absolute inset-0 pointer-events-none -z-10 flex items-center justify-center">
+        <div className="w-[1100px] h-[500px] bg-gradient-to-r from-amber-500/5 via-[#890754]/5 to-emerald-500/5 rounded-full blur-3xl" />
+      </div>
 
-          {/* Top Micro Live Pill */}
-          <div className="absolute top-3.5 left-3.5 sm:top-5 sm:left-5 z-10 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md border border-amber-900/15 shadow-xs flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-950">
-              {isAr ? "١٠٠٪ تركيبة نباتية" : "100% Herbal Active"}
-            </span>
-          </div>
+      <div className="w-full max-w-[1536px] mx-auto flex flex-col items-center">
+        {/* 1. Ultra-Slim Section Header Bar (Matching other sections) */}
+        <div className="w-full mb-4 sm:mb-6 md:mb-8 relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#3e0325] via-[#540434] to-[#3e0325] backdrop-blur-xl border border-pink-500/20 px-4 py-3 sm:px-6 sm:py-3.5 shadow-[0_8px_32px_rgba(84,4,52,0.2)]">
+          {/* Glow accent */}
+          <div className="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/15 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-8 right-12 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
-          {/* Top-Right Quick View Button */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (matchedProduct) onQuickView(matchedProduct);
-            }}
-            className="absolute top-3.5 right-3.5 sm:top-5 sm:right-5 z-10 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-md backdrop-blur-md flex items-center justify-center active:scale-95 transition-all"
-            title={isAr ? "معاينة سريعة" : "Quick View"}
-          >
-            <Eye size={15} className="text-[#890754]" />
-          </button>
+          <div className="relative flex flex-wrap items-center justify-between gap-2 sm:gap-6">
+            {/* Left: Title + Mini Badge */}
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase min-w-0 truncate">
+                {title}
+              </h2>
+              <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                <Sparkles className="w-2.5 h-2.5" />
+                {badge}
+              </span>
+            </div>
 
-          {/* ========================================================================= */}
-          {/* FLOATING ORDER NOW BUTTON AT THE BOTTOM */}
-          {/* ========================================================================= */}
-          <div className="absolute bottom-3 sm:bottom-6 left-3 right-3 sm:left-6 sm:right-6 z-20">
-            <motion.div 
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="p-2 sm:p-2.5 rounded-2xl sm:rounded-full bg-white/95 backdrop-blur-xl border border-amber-900/15 shadow-[0_12px_32px_rgba(40,20,10,0.22)] flex items-center justify-between gap-2 sm:gap-4"
-              onClick={(e) => e.stopPropagation()}
+            {/* Right: Slim See All CTA */}
+            <Link
+              href="/products?category=Hair%20Care"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
             >
-              {/* Left: Price & Rating */}
-              <div className="pl-2 sm:pl-4 min-w-0">
-                <div className="flex items-baseline gap-1.5">
-                  <Price
-                    amount={displayPrice}
-                    countryPrices={matchedProduct?.countryPrices as CountryPrice[]}
-                    currency={resolvedHairPrice?.currency}
-                    className="text-base sm:text-xl font-black text-[#890754] leading-none"
-                  />
-                  {originalPrice && (
-                    <span className="text-[10px] sm:text-xs text-gray-400 line-through font-bold">
-                      <Price amount={originalPrice} countryPrices={matchedProduct?.countryPrices as CountryPrice[]} currency={resolvedHairPrice?.currency} />
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 mt-0.5 text-amber-500">
-                  <Star size={10} className="fill-amber-400 text-amber-400" />
-                  <span className="text-[9.5px] font-bold text-gray-700">4.9</span>
-                  <span className="text-[8.5px] text-gray-400 font-medium truncate hidden xs:inline">
-                    {isAr ? "شامبو طبيعي" : "Methi Scalp Care"}
+              <span>{isAr ? "عرض الكل" : "See All"}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* 2. Desktop: 2 columns side-by-side | Mobile: horizontal snap slider */}
+        <div className="w-full">
+          {/* Mobile Slider (below md) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="flex md:hidden gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar -mx-2 px-2 pt-1"
+          >
+            {featuredProducts.map((product: any, idx: number) => (
+              <div
+                key={product.id || idx}
+                className="relative h-full min-w-[62%] sm:min-w-[46%] pt-3 shrink-0 snap-start"
+              >
+                <div className="absolute top-0 left-2 z-20 pointer-events-none">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#540434] to-[#890754] text-white text-[8px] sm:text-[10px] font-semibold uppercase tracking-wider shadow-xs">
+                    <Palette className="w-2.5 h-2.5" />
+                    {idx < 2 ? (isAr ? "الأكثر مبيعاً" : "Top Pick") : (isAr ? "جديد" : "New In")}
                   </span>
                 </div>
+                <ProductCard
+                  product={product}
+                  onQuickView={onQuickView}
+                  onAddToCart={addToCart}
+                  onOrderNow={orderNow}
+                  compact={true}
+                  priority={idx < 2}
+                />
               </div>
+            ))}
+          </motion.div>
 
-              {/* Right: Actions */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {/* Add to Cart Icon Button */}
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-xs active:scale-95 ${
-                    isAdded
-                      ? "bg-emerald-600 text-white"
-                      : "bg-gray-100 hover:bg-pink-50 text-[#890754]"
-                  }`}
-                  title={isAr ? "أضف للسلة" : "Add to Cart"}
-                >
-                  {isAdded ? <Check size={16} /> : <ShoppingBag size={16} />}
-                </button>
-
-                {/* Main ORDER NOW Floating Button */}
-                <button
-                  type="button"
-                  onClick={handleOrderNow}
-                  className="px-5 sm:px-7 py-2.5 rounded-full bg-[#890754] hover:bg-[#6e0543] text-white text-xs sm:text-sm font-black uppercase tracking-wider shadow-[0_6px_20px_rgba(137,7,84,0.35)] hover:shadow-[0_8px_24px_rgba(137,7,84,0.45)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"
-                >
-                  <Zap size={14} className="fill-white" />
-                  <span>{isAr ? "اطلب الآن" : "Order Now"}</span>
-                </button>
+          {/* Desktop Grid: exactly 2 columns (left/right) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="hidden md:grid grid-cols-2 gap-5 sm:gap-8 max-w-5xl mx-auto px-2"
+          >
+            {featuredProducts.slice(0, 2).map((product: any, idx: number) => (
+              <div key={product.id || idx} className="relative h-full pt-4">
+                <div className="absolute top-0 left-2 z-20 pointer-events-none">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#540434] to-[#890754] text-white text-[8px] sm:text-[10px] font-semibold uppercase tracking-wider shadow-xs">
+                    <Palette className="w-2.5 h-2.5" />
+                    {idx === 0 ? (isAr ? "الأكثر مبيعاً" : "Top Pick") : (isAr ? "جديد" : "New In")}
+                  </span>
+                </div>
+                <ProductCard
+                  product={product}
+                  onQuickView={onQuickView}
+                  onAddToCart={addToCart}
+                  onOrderNow={orderNow}
+                  compact={true}
+                  priority={idx < 2}
+                />
               </div>
-            </motion.div>
-          </div>
-
+            ))}
+          </motion.div>
         </div>
-      </motion.div>
+      </div>
+
+      <style jsx>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </section>
   );
 }
