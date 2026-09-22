@@ -8,7 +8,7 @@ import {
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
   Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace, Activity, Sparkles
+  Zap, Flame, ScanFace, Activity, Sparkles, Percent
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -207,6 +207,13 @@ export function AdminSidebar() {
                       className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
                    >
                       <SettingsIcon size={18} /> Shipping Settings
+                   </Link>
+                   <Link
+                      href="/ueadmin/settings/vat-delivery"
+                      prefetch={true}
+                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
+                   >
+                      <Percent size={18} /> VAT & Delivery
                    </Link>
 <Link
                      href="/ueadmin/blog"

@@ -96,10 +96,10 @@ export async function middleware(req: NextRequest) {
   if (hasStore) return NextResponse.next();
 
   // Detect country from Vercel headers
-  const countryCode = (req.headers.get('x-vercel-ip-country') || 'KW').toUpperCase()
+  const countryCode = (req.headers.get('x-vercel-ip-country') || 'AE').toUpperCase()
 
-  // Strict check: only auto-detect for the 6 GCC countries, otherwise default to KUWAIT
-  const storeCode = countryToStore[countryCode] || 'KUWAIT'
+  // Strict check: only auto-map the 6 GCC countries, otherwise default to UAE (AED)
+  const storeCode = countryToStore[countryCode] || 'UAE'
 
   const res = NextResponse.next()
   res.cookies.set('store_code', storeCode, { path: '/', maxAge: 60 * 60 * 24 * 30 })

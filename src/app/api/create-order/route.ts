@@ -7,10 +7,8 @@ import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { cookies } from "next/headers";
 import { createPendingCheckout } from "@/services/checkout/pending-checkout";
 import { convertCurrency } from "@/lib/currency-rates";
+import { loadCountryCharges } from "@/lib/vat-delivery-config";
 import { notifyNewOrder } from "@/lib/pusher";
-
-// Delivery fee configuration by country (Using global config)
-const DELIVERY_CONFIG = COUNTRY_CONFIG;
 
 // Helper to get currency for country
 function getCurrencyForCountry(country: string): string {
@@ -27,21 +25,25 @@ function getCurrencyForCountry(country: string): string {
 }
 
 // Calculate delivery fee based on country and subtotal
-function calculateDeliveryFee(countryCode: string, subtotal: number): { fee: number; freeDelivery: boolean } {
-  const config = (DELIVERY_CONFIG as any)[countryCode.toUpperCase()];
-  
+function calculateDeliveryFee(
+  charges: Record<string, { deliveryFee: number; freeDelivery: number }>,
+  countryCode: string,
+  subtotal: number
+): { fee: number; freeDelivery: boolean } {
+  const config = charges[countryCode.toUpperCase()];
+
   if (!config) {
     // Default to UAE config if country not found
-    const defaultConfig = (DELIVERY_CONFIG as any)['AE'];
-    const fee = subtotal >= defaultConfig.freeDelivery ? 0 : defaultConfig.deliveryFee;
+    const defaultConfig = charges['AE'];
+    const fee = defaultConfig && subtotal >= defaultConfig.freeDelivery ? 0 : defaultConfig?.deliveryFee ?? 0;
     return { fee: fee, freeDelivery: fee === 0 };
   }
-  
+
   // Check if order qualifies for free delivery
   if (subtotal >= config.freeDelivery) {
     return { fee: 0, freeDelivery: true };
   }
-  
+
   return { fee: config.deliveryFee, freeDelivery: false };
 }
 
@@ -520,15 +522,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order total must be greater than 0. Please check product prices." }, { status: 400 });
     }
 
+    // Load admin-editable per-country delivery & VAT charges from settings
+    const charges = await loadCountryCharges();
+
     // Calculate delivery fee based on country
-    let { fee: shippingFee, freeDelivery } = calculateDeliveryFee(countryCode, subtotal);
+    let { fee: shippingFee, freeDelivery } = calculateDeliveryFee(charges, countryCode, subtotal);
     if (allItemsFreeDelivery && orderItemsData.length > 0) {
       shippingFee = 0;
       freeDelivery = true;
     }
     
     // Check if minimum order requirement is met (Skip for Admins to allow manual order flexibility)
-    const deliveryConfig = (DELIVERY_CONFIG as any)[countryCode.toUpperCase()];
+    const deliveryConfig = charges[countryCode.toUpperCase()];
     
     if (!isUserAdmin && deliveryConfig && subtotal < deliveryConfig.minOrder) {
       const currencySymbol = getCurrencyForCountry(countryCode);
@@ -571,7 +576,7 @@ export async function POST(req: Request) {
     const effectiveDiscount = (isUserAdmin && typeof clientDiscount === 'number') ? clientDiscount : discount;
 
     // Tax calculation: respect products exempt from VAT
-    const countryTaxRate = (COUNTRY_CONFIG[countryCode]?.taxRate) || 0;
+    const countryTaxRate = charges[countryCode.toUpperCase()]?.taxRate || 0;
     const discountRatio = subtotal > 0 ? Math.max(0, 1 - (effectiveDiscount / subtotal)) : 1;
     const taxableProductBase = taxableProductSubtotal * discountRatio;
     const taxableShipping = effectiveShipping;

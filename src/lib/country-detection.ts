@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { SUPPORTED_COUNTRIES } from "./countries";
 
-const DEFAULT_COUNTRY = "KW";
+const DEFAULT_COUNTRY = "AE";
 const GULF_COUNTRIES = ["AE", "SA", "KW", "QA", "BH", "OM"];
 
 function detectUserCountry(): string {

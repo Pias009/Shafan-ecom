@@ -11,7 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Price } from "@/components/Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { useCountryStore } from "@/lib/country-store";
+import { useCountryStore, resolveGeoCountry } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { useLoadingStore } from "@/lib/loading-store";
@@ -91,7 +91,10 @@ function CartPageContent() {
   const { currentLanguage } = useLanguageStore();
   const isArabic = currentLanguage.code === "ar";
   const t = translations[currentLanguage.code as keyof typeof translations];
-  const { selectedCountry } = useCountryStore();
+  const selectedCountry = useCountryStore((s) => s.selectedCountry);
+  const detectedCountry = useCountryStore((s) => s.detectedCountry);
+  // Checkout is always locked to the user's geo-detected country/currency
+  const checkoutCountry = resolveGeoCountry(detectedCountry || selectedCountry);
   const {
     items,
     removeItem,
@@ -108,6 +111,8 @@ function CartPageContent() {
 
   const [mounted, setMounted] = useState(false);
 
+  const [countryCharges, setCountryCharges] = useState<Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number }>>({});
+
   const [email, setEmail] = useState("");
   const [notifyMe, setNotifyMe] = useState(false);
 
@@ -121,7 +126,7 @@ function CartPageContent() {
   const [zone, setZone] = useState("");
   const [region, setRegion] = useState("");
   const [phone, setPhone] = useState("");
-  const [deliveryCountry, setDeliveryCountry] = useState(getCountryName(selectedCountry));
+  const [deliveryCountry, setDeliveryCountry] = useState(getCountryName(checkoutCountry));
   const [saveInfo, setSaveInfo] = useState(false);
   const [shipMethod, setShipMethod] = useState<"ship" | "pickup">("ship");
   const [showRegionDropdown, setShowRegionDropdown] = useState(false);
@@ -142,6 +147,28 @@ function CartPageContent() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Load admin-editable VAT & delivery charges for the selectable countries
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/checkout/allowed-countries")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!isMounted) return;
+        const map: Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number }> = {};
+        (data?.activeCountries || []).forEach((c: any) => {
+          map[c.code] = {
+            deliveryFee: Number(c.deliveryFee) || 0,
+            freeDelivery: Number(c.freeDelivery) || 0,
+            taxRate: Number(c.taxRate) || 0,
+            minOrder: Number(c.minOrder) || 0,
+          };
+        });
+        setCountryCharges(map);
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {
@@ -200,8 +227,6 @@ function CartPageContent() {
           setZone(addr.zone || "");
           setRegion(addr.region || "");
           setPhone(addr.phone || "");
-          const countryName = getCountryName(addr.country);
-          setDeliveryCountry(countryName);
           setHasAddress(true);
         }
       } catch (e) {
@@ -214,32 +239,33 @@ function CartPageContent() {
     return () => { isMounted = false; };
   }, [session, setHasAddress]);
 
-  // Auto-switch store & currency to match delivery country currency for payment & COD
+  // Lock checkout to the geo-detected country/currency: sync the global store
+  // during checkout so prices, coupons and payment stay in the geo currency.
   useEffect(() => {
-    const targetCode = getCountryCode(deliveryCountry);
-    if (targetCode && selectedCountry !== targetCode) {
-      useCountryStore.getState().setCountry(targetCode);
-      useCartStore.getState().refreshPrices().catch(() => {});
+    if (useCountryStore.getState().selectedCountry !== checkoutCountry) {
+      useCountryStore.getState().setCountry(checkoutCountry);
     }
-  }, [deliveryCountry, selectedCountry]);
+    setDeliveryCountry(getCountryName(checkoutCountry));
+    useCartStore.getState().refreshPrices().catch(() => {});
+  }, [checkoutCountry]);
 
   useEffect(() => {
     if (items.length > 0) {
       const total = items.reduce((acc, item) => {
-        const { price: itemPrice } = getDisplayPrice(item, selectedCountry);
+        const { price: itemPrice } = getDisplayPrice(item, checkoutCountry);
         return acc + (Number(itemPrice) * item.quantity);
       }, 0);
       trackBeginCheckout({
         items: items.map((i: CartItem) => ({
           id: i.id,
           name: i.name,
-          price: Number(getDisplayPrice(i, selectedCountry).price) || 0,
+          price: Number(getDisplayPrice(i, checkoutCountry).price) || 0,
           quantity: i.quantity,
           brand: i.brand,
           category: i.category,
         })),
         value: total,
-        currency: getCurrencyForCountry(selectedCountry),
+        currency: getCurrencyForCountry(checkoutCountry),
       });
 
       fetch("/api/events/checkout-entered", {
@@ -248,31 +274,37 @@ function CartPageContent() {
         body: JSON.stringify({
           itemCount: items.length,
           total: total,
-          currency: getCurrencyForCountry(selectedCountry),
-          country: selectedCountry,
+          currency: getCurrencyForCountry(checkoutCountry),
+          country: checkoutCountry,
         }),
       }).catch(() => {});
     }
-  }, [items, selectedCountry]);
+  }, [items, checkoutCountry]);
 
   if (!mounted) return null;
 
+  function getChargeConfig(code: string) {
+    const base = COUNTRY_CONFIG[code.toUpperCase()] || COUNTRY_CONFIG["AE"];
+    const override = countryCharges[code.toUpperCase()];
+    return override ? { ...base, ...override } : base;
+  }
+
   const subtotal = items.reduce((acc, item) => {
-    const { price: itemPrice } = getDisplayPrice(item, selectedCountry);
+    const { price: itemPrice } = getDisplayPrice(item, checkoutCountry);
     return acc + (Number(itemPrice) * item.quantity);
   }, 0);
 
   const rawDiscount = subtotal * couponDiscount;
   const discount = couponMaxLimit ? Math.min(rawDiscount, couponMaxLimit) : rawDiscount;
 
-  const deliveryConfig = COUNTRY_CONFIG[selectedCountry.toUpperCase()] || COUNTRY_CONFIG["AE"];
+  const deliveryConfig = getChargeConfig(checkoutCountry);
   const allItemsFreeDelivery = items.length > 0 && items.every((i) => i.deliveryFeeOption === "FREE");
   const shipping = allItemsFreeDelivery ? 0 : (subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee);
 
   const countryTaxRate = deliveryConfig.taxRate || 0;
   const taxableSubtotal = items.reduce((acc, item) => {
     if (item.vatOption === "EXEMPT") return acc;
-    const { price: itemPrice } = getDisplayPrice(item, selectedCountry);
+    const { price: itemPrice } = getDisplayPrice(item, checkoutCountry);
     return acc + (Number(itemPrice) * item.quantity);
   }, 0);
 
@@ -398,7 +430,7 @@ function CartPageContent() {
       await saveAddressToBackend(addr);
 
       const orderItems = items.map((i: CartItem) => {
-        const { price: itemPrice } = getDisplayPrice(i, selectedCountry);
+        const { price: itemPrice } = getDisplayPrice(i, checkoutCountry);
         return {
           productId: i.id,
           quantity: Number(i.quantity) || 1,
@@ -408,7 +440,7 @@ function CartPageContent() {
 
       const calculatedSubtotal = Number(orderItems.reduce((sum: number, i: { productId: string; quantity: number; price: number }) => sum + (i.price * i.quantity), 0));
 
-      const deliveryConfigLocal = COUNTRY_CONFIG[selectedCountry.toUpperCase()] || COUNTRY_CONFIG["AE"];
+      const deliveryConfigLocal = getChargeConfig(checkoutCountry);
       const allItemsFree = items.length > 0 && items.every((i: CartItem) => i.deliveryFeeOption === "FREE");
       const freeDeliveryThreshold = deliveryConfigLocal?.freeDelivery || 150;
       const shippingFee = allItemsFree ? 0 : (calculatedSubtotal >= freeDeliveryThreshold ? 0 : (deliveryConfigLocal?.deliveryFee || 10));
@@ -418,7 +450,7 @@ function CartPageContent() {
       const taxRateLocal = deliveryConfigLocal?.taxRate || 0;
       const taxableSub = items.reduce((acc, item: CartItem) => {
         if (item.vatOption === "EXEMPT") return acc;
-        const { price: itemPrice } = getDisplayPrice(item, selectedCountry);
+        const { price: itemPrice } = getDisplayPrice(item, checkoutCountry);
         return acc + (Number(itemPrice) * item.quantity);
       }, 0);
 
@@ -428,7 +460,7 @@ function CartPageContent() {
 
       const minOrderValue = deliveryConfigLocal?.minOrder || 80;
       if (calculatedSubtotal < minOrderValue) {
-        toast.error(`Minimum order is ${getCurrencyForCountry(selectedCountry)} ${minOrderValue}. Add more items!`, { id: "checkout" });
+        toast.error(`Minimum order is ${getCurrencyForCountry(checkoutCountry)} ${minOrderValue}. Add more items!`, { id: "checkout" });
         return;
       }
 
@@ -450,9 +482,9 @@ function CartPageContent() {
             ...(couponCode && { couponCode }),
             billing: addr,
             shipping: addr,
-            country: selectedCountry,
+            country: checkoutCountry,
             payment_method: "tamara",
-            payment_method_title: `Tamara ${getCurrencyForCountry(selectedCountry)} Installments`,
+            payment_method_title: `Tamara ${getCurrencyForCountry(checkoutCountry)} Installments`,
           }),
         });
 
@@ -505,7 +537,7 @@ function CartPageContent() {
           ...(couponCode && { couponCode }),
           billing: addr,
           shipping: addr,
-          country: selectedCountry,
+          country: checkoutCountry,
           ...paymentMethodData,
         }),
       });
@@ -515,9 +547,9 @@ function CartPageContent() {
       if (orderRes.ok && data.pendingCheckoutId) {
         trackBeginCheckout({
           value: totalLocal,
-          currency: getCurrencyForCountry(selectedCountry),
+          currency: getCurrencyForCountry(checkoutCountry),
           items: items.map((i: CartItem) => {
-            const { price: itemPrice } = getDisplayPrice(i, selectedCountry);
+            const { price: itemPrice } = getDisplayPrice(i, checkoutCountry);
             return {
               id: i.id,
               name: i.name || "Product",
@@ -970,7 +1002,7 @@ function CartPageContent() {
               </h2>
 
               <PaymentSelection
-                currentCurrency={getCurrencyForCountry(selectedCountry)}
+                currentCurrency={getCurrencyForCountry(checkoutCountry)}
                 totalCartAmount={total}
                 activePayment={activePayment}
                 onPaymentSelect={(method) =>
@@ -979,7 +1011,7 @@ function CartPageContent() {
                 useBillingAddress={useBillingAddress}
                 onBillingToggle={() => setUseBillingAddress(!useBillingAddress)}
                 lang={currentLanguage.code}
-                currentCountry={selectedCountry.toUpperCase()}
+                currentCountry={checkoutCountry.toUpperCase()}
               />
             </div>
 
@@ -1018,7 +1050,7 @@ function CartPageContent() {
                 ) : (
                   <div className="space-y-4 max-h-[480px] md:max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
                     {items.map((item: CartItem, idx: number) => {
-                      const { price: itemDisplayPrice } = getDisplayPrice(item, selectedCountry);
+                      const { price: itemDisplayPrice } = getDisplayPrice(item, checkoutCountry);
                       const itemKey = item.id || `item-${idx}`;
                       return (
                         <div key={itemKey} className="flex gap-2 sm:gap-3 items-start group bg-black/[0.02] rounded-2xl p-3 hover:bg-black/[0.04] transition">
@@ -1169,12 +1201,12 @@ function CartPageContent() {
                   </div>
 
                   {/* Tabby on-site messaging — shown below the cart total for supported markets */}
-                  {["AED", "SAR", "KWD"].includes(getCurrencyForCountry(selectedCountry)) && total > 0 && (
+                  {["AED", "SAR", "KWD"].includes(getCurrencyForCountry(checkoutCountry)) && total > 0 && (
                     <TabbyPromo
                       id="TabbyPromoCart"
                       source="cart"
                       price={total}
-                      currency={getCurrencyForCountry(selectedCountry)}
+                      currency={getCurrencyForCountry(checkoutCountry)}
                       publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
                       merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
                       lang={currentLanguage.code === "ar" ? "ar" : "en"}

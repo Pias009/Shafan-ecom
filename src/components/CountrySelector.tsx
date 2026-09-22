@@ -1,9 +1,9 @@
 "use client";
 
-import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
+import { useCountryStore, useCountryStoreReady, useCheckoutCountry } from "@/lib/country-store";
 import { SUPPORTED_COUNTRIES, CountryConfig } from "@/lib/countries";
 import { useState, useEffect, useRef } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore } from "@/lib/cart-store";
 
@@ -11,19 +11,27 @@ export function CountrySelector({
   direction = "down",
   align = "right",
   compact = false,
+  locked = false,
 }: {
   direction?: "up" | "down";
   align?: "left" | "right";
   compact?: boolean;
+  locked?: boolean;
 }) {
   const { selectedCountry, setCountry } = useCountryStore();
   const hasHydrated = useCountryStoreReady();
   const refreshPrices = useCartStore((s) => s.refreshPrices);
+  const checkoutCountry = useCheckoutCountry();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const currentCountry =
     SUPPORTED_COUNTRIES.find((c) => c.code === selectedCountry) ||
+    SUPPORTED_COUNTRIES[0];
+
+  // On checkout the currency is locked to the user's geo country/currency
+  const lockedCountry =
+    SUPPORTED_COUNTRIES.find((c) => c.code === checkoutCountry) ||
     SUPPORTED_COUNTRIES[0];
 
   useEffect(() => {
@@ -48,6 +56,21 @@ export function CountrySelector({
   if (!hasHydrated) {
     return (
       <div className="w-16 h-8 bg-black/5 rounded-full animate-pulse" />
+    );
+  }
+
+  if (locked) {
+    return (
+      <div
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 text-black font-semibold text-xs cursor-not-allowed select-none"
+        title={`Locked to your location: ${lockedCountry.name} (${lockedCountry.currency})`}
+      >
+        <Lock size={11} className="text-black/40" />
+        <span className="text-base">{lockedCountry.flag}</span>
+        <span className="font-bold uppercase tracking-wider">
+          {compact ? lockedCountry.currency : `${lockedCountry.code} (${lockedCountry.currency})`}
+        </span>
+      </div>
     );
   }
 

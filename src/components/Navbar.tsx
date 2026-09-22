@@ -20,6 +20,10 @@ export function Navbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+
+  // The currency switcher is hidden/locked on checkout & order pages —
+  // payment must always happen in the user's geo-location currency.
+  const isCheckoutPage = !!pathname && (pathname.startsWith("/cart") || pathname.startsWith("/checkout") || pathname.startsWith("/account/orders"));
   const [authOpen, setAuthOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [orderNotification, setOrderNotification] = useState<string | null>(null);
@@ -286,7 +290,7 @@ export function Navbar() {
             </div>
             <div className="hidden md:flex items-center gap-4 text-white/80 text-[10.5px]">
               <div className="scale-90 origin-right">
-                <CountrySelector compact direction="down" />
+                <CountrySelector compact direction="down" locked={isCheckoutPage} />
               </div>
               <span className="text-white/30">|</span>
               <Link href="/account/orders" className="hover:text-white transition-colors">Track Order</Link>
@@ -467,7 +471,7 @@ export function Navbar() {
                     <div className="border-t border-black/5 my-2" />
                     {isClient && (
                       <div className="flex flex-col gap-3 px-3 py-1">
-                        <CountrySelector direction="down" />
+                        <CountrySelector direction="down" locked={isCheckoutPage} />
                         <LanguageSelector direction="down" />
                       </div>
                     )}
@@ -615,7 +619,7 @@ export function Navbar() {
                 <div className="mt-auto bg-white/60 backdrop-blur-xl border-t border-black/5 p-6 pb-20">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                      <CountrySelector align="left" direction="up" compact />
+                      <CountrySelector align="left" direction="up" compact locked={isCheckoutPage} />
                       <LanguageSelector align="left" direction="up" />
                     </div>
                     {status === "authenticated" && (

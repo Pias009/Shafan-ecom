@@ -9,9 +9,21 @@ const CURRENCY_TO_COUNTRY: Record<string, string> = {
   SAR: "SA",
   OMR: "OM",
   QAR: "QA",
-  BDT: "KW",
-  USD: "US",
+  BDT: "AE",
+  USD: "AE",
 };
+
+export const GULF_COUNTRIES: string[] = ["AE", "KW", "BH", "SA", "OM", "QA"];
+
+/**
+ * Resolve the checkout country from a raw geo-detected country code.
+ * Only the 6 serviced GCC countries keep their own country/currency;
+ * everywhere else (and unknown) falls back to the store default -> AED.
+ */
+export function resolveGeoCountry(rawCountry?: string | null): string {
+  const upper = (rawCountry || "AE").toUpperCase();
+  return GULF_COUNTRIES.includes(upper) ? upper : "AE";
+}
 
 interface CountryState {
   selectedCountry: string;
@@ -27,9 +39,9 @@ interface CountryState {
 export const useCountryStore = create<CountryState>()(
   persist(
     (set, get) => ({
-      selectedCountry: "KW",
-      selectedCurrency: "KWD",
-      detectedCountry: "KW",
+      selectedCountry: "AE",
+      selectedCurrency: "AED",
+      detectedCountry: "AE",
       _hasHydrated: false,
       setCountry: (countryCode: string) => {
         const upperCode = countryCode.toUpperCase();
@@ -61,9 +73,9 @@ export const useCountryStore = create<CountryState>()(
       },
       setCurrency: (currencyCode: string) => {
         const upperCurrency = currencyCode.toUpperCase();
-        let country = CURRENCY_TO_COUNTRY[upperCurrency] || "KW";
+        let country = CURRENCY_TO_COUNTRY[upperCurrency] || "AE";
         if (upperCurrency === "BDT") {
-          country = "KW";
+          country = "AE";
         }
         
         // Sync with store_code cookie for server-side logic
@@ -109,4 +121,15 @@ export const useCountryStore = create<CountryState>()(
 
 export function useCountryStoreReady() {
   return useCountryStore((state) => state._hasHydrated);
+}
+
+/**
+ * The geo-detected checkout country (always one of the 6 GCC countries, else AED).
+ * Checkout / order / payment must always use this, regardless of the currency
+ * the user chose for general browsing.
+ */
+export function useCheckoutCountry(): string {
+  const detectedCountry = useCountryStore((state) => state.detectedCountry);
+  const selectedCountry = useCountryStore((state) => state.selectedCountry);
+  return resolveGeoCountry(detectedCountry || selectedCountry || "AE");
 }

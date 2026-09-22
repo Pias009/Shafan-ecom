@@ -54,6 +54,32 @@ export function CreateOrderForm() {
   const [couponCode, setCouponCode] = useState("");
   const [discountInfo, setDiscountInfo] = useState<{ code: string; type: string; discount: number; maxLimitAmount?: number } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [countryCharges, setCountryCharges] = useState<Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number }>>({});
+
+  // Load admin-editable VAT & delivery charges for the selectable countries
+  useEffect(() => {
+    fetch("/api/checkout/allowed-countries")
+      .then(r => r.json())
+      .then((data) => {
+        const map: Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number }> = {};
+        (data?.activeCountries || []).forEach((c: any) => {
+          map[c.code] = {
+            deliveryFee: Number(c.deliveryFee) || 0,
+            freeDelivery: Number(c.freeDelivery) || 0,
+            taxRate: Number(c.taxRate) || 0,
+            minOrder: Number(c.minOrder) || 0,
+          };
+        });
+        setCountryCharges(map);
+      })
+      .catch(() => {});
+  }, []);
+
+  function getChargeConfig(code: string) {
+    const base = COUNTRY_CONFIG[code] || COUNTRY_CONFIG["AE"];
+    const override = countryCharges[code];
+    return override ? { ...base, ...override } : base;
+  }
 
   // Fetch products on mount or search
   useEffect(() => {
@@ -123,7 +149,7 @@ export function CreateOrderForm() {
   
   // Automate shipping fee based on subtotal and country config
   useEffect(() => {
-    const config = COUNTRY_CONFIG[selectedCountry];
+    const config = getChargeConfig(selectedCountry);
     if (config) {
       if (subtotal >= config.freeDelivery) {
         setShippingFee(0);
@@ -131,7 +157,7 @@ export function CreateOrderForm() {
         setShippingFee(config.deliveryFee);
       }
     }
-  }, [subtotal, selectedCountry]);
+  }, [subtotal, selectedCountry, countryCharges]);
 
   const discountAmount = useMemo(() => {
     if (!discountInfo) return 0;
@@ -150,7 +176,7 @@ export function CreateOrderForm() {
   }, [subtotal, discountInfo]);
 
   const preTaxTotal = subtotal + (discountInfo?.type === "FREE_SHIPPING" ? 0 : Number(shippingFee)) - discountAmount;
-  const taxRate = COUNTRY_CONFIG[selectedCountry]?.taxRate || 0;
+  const taxRate = getChargeConfig(selectedCountry).taxRate || 0;
   const taxAmount = Math.round(preTaxTotal * taxRate * 100) / 100;
   const finalTotal = preTaxTotal + taxAmount;
 

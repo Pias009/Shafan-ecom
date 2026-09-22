@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     req.headers.get('cf-ipcountry') ||
     req.headers.get('x-country-code') ||
     req.headers.get('x-real-ip-country') ||
-    'KW';
+    'AE';
   
   // Return the country code
   return NextResponse.json({ country: country.toUpperCase() });

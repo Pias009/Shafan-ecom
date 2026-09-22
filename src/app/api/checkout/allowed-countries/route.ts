@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { COUNTRY_CONFIG, getActiveCountries } from '@/lib/address-config';
+import { loadCountryCharges } from '@/lib/vat-delivery-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,17 +11,22 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const activeCountries = getActiveCountries();
+    const charges = await loadCountryCharges();
 
-    const countriesData = activeCountries.map((country) => ({
-      code: country.code,
-      name: country.name,
-      currency: country.currency,
-      minOrder: country.minOrder,
-      deliveryFee: country.deliveryFee,
-      freeDelivery: country.freeDelivery,
-      estimatedDays: country.estimatedDays,
-      regions: country.regions || [],
-    }));
+    const countriesData = activeCountries.map((country) => {
+      const charge = charges[country.code];
+      return {
+        code: country.code,
+        name: country.name,
+        currency: country.currency,
+        minOrder: charge?.minOrder ?? country.minOrder,
+        deliveryFee: charge?.deliveryFee ?? country.deliveryFee,
+        freeDelivery: charge?.freeDelivery ?? country.freeDelivery,
+        taxRate: charge?.taxRate ?? country.taxRate,
+        estimatedDays: country.estimatedDays,
+        regions: country.regions || [],
+      };
+    });
 
     return NextResponse.json({
       activeCountries: countriesData,
@@ -73,15 +79,19 @@ export async function POST(req: Request) {
       );
     }
 
+    const charges = await loadCountryCharges();
+    const charge = charges[country.code];
+
     return NextResponse.json({
       allowed: true,
       country: {
         code: country.code,
         name: country.name,
         currency: country.currency,
-        minOrder: country.minOrder,
-        deliveryFee: country.deliveryFee,
-        freeDelivery: country.freeDelivery,
+        minOrder: charge?.minOrder ?? country.minOrder,
+        deliveryFee: charge?.deliveryFee ?? country.deliveryFee,
+        freeDelivery: charge?.freeDelivery ?? country.freeDelivery,
+        taxRate: charge?.taxRate ?? country.taxRate,
         estimatedDays: country.estimatedDays,
         regions: country.regions || [],
       },

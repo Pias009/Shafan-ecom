@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useCurrencyStore } from "@/lib/currency-store";
 import { useLanguageStore } from "@/lib/language-store";
-import { useCountryStore } from "@/lib/country-store";
+import { useCountryStore, resolveGeoCountry } from "@/lib/country-store";
 import { useCartStore } from "@/lib/cart-store";
 import { useSession } from "next-auth/react";
-
-const GULF_COUNTRIES = ['AE', 'KW', 'BH', 'SA', 'OM', 'QA'];
 
 const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
   AE: { currency: "AED", lang: "en" },
@@ -18,7 +16,7 @@ const IP_MAP: Record<string, { currency: string; lang: "en" | "ar" }> = {
   OM: { currency: "OMR", lang: "en" },
 };
 
-const DEFAULT_CONFIG = { country: "KW", currency: "KWD", lang: "en" as const };
+const DEFAULT_CONFIG = { country: "AE", currency: "AED", lang: "en" as const };
 
 function defer(fn: () => void) {
   if (typeof requestIdleCallback !== 'undefined') {
@@ -31,8 +29,7 @@ function defer(fn: () => void) {
 export function GlobalInitializer() {
   const { setCurrency: setLegacyCurrency } = useCurrencyStore();
   const { setLanguage } = useLanguageStore();
-  const { setCountry, _hasHydrated } = useCountryStore();
-  const [initialized, setInitialized] = useState(false);
+  const { setCountry, setDetectedCountry, _hasHydrated } = useCountryStore();
 
   useEffect(() => {
     if (!_hasHydrated) return;
@@ -41,11 +38,6 @@ export function GlobalInitializer() {
     const testCountry = urlParams.get('test_country');
     const autoDetected = localStorage.getItem("country-auto-detected");
     const langStorage = localStorage.getItem("language-storage");
-
-    if (autoDetected && langStorage && !testCountry) {
-      setInitialized(true);
-      return;
-    }
 
     defer(() => {
       const controller = new AbortController();
@@ -57,35 +49,36 @@ export function GlobalInitializer() {
         .then(data => {
           clearTimeout(timeoutId);
           const countryCode = data?.country?.toUpperCase();
+          const geoCountry = resolveGeoCountry(countryCode);
+          const config = IP_MAP[geoCountry];
 
-          if (countryCode && GULF_COUNTRIES.includes(countryCode)) {
-            const config = IP_MAP[countryCode];
-            if (config) {
-              setCountry(countryCode);
-              setLegacyCurrency(config.currency);
-              if (!langStorage) setLanguage(config.lang);
-              localStorage.setItem("country-auto-detected", "true");
-            }
-          } else {
+          // Always refresh the geo-detected checkout country (per browser session).
+          // Checkout/orders stick to this; the browsing currency is only
+          // auto-switched the very first time, so the user is free to switch
+          // and browse in any other currency afterwards.
+          setDetectedCountry(geoCountry);
+
+          if (!autoDetected) {
+            setCountry(geoCountry);
+            setLegacyCurrency(config?.currency || DEFAULT_CONFIG.currency);
+            if (!langStorage) setLanguage(config?.lang || DEFAULT_CONFIG.lang);
+            localStorage.setItem("country-auto-detected", "true");
+          }
+        })
+        .catch(() => {
+          clearTimeout(timeoutId);
+          if (!autoDetected) {
+            setDetectedCountry(DEFAULT_CONFIG.country);
             setCountry(DEFAULT_CONFIG.country);
             setLegacyCurrency(DEFAULT_CONFIG.currency);
             if (!langStorage) setLanguage(DEFAULT_CONFIG.lang);
             localStorage.setItem("country-auto-detected", "true");
           }
-          setInitialized(true);
-        })
-        .catch(() => {
-          clearTimeout(timeoutId);
-          setCountry(DEFAULT_CONFIG.country);
-          setLegacyCurrency(DEFAULT_CONFIG.currency);
-          if (!langStorage) setLanguage(DEFAULT_CONFIG.lang);
-          localStorage.setItem("country-auto-detected", "true");
-          setInitialized(true);
         });
     });
 
     return () => {};
-  }, [_hasHydrated, setCountry, setLegacyCurrency, setLanguage]);
+  }, [_hasHydrated, setCountry, setDetectedCountry, setLegacyCurrency, setLanguage]);
 
   const setHasAddress = useCartStore(state => state.setHasAddress);
   const { data: session } = useSession();
