@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/email";
 import { notifyNewOrder } from "@/lib/pusher";
 import { revalidatePath } from "next/cache";
 import { promoteToOrder } from "@/services/checkout/pending-checkout";
+import { getOrderNumber, formatOrderNumber } from "@/lib/order-number";
 
 function generateTrackingCode(): string {
   const prefix = "GL";
@@ -154,7 +155,7 @@ export async function POST(req: Request) {
             <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <div>
-                  <h2 style="color: #333; margin: 0 0 5px; font-size: 20px;">Order #${updatedOrder.id.substring(0, 8)}</h2>
+                  <h2 style="color: #333; margin: 0 0 5px; font-size: 20px;">Order ${formatOrderNumber(updatedOrder.id)}</h2>
                   <p style="color: #6c757d; margin: 0; font-size: 13px;">${new Date(updatedOrder.createdAt).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
                 <span style="background: #ffc107; color: #000; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;">Cash on Delivery</span>
@@ -223,7 +224,7 @@ export async function POST(req: Request) {
 
       await sendEmail({
         to: customerEmail,
-        subject: `Order Confirmed #${updatedOrder.id.substring(0, 8)} — Cash on Delivery | SHANFA`,
+        subject: `Order Confirmed ${formatOrderNumber(updatedOrder.id)} — Cash on Delivery | SHANFA`,
         html: emailHtml,
       }).catch((err) => {
         console.error("[COD Email] Failed to send confirmation:", err);
@@ -253,7 +254,7 @@ export async function POST(req: Request) {
       const adminItemsList = updatedOrder.items.map((item: any) => `${item.nameSnapshot || 'Product'} x${item.quantity}`).join(', ');
       await sendEmail({
         to: process.env.ADMIN_EMAIL,
-        subject: `New COD Order #${updatedOrder.id.substring(0, 8)} — ${Number(updatedOrder.total).toFixed(2)} ${(updatedOrder.currency || 'aed').toUpperCase()}`,
+        subject: `New COD Order ${formatOrderNumber(updatedOrder.id)} — ${Number(updatedOrder.total).toFixed(2)} ${(updatedOrder.currency || 'aed').toUpperCase()}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px;">
             <h2 style="color: #d97706;">New Cash on Delivery Order! 💵</h2>

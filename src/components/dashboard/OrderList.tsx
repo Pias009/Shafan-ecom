@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { PackageOpen, ChevronDown } from "lucide-react";
 import OrderDetailView from "./OrderDetailView";
+import { formatOrderNumber } from "@/lib/order-number";
 
 function formatPrice(amountCents: number, currency: string): string {
   const code = currency?.toUpperCase() || "USD";
@@ -170,7 +171,7 @@ export default function OrderList({ orders: initialOrders }: { orders: OrderData
             >
               <div className="w-14 h-14 rounded-2xl bg-black text-white flex flex-col items-center justify-center shrink-0 shadow-xl shadow-black/10">
                 <span className="text-[8px] font-black uppercase tracking-widest opacity-40">Order</span>
-                <span className="text-[11px] font-black">#{order.id.substring(0, 6)}</span>
+                <span className="text-[11px] font-black">{formatOrderNumber(order.id)}</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-4 flex-1 min-w-0">

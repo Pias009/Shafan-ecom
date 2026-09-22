@@ -3,6 +3,7 @@
 import { Download, Printer } from "lucide-react";
 import toast from "react-hot-toast";
 import { useState } from "react";
+import { getOrderNumber } from "@/lib/order-number";
 
 interface Props {
   orderId: string;
@@ -36,7 +37,7 @@ export default function InvoiceDownload({ orderId }: Props) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `invoice-${orderId.slice(-8)}.pdf`;
+      a.download = `invoice-${getOrderNumber(orderId)}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

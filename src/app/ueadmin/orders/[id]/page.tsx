@@ -11,6 +11,7 @@ import RequestAlerts from './RequestAlerts';
 import OrderEditor from './_components/OrderEditor';
 import TamaraRefundAction from './_components/TamaraRefundAction';
 import InvoicePreview from './_components/InvoicePreview';
+import { formatOrderNumber } from '@/lib/order-number';
 
 function formatPrice(amount: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
@@ -98,7 +99,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-4 flex-wrap">
-              <h1 className="text-3xl md:text-4xl font-black text-slate-900">Order #{order.id?.slice(-8)?.toUpperCase() || 'N/A'}</h1>
+              <h1 className="text-3xl md:text-4xl font-black text-slate-900">Order {formatOrderNumber(order.id) || 'N/A'}</h1>
               <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
                 order.status === OrderStatus.DELIVERED ? 'bg-green-500 text-white border-green-600' :
                 order.status === OrderStatus.PROCESSING ? 'bg-blue-500 text-white border-blue-600' :

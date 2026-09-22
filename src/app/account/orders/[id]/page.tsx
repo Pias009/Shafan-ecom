@@ -7,6 +7,7 @@ import OrderActions from "./OrderActions";
 import OrderStatusBadge from "./OrderStatusBadge";
 import CancelItemButton from "./CancelItemButton";
 import ScrollToProduct from "./ScrollToProduct";
+import { formatOrderNumber } from "@/lib/order-number";
 
 function formatPrice(amount: number, currency?: string): string {
   const code = currency?.toUpperCase() || "AED";
@@ -102,7 +103,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8 border-b border-black/5 pb-8 md:pb-10">
         <div className="text-center md:text-left">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-2">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tighter">Receipt #{order.id.substring(0, 8)}</h1>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tighter">Receipt {formatOrderNumber(order.id)}</h1>
             <OrderStatusBadge orderId={order.id} initialStatus={order.status} />
           </div>
           <p className="text-[10px] md:text-xs font-bold text-black/30 uppercase tracking-widest">

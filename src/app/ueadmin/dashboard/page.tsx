@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from 'next/link';
+import { formatOrderNumber } from "@/lib/order-number";
 import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock, ThumbsUp } from 'lucide-react';
 import { OrderStatus } from "@prisma/client";
 import { requireAdminSession, getAccessibleStoreIds } from "@/lib/admin-session";
@@ -143,7 +144,7 @@ export default async function Dashboard() {
                   {recentOrders.map((o: any) => (
                     <tr key={o.id} className="hover:bg-black/[0.01] transition-colors">
                       <td className="px-8 py-5">
-                        <div className="font-black text-sm">#{o.id.substring(0, 8)}</div>
+                        <div className="font-black text-sm">{formatOrderNumber(o.id)}</div>
                         <div className="text-[9px] font-bold text-black/50 uppercase">{new Date(o.createdAt).toLocaleDateString()}</div>
                       </td>
                       <td className="px-8 py-5">

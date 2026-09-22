@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { OrderFilter } from './OrderFilter';
+import { formatOrderNumber } from '@/lib/order-number';
 import { Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -234,7 +235,7 @@ function getDateGroup(dateStr: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Dubai' });
 }
 
-export default function OrdersTableClient({ dbOrders, status, storeAccess }: { dbOrders: any[], status: string, storeAccess: any }) {
+export default function OrdersTableClient({ dbOrders, status, query = '', storeAccess }: { dbOrders: any[], status: string, query?: string, storeAccess: any }) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState(false);
@@ -325,7 +326,7 @@ export default function OrdersTableClient({ dbOrders, status, storeAccess }: { d
 
       <div className="glass-panel-heavy overflow-hidden rounded-3xl border border-black/5 shadow-sm bg-white">
         <div className="mb-2 p-6 flex items-center justify-between border-b border-black/5">
-           <OrderFilter currentStatus={status} />
+           <OrderFilter currentStatus={status} currentQuery={query} />
            <div className="text-[10px] font-black uppercase tracking-widest text-black italic">Global Fulfilment Flow</div>
         </div>
         <div className="overflow-x-auto max-h-[70vh] overflow-y-auto custom-scrollbar">
@@ -353,6 +354,15 @@ export default function OrdersTableClient({ dbOrders, status, storeAccess }: { d
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5 overflow-x-auto">
+              {sortedDateKeys.length === 0 && (
+                <tr>
+                  <td colSpan={11} className="px-6 py-16 text-center">
+                    <p className="text-sm font-bold text-black/40">
+                      {query ? `No orders found for "${query}".` : 'No orders found for this filter.'}
+                    </p>
+                  </td>
+                </tr>
+              )}
               {sortedDateKeys.map((dateKey) => {
                 const ordersInGroup = groupedOrders[dateKey];
                 const groupLabel = getDateGroup(dateKey);
@@ -389,7 +399,7 @@ export default function OrdersTableClient({ dbOrders, status, storeAccess }: { d
                               className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black accent-black"
                             />
                           </td>
-                          <td className="px-2 md:px-4 py-4 font-black">#{o.id.substring(0, 8)}</td>
+                          <td className="px-2 md:px-4 py-4 font-black">{formatOrderNumber(o.id)}</td>
                           <td className="px-4 md:px-6 py-4">
                             <div className="font-black text-[10px] md:text-xs uppercase tracking-widest">{storeCode}</div>
                             <div className="text-[9px] text-black/70 truncate max-w-[80px]">{storeName}</div>

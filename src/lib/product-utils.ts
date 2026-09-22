@@ -80,6 +80,90 @@ export function getDisplayPrice(product: any, userCountry?: string): { price: nu
   return { price: 0, originalPrice: 0, currency: targetCurrency, hasDiscount: false, discountPrice: 0 };
 }
 
+export interface ResolvedPrice {
+  displayPrice: number;
+  originalPrice: number;
+  currency: string;
+  hasDiscount: boolean;
+  discountPrice: number;
+  available: boolean;
+}
+
+/**
+ * Single source of truth for the price shown on every product surface
+ * (cards, quick-view popup, product detail page, sliders).
+ *
+ * The real price lives in `product.countryPrices` — one entry per serviced
+ * country in that country's own currency. The legacy base `price` /
+ * `discountPrice` fields are unreliable (currency is a stale value and the
+ * price is 0 for almost every product), so they are only used as a final
+ * fallback when the user's country has no entry.
+ */
+export function resolveProductPrice(product: any, userCountry?: string): ResolvedPrice {
+  const countryCode = (userCountry || "").toUpperCase();
+  const fallbackCurrency = getCurrencyForCountry(countryCode || "AE");
+
+  const cpArray = Array.isArray(product?.countryPrices) ? product.countryPrices : [];
+
+  // 1. Real, per-country price for the user's country
+  if (cpArray.length > 0) {
+    const cp = cpArray.find(
+      (c: any) =>
+        String(c.country ?? c.countryCode ?? "").toUpperCase() === countryCode &&
+        c.active !== false
+    );
+    if (cp) {
+      const regular = Number(cp.price) || 0;
+      if (regular > 0) {
+        const cpDiscount = Number(cp.discountPrice ?? cp.salePrice ?? 0) || 0;
+        // Base discountPrice is only meaningful when it shares the country's currency
+        const sameCurrency =
+          String(cp.currency || "").toUpperCase() ===
+          String(product?.currency || "").toUpperCase();
+        const baseDiscount = sameCurrency ? Number(product?.discountPrice) || 0 : 0;
+        const discount = cpDiscount > 0 && cpDiscount < regular
+          ? cpDiscount
+          : baseDiscount > 0 && baseDiscount < regular
+            ? baseDiscount
+            : 0;
+
+        return {
+          displayPrice: discount > 0 ? discount : regular,
+          originalPrice: regular,
+          currency: String(cp.currency || fallbackCurrency).toUpperCase(),
+          hasDiscount: discount > 0,
+          discountPrice: discount,
+          available: true,
+        };
+      }
+    }
+  }
+
+  // 2. Fallback to the base product price
+  if (product?.price && Number(product.price) > 0) {
+    const regular = Number(product.price);
+    const baseDiscount = Number(product.discountPrice) || 0;
+    const hasDiscount = baseDiscount > 0 && baseDiscount < regular;
+    return {
+      displayPrice: hasDiscount ? baseDiscount : regular,
+      originalPrice: regular,
+      currency: String(product.currency || "AED").toUpperCase(),
+      hasDiscount,
+      discountPrice: hasDiscount ? baseDiscount : 0,
+      available: true,
+    };
+  }
+
+  return {
+    displayPrice: 0,
+    originalPrice: 0,
+    currency: fallbackCurrency,
+    hasDiscount: false,
+    discountPrice: 0,
+    available: false,
+  };
+}
+
 // Helper to get correct divisor for raw price units (cents vs fils)
 export function getCurrencyDivisor(currencyCode: string): number {
   const code = currencyCode?.toUpperCase() || 'AED';

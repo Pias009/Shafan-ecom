@@ -62,9 +62,10 @@ interface Order {
 
 export const dynamic = 'force-dynamic';
 
-export default async function OrdersPage({ searchParams }: { searchParams?: Promise<{ status?: string }> }) {
+export default async function OrdersPage({ searchParams }: { searchParams?: Promise<{ status?: string; q?: string }> }) {
   const params = await searchParams;
   const status = params?.status || 'ALL';
+  const q = (params?.q || '').trim().replace(/^#+/, '') || '';
 
   // Get admin store access to filter orders by store
   const storeAccess = await getAdminStoreAccess();
@@ -100,24 +101,51 @@ export default async function OrdersPage({ searchParams }: { searchParams?: Prom
     );
   }
 
-  const dbOrders = await prisma.order.findMany({
-    where,
-    include: {
-      user: {
-        include: {
-          accounts: {
-            select: { provider: true }
-          }
+  const include = {
+    user: {
+      include: {
+        accounts: {
+          select: { provider: true }
         }
-      },
-      store: { select: { code: true, name: true } },
-      items: true,
-      shipment: true
+      }
     },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  }) as unknown as Order[];
+    store: { select: { code: true, name: true } },
+    items: true,
+    shipment: true
+  } as const;
 
-  return <OrdersTableClient dbOrders={dbOrders} status={status} storeAccess={storeAccess} />;
+  let dbOrders: Order[];
+
+  if (q) {
+    // Order numbers are the last 8 chars of the Order _id (ObjectId). Prisma
+    // cannot run substring filters on ObjectId fields, so resolve matching ids
+    // with a raw aggregation and then load the full orders.
+    const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rawRes = await (prisma as any).$runCommandRaw({
+      aggregate: 'Order',
+      pipeline: [
+        { $addFields: { _idStr: { $toString: '$_id' } } },
+        { $match: { _idStr: { $regex: safeQ, $options: 'i' } } },
+        { $project: { _id: 0, id: { $toString: '$_id' } } },
+      ],
+      cursor: {},
+    });
+    const ids = (rawRes?.cursor?.firstBatch || []).map((r: any) => r.id as string);
+
+    dbOrders = await prisma.order.findMany({
+      where: { ...where, id: { in: ids } },
+      include,
+      orderBy: { createdAt: 'desc' }
+    }) as unknown as Order[];
+  } else {
+    dbOrders = await prisma.order.findMany({
+      where,
+      include,
+      orderBy: {
+        createdAt: 'desc'
+      }
+    }) as unknown as Order[];
+  }
+
+  return <OrdersTableClient dbOrders={dbOrders} status={status} query={q} storeAccess={storeAccess} />;
 }

@@ -8,6 +8,8 @@ import { ShoppingBag, ArrowRight, Check } from "lucide-react";
 import { Price } from "./Price";
 import { CountryPrice } from "./ProductCard";
 import { useLanguageStore } from "@/lib/language-store";
+import { useCountryStore } from "@/lib/country-store";
+import { resolveProductPrice } from "@/lib/product-utils";
 import { DEFAULT_REJUVENATE_SECTION, RejuvenateSectionConfig } from "@/lib/rejuvenate-section";
 
 interface RejuvenateBestProductsSectionProps {
@@ -28,6 +30,7 @@ export default function RejuvenateBestProductsSection({
 }: RejuvenateBestProductsSectionProps) {
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
+  const { selectedCountry } = useCountryStore();
 
   const [addedId, setAddedId] = useState<string | null>(null);
 
@@ -112,7 +115,8 @@ export default function RejuvenateBestProductsSection({
             {cardsData.map((card, idx) => {
               const p = card.product;
               const hasProduct = Boolean(p);
-              const displayPrice = p ? (p.discountPrice ?? p.price ?? p.priceCents ?? 0) : 0;
+              const resolvedRej = p ? resolveProductPrice(p, selectedCountry) : null;
+              const displayPrice = resolvedRej ? (resolvedRej.displayPrice || 0) : 0;
               const isAdded = p && addedId === p.id;
 
               return (
@@ -186,6 +190,7 @@ export default function RejuvenateBestProductsSection({
                           <Price
                             amount={displayPrice}
                             countryPrices={p?.countryPrices as CountryPrice[]}
+                            currency={resolvedRej?.currency}
                             className="text-[8.5px] xs:text-[10px] sm:text-xs font-black text-[#890754] leading-tight block mt-0.5"
                           />
                         )}

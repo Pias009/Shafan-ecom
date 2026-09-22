@@ -5,6 +5,8 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, ShoppingCart, Star, Flame } from "lucide-react";
 import { Price } from "@/components/Price";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
+import { resolveProductPrice } from "@/lib/product-utils";
+import { useCountryStore } from "@/lib/country-store";
 
 interface FlashSaleProduct {
   id: string;
@@ -66,6 +68,7 @@ export function FlashSalesSlider({
   addToCart,
   orderNow,
 }: FlashSalesSliderProps) {
+  const { selectedCountry } = useCountryStore();
   const [activeIndex, setActiveIndex] = useState(2);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -202,12 +205,14 @@ export function FlashSalesSlider({
 
               const isCenter = diff === 0;
               const product = transformProduct(rawProduct);
-              const regularPrice = product.price || 0;
-              const effectivePrice = product.discountPrice || product.salePrice || 0;
+              const resolved = resolveProductPrice(product, selectedCountry);
+              const regularPrice = resolved.originalPrice;
+              const effectivePrice = resolved.displayPrice;
               const discountPct =
-                effectivePrice > 0 && regularPrice > effectivePrice
+                resolved.hasDiscount && regularPrice > effectivePrice
                   ? Math.round(((regularPrice - effectivePrice) / regularPrice) * 100)
                   : 0;
+              const priceCurrency = resolved.currency;
 
               const rawImg = product.imageUrl || product.mainImage || "/placeholder-product.png";
               const imgSrc = getOptimizedUrl(rawImg, 800);
@@ -296,9 +301,10 @@ export function FlashSalesSlider({
                       <div className="flex items-center justify-between gap-2 pt-0.5 mt-0.5">
                         <div className="flex items-baseline min-w-0">
                           <Price
-                            amount={product.discountPrice || product.salePrice || product.price}
+                            amount={effectivePrice || regularPrice}
                             className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
                             countryPrices={product.countryPrices}
+                            currency={priceCurrency}
                           />
                         </div>
 

@@ -9,6 +9,8 @@ import { ProductCard } from './ProductCard';
 import { Price } from './Price';
 import { getOptimizedUrl } from '@/lib/cloudinary-url';
 import { useLanguageStore } from '@/lib/language-store';
+import { useCountryStore } from '@/lib/country-store';
+import { resolveProductPrice } from '@/lib/product-utils';
 
 interface RoutineBanner {
   id: string;
@@ -91,6 +93,7 @@ function transformRoutineProduct(product: any) {
 export function RoutineSection({ products, banners = [], onQuickView, addToCart, orderNow }: Props) {
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
+  const { selectedCountry } = useCountryStore();
   const sectionRef = useRef<HTMLElement>(null);
   const stepPillsRef = useRef<HTMLDivElement>(null);
   const [activeBanner, setActiveBanner] = useState(0);
@@ -372,6 +375,11 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
 
                     const isCenter = diff === 0;
                     const product = transformRoutineProduct(rawProduct);
+                    const resolved = resolveProductPrice(product, selectedCountry);
+                    const routinePrice = resolved.displayPrice;
+                    const routineOriginalPrice = resolved.originalPrice;
+                    const routineHasDiscount = resolved.hasDiscount && resolved.originalPrice > routinePrice;
+                    const routineCurrency = resolved.currency;
                     const stepMeta = getRoutineStepForProduct(product, i);
                     const rawImg = product.imageUrl || product.mainImage || "/placeholder-product.png";
                     const imgSrc = getOptimizedUrl(rawImg, 800);
@@ -451,10 +459,16 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                             <div className="flex items-center justify-between gap-2 pt-0.5 mt-0.5">
                               <div className="flex items-baseline min-w-0">
                                 <Price
-                                  amount={product.discountPrice || product.price}
+                                  amount={routinePrice}
                                   className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
                                   countryPrices={product.countryPrices}
+                                  currency={routineCurrency}
                                 />
+                                {routineHasDiscount && (
+                                  <span className="ml-1 text-[9px] sm:text-[10px] text-red-400 line-through font-semibold">
+                                    <Price amount={routineOriginalPrice} countryPrices={product.countryPrices} currency={routineCurrency} />
+                                  </span>
+                                )}
                               </div>
 
                               {/* Cart Icon Button */}

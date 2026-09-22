@@ -2,10 +2,10 @@
 
 import { memo, useState } from "react";
 import Image from "next/image";
-import { ShoppingCart, Flame, Star, Package } from "lucide-react";
+import { ShoppingCart, Flame, Star, Package, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { Price } from "./Price";
-import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
+import { hasValidPrice, resolveProductPrice } from "@/lib/product-utils";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 import { useRouter } from "next/navigation";
@@ -95,13 +95,13 @@ const ProductCardComponent = function ProductCard({
 
   if (!hasValidPrice(product, selectedCountry)) return null;
 
-  const displayPrice = (() => {
-    const { price: countryPrice } = getDisplayPrice(product, selectedCountry);
-    return countryPrice > 0 ? countryPrice : product.price || 0;
-  })();
+  const resolved = resolveProductPrice(product, selectedCountry);
+  if (!resolved.available) return null;
 
-  const salePrice = product.discountPrice || product.salePrice || product.salePriceCents || 0;
-  const hasDiscount = salePrice > 0 && salePrice < displayPrice;
+  const displayPrice = resolved.displayPrice;
+  const originalPrice = resolved.originalPrice;
+  const hasDiscount = resolved.hasDiscount;
+  const priceCurrency = resolved.currency;
 
   if (!displayPrice || displayPrice <= 0) return null;
 
@@ -116,8 +116,8 @@ const ProductCardComponent = function ProductCard({
   const rating = product.averageRating || 4.9;
   const reviewCount = product.ratingCount || 245;
   const discountPct =
-    hasDiscount && displayPrice > 0
-      ? Math.round(((displayPrice - salePrice) / displayPrice) * 100)
+    hasDiscount && displayPrice > 0 && originalPrice > displayPrice
+      ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
       : 0;
 
   const badge = (() => {
@@ -247,18 +247,19 @@ const ProductCardComponent = function ProductCard({
             {/* Price */}
             <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-1 leading-none min-w-0">
               <Price
-                amount={hasDiscount ? salePrice : displayPrice}
+                amount={displayPrice}
                 className="text-[11.5px] xs:text-[12px] sm:text-[14px] md:text-[15px] font-black text-[#890754] tracking-tight leading-none"
                 countryPrices={product.countryPrices as CountryPrice[]}
+                currency={priceCurrency}
               />
               {hasDiscount && (
                 <span className="text-[8px] sm:text-[9px] text-gray-400 line-through font-bold truncate leading-none">
-                  <Price amount={displayPrice} countryPrices={product.countryPrices as CountryPrice[]} />
+                  <Price amount={originalPrice} countryPrices={product.countryPrices as CountryPrice[]} currency={priceCurrency} />
                 </span>
               )}
             </div>
 
-            {/* Cart Icon Button (Reduced Icon Size, Reduced Padding, Clean Transparent Background) */}
+            {/* Cart Icon Button (Homepage style: solid maroon circle) */}
             <button
               type="button"
               disabled={isNotAvailable}
@@ -268,22 +269,22 @@ const ProductCardComponent = function ProductCard({
                 setJustAdded(true);
                 setTimeout(() => setJustAdded(false), 1400);
               }}
-              className={`p-0.5 bg-transparent flex items-center justify-center shrink-0 transition-all duration-200 active:scale-90 ${
+              className={`w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded-full flex items-center justify-center shrink-0 shadow-xs transition-all duration-200 active:scale-90 ${
                 isNotAvailable
-                  ? "text-slate-300 cursor-not-allowed"
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed"
                   : justAdded
-                  ? "text-[#890754] scale-110"
-                  : "text-[#890754] hover:text-[#540434] hover:scale-110"
+                  ? "bg-emerald-600 text-white scale-110"
+                  : "bg-[#890754] hover:bg-[#540434] text-white"
               }`}
               aria-label="Add to Cart"
               title={isNotAvailable ? "Sold Out" : "Add to Cart"}
             >
               {isNotAvailable ? (
-                <Package size={14} className="sm:w-3.5 sm:h-3.5" strokeWidth={2} />
+                <Package size={14} className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" strokeWidth={2} />
               ) : justAdded ? (
-                <span className="text-[11px] sm:text-xs font-black text-emerald-600 leading-none">✓</span>
+                <Check size={14} className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" strokeWidth={3} />
               ) : (
-                <ShoppingCart size={14} className="sm:w-3.5 sm:h-3.5" strokeWidth={2.2} />
+                <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
               )}
             </button>
           </div>

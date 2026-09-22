@@ -9,6 +9,7 @@ import { createPendingCheckout } from "@/services/checkout/pending-checkout";
 import { convertCurrency } from "@/lib/currency-rates";
 import { loadCountryCharges } from "@/lib/vat-delivery-config";
 import { notifyNewOrder } from "@/lib/pusher";
+import { getOrderNumber } from "@/lib/order-number";
 
 // Helper to get currency for country
 function getCurrencyForCountry(country: string): string {
@@ -675,7 +676,7 @@ export async function POST(req: Request) {
       // Real-time instant notification to admin mobile app
       notifyNewOrder({
         id: order.id,
-        orderNumber: (order as any).orderNumber || order.id.slice(-6).toUpperCase(),
+        orderNumber: (order as any).orderNumber || getOrderNumber(order.id),
         total: finalTotal,
         amount: finalTotal,
         currency: currency.toUpperCase(),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TamaraService, TamaraRegion, TamaraCurrency } from "@/services/payments/tamara";
+import { getOrderNumber, formatOrderNumber } from "@/lib/order-number";
 
 const COUNTRY_TO_REGION: Record<string, { region: TamaraRegion; currency: TamaraCurrency; phonePrefix: string }> = {
   AE: { region: "UAE", currency: "AED", phonePrefix: "+971" },
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     const session = await tamaraService.createSession({
       orderReferenceId: uniqueRefId,
-      description: `Order #${order.id.substring(order.id.length - 8)}`,
+      description: `Order ${formatOrderNumber(order.id)}`,
       currency,
       locale: "en-US",
       paymentType: "pay_later",

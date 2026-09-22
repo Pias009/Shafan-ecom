@@ -7,6 +7,8 @@ import { ArrowRight, ChevronLeft, ChevronRight, ShoppingCart, Star, Sparkles } f
 import { Price } from "@/components/Price";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 import { useLanguageStore } from "@/lib/language-store";
+import { useCountryStore } from "@/lib/country-store";
+import { resolveProductPrice } from "@/lib/product-utils";
 
 interface BestSellersSectionProps {
   products: any[];
@@ -22,6 +24,7 @@ export function BestSellersSection({
 }: BestSellersSectionProps) {
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
+  const { selectedCountry } = useCountryStore();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -185,10 +188,12 @@ export function BestSellersSection({
                 typeof product.brand === "string"
                   ? product.brand
                   : product.brand?.name || product.brandName || "Shafan";
-              const regularPrice = product.price || 0;
-              const effectivePrice = product.discountPrice || product.salePrice || 0;
+              const resolved = resolveProductPrice(product, selectedCountry);
+              const regularPrice = resolved.originalPrice;
+              const effectivePrice = resolved.displayPrice;
               const displayPrice = effectivePrice > 0 ? effectivePrice : regularPrice;
-              const originalPrice = effectivePrice > 0 && regularPrice > effectivePrice ? regularPrice : null;
+              const originalPrice = resolved.hasDiscount && regularPrice > effectivePrice ? regularPrice : null;
+              const priceCurrency = resolved.currency;
 
               return (
                 <div
@@ -273,6 +278,7 @@ export function BestSellersSection({
                             amount={displayPrice}
                             className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
                             countryPrices={product.countryPrices}
+                            currency={priceCurrency}
                           />
                         </div>
 

@@ -2,6 +2,7 @@
 
 import React, { useRef } from "react";
 import { Printer, Download } from "lucide-react";
+import { formatOrderNumber, getOrderNumber } from "@/lib/order-number";
 
 interface InvoicePreviewProps {
   order: any;
@@ -33,8 +34,8 @@ export default function InvoicePreview({ order }: InvoicePreviewProps) {
 
   const cityCountry = `${billing?.city_name || billing?.city || shipping?.city || ""} ${billing?.country || shipping?.country || ""}`.trim();
 
-  const orderNum = order.id ? `#${order.id.slice(-5).toUpperCase()}` : "#35767";
-  const invoiceNum = order.id ? `${order.id.slice(-5).toUpperCase()}` : "26157";
+  const orderNum = formatOrderNumber(order.id);
+  const invoiceNum = getOrderNumber(order.id);
   const dateStr = new Date(order.createdAt || Date.now()).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "2-digit",

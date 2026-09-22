@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getOrderNumber } from '@/lib/order-number';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -107,7 +108,7 @@ export async function POST(
     const total        = order.total        || 0;
     const taxRate      = order.taxRate      || 0;
     const taxValue     = order.taxAmount    || 0;
-    const invoiceNum   = (order.id || '').slice(-8).toUpperCase();
+    const invoiceNum   = getOrderNumber(order.id);
 
     // ── PDF generation ─────────────────────────────────────────────────────────
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
@@ -454,7 +455,7 @@ export async function POST(
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${id.slice(-8)}.pdf"`,
+        'Content-Disposition': `attachment; filename="invoice-${getOrderNumber(id)}.pdf"`,
       },
     });
   } catch (error) {

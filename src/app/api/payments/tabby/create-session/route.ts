@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
 import type { PendingCheckoutItemSnapshot } from "@/services/checkout/pending-checkout";
+import { formatOrderNumber } from "@/lib/order-number";
 
 const COUNTRY_TO_REGION: Record<string, { region: TabbyRegion; currency: TabbyCurrency }> = {
   AE: { region: "UAE", currency: "AED" },
@@ -288,7 +289,7 @@ export async function POST(request: NextRequest) {
         process.env.NODE_ENV === "development"
           ? `${order.id}-${Date.now().toString().slice(-4)}`
           : order.id,
-      description: `Order #${order.id.substring(0, 8)}`,
+      description: `Order ${formatOrderNumber(order.id)}`,
       merchant_urls: {
         success: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/success?pcid=${order.id}&payment=tabby`,
         cancel: `${process.env.NEXT_PUBLIC_SITE_URL || baseUrl}/checkout/payment/${order.id}?status=cancel&orderId=${order.id}&canceled=tabby`,

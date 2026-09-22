@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { ArrowLeft, Mail, User, ShoppingBag, History, Calendar, DollarSign, Package, Lock, ShieldCheck } from 'lucide-react';
 import UserAddressManager from './_components/UserAddressManager';
+import { formatOrderNumber } from '@/lib/order-number';
 
 export default async function UserDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -194,7 +195,7 @@ export default async function UserDetailsPage(props: { params: Promise<{ id: str
                                             <td className="px-8 py-6">
                                                 <Link href={`/ueadmin/orders/${order.id}`} className="font-bold text-black flex items-center gap-2 hover:underline">
                                                     <span className="text-[10px] text-black/20 font-mono">#</span>
-                                                    {order.id.slice(-8)}
+                                                    {formatOrderNumber(order.id)}
                                                 </Link>
                                             </td>
                                             <td className="px-8 py-6">

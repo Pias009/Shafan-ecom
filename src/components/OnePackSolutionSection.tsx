@@ -7,6 +7,8 @@ import { ShoppingCart, Eye, Star, CheckCircle2, ShieldCheck } from "lucide-react
 import { Price } from "./Price";
 import { CountryPrice } from "./ProductCard";
 import { useLanguageStore } from "@/lib/language-store";
+import { useCountryStore } from "@/lib/country-store";
+import { resolveProductPrice } from "@/lib/product-utils";
 
 interface ProblemNode {
   id: string;
@@ -105,6 +107,7 @@ export function OnePackSolutionSection({
 }: Props) {
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage.code === "ar";
+  const { selectedCountry } = useCountryStore();
   const [activeProblem, setActiveProblem] = useState<string | null>(null);
   const [justAdded, setJustAdded] = useState(false);
 
@@ -136,11 +139,15 @@ export function OnePackSolutionSection({
       ratingCount: 148,
     };
 
-  const displayPrice = heroProduct.salePrice || heroProduct.discountPrice || heroProduct.price || 145;
-  const originalPrice =
-    (heroProduct.salePrice || heroProduct.discountPrice) && heroProduct.price > displayPrice
-      ? heroProduct.price
-      : null;
+  const resolvedPackPrice = heroProduct
+    ? resolveProductPrice(heroProduct, selectedCountry)
+    : null;
+  const displayPrice = resolvedPackPrice
+    ? (resolvedPackPrice.displayPrice || 145)
+    : 145;
+  const originalPrice = resolvedPackPrice && resolvedPackPrice.hasDiscount
+    ? resolvedPackPrice.originalPrice
+    : null;
   const brandName =
     typeof heroProduct.brand === "string"
       ? heroProduct.brand
@@ -520,11 +527,12 @@ export function OnePackSolutionSection({
                 <Price
                   amount={displayPrice}
                   countryPrices={heroProduct.countryPrices as CountryPrice[]}
+                  currency={resolvedPackPrice?.currency}
                   className="text-base sm:text-xl md:text-2xl font-black text-[#890754] tracking-tight leading-none"
                 />
                 {originalPrice && (
                   <span className="text-[11px] sm:text-xs text-gray-400 line-through font-bold">
-                    <Price amount={originalPrice} countryPrices={heroProduct.countryPrices as CountryPrice[]} />
+                    <Price amount={originalPrice} countryPrices={heroProduct.countryPrices as CountryPrice[]} currency={resolvedPackPrice?.currency} />
                   </span>
                 )}
               </div>

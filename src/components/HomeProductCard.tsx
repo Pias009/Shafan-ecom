@@ -6,7 +6,7 @@ import { ShoppingCart, Truck, Star } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { getDisplayPrice } from "@/lib/product-utils";
+import { resolveProductPrice } from "@/lib/product-utils";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { useRouter } from "next/navigation";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
@@ -69,15 +69,15 @@ function HomeProductCardComponent({
     );
   }
 
-  const { price: countryPrice } = getDisplayPrice(product, selectedCountry);
-  const basePrice = product.discountPrice ?? product.price;
-  const displayPrice = countryPrice > 0 ? countryPrice : basePrice;
+  const resolved = resolveProductPrice(product, selectedCountry);
+  const displayPrice = resolved.displayPrice;
+  const originalPrice = resolved.originalPrice;
   const isNotAvailable = displayPrice <= 0 || (typeof product.stockQuantity === 'number' && product.stockQuantity <= 0);
   const price = displayPrice;
-  const hasDiscount = countryPrice > 0 && product.discountPrice && product.discountPrice < countryPrice;
-  
+  const hasDiscount = resolved.hasDiscount && resolved.originalPrice > displayPrice;
+
   const discountPercentage = hasDiscount 
-    ? Math.round(((countryPrice - product.discountPrice!) / countryPrice) * 100)
+    ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
     : 0;
 
   const brandName = typeof product.brand === "string"
@@ -175,7 +175,7 @@ function HomeProductCardComponent({
         {/* Cart Overlay - Shows on Hover (desktop only) */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none hidden md:flex flex-col items-center justify-center">
           <div className={`${compact ? 'mb-2' : 'mb-4'} ${compact ? 'text-sm sm:text-base' : 'text-lg sm:text-xl'} font-black text-white transition-all duration-600 ease-out delay-100 opacity-0 group-hover:opacity-100 ${compact ? 'translate-y-2' : 'translate-y-4'} group-hover:translate-y-0`}>
-            <Price amount={price} showSymbolSmall countryPrices={product.countryPrices} />
+            <Price amount={price} showSymbolSmall countryPrices={product.countryPrices} currency={resolved.currency} />
           </div>
           
           <div className={`flex flex-col ${compact ? 'gap-1.5 sm:gap-2' : 'gap-1.5 sm:gap-2 md:gap-3'} transition-all duration-600 ease-out delay-200 opacity-0 group-hover:opacity-100 active:opacity-100 transform ${compact ? 'translate-y-2' : 'translate-y-4'} group-hover:translate-y-0 active:translate-y-0`}>
@@ -209,9 +209,9 @@ function HomeProductCardComponent({
         {/* Price and Stock Info Row */}
         <div className={`flex items-center justify-between ${compact ? 'mb-0.5' : 'mb-1.5 sm:mb-2'} flex-shrink-0`}>
           <div className="flex items-baseline gap-1 sm:gap-2">
-            <Price amount={price} className={`${fontSize.price} font-black text-black`} countryPrices={product.countryPrices} />
+            <Price amount={price} className={`${fontSize.price} font-black text-black`} countryPrices={product.countryPrices} currency={resolved.currency} />
             {hasDiscount && (
-              <Price amount={product.discountPrice || countryPrice} className={`${fontSize.oldPrice} text-red-500 line-through font-bold`} countryPrices={product.countryPrices} />
+              <Price amount={originalPrice} className={`${fontSize.oldPrice} text-red-500 line-through font-bold`} countryPrices={product.countryPrices} currency={resolved.currency} />
             )}
           </div>
         </div>

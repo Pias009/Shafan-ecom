@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RotateCcw, X, Loader2, DollarSign, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { formatOrderNumber } from '@/lib/order-number';
 
 interface TamaraRefundActionProps {
   orderId: string;
@@ -82,7 +83,7 @@ export default function TamaraRefundAction({
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl font-black text-black">Tamara Refund</h2>
-                <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest mt-1">Order #{orderId.slice(-8).toUpperCase()}</p>
+                <p className="text-[10px] font-bold text-black/40 uppercase tracking-widest mt-1">Order {formatOrderNumber(orderId)}</p>
               </div>
               <button 
                 onClick={() => setIsOpen(false)} 

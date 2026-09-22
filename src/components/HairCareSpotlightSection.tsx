@@ -7,6 +7,8 @@ import { ShoppingBag, Eye, Star, Zap, Check } from "lucide-react";
 import { Price } from "./Price";
 import { CountryPrice } from "./ProductCard";
 import { useLanguageStore } from "@/lib/language-store";
+import { useCountryStore } from "@/lib/country-store";
+import { resolveProductPrice } from "@/lib/product-utils";
 
 interface HairCareSpotlightSectionProps {
   products?: any[];
@@ -23,6 +25,7 @@ export default function HairCareSpotlightSection({
 }: HairCareSpotlightSectionProps) {
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
+  const { selectedCountry } = useCountryStore();
 
   const [isAdded, setIsAdded] = useState(false);
 
@@ -49,11 +52,14 @@ export default function HairCareSpotlightSection({
     return products[0];
   }, [products]);
 
-  const displayPrice = matchedProduct
-    ? (matchedProduct.discountPrice ?? matchedProduct.price ?? matchedProduct.priceCents ?? 49)
+  const resolvedHairPrice = matchedProduct
+    ? resolveProductPrice(matchedProduct, selectedCountry)
+    : null;
+  const displayPrice = resolvedHairPrice
+    ? (resolvedHairPrice.displayPrice || 49)
     : 49;
-  const originalPrice = matchedProduct && (matchedProduct.discountPrice || matchedProduct.salePrice)
-    ? (matchedProduct.price || matchedProduct.priceCents)
+  const originalPrice = resolvedHairPrice && resolvedHairPrice.hasDiscount
+    ? (resolvedHairPrice.originalPrice || null)
     : null;
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -135,11 +141,12 @@ export default function HairCareSpotlightSection({
                   <Price
                     amount={displayPrice}
                     countryPrices={matchedProduct?.countryPrices as CountryPrice[]}
+                    currency={resolvedHairPrice?.currency}
                     className="text-base sm:text-xl font-black text-[#890754] leading-none"
                   />
                   {originalPrice && (
                     <span className="text-[10px] sm:text-xs text-gray-400 line-through font-bold">
-                      <Price amount={originalPrice} countryPrices={matchedProduct?.countryPrices as CountryPrice[]} />
+                      <Price amount={originalPrice} countryPrices={matchedProduct?.countryPrices as CountryPrice[]} currency={resolvedHairPrice?.currency} />
                     </span>
                   )}
                 </div>

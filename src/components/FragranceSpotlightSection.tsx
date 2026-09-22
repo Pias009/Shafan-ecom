@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, ShoppingCart, Star, Heart, Sparkles, ArrowRight } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
+import { useCountryStore } from "@/lib/country-store";
+import { resolveProductPrice } from "@/lib/product-utils";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
 interface FragranceSpotlightSectionProps {
@@ -24,6 +26,7 @@ export default function FragranceSpotlightSection({
 }: FragranceSpotlightSectionProps) {
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
+  const { selectedCountry } = useCountryStore();
   const [activeIndex, setActiveIndex] = useState(2);
   const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -211,10 +214,11 @@ export default function FragranceSpotlightSection({
                 typeof product.brand === "string"
                   ? product.brand
                   : product.brand?.name || product.brandName || "Shafan Fragrance";
-              const regularPrice = product.price || product.priceCents || 0;
-              const effectivePrice = product.discountPrice || product.salePrice || 0;
+              const resolved = resolveProductPrice(product, selectedCountry);
+              const regularPrice = resolved.originalPrice;
+              const effectivePrice = resolved.displayPrice;
               const displayPrice = effectivePrice > 0 ? effectivePrice : regularPrice;
-              const originalPrice = effectivePrice > 0 && regularPrice > effectivePrice ? regularPrice : null;
+              const originalPrice = resolved.hasDiscount && regularPrice > effectivePrice ? regularPrice : null;
 
               return (
                 <div
@@ -310,6 +314,7 @@ export default function FragranceSpotlightSection({
                             amount={displayPrice}
                             className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
                             countryPrices={product.countryPrices}
+                            currency={resolved.currency}
                           />
                         </div>
 

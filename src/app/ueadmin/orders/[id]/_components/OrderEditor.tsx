@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Edit2, Save, X, Trash2, Plus, Minus, Search, Package, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { formatOrderNumber } from '@/lib/order-number';
 
 const BLOCKED_STATUSES = ['IN_TRANSIT', 'ORDER_PICKED_UP', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
 const STATUS_LABELS: Record<string, string> = {
@@ -205,7 +206,7 @@ export default function OrderEditor({ order }: OrderEditorProps) {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-3xl font-black text-black">Edit Order</h2>
-            <p className="text-xs font-bold text-black/40 uppercase tracking-widest mt-1">Order #{order.id?.slice(-8)?.toUpperCase()}</p>
+            <p className="text-xs font-bold text-black/40 uppercase tracking-widest mt-1">Order {formatOrderNumber(order.id)}</p>
           </div>
           <button onClick={() => setIsEditing(false)} className="p-3 bg-black/5 rounded-full hover:bg-black/10 transition">
             <X size={20} />

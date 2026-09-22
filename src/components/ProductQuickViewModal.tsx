@@ -7,6 +7,7 @@ import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
+import { resolveProductPrice, formatPriceUnits } from "@/lib/product-utils";
 import { formatDescription } from "@/utils/formatText";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 import TabbyPromo from "./TabbyPromo";
@@ -71,22 +72,13 @@ export function ProductQuickViewModal({
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => { setCurrentImageIndex(0); setAddedToCart(false); }, [product?.id]);
 
-  const { displayPrice, originalPrice, isAvailable, isOutOfStock } = useMemo(() => {
-    if (!product) return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: false };
-    const outOfStock = typeof product.stockQuantity === "number" && product.stockQuantity <= 0;
-    const cpArray = Array.isArray(product.countryPrices) ? product.countryPrices : [];
-    if (cpArray.length === 0) return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: outOfStock };
-    const countryUpper = selectedCountry.toUpperCase();
-    const countryPrice = cpArray.find((cp: any) => {
-      const cpCountry = (cp.country?.toUpperCase() || "").trim();
-      return cpCountry === countryUpper && Number(cp.price) > 0;
-    });
-    if (countryPrice) {
-      const priceValue = Number(countryPrice.price) || 0;
-      if (priceValue > 0) return { displayPrice: priceValue, originalPrice: priceValue, isAvailable: !outOfStock, isOutOfStock: outOfStock };
-    }
-    return { displayPrice: 0, originalPrice: 0, isAvailable: false, isOutOfStock: outOfStock };
-  }, [product, selectedCountry]);
+  const { displayPrice, originalPrice, currency, hasDiscount, available } = useMemo(() => {
+    if (!product) return { displayPrice: 0, originalPrice: 0, currency: selectedCurrency, hasDiscount: false, available: false };
+    return resolveProductPrice(product, selectedCountry);
+  }, [product, selectedCountry, selectedCurrency]);
+  const isOutOfStock =
+    typeof product?.stockQuantity === "number" && product.stockQuantity <= 0;
+  const isAvailable = available && !isOutOfStock && displayPrice > 0;
 
   const { allImages, brandName, categories, subCategoryName, skinTones, skinConcerns } = useMemo(() => {
     if (!product) return { allImages: [] as string[], brandName: "SHANFA GLOBAL", categories: [] as string[], subCategoryName: undefined as string | undefined, skinTones: [] as { name: string; hexColor?: string }[], skinConcerns: [] as string[] };
@@ -109,7 +101,7 @@ export function ProductQuickViewModal({
     return () => clearInterval(t);
   }, [product, allImages.length]);
 
-  const discountPct = displayPrice < originalPrice && originalPrice > 0
+  const discountPct = hasDiscount && displayPrice < originalPrice && originalPrice > 0
     ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100) : 0;
 
   const handleAddToCart = () => {
@@ -323,7 +315,7 @@ export function ProductQuickViewModal({
                   {isOutOfStock ? (
                     <div className="space-y-2">
                       <p className="text-3xl font-black text-[#0c3a32]">
-                        {displayPrice.toFixed(2)} <span className="text-sm font-bold text-[#52736b]">{selectedCurrency}</span>
+                        {formatPriceUnits(displayPrice, currency)} <span className="text-sm font-bold text-[#52736b]">{currency}</span>
                       </p>
                       <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 text-orange-600 text-xs font-black uppercase tracking-wider rounded-full border border-orange-200">
                         <Package size={12} /> Out of Stock
@@ -332,11 +324,11 @@ export function ProductQuickViewModal({
                   ) : isAvailable ? (
                     <div className="flex items-end gap-3">
                       <p className="text-3xl md:text-4xl font-black text-[#0c3a32] leading-none">
-                        {displayPrice.toFixed(2)} <span className="text-base font-bold text-[#52736b]">{selectedCurrency}</span>
+                        {formatPriceUnits(displayPrice, currency)} <span className="text-base font-bold text-[#52736b]">{currency}</span>
                       </p>
-                      {discountPct > 0 && (
+                      {hasDiscount && originalPrice > displayPrice && (
                         <p className="text-sm font-bold text-[#82a49b] line-through mb-0.5">
-                          {originalPrice.toFixed(2)} {selectedCurrency}
+                          {formatPriceUnits(originalPrice, currency)} {currency}
                         </p>
                       )}
                     </div>
@@ -348,12 +340,12 @@ export function ProductQuickViewModal({
                 </div>
 
                 {/* Tabby promo */}
-                {isAvailable && !isOutOfStock && displayPrice > 0 && ["AED", "SAR", "KWD"].includes((selectedCurrency || "").toUpperCase()) && (
+                {isAvailable && !isOutOfStock && displayPrice > 0 && ["AED", "SAR", "KWD"].includes((currency || "").toUpperCase()) && (
                   <TabbyPromo
                     id="TabbyPromoQuickView"
                     source="product"
                     price={displayPrice}
-                    currency={selectedCurrency.toUpperCase()}
+                    currency={currency.toUpperCase()}
                     publicKey={process.env.NEXT_PUBLIC_TABBY_PUBLIC_KEY || ""}
                     merchantCode={process.env.NEXT_PUBLIC_TABBY_MERCHANT_CODE || "SGAE"}
                     lang={currentLanguage.code === "ar" ? "ar" : "en"}

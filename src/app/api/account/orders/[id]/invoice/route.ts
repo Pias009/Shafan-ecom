@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { formatPriceUnits } from '@/lib/product-utils';
+import { getOrderNumber } from '@/lib/order-number';
 
 export async function GET(
   req: NextRequest,
@@ -49,7 +50,7 @@ export async function GET(
 
     // Format data for invoice
     const invoiceData = {
-      orderNumber: order.id.toUpperCase().slice(-8),
+      orderNumber: getOrderNumber(order.id),
       orderDate: new Date(order.createdAt).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',

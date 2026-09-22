@@ -40,7 +40,7 @@ function formatPriceWithIntl(amount: number, currencyCode: string): string {
   
   const decimals = ["KWD", "BHD", "OMR"].includes(code) ? 3 : 2;
   const formatted = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: decimals,
+    minimumFractionDigits: 0,
     maximumFractionDigits: decimals,
   }).format(amount);
   

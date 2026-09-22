@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, ShoppingCart, Star, Heart, Flame, ArrowRight } from "lucide-react";
 import { Price } from "./Price";
 import { useLanguageStore } from "@/lib/language-store";
+import { useCountryStore } from "@/lib/country-store";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
+import { resolveProductPrice } from "@/lib/product-utils";
 
 interface TrendingProduct {
   id: string;
@@ -50,6 +52,7 @@ export function TrendingNowSlider({
   const router = useRouter();
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
+  const { selectedCountry } = useCountryStore();
   const [activeIndex, setActiveIndex] = useState(2);
   const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -235,10 +238,8 @@ export function TrendingNowSlider({
                 typeof product.brand === "string"
                   ? product.brand
                   : product.brand?.name || product.brandName || "Shafan";
-              const regularPrice = product.price || product.priceCents || 0;
-              const effectivePrice = product.discountPrice || product.salePrice || 0;
-              const displayPrice = effectivePrice > 0 ? effectivePrice : regularPrice;
-              const originalPrice = effectivePrice > 0 && regularPrice > effectivePrice ? regularPrice : null;
+              const resolvedPrice = resolveProductPrice(product, selectedCountry);
+              const displayPrice = resolvedPrice.displayPrice;
 
               return (
                 <div
@@ -334,6 +335,7 @@ export function TrendingNowSlider({
                             amount={displayPrice}
                             className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
                             countryPrices={product.countryPrices}
+                            currency={resolvedPrice.currency}
                           />
                         </div>
 

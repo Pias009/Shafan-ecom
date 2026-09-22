@@ -15,6 +15,7 @@ import TabbyCard from "@/components/TabbyCard";
 import TamaraWidget from "@/components/TamaraWidget";
 import { useLanguageStore } from "@/lib/language-store";
 import { trackAddPaymentInfo } from "@/lib/datalayer";
+import { getOrderNumber } from "@/lib/order-number";
 
 const StripePaymentForm = dynamic(() => import("@/components/StripePaymentForm"), {
   ssr: false,
@@ -445,7 +446,7 @@ function PaymentPageContent() {
           <div className="lg:col-span-12 xl:col-span-8 space-y-6 md:space-y-8 order-1 w-full overflow-x-hidden">
             <div className="text-center xl:text-left">
               <h1 className="font-display text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-black">Secure Payment</h1>
-              <p className="font-body text-[10px] md:text-sm text-black/40 mt-1 uppercase font-bold tracking-widest">Order ID: {id.substring(0, 8)}</p>
+              <p className="font-body text-[10px] md:text-sm text-black/40 mt-1 uppercase font-bold tracking-widest">Order ID: {getOrderNumber(id)}</p>
             </div>
 
             {/* Error Message Display */}

@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Eye, ShoppingCart, ArrowRight, Check, Star } from "lucide-react";
 import { Price } from "./Price";
 import { useCountryStore } from "@/lib/country-store";
+import { resolveProductPrice } from "@/lib/product-utils";
 import { useLanguageStore } from "@/lib/language-store";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 
@@ -109,6 +110,9 @@ export default function MakeupSpotlightSection({
 
             const isJustAdded = !!addedIds[product.id];
             const imgSrc = product.mainImage || (product.images && product.images[0]) || "/placeholder-product.png";
+            const resolvedPrice = resolveProductPrice(product, selectedCountry);
+            const makeupPrice = resolvedPrice.displayPrice || 170;
+            const makeupCurrency = resolvedPrice.currency;
 
             return (
               <motion.div
@@ -189,9 +193,10 @@ export default function MakeupSpotlightSection({
                   <div className="flex items-center justify-between gap-2 pt-0.5 mt-0.5">
                     <div className="flex items-baseline min-w-0">
                       <Price
-                        amount={product.discountPrice ?? product.price ?? 170}
+                        amount={makeupPrice}
                         className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
                         countryPrices={product.countryPrices}
+                        currency={makeupCurrency}
                       />
                     </div>
 

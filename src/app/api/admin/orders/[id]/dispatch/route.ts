@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { createNaqelShipment } from "@/services/shipping/naqel-api";
 import { OrderStatus } from "@prisma/client";
+import { getOrderNumber, formatOrderNumber } from "@/lib/order-number";
 
 // ─── Country code helpers ─────────────────────────────────────────────────────
 const ISO_MAP: Record<string, string> = {
@@ -90,7 +91,7 @@ async function dispatchAramex(order: any, dimensions: any) {
     Shipments: [
       {
         Shipper: {
-          Reference1: order.id.slice(-8).toUpperCase(),
+          Reference1: getOrderNumber(order.id),
           AccountNumber: process.env.ARAMEX_ACCOUNT_NUMBER,
           PartyAddress: {
             Line1: process.env.ARAMEX_SHIPPER_ADDRESS || "Office 405, Al Diyafa Center",
@@ -104,7 +105,7 @@ async function dispatchAramex(order: any, dimensions: any) {
           },
         },
         Consignee: {
-          Reference1: order.id.slice(-8).toUpperCase(),
+          Reference1: getOrderNumber(order.id),
           PartyAddress: {
             Line1: shipping.address_1 || "N/A",
             Line2: shipping.address_2 || "",
@@ -214,8 +215,8 @@ async function dispatchNaqel(order: any, dimensions: any) {
     customsDeclaredValue: numTotal,
     customsDeclaredValueCurrency: order.currency?.toUpperCase() || "AED",
     reference: {
-      shipperReference1: order.id.slice(-8).toUpperCase(),
-      shipperNote1: `Order #${order.id.slice(-8).toUpperCase()}`,
+      shipperReference1: getOrderNumber(order.id),
+      shipperNote1: `Order ${formatOrderNumber(order.id)}`,
     },
     consignee: {
       consigneeContact: {

@@ -32,7 +32,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useUserCountry } from "@/lib/country-detection";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice, resolveProductPrice } from "@/lib/product-utils";
 import { VisualDescription } from "@/utils/formatText";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackViewItem, trackAddToCart as trackAddToCartDataLayer } from "@/lib/datalayer";
@@ -77,18 +77,18 @@ export default function ProductPageClient({
     setMounted(true);
   }, []);
 
-  // Price calculation using getDisplayPrice
+  // Price calculation — single source of truth shared with cards + quick-view popup
   const priceInfo = useMemo(() => {
-    return getDisplayPrice(product, selectedCountry);
+    return resolveProductPrice(product, selectedCountry);
   }, [product, selectedCountry]);
-  const displayPrice = priceInfo.price || product.price || 0;
+  const displayPrice = priceInfo.displayPrice || product.price || 0;
   const isOutOfStock =
     typeof product.stockQuantity === "number" && product.stockQuantity <= 0;
   const isAvailable = displayPrice > 0 && !isOutOfStock;
 
   // Discount calculation
-  const hasDiscount = Boolean(product.discountPrice && product.discountPrice > 0);
-  const regularPrice = product.price || displayPrice;
+  const hasDiscount = priceInfo.hasDiscount;
+  const regularPrice = priceInfo.originalPrice || displayPrice;
   const discountPercent =
     hasDiscount && regularPrice > displayPrice
       ? Math.round(((regularPrice - displayPrice) / regularPrice) * 100)
@@ -562,6 +562,7 @@ export default function ProductPageClient({
                       <Price
                         amount={displayPrice}
                         countryPrices={product.countryPrices}
+                        currency={priceInfo.currency}
                         className="text-2xl sm:text-3xl md:text-4xl font-black text-[#890754] tracking-tight leading-none"
                       />
                       {hasDiscount && regularPrice > displayPrice && (
@@ -569,6 +570,7 @@ export default function ProductPageClient({
                           <Price
                             amount={regularPrice}
                             countryPrices={product.countryPrices}
+                            currency={priceInfo.currency}
                           />
                         </span>
                       )}
@@ -582,6 +584,7 @@ export default function ProductPageClient({
                     <Price
                       amount={displayPrice}
                       countryPrices={product.countryPrices}
+                      currency={priceInfo.currency}
                       className="text-2xl sm:text-3xl font-black text-gray-400"
                     />
                   ) : (

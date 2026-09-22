@@ -7,6 +7,7 @@ import { sendEmail } from "@/lib/email";
 import { notifyNewOrder } from "@/lib/pusher";
 import { createAramexShipment } from "@/lib/shipping/aramex";
 import { promoteToOrder } from "@/services/checkout/pending-checkout";
+import { getOrderNumber, formatOrderNumber } from "@/lib/order-number";
 
 function generateTrackingCode(): string {
   const prefix = "GL";
@@ -251,7 +252,7 @@ export async function POST(req: Request) {
               <p style="color:#495057;font-size:16px;margin:0 0 20px;">Hello <strong>${customerName}</strong>,</p>
               <p style="color:#495057;margin:0 0 24px;">Your payment was successful. We're now preparing your order!</p>
               <div style="background:white;padding:24px;border-radius:12px;margin:0 0 24px;">
-                <h2 style="color:#333;margin:0 0 5px;font-size:20px;">Order #${updatedOrder.id.substring(0, 8)}</h2>
+                <h2 style="color:#333;margin:0 0 5px;font-size:20px;">Order ${formatOrderNumber(updatedOrder.id)}</h2>
                 <p style="color:#6c757d;margin:0 0 16px;font-size:13px;">${new Date(updatedOrder.createdAt).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
                 <table style="width:100%;border-collapse:collapse;">
                   <thead>
@@ -291,7 +292,7 @@ export async function POST(req: Request) {
 
         await sendEmail({
           to: customerEmail,
-          subject: `Payment Confirmed! Order #${updatedOrder.id.substring(0, 8)} | SHANFA`,
+          subject: `Payment Confirmed! Order ${formatOrderNumber(updatedOrder.id)} | SHANFA`,
           html: emailHtml,
         }).catch((err) => console.error("[Stripe Webhook] Customer email failed:", err));
       }

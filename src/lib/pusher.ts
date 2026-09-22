@@ -1,4 +1,5 @@
 import Pusher from "pusher";
+import { getOrderNumber } from "@/lib/order-number";
 
 const PUSHER_APP_ID = process.env.PUSHER_APP_ID || "2145513";
 const PUSHER_KEY = process.env.PUSHER_KEY || process.env.NEXT_PUBLIC_PUSHER_KEY || "1f774a5bbab3fae7abac";
@@ -36,7 +37,7 @@ export async function notifyNewOrder(order: {
 }) {
   return triggerNotification("admin-notifications", "new-order", {
     id: order.id,
-    orderNumber: order.orderNumber || order.id,
+    orderNumber: order.orderNumber !== undefined && order.orderNumber !== null && order.orderNumber !== "" ? order.orderNumber : getOrderNumber(order.id),
     total: order.total,
     amount: order.amount ?? order.total,
     currency: order.currency,
