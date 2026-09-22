@@ -4,7 +4,6 @@ import { useCurrencyStore, SUPPORTED_CURRENCIES } from "@/lib/currency-store";
 import { useEffect, useState } from "react";
 import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { getDisplayPrice } from "@/lib/product-utils";
-import { convertCurrency, getExchangeRate, EXCHANGE_RATES } from "@/lib/currency-rates";
 
 interface PriceProps {
   amount: number | string;

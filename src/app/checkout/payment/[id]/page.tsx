@@ -710,7 +710,7 @@ function PaymentPageContent() {
                   <div className="bg-black/5 rounded-2xl p-4 space-y-2">
                     <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Order Total</div>
                     <div className="font-black text-2xl">
-                      <Price amount={order.total} />
+                      <Price amount={order.total} currency={order.currency} />
                     </div>
                   </div>
                   <button
@@ -745,7 +745,7 @@ function PaymentPageContent() {
                   <div className="bg-black/5 rounded-2xl p-4 space-y-1">
                     <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Total Amount</div>
                     <div className="font-black text-2xl">
-                      <Price amount={order.total} />
+                      <Price amount={order.total} currency={order.currency} />
                     </div>
                   </div>
                   <button
@@ -782,7 +782,7 @@ function PaymentPageContent() {
                   <div className="bg-black/5 rounded-2xl p-4 space-y-2">
                     <div className="text-[10px] font-black uppercase tracking-wider text-black/30">{isArabic ? "المبلغ الإجمالي" : "Total Amount"}</div>
                     <div className="font-black text-2xl">
-                      <Price amount={order.total} />
+                      <Price amount={order.total} currency={order.currency} />
                     </div>
                   </div>
                   <button
@@ -812,7 +812,7 @@ function PaymentPageContent() {
                       <div className="text-[9px] md:text-[10px] text-black/40 font-bold uppercase tracking-widest mt-1">Quantity: {item.quantity}</div>
                     </div>
                     <div className="text-right font-black text-xs md:text-sm">
-                      <Price amount={Number(item.unitPrice) * item.quantity} currency={order.currency} />
+                      <Price amount={Number(item.unitPrice) * item.quantity} currency={order.currency?.toUpperCase()} />
                     </div>
                   </div>
                 ))}
@@ -821,17 +821,17 @@ function PaymentPageContent() {
               <div className="space-y-3 pt-6 border-t border-black/5">
                 <div className="flex justify-between text-[10px] text-black/40 font-bold uppercase tracking-widest">
                   <span>Subtotal</span>
-                  <Price amount={order.subtotal} className="text-black" />
+                  <Price amount={order.subtotal} currency={order.currency} className="text-black" />
                 </div>
                 {order.taxAmount > 0 && (
                   <div className="flex justify-between text-[10px] text-orange-600 font-bold uppercase tracking-widest">
                     <span>VAT ({(order.taxRate * 100).toFixed(0)}%)</span>
-                    <Price amount={order.taxAmount} />
+                    <Price amount={order.taxAmount} currency={order.currency} />
                   </div>
                 )}
                 <div className="flex justify-between pt-4 border-t border-black/5">
                   <span className="font-bold text-base md:text-lg">Total</span>
-                  <Price amount={order.total} className="font-black text-xl md:text-2xl" />
+                  <Price amount={order.total} currency={order.currency} className="font-black text-xl md:text-2xl" />
                 </div>
               </div>
 

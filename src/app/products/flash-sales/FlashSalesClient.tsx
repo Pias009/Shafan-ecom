@@ -7,7 +7,7 @@ import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { fbEvent } from "@/lib/fpixel";
 import { Zap } from "lucide-react";
 import { useLoadingStore } from "@/lib/loading-store";
@@ -52,13 +52,14 @@ export default function FlashSalesClient({ products }: FlashSalesClientProps) {
       countryPrices: product.countryPrices,
     };
     addItem(cartItem, 1);
-    
+
+    const { price: eventPrice, currency: eventCurrency } = getDisplayPrice(product, selectedCountry);
     fbEvent('AddToCart', {
       content_ids: [product.id],
       content_type: 'product',
       content_name: product.name,
-      value: product.price || 0,
-      currency: 'SAR',
+      value: eventPrice || product.price || 0,
+      currency: eventCurrency,
     });
     
     toast.success(`${product.name} added to cart`);

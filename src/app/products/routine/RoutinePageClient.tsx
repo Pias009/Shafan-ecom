@@ -7,7 +7,7 @@ import { useCartStore } from "@/lib/cart-store";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useCountryStore } from "@/lib/country-store";
-import { hasValidPrice } from "@/lib/product-utils";
+import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackAddToCart } from "@/lib/datalayer";
 import { Sparkles } from "lucide-react";
@@ -34,11 +34,12 @@ export default function RoutinePageClient({ products }: { products: any[] }) {
       countryPrices: product.countryPrices,
     };
     addItem(cartItem, 1);
+    const { price: eventPrice, currency: eventCurrency } = getDisplayPrice(product, selectedCountry);
     trackAddToCart({
       id: product.id,
       name: product.name,
-      price: product.price || 0,
-      currency: 'AED',
+      price: eventPrice || product.price || 0,
+      currency: eventCurrency,
       category: product.categoryName || 'General',
       brand: product.brandName || product.brand?.name || 'Generic',
       quantity: 1,

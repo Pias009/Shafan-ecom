@@ -330,6 +330,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
         returnRequest={order.returnRequest}
         returnStatus={order.returnStatus}
         adminAddedItems={adminAddedItems}
+        currency={order.currency}
       />
     </div>
   );

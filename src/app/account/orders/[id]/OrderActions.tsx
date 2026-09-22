@@ -21,6 +21,7 @@ interface OrderActionsProps {
   returnRequest?: boolean;
   returnStatus?: string;
   adminAddedItems?: AdminAddedItem[];
+  currency?: string;
 }
 
 function formatPrice(amount: number, currency: string): string {
@@ -40,6 +41,7 @@ export default function OrderActions({
   returnRequest,
   returnStatus,
   adminAddedItems,
+  currency = "AED",
 }: OrderActionsProps) {
   const [loading, setLoading] = useState(false);
   const [reason, setReason] = useState("");
@@ -146,7 +148,7 @@ export default function OrderActions({
                 <div key={item.id} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-blue-100">
                   <div className="min-w-0 flex-1">
                     <div className="font-bold text-xs text-gray-900 truncate">{item.nameSnapshot}</div>
-                    <div className="text-[10px] font-bold text-gray-400 mt-0.5">Qty: {item.quantity} &times; {formatPrice(item.unitPrice, 'AED')}</div>
+                    <div className="text-[10px] font-bold text-gray-400 mt-0.5">Qty: {item.quantity} &times; {formatPrice(item.unitPrice, currency)}</div>
                   </div>
                   <div className="flex items-center gap-2 text-[10px] font-black text-amber-600 flex-shrink-0">
                     <Clock size={12} />

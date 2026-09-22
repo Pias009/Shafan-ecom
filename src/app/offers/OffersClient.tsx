@@ -10,6 +10,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import { useUserCountry } from "@/lib/country-detection";
+import { getDisplayPrice } from "@/lib/product-utils";
 import { fbEvent } from "@/lib/fpixel";
 import toast from "react-hot-toast";
 
@@ -176,12 +177,13 @@ export function OffersClient({
     };
     addItem(cartItem, 1);
 
+    const { price: eventPrice, currency: eventCurrency } = getDisplayPrice(product, userCountry);
     fbEvent('AddToCart', {
       content_ids: [product.id],
       content_type: 'product',
       content_name: product.name,
-      value: product.price,
-      currency: 'SAR',
+      value: eventPrice || product.price || 0,
+      currency: eventCurrency,
     });
 
     toast.success(`${product.name} added to cart`);

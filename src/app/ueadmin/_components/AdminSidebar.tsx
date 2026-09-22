@@ -8,7 +8,7 @@ import {
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
   Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace, Activity, Sparkles, Percent
+  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -48,6 +48,12 @@ export function AdminSidebar() {
       label: "Brands", 
       href: "/ueadmin/brands", 
       icon: Tag, 
+      show: true 
+    },
+    { 
+      label: "Categories", 
+      href: "/ueadmin/categories", 
+      icon: Layers, 
       show: true 
     },
 { 

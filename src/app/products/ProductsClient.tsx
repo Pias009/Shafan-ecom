@@ -15,6 +15,7 @@ import { translations } from "@/lib/translations";
 import { useCountryStore } from "@/lib/country-store";
 import { useSearchStore } from "@/lib/search-store";
 import { trackAddToCart } from "@/lib/datalayer";
+import { getDisplayPrice } from "@/lib/product-utils";
 
 const MAINTAINED_CATEGORIES = ["Skin Care", "Makeup", "Fragrances", "Hair Care", "Body Care"];
 
@@ -343,11 +344,12 @@ return sorted;
     };
     addItem(cartItem, 1);
     
+    const { price: eventPrice, currency: eventCurrency } = getDisplayPrice(product, selectedCountry);
     trackAddToCart({
       id: product.id,
       name: product.name,
-      price: product.price,
-      currency: 'AED',
+      price: eventPrice || product.price,
+      currency: eventCurrency,
       category: product.categoryName,
       brand: product.brandName,
       quantity: 1,

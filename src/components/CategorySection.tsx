@@ -115,7 +115,8 @@ export function CategorySection({
 
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
 
   useEffect(() => {
     async function loadCategories() {
@@ -139,6 +140,12 @@ export function CategorySection({
     loadCategories();
   }, []);
 
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, [categories]);
+
   const itemsToRender = categories.length > 0 ? categories : defaultCategories;
 
   const handleCategoryClick = (cat: CategoryItem) => {
@@ -154,6 +161,7 @@ export function CategorySection({
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     setCanScrollLeft(scrollLeft > 10);
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    setIsOverflowing(scrollWidth > clientWidth + 10);
   };
 
   const handleScroll = (direction: "left" | "right") => {
@@ -211,11 +219,35 @@ export function CategorySection({
       {/* Main Flowing Ribbon Chain Container */}
       <div className="relative w-full">
 
-        {/* Scrollable Track that Centers on Desktop */}
+        {/* Scroll Arrow - Left */}
+        {isOverflowing && canScrollLeft && (
+          <button
+            onClick={() => handleScroll("left")}
+            aria-label="Scroll categories left"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-40 w-10 h-10 rounded-full bg-white shadow-lg border border-black/10 flex items-center justify-center text-black hover:bg-[#890754] hover:text-white transition-all active:scale-90"
+          >
+            <ChevronLeft size={18} />
+          </button>
+        )}
+
+        {/* Scroll Arrow - Right */}
+        {isOverflowing && canScrollRight && (
+          <button
+            onClick={() => handleScroll("right")}
+            aria-label="Scroll categories right"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-40 w-10 h-10 rounded-full bg-white shadow-lg border border-black/10 flex items-center justify-center text-black hover:bg-[#890754] hover:text-white transition-all active:scale-90"
+          >
+            <ChevronRight size={18} />
+          </button>
+        )}
+
+        {/* Scrollable Track - centered when it fits, left-aligned when it overflows so scrolling reveals all */}
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="w-full overflow-x-auto scrollbar-none py-3 px-1 flex items-center justify-start lg:justify-center scroll-smooth"
+          className={`w-full overflow-x-auto scrollbar-none py-3 px-1 flex items-center scroll-smooth ${
+            isOverflowing ? "justify-start" : "justify-center"
+          }`}
         >
           <div className="flex items-center min-w-max py-1">
             {itemsToRender.map((category, idx) => {

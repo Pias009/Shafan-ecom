@@ -142,7 +142,7 @@ export default function ProductPageClient({
         id: product.id,
         name: product.name,
         price: displayPrice,
-        currency: "AED",
+        currency: priceInfo.currency,
         category:
           typeof product.category === "string"
             ? product.category
@@ -188,7 +188,7 @@ export default function ProductPageClient({
       id: p.id,
       name: p.name,
       price: itemPrice,
-      currency: "AED",
+      currency: priceInfo.currency,
       category:
         typeof p.category === "string" ? p.category : p.category?.name,
       brand: typeof p.brand === "string" ? p.brand : p.brand?.name,
