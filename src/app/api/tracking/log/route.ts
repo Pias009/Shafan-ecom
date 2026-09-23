@@ -4,7 +4,25 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { eventType, eventData, sessionId } = body;
+    // Handle batch events
+    if (body.events && Array.isArray(body.events)) {
+      const validEvents = body.events.filter((e: any) => e && (e.eventType || e.event));
+      if (validEvents.length > 0) {
+        await prisma.trackingLog.createMany({
+          data: validEvents.map((e: any) => ({
+            eventType: e.eventType || e.event || 'unknown',
+            eventData: e.eventData || e.ecommerce || e || null,
+            sessionId: e.sessionId || null,
+            userId: e.userId || null,
+            createdAt: e.timestamp ? new Date(e.timestamp) : new Date(),
+          })),
+        });
+        return NextResponse.json({ success: true, count: validEvents.length });
+      }
+      return NextResponse.json({ success: true, count: 0 });
+    }
+
+    const { eventType, eventData, sessionId, userId } = body;
 
     if (!eventType) {
       return NextResponse.json(
@@ -18,6 +36,7 @@ export async function POST(request: NextRequest) {
         eventType,
         eventData: eventData || null,
         sessionId: sessionId || null,
+        userId: userId || null,
       },
     });
 

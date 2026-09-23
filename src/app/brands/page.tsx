@@ -98,10 +98,10 @@ export default function BrandsPage() {
               {currentLanguage.code === "ar" ? "شركاؤنا المميزون" : "Our Premier Partners"}
             </span>
           </div>
-          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-black font-black italic tracking-tighter leading-[0.9] sm:leading-tight">
+          <h1 className="font-sans text-5xl md:text-7xl lg:text-8xl text-black font-black uppercase tracking-tight leading-none">
             {t.brands.title}
           </h1>
-          <p className="font-body text-black/40 text-sm sm:text-lg font-bold uppercase tracking-[0.2em] max-w-2xl mx-auto">
+          <p className="font-sans text-black/40 text-sm sm:text-base font-semibold uppercase tracking-[0.25em] max-w-2xl mx-auto">
             {t.brands.subtitle}
           </p>
         </div>
@@ -171,30 +171,27 @@ export default function BrandsPage() {
                 {/* Decorative overlay on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-black/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <div className="relative w-20 h-20 sm:w-28 sm:h-28 mb-4 sm:mb-8">
-                   {/* Animated ring */}
-                  <div className="absolute inset-[-4px] rounded-full border border-black/[0.05] group-hover:scale-110 group-hover:rotate-180 transition-all duration-700" />
-                  
-                  <div className="w-full h-full rounded-full bg-white flex items-center justify-center shadow-sm p-1 sm:p-2 group-hover:shadow-md transition-all duration-300 overflow-hidden relative z-10">
-                    {brand.image ? (
-                      <img
-                        src={brand.image}
-                        alt={brand.name}
-                        className="w-full h-full object-cover rounded-full grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
-                      />
-                    ) : (
-                      <span className="font-display text-2xl sm:text-4xl text-black font-black italic">
+                <div className="relative w-28 h-28 sm:w-40 sm:h-40 mb-4 sm:mb-6">
+                  {brand.image ? (
+                    <img
+                      src={brand.image}
+                      alt={brand.name}
+                      className="w-full h-full object-contain grayscale-[0.1] group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="font-sans text-5xl sm:text-7xl text-black font-black uppercase leading-none">
                         {brand.name[0]}
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="relative z-10 space-y-1 sm:space-y-2 mb-4 sm:mb-8">
-                  <h2 className="font-display text-sm sm:text-2xl text-black font-black italic tracking-tight group-hover:text-black transition-colors">
+                <div className="relative z-10 space-y-1 sm:space-y-2 mb-4 sm:mb-6">
+                  <h2 className="font-sans text-sm sm:text-xl text-black font-black uppercase tracking-tight group-hover:text-[#890754] transition-colors">
                     {brand.name}
                   </h2>
-                  <p className="hidden sm:block font-body text-[11px] text-black/40 italic leading-relaxed font-bold uppercase tracking-wider line-clamp-2 px-2">
+                  <p className="hidden sm:block font-sans text-[11px] text-black/40 leading-relaxed font-medium uppercase tracking-wider line-clamp-2 px-2">
                     {brand.tagline}
                   </p>
                 </div>

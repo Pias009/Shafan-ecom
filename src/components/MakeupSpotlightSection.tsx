@@ -94,13 +94,6 @@ export default function MakeupSpotlightSection({
     setTouchStart(null);
   };
 
-  // Track scrubber click
-  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    const target = Math.min(total - 1, Math.max(0, Math.floor(ratio * total)));
-    setActiveIndex(target);
-  };
 
   if (total === 0) return null;
 
@@ -311,9 +304,9 @@ export default function MakeupSpotlightSection({
                           <span className="text-[8px] sm:text-[10px] lg:text-xs font-semibold uppercase tracking-wider text-[#890754] truncate">
                             {brandName}
                           </span>
-                          <div className="flex items-center gap-0.5 shrink-0">
-                            <Star size={10} className="text-amber-400 fill-amber-400 sm:w-3 sm:h-3" />
-                            <span className="text-[8.5px] sm:text-[10px] lg:text-xs font-semibold text-slate-600">
+                          <div className="inline-flex items-center gap-0.5 bg-amber-50 border border-amber-200/70 rounded-full px-1.5 py-0.5 shrink-0">
+                            <Star size={8} className="text-amber-400 fill-amber-400 sm:w-2.5 sm:h-2.5" />
+                            <span className="text-[8px] sm:text-[9.5px] font-bold text-amber-600 leading-none">
                               {product.averageRating || 4.9}
                             </span>
                           </div>
@@ -362,30 +355,21 @@ export default function MakeupSpotlightSection({
             </div>
           </div>
 
-          {/* 3. Slider Scrubber & Progress Bar */}
-          <div className="mt-5 sm:mt-8 flex flex-col items-center justify-center gap-2.5 select-none max-w-md mx-auto px-4">
-            {/* Step info pill */}
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-sans text-slate-600 tracking-normal">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-pink-50 text-[#890754] text-[10px] sm:text-xs font-semibold uppercase tracking-wider border border-pink-100">
-                {activeIndex + 1} / {total}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="text-slate-900 font-medium">{makeupProducts[activeIndex]?.name}</span>
-            </div>
-
-            {/* Scrubber track line */}
-            <div
-              onClick={handleTrackClick}
-              className="w-full h-1.5 sm:h-2 bg-slate-100 hover:bg-slate-200/80 rounded-full relative overflow-hidden cursor-pointer transition-colors"
-              title="Click along track to navigate products"
-            >
-              <div
-                className="h-full bg-gradient-to-r from-[#540434] to-[#890754] rounded-full transition-all duration-300 ease-out shadow-xs"
-                style={{
-                  width: `${((activeIndex + 1) / total) * 100}%`,
-                }}
+          {/* Dot navigation indicators */}
+          <div className="mt-4 sm:mt-6 flex items-center justify-center gap-1.5">
+            {makeupProducts.map((_: any, i: number) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActiveIndex(i)}
+                aria-label={`Go to product ${i + 1}`}
+                className={`transition-all duration-300 rounded-full ${
+                  i === activeIndex
+                    ? "w-5 sm:w-6 h-1.5 bg-[#890754]"
+                    : "w-1.5 h-1.5 bg-slate-300 hover:bg-slate-400"
+                }`}
               />
-            </div>
+            ))}
           </div>
         </div>
       </div>

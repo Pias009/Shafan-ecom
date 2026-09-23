@@ -5,13 +5,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Ticket, Copy, CheckCircle, Calendar, Sparkles, ShoppingBag, Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Ticket, Copy, CheckCircle, Calendar, Sparkles, ShoppingBag, Zap, ArrowRight, ChevronLeft, ChevronRight, Star, ShoppingCart, Check } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import { useUserCountry } from "@/lib/country-detection";
-import { getDisplayPrice } from "@/lib/product-utils";
+import { getDisplayPrice, resolveProductPrice } from "@/lib/product-utils";
 import { fbEvent } from "@/lib/fpixel";
+import { Price } from "@/components/Price";
+import { getOptimizedUrl } from "@/lib/cloudinary-url";
+import { useCountryStore } from "@/lib/country-store";
 import toast from "react-hot-toast";
 
 interface Coupon {
@@ -152,6 +155,7 @@ export function OffersClient({
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
   const { addItem, hasAddress } = useCartStore();
+  const { selectedCountry } = useCountryStore();
 
   function scrollSlider(dir: "left" | "right") {
     const el = sliderRef.current;
@@ -422,17 +426,17 @@ export function OffersClient({
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* Prev / Next arrows */}
+                  {/* Prev / Next arrows — hidden on mobile */}
                   <button
                     onClick={() => scrollSlider("left")}
-                    className="w-10 h-10 rounded-full bg-black/5 hover:bg-black hover:text-white flex items-center justify-center transition-all active:scale-90"
+                    className="hidden sm:flex w-10 h-10 rounded-full bg-black/5 hover:bg-black hover:text-white items-center justify-center transition-all active:scale-90"
                     aria-label="Previous"
                   >
                     <ChevronLeft size={18} />
                   </button>
                   <button
                     onClick={() => scrollSlider("right")}
-                    className="w-10 h-10 rounded-full bg-black/5 hover:bg-black hover:text-white flex items-center justify-center transition-all active:scale-90"
+                    className="hidden sm:flex w-10 h-10 rounded-full bg-black/5 hover:bg-black hover:text-white items-center justify-center transition-all active:scale-90"
                     aria-label="Next"
                   >
                     <ChevronRight size={18} />
@@ -446,37 +450,114 @@ export function OffersClient({
                 </div>
               </div>
 
-              {/* Scroll-snap slider */}
+              {/* Scroll-snap slider (desktop) / Vertical list (mobile) */}
               <div className="relative">
-                <div
-                  ref={sliderRef}
-                  className="flex flex-row gap-6 overflow-x-auto scroll-smooth pb-4 [&::-webkit-scrollbar]:hidden"
-                  style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" }}
-                >
-                  {flashProducts.map((product: any) => (
-                    <div
-                      key={product.id}
-                      className="relative flex-none w-[220px] sm:w-[240px] lg:w-[260px]"
-                      style={{ scrollSnapAlign: "start" }}
-                    >
-                      <ProductCard
-                        product={{
-                          ...product,
-                          price: product.price,
-                          imageUrl: product.imageUrl,
-                        }}
-                        onQuickView={(p) => setQuickView(p)}
-                        onAddToCart={(p) => addToCart(p)}
-                        onOrderNow={(p) => orderNow(p)}
-                      />
-                      <div className="absolute top-3 left-3 z-10 pointer-events-none">
-                        <div className="bg-yellow-400 text-black text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-1 shadow-md">
-                          <Zap size={10} className="fill-black" /> HOT
+                  {/* Mobile: compact horizontal row list */}
+                  <div className="flex flex-col gap-3 sm:hidden">
+                    {flashProducts.map((product: any) => {
+                      const resolved = resolveProductPrice(product, selectedCountry);
+                      const rowPrice = resolved.displayPrice;
+                      const rowOriginal = resolved.originalPrice;
+                      const rowHasDiscount = resolved.hasDiscount && rowOriginal > rowPrice;
+                      const rowCurrency = resolved.currency;
+                      const rowRating = product.averageRating || 4.9;
+                      const brandName =
+                        product.brandName ||
+                        (typeof product.brand === "string" ? product.brand : product.brand?.name) ||
+                        "SHAFAN";
+                      const imgSrc = getOptimizedUrl(product.imageUrl || product.mainImage || "/placeholder-product.png", 200);
+                      return (
+                        <div
+                          key={product.id}
+                          onClick={() => router.push(`/products/${product.slug || product.id}`)}
+                          className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-3 cursor-pointer active:scale-[0.98] transition-transform"
+                        >
+                          {/* Thumbnail */}
+                          <div className="relative w-[72px] h-[72px] shrink-0 rounded-xl bg-slate-50 overflow-hidden">
+                            <Image
+                              src={imgSrc}
+                              alt={product.name}
+                              fill
+                              className="object-contain p-1"
+                              sizes="80px"
+                            />
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                            <p className="text-[9px] font-bold uppercase tracking-wider text-[#890754]/80 truncate leading-none">
+                              {brandName}
+                            </p>
+                            <p className="text-[12px] font-semibold text-slate-900 leading-snug line-clamp-2">
+                              {product.name}
+                            </p>
+                            <div className="flex items-center gap-0.5">
+                              {[...Array(5)].map((_: any, i: number) => (
+                                <Star
+                                  key={i}
+                                  size={8}
+                                  className={i < Math.round(rowRating) ? "text-amber-400 fill-amber-400" : "text-slate-200 fill-slate-200"}
+                                />
+                              ))}
+                              <span className="text-[8px] text-slate-400 font-medium ml-0.5">{rowRating}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 mt-1">
+                              <div className="flex items-baseline gap-1">
+                                <Price
+                                  amount={rowPrice}
+                                  className="text-[13px] font-black text-[#890754] leading-none"
+                                  countryPrices={product.countryPrices}
+                                  currency={rowCurrency}
+                                />
+                                {rowHasDiscount && (
+                                  <Price
+                                    amount={rowOriginal}
+                                    className="text-[9px] text-slate-400 line-through font-semibold leading-none"
+                                    countryPrices={product.countryPrices}
+                                    currency={rowCurrency}
+                                  />
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); addToCart(product); }}
+                                className="w-7 h-7 rounded-full bg-[#890754] hover:bg-[#540434] text-white flex items-center justify-center shrink-0 shadow-sm transition-all active:scale-90"
+                                aria-label="Add to Cart"
+                              >
+                                <ShoppingCart className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Desktop: horizontal scroll slider */}
+                  <div
+                    ref={sliderRef}
+                    className="hidden sm:flex flex-row gap-6 overflow-x-auto scroll-smooth pb-4 [&::-webkit-scrollbar]:hidden"
+                    style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" }}
+                  >
+                    {flashProducts.map((product: any) => (
+                      <div
+                        key={product.id}
+                        className="flex-none w-[240px] lg:w-[260px]"
+                        style={{ scrollSnapAlign: "start" }}
+                      >
+                        <ProductCard
+                          product={{
+                            ...product,
+                            price: product.price,
+                            imageUrl: product.imageUrl,
+                          }}
+                          onQuickView={(p) => setQuickView(p)}
+                          onAddToCart={(p) => addToCart(p)}
+                          onOrderNow={(p) => orderNow(p)}
+                        />
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
               </div>
             </div>
           )}

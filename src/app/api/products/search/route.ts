@@ -81,6 +81,16 @@ export async function GET(req: Request) {
       take: limit,
     });
 
+    // Log search query for analytics asynchronously
+    if (query && query.trim().length >= 2) {
+      prisma.trackingLog.create({
+        data: {
+          eventType: 'search',
+          eventData: { query: query.trim(), resultsCount: products.length },
+        },
+      }).catch(() => {});
+    }
+
     const cookieStore = req.headers.get('cookie') || '';
     const storeCodeMatch = cookieStore.match(/store_code=([^;]+)/);
     const storeCode = storeCodeMatch ? storeCodeMatch[1] : 'UAE';
