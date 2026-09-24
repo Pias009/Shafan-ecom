@@ -13,6 +13,33 @@ export const EXCHANGE_RATES: Record<string, number> = {
   GBP: 0.79,
 };
 
+export const CURRENCY_TO_AED_RATES: Record<string, number> = {
+  AED: 1.0,
+  USD: 3.67,
+  SAR: 0.98,
+  KWD: 12.0,
+  BHD: 9.75,
+  QAR: 1.01,
+  OMR: 9.55,
+  EUR: 4.0,
+  GBP: 4.65,
+  BDT: 0.031,
+};
+
+export function convertToAED(amount: number, fromCurrency?: string | null): number {
+  if (!amount || isNaN(amount)) return 0;
+  if (!fromCurrency) return Number(amount.toFixed(2));
+  const curr = fromCurrency.trim().toUpperCase();
+  const rate = CURRENCY_TO_AED_RATES[curr] || 1.0;
+  return Number((amount * rate).toFixed(2));
+}
+
+export function getCurrencyPairRateToAED(fromCurrency?: string | null): number {
+  if (!fromCurrency) return 1.0;
+  const curr = fromCurrency.trim().toUpperCase();
+  return CURRENCY_TO_AED_RATES[curr] || 1.0;
+}
+
 export function convertCurrency(
   amount: number,
   fromCurrency: string,

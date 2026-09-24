@@ -1,19 +1,30 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 import gsap from "gsap";
 
 /**
  * LenisProvider — Wires Lenis smooth scroll to the GSAP ticker.
  * Disabled on mobile (<768px) to preserve native momentum scrolling.
+ * Disabled on admin panel (/ueadmin) for standard native scrolling.
  * Safe to mount once in ClientLayout.
  */
 export function LenisProvider() {
   const lenisRef = useRef<Lenis | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Skip on touch/mobile devices
+    // Skip on admin panel or mobile or reduced motion
+    if (pathname?.startsWith("/ueadmin")) {
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+      return;
+    }
+
     const isMobile = window.matchMedia("(max-width: 767px)").matches;
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"

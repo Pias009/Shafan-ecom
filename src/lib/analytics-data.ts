@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { OrderStatus } from '@prisma/client';
+import {
+  convertToAED,
+  getCurrencyPairRateToAED,
+  CURRENCY_TO_AED_RATES,
+} from '@/lib/currency-rates';
 
 export type TimeRange = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'all';
 
@@ -37,6 +42,16 @@ export interface ProductAnalyticsItem {
   searchFrequency: number;
   conversionRate: number; // percentage
   stockQuantity: number;
+}
+
+export interface CurrencyPairAnalyticsItem {
+  currency: string;
+  pair: string;
+  rate: number;
+  orders: number;
+  rawTotal: number;
+  convertedAED: number;
+  percentage: number;
 }
 
 export interface SourceAnalyticsItem {
@@ -102,6 +117,7 @@ export interface AnalyticsResponse {
     revenue: number;
   }[];
   products: ProductAnalyticsItem[];
+  currencyPairs: CurrencyPairAnalyticsItem[];
   sources: SourceAnalyticsItem[];
   countries: CountryAnalyticsItem[];
   paymentMethods: PaymentAnalyticsItem[];
@@ -306,9 +322,12 @@ export async function getAnalyticsData({
       }),
   ]);
 
-  // Aggregate current metrics
+  // Aggregate current metrics (converted to AED using international currency pairs)
   const validCurrentOrders = currentOrders.filter((o) => o.status !== OrderStatus.CANCELLED);
-  const currentRevenue = validCurrentOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+  const currentRevenue = validCurrentOrders.reduce(
+    (acc, o) => acc + convertToAED(o.total || 0, o.currency),
+    0
+  );
   const currentOrderCount = currentOrders.length;
   const currentAov = currentOrderCount > 0 ? currentRevenue / currentOrderCount : 0;
   const currentItemsSold = validCurrentOrders.reduce(
@@ -316,7 +335,7 @@ export async function getAnalyticsData({
     0
   );
 
-  // Aggregate previous metrics
+  // Aggregate previous metrics (converted to AED)
   let prevRevenue: number | undefined;
   let prevOrderCount: number | undefined;
   let prevAov: number | undefined;
@@ -324,7 +343,10 @@ export async function getAnalyticsData({
 
   if (compare) {
     const validPrevOrders = prevOrders.filter((o) => o.status !== OrderStatus.CANCELLED);
-    prevRevenue = validPrevOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+    prevRevenue = validPrevOrders.reduce(
+      (acc, o) => acc + convertToAED(o.total || 0, o.currency),
+      0
+    );
     prevOrderCount = prevOrders.length;
     prevAov = prevOrderCount > 0 ? prevRevenue / prevOrderCount : 0;
     prevItemsSold = validPrevOrders.reduce(
@@ -397,9 +419,9 @@ export async function getAnalyticsData({
       }
       if (!isCancelled) {
         const qty = item.quantity || 1;
-        const price = item.unitPrice || 0;
+        const priceInAED = convertToAED(item.unitPrice || 0, order.currency);
         productOrderStats[pid].unitsSold += qty;
-        productOrderStats[pid].revenue += qty * price;
+        productOrderStats[pid].revenue += qty * priceInAED;
       }
     }
   }
@@ -503,13 +525,13 @@ export async function getAnalyticsData({
           const d = new Date(o.createdAt);
           return d.getHours() === h && o.status !== OrderStatus.CANCELLED;
         });
-        prevRev = prevInHour.reduce((sum, o) => sum + (o.total || 0), 0);
+        prevRev = prevInHour.reduce((sum, o) => sum + convertToAED(o.total || 0, o.currency), 0);
         prevOrd = prevOrders.filter((o) => new Date(o.createdAt).getHours() === h).length;
       }
 
       chartData.push({
         label: hourStr,
-        revenue: Number(currInHour.reduce((sum, o) => sum + (o.total || 0), 0).toFixed(2)),
+        revenue: Number(currInHour.reduce((sum, o) => sum + convertToAED(o.total || 0, o.currency), 0).toFixed(2)),
         prevRevenue: compare ? Number(prevRev.toFixed(2)) : undefined,
         orders: currOrdersHour.length,
         prevOrders: compare ? prevOrd : undefined,
@@ -560,7 +582,7 @@ export async function getAnalyticsData({
             o.status !== OrderStatus.CANCELLED
           );
         });
-        prevRev = prevInDay.reduce((sum, o) => sum + (o.total || 0), 0);
+        prevRev = prevInDay.reduce((sum, o) => sum + convertToAED(o.total || 0, o.currency), 0);
         prevOrd = prevOrders.filter((o) => {
           const od = new Date(o.createdAt);
           return od.getFullYear() === pYear && od.getMonth() === pMonth && od.getDate() === pDate;
@@ -569,7 +591,7 @@ export async function getAnalyticsData({
 
       chartData.push({
         label: dayLabel,
-        revenue: Number(currInDay.reduce((sum, o) => sum + (o.total || 0), 0).toFixed(2)),
+        revenue: Number(currInDay.reduce((sum, o) => sum + convertToAED(o.total || 0, o.currency), 0).toFixed(2)),
         prevRevenue: compare ? Number(prevRev.toFixed(2)) : undefined,
         orders: currOrdInDay.length,
         prevOrders: compare ? prevOrd : undefined,
@@ -618,7 +640,7 @@ export async function getAnalyticsData({
             o.status !== OrderStatus.CANCELLED
           );
         });
-        prevRev = prevInDay.reduce((sum, o) => sum + (o.total || 0), 0);
+        prevRev = prevInDay.reduce((sum, o) => sum + convertToAED(o.total || 0, o.currency), 0);
         prevOrd = prevOrders.filter((o) => {
           const od = new Date(o.createdAt);
           return od.getFullYear() === pYear && od.getMonth() === pMonth && od.getDate() === pDate;
@@ -627,7 +649,7 @@ export async function getAnalyticsData({
 
       chartData.push({
         label: dayLabel,
-        revenue: Number(currInDay.reduce((sum, o) => sum + (o.total || 0), 0).toFixed(2)),
+        revenue: Number(currInDay.reduce((sum, o) => sum + convertToAED(o.total || 0, o.currency), 0).toFixed(2)),
         prevRevenue: compare ? Number(prevRev.toFixed(2)) : undefined,
         orders: currOrdInDay.length,
         prevOrders: compare ? prevOrd : undefined,
@@ -668,7 +690,7 @@ export async function getAnalyticsData({
             o.status !== OrderStatus.CANCELLED
           );
         });
-        prevRev = prevInMonth.reduce((sum, o) => sum + (o.total || 0), 0);
+        prevRev = prevInMonth.reduce((sum, o) => sum + convertToAED(o.total || 0, o.currency), 0);
         prevOrd = prevOrders.filter((o) => {
           const od = new Date(o.createdAt);
           return od.getFullYear() === prevYear && od.getMonth() === mIdx;
@@ -677,7 +699,7 @@ export async function getAnalyticsData({
 
       chartData.push({
         label,
-        revenue: Number(currInMonth.reduce((sum, o) => sum + (o.total || 0), 0).toFixed(2)),
+        revenue: Number(currInMonth.reduce((sum, o) => sum + convertToAED(o.total || 0, o.currency), 0).toFixed(2)),
         prevRevenue: compare ? Number(prevRev.toFixed(2)) : undefined,
         orders: currOrdInMonth.length,
         prevOrders: compare ? prevOrd : undefined,
@@ -685,14 +707,14 @@ export async function getAnalyticsData({
     }
   }
 
-  // Referral Sources Breakdown
+  // Referral Sources Breakdown (in AED)
   const sourceStatsMap: Record<string, { orders: number; revenue: number }> = {};
   for (const o of currentOrders) {
     const src = o.referralSource || 'other';
     if (!sourceStatsMap[src]) sourceStatsMap[src] = { orders: 0, revenue: 0 };
     sourceStatsMap[src].orders++;
     if (o.status !== OrderStatus.CANCELLED) {
-      sourceStatsMap[src].revenue += o.total || 0;
+      sourceStatsMap[src].revenue += convertToAED(o.total || 0, o.currency);
     }
   }
 
@@ -708,7 +730,7 @@ export async function getAnalyticsData({
     }))
     .sort((a, b) => b.orders - a.orders);
 
-  // Geographic Breakdown (Country)
+  // Geographic Breakdown (Country) (in AED)
   const countryStatsMap: Record<string, { orders: number; revenue: number }> = {};
   for (const o of currentOrders) {
     const shipAddr = (o.shippingAddress as any) || {};
@@ -719,7 +741,7 @@ export async function getAnalyticsData({
     if (!countryStatsMap[country]) countryStatsMap[country] = { orders: 0, revenue: 0 };
     countryStatsMap[country].orders++;
     if (o.status !== OrderStatus.CANCELLED) {
-      countryStatsMap[country].revenue += o.total || 0;
+      countryStatsMap[country].revenue += convertToAED(o.total || 0, o.currency);
     }
   }
 
@@ -733,14 +755,14 @@ export async function getAnalyticsData({
     }))
     .sort((a, b) => b.orders - a.orders);
 
-  // Payment Methods Breakdown
+  // Payment Methods Breakdown (in AED)
   const paymentStatsMap: Record<string, { orders: number; revenue: number }> = {};
   for (const o of currentOrders) {
     const method = (o.paymentMethod || 'other').toLowerCase();
     if (!paymentStatsMap[method]) paymentStatsMap[method] = { orders: 0, revenue: 0 };
     paymentStatsMap[method].orders++;
     if (o.status !== OrderStatus.CANCELLED) {
-      paymentStatsMap[method].revenue += o.total || 0;
+      paymentStatsMap[method].revenue += convertToAED(o.total || 0, o.currency);
     }
   }
 
@@ -762,6 +784,37 @@ export async function getAnalyticsData({
       percentage: currentOrderCount > 0 ? Math.round((data.orders / currentOrderCount) * 100) : 0,
     }))
     .sort((a, b) => b.orders - a.orders);
+
+  // International Currency Pairs & Conversion Breakdown
+  const currencyPairStatsMap: Record<
+    string,
+    { orders: number; rawTotal: number; convertedAED: number; rate: number }
+  > = {};
+
+  for (const o of validCurrentOrders) {
+    const curr = (o.currency || 'AED').toUpperCase();
+    const rate = getCurrencyPairRateToAED(curr);
+    if (!currencyPairStatsMap[curr]) {
+      currencyPairStatsMap[curr] = { orders: 0, rawTotal: 0, convertedAED: 0, rate };
+    }
+    currencyPairStatsMap[curr].orders++;
+    const raw = o.total || 0;
+    currencyPairStatsMap[curr].rawTotal += raw;
+    currencyPairStatsMap[curr].convertedAED += convertToAED(raw, curr);
+  }
+
+  const currencyPairs: CurrencyPairAnalyticsItem[] = Object.entries(currencyPairStatsMap)
+    .map(([curr, data]) => ({
+      currency: curr,
+      pair: `${curr} / AED`,
+      rate: data.rate,
+      orders: data.orders,
+      rawTotal: Number(data.rawTotal.toFixed(2)),
+      convertedAED: Number(data.convertedAED.toFixed(2)),
+      percentage:
+        currentRevenue > 0 ? Math.round((data.convertedAED / currentRevenue) * 100) : 0,
+    }))
+    .sort((a, b) => b.convertedAED - a.convertedAED);
 
   // Search Queries Breakdown
   const searchQueries: SearchQueryItem[] = Object.entries(searchCounts)
@@ -904,6 +957,7 @@ export async function getAnalyticsData({
     chartData,
     topProductsChart,
     products: productAnalytics,
+    currencyPairs,
     sources,
     countries,
     paymentMethods,

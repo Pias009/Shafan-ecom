@@ -8,10 +8,10 @@ import {
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
   Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers, Palette
+  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers, Palette, X
 } from "lucide-react";
 
-export function AdminSidebar() {
+export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
   const { data: session } = useAdminSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -77,22 +77,36 @@ export function AdminSidebar() {
   ];
 
   return (
-    <aside className="w-80 h-full border-r border-black/5 bg-white p-10 flex flex-col space-y-12 shrink-0 glass-panel overflow-y-auto custom-scrollbar">
-       <div className="flex items-center gap-4 group cursor-pointer">
-          <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-2xl shadow-black/20 group-hover:rotate-12 transition-transform">S</div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <h2 className="font-black text-xs uppercase tracking-widest text-black">SHANFA Admin</h2>
-              <button 
-                onClick={() => window.location.reload()}
-                className="p-2 hover:bg-black/5 rounded-lg text-black/40 hover:text-black transition-colors"
-                title="Sync Data Now"
-              >
-                <BarChart3 size={14} className="animate-pulse" />
-              </button>
-            </div>
-            <p className="text-[10px] font-bold text-black/60 uppercase tracking-[0.2em]">Admin Panel</p>
+    <aside
+      className="w-80 h-full border-r border-black/5 bg-white p-8 lg:p-10 flex flex-col space-y-10 shrink-0 glass-panel overflow-y-auto custom-scrollbar"
+      data-lenis-prevent="true"
+    >
+       <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1 group cursor-pointer">
+             <div className="w-11 h-11 bg-black rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-xl shadow-black/20 group-hover:rotate-12 transition-transform">S</div>
+             <div className="flex-1">
+               <div className="flex items-center justify-between">
+                 <h2 className="font-black text-xs uppercase tracking-widest text-black">SHANFA Admin</h2>
+                 <button 
+                   onClick={() => window.location.reload()}
+                   className="p-1.5 hover:bg-black/5 rounded-lg text-black/40 hover:text-black transition-colors"
+                   title="Sync Data Now"
+                 >
+                   <BarChart3 size={14} className="animate-pulse" />
+                 </button>
+               </div>
+               <p className="text-[10px] font-bold text-black/60 uppercase tracking-[0.2em]">Admin Panel</p>
+             </div>
           </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden p-2 hover:bg-black/5 rounded-xl text-black/60 hover:text-black transition-colors"
+              title="Close Menu"
+            >
+              <X size={18} />
+            </button>
+          )}
        </div>
 
        <nav className="flex-1 space-y-2">
@@ -105,6 +119,7 @@ export function AdminSidebar() {
                  key={link.href}
                  href={link.href}
                  prefetch={true}
+                 onClick={() => onClose?.()}
                  className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
                    active 
                      ? "bg-black text-white shadow-xl shadow-black/10 scale-105 border border-black/20" 

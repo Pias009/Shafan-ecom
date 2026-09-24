@@ -426,21 +426,6 @@ export function OffersClient({
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {/* Prev / Next arrows — hidden on mobile */}
-                  <button
-                    onClick={() => scrollSlider("left")}
-                    className="hidden sm:flex w-10 h-10 rounded-full bg-black/5 hover:bg-black hover:text-white items-center justify-center transition-all active:scale-90"
-                    aria-label="Previous"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    onClick={() => scrollSlider("right")}
-                    className="hidden sm:flex w-10 h-10 rounded-full bg-black/5 hover:bg-black hover:text-white items-center justify-center transition-all active:scale-90"
-                    aria-label="Next"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
                   <Link
                     href="/products/flash-sales"
                     className="flex items-center gap-2 px-6 py-3 bg-yellow-400 text-black font-black text-xs uppercase tracking-widest rounded-full hover:bg-yellow-300 transition-all shadow-md hover:scale-105 active:scale-95"
@@ -533,18 +518,10 @@ export function OffersClient({
                     })}
                   </div>
 
-                  {/* Desktop: horizontal scroll slider */}
-                  <div
-                    ref={sliderRef}
-                    className="hidden sm:flex flex-row gap-6 overflow-x-auto scroll-smooth pb-4 [&::-webkit-scrollbar]:hidden"
-                    style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" }}
-                  >
+                  {/* Desktop: standard responsive product grid */}
+                  <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {flashProducts.map((product: any) => (
-                      <div
-                        key={product.id}
-                        className="flex-none w-[240px] lg:w-[260px]"
-                        style={{ scrollSnapAlign: "start" }}
-                      >
+                      <div key={product.id} className="w-full">
                         <ProductCard
                           product={{
                             ...product,

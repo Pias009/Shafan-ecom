@@ -290,7 +290,7 @@ export function Navbar() {
             </div>
             <div className="hidden md:flex items-center gap-4 text-white/80 text-[10.5px]">
               <div className="scale-90 origin-right">
-                <CountrySelector compact direction="down" locked={isCheckoutPage} />
+                <CountrySelector compact direction="down" locked={isCheckoutPage} variant="white" />
               </div>
               <span className="text-white/30">|</span>
               <Link href="/account/orders" className="hover:text-white transition-colors">Track Order</Link>

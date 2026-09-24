@@ -5,7 +5,17 @@ import { useState, useEffect, useRef } from "react";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function LanguageSelector({ direction = "up", align = "right" }: { direction?: "up" | "down", align?: "left" | "right" }) {
+export function LanguageSelector({
+  direction = "up",
+  align = "right",
+  variant = "default",
+  className = "",
+}: {
+  direction?: "up" | "down";
+  align?: "left" | "right";
+  variant?: "default" | "white";
+  className?: string;
+}) {
   const { currentLanguage, setLanguage } = useLanguageStore();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,10 +41,14 @@ export function LanguageSelector({ direction = "up", align = "right" }: { direct
     <div className="relative" ref={containerRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/5 hover:bg-black/10 transition"
+        className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all font-semibold active:scale-95 ${
+          variant === "white"
+            ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm"
+            : "bg-black/5 hover:bg-black/10 text-black"
+        } ${className}`}
       >
         <span className="text-lg">{current.flag}</span>
-        <span className="text-sm font-semibold uppercase">{current.code}</span>
+        <span className={`text-sm font-semibold uppercase ${variant === "white" ? "text-white" : "text-black"}`}>{current.code}</span>
       </button>
 
       <AnimatePresence>

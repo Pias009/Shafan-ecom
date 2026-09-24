@@ -24,6 +24,8 @@ import {
   MousePointerClick,
   Check,
   FileDown,
+  Coins,
+  ArrowRightLeft,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -300,6 +302,10 @@ export function AnalyticsClient({ initialData }: AnalyticsClientProps) {
           </div>
           <div className="text-2xl sm:text-3xl font-black text-black tracking-tight">
             {data.kpis.revenue.formatted}
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 text-[9px] font-black text-emerald-800 bg-emerald-50/80 px-2 py-0.5 rounded-full w-fit">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+            <span>Harmonized to AED</span>
           </div>
           {compare && data.kpis.revenue.changePercent !== undefined && (
             <div className="mt-3 flex items-center gap-1.5">
@@ -1191,6 +1197,94 @@ export function AnalyticsClient({ initialData }: AnalyticsClientProps) {
           </div>
         </section>
       </div>
+
+      {/* Section: International Currency Pairs & Conversion Breakdown */}
+      <section
+        id="section-currency-pairs"
+        className="bg-white rounded-[2.5rem] p-6 sm:p-8 border border-black/5 shadow-xl space-y-6"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Coins size={22} className="text-black/70" />
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-black">
+                International Currency Pairs & Conversion
+              </h2>
+            </div>
+            <p className="text-xs text-black/50 font-bold uppercase tracking-wider mt-1">
+              Multi-currency order pricing automatically harmonized into UAE Dirhams (AED)
+            </p>
+          </div>
+
+          <button
+            onClick={() =>
+              handlePdfExport(
+                'section-currency-pairs',
+                'International Currency Pairs & Conversion Report',
+                data.periodLabel
+              )
+            }
+            className="no-pdf flex items-center gap-1.5 px-3.5 py-1.5 bg-black/5 hover:bg-black/10 rounded-xl text-xs font-black text-black transition-all"
+          >
+            <Download size={14} />
+            <span>PDF</span>
+          </button>
+        </div>
+
+        {/* Currency Pairs Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {data.currencyPairs && data.currencyPairs.length > 0 ? (
+            data.currencyPairs.map((cp) => (
+              <div
+                key={cp.currency}
+                className="bg-black/[0.02] border border-black/5 p-5 rounded-2xl relative overflow-hidden flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="px-3 py-1 bg-black text-white text-xs font-black rounded-xl tracking-wider">
+                      {cp.pair}
+                    </span>
+                    <span className="text-[10px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-lg">
+                      1 {cp.currency} = {cp.rate.toFixed(2)} AED
+                    </span>
+                  </div>
+
+                  <div className="mt-2">
+                    <div className="text-[10px] font-black text-black/40 uppercase tracking-widest">
+                      Converted Revenue (AED)
+                    </div>
+                    <div className="text-2xl font-black text-black tracking-tight mt-0.5">
+                      AED {cp.convertedAED.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between text-xs text-black/70 font-bold border-t border-black/5 pt-2.5">
+                    <span>Original: {cp.rawTotal.toLocaleString()} {cp.currency}</span>
+                    <span>{cp.orders} {cp.orders === 1 ? 'order' : 'orders'}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-2 border-t border-black/5">
+                  <div className="flex items-center justify-between text-[10px] font-black mb-1">
+                    <span className="text-black/50 uppercase tracking-wider">Share of Revenue</span>
+                    <span className="text-black">{cp.percentage}%</span>
+                  </div>
+                  <div className="w-full bg-black/5 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-black h-full rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(cp.percentage, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-3 text-center py-8 text-black/40 text-xs font-bold">
+              No international order currency data available for this time range.
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Section 6: Search Insights & Query Analytics */}
       <section

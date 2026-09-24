@@ -4,6 +4,7 @@ import { formatOrderNumber } from "@/lib/order-number";
 import { Package, ShoppingBag, Users, TrendingUp, ArrowRight, Clock, ThumbsUp } from 'lucide-react';
 import { OrderStatus } from "@prisma/client";
 import { requireAdminSession, getAccessibleStoreIds } from "@/lib/admin-session";
+import { convertToAED } from "@/lib/currency-rates";
 
 export const dynamic = 'force-dynamic';
 
@@ -37,12 +38,12 @@ export default async function Dashboard() {
       orderBy: { createdAt: 'desc' },
       include: { user: true, store: true }
     }),
-    prisma.order.aggregate({
-      _sum: { total: true },
+    prisma.order.findMany({
       where: { 
         storeId: { in: accessibleStoreIds },
         NOT: { status: OrderStatus.CANCELLED } 
-      }
+      },
+      select: { total: true, currency: true }
     }),
     Promise.all([
       prisma.sesiVote.count({ where: { rating: "Happy" } }),
@@ -52,7 +53,11 @@ export default async function Dashboard() {
     ])
   ]);
 
-  const totalRevenue = revenueData._sum.total || 0;
+  const totalRevenue = revenueData.reduce(
+    (acc: number, o: { total: number | null; currency: string | null }) =>
+      acc + convertToAED(o.total || 0, o.currency),
+    0
+  );
   const [happyVotes, okayVotes, sadVotes, totalVotes] = sesiVotes;
   
   const getStatusColor = (status: OrderStatus) => {
