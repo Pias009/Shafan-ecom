@@ -64,7 +64,7 @@ function OfferBannerSlider({ banners }: { banners: OfferBanner[] }) {
         sizes="100vw"
         priority
       />
-      {(banner.title || banner.subtitle || banner.offerText || banner.ctaText) && (
+      {(banner.title || banner.subtitle || banner.offerText) && (
         <div
           className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-16"
           style={{ color: banner.textColor || "#000" }}
@@ -77,11 +77,6 @@ function OfferBannerSlider({ banners }: { banners: OfferBanner[] }) {
           )}
           {banner.subtitle && (
             <p className="text-sm sm:text-lg mt-2 sm:mt-4 max-w-lg font-medium opacity-80">{banner.subtitle}</p>
-          )}
-          {banner.ctaText && (
-            <span className="inline-flex items-center gap-2 mt-6 w-fit px-6 py-3 bg-black text-white rounded-full font-black text-xs uppercase tracking-widest">
-              {banner.ctaText} <ArrowRight size={14} />
-            </span>
           )}
         </div>
       )}

@@ -354,23 +354,6 @@ export default function MakeupSpotlightSection({
               })}
             </div>
           </div>
-
-          {/* Dot navigation indicators */}
-          <div className="mt-4 sm:mt-6 flex items-center justify-center gap-1.5">
-            {makeupProducts.map((_: any, i: number) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setActiveIndex(i)}
-                aria-label={`Go to product ${i + 1}`}
-                className={`transition-all duration-300 rounded-full ${
-                  i === activeIndex
-                    ? "w-5 sm:w-6 h-1.5 bg-[#890754]"
-                    : "w-1.5 h-1.5 bg-slate-300 hover:bg-slate-400"
-                }`}
-              />
-            ))}
-          </div>
         </div>
       </div>
     </section>
