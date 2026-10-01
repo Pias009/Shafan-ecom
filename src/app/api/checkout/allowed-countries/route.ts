@@ -24,6 +24,8 @@ export async function GET() {
         freeDelivery: charge?.freeDelivery ?? country.freeDelivery,
         taxRate: charge?.taxRate ?? country.taxRate,
         estimatedDays: country.estimatedDays,
+        deliveryTime: charge?.deliveryTime || `${country.estimatedDays || 2} - ${(country.estimatedDays || 2) + 1} Business Days`,
+        deliveryText: charge?.deliveryText || "Same-Day Dispatch • Tracked Shipping",
         regions: country.regions || [],
       };
     });

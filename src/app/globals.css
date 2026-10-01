@@ -571,6 +571,7 @@ h1, h2, h3, h4, h5, h6,
     }
   }
 
+  .rainbow-border-spin,
   .rainbow-border-ring {
     background: conic-gradient(
       from 0deg,
@@ -612,8 +613,68 @@ h1, h2, h3, h4, h5, h6,
   }
 
   .group:hover .rainbow-border-ring,
+  .group:hover .rainbow-border-spin,
   .group:hover .rainbow-border-aura {
     animation-duration: 1.8s;
+  }
+
+  /* Luxury Offers Button Animations */
+  @keyframes offer-border-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes offer-shimmer-sweep {
+    0% {
+      transform: translateX(-160%) skewX(-15deg);
+    }
+    45%, 100% {
+      transform: translateX(260%) skewX(-15deg);
+    }
+  }
+
+  .offer-border-spin {
+    background: conic-gradient(
+      from 0deg,
+      #ff0055 0deg,
+      #ff5500 55deg,
+      #ffaa00 110deg,
+      #ffffff 165deg,
+      #ffaa00 220deg,
+      #ff0055 285deg,
+      #ff0055 360deg
+    );
+    animation: offer-border-spin 2.6s linear infinite;
+    will-change: transform;
+  }
+
+  .offer-border-aura {
+    background: conic-gradient(
+      from 0deg,
+      #ff0055 0deg,
+      #ff5500 60deg,
+      #ffaa00 120deg,
+      #ff0055 240deg,
+      #ff0055 360deg
+    );
+    filter: blur(6px);
+    opacity: 0.75;
+    animation: offer-border-spin 2.6s linear infinite;
+    will-change: transform;
+  }
+
+  .offer-shimmer-sweep {
+    animation: offer-shimmer-sweep 2.8s ease-in-out infinite;
+    will-change: transform;
+  }
+
+  .group:hover .offer-border-spin,
+  .group:hover .offer-border-aura {
+    animation-duration: 1.3s;
   }
 
 

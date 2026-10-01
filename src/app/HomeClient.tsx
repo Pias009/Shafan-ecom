@@ -29,8 +29,9 @@ import { WhatsAppConciergeButton } from "@/components/WhatsAppConciergeButton";
 import dynamic from "next/dynamic";
 const GoogleReviewsSection = dynamic(() => import("@/components/GoogleReviewsSection").then(m => m.GoogleReviewsSection), { ssr: false });
 const BrandMarquee = dynamic(() => import("@/components/BrandMarquee").then(m => m.BrandMarquee), { ssr: false });
+import { useLanguageStore } from "@/lib/language-store";
 
-function FlashSaleCountdown() {
+function FlashSaleCountdown({ isAr = false }: { isAr?: boolean }) {
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 28, seconds: 45 });
 
   useEffect(() => {
@@ -54,14 +55,16 @@ function FlashSaleCountdown() {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2 bg-black/40 backdrop-blur-md px-3 py-1 sm:px-4 sm:py-1.5 rounded-full border border-pink-400/30 text-pink-200 text-[10px] sm:text-xs font-medium tracking-wider shadow-xs select-none shrink-0 whitespace-nowrap">
-      <Zap size={13} className="text-amber-400 fill-amber-400 animate-pulse shrink-0" />
-      <span className="hidden xs:inline text-[10px] sm:text-xs text-pink-300 font-semibold">ENDS IN:</span>
-      <span className="bg-black/50 px-1.5 py-0.5 rounded text-white font-mono font-bold">{pad(timeLeft.hours)}h</span>
-      <span>:</span>
-      <span className="bg-black/50 px-1.5 py-0.5 rounded text-white font-mono font-bold">{pad(timeLeft.minutes)}m</span>
-      <span>:</span>
-      <span className="bg-black/50 px-1.5 py-0.5 rounded text-pink-300 font-mono font-bold">{pad(timeLeft.seconds)}s</span>
+    <div className="flex items-center gap-1.5 sm:gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-pink-400/30 text-pink-200 text-[10px] sm:text-xs font-medium tracking-wider shadow-xs select-none shrink-0 whitespace-nowrap">
+      <Zap size={13} className="text-amber-400 fill-amber-400 animate-pulse shrink-0 sm:w-3.5 sm:h-3.5" />
+      <span className="text-[9.5px] sm:text-xs text-pink-300 font-semibold uppercase tracking-wider">
+        {isAr ? "ينتهي خلال:" : "ENDS IN:"}
+      </span>
+      <span className="bg-black/50 px-1.5 py-0.5 rounded text-white font-mono font-bold text-[10px] sm:text-xs">{pad(timeLeft.hours)}h</span>
+      <span className="text-pink-300 font-bold">:</span>
+      <span className="bg-black/50 px-1.5 py-0.5 rounded text-white font-mono font-bold text-[10px] sm:text-xs">{pad(timeLeft.minutes)}m</span>
+      <span className="text-pink-300 font-bold">:</span>
+      <span className="bg-black/50 px-1.5 py-0.5 rounded text-pink-300 font-mono font-bold text-[10px] sm:text-xs">{pad(timeLeft.seconds)}s</span>
     </div>
   );
 }
@@ -126,6 +129,9 @@ export default function HomeClient({
   const { addItem, hasAddress } = useCartStore();
   const router = useRouter();
   const { selectedCountry, selectedCurrency } = useCountryStore();
+  const { currentLanguage } = useLanguageStore();
+  // Language is persisted in localStorage; gate on mount so SSR and first client render match.
+  const isAr = mounted && currentLanguage?.code === "ar";
 
   useEffect(() => {
     setMounted(true);
@@ -310,33 +316,67 @@ export default function HomeClient({
         {filteredFlashSales.length > 0 && (
           <section className="relative w-full py-4 sm:py-6 md:py-8 select-none">
             {/* Ultra-Slim Section Header Bar */}
-            <div className="mb-4 sm:mb-6 md:mb-8 relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#3e0325] via-[#540434] to-[#3e0325] backdrop-blur-xl border border-pink-500/20 px-4 py-3 sm:px-6 sm:py-3.5 shadow-[0_8px_32px_rgba(84,4,52,0.2)]">
+            <div className="mb-4 sm:mb-6 md:mb-8 relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#3e0325] via-[#540434] to-[#3e0325] backdrop-blur-xl border border-pink-500/20 px-3.5 py-3 sm:px-6 sm:py-3.5 shadow-[0_8px_32px_rgba(84,4,52,0.2)]">
               {/* Glow accent */}
               <div className="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/15 rounded-full blur-2xl pointer-events-none" />
               <div className="absolute -bottom-8 right-12 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
-              <div className="relative flex flex-wrap items-center justify-between gap-2 sm:gap-3 md:gap-6">
-                {/* Left: Title + Mini LIVE Badge */}
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase min-w-0 truncate">
-                    Flash Sales
-                  </h2>
-                  <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse">
-                    LIVE
-                  </span>
+              <div className="relative">
+                {/* Mobile View (< sm): Row 1 has Title on Left + See All on Right; Row 2 has Centered Countdown Banner */}
+                <div className="flex sm:hidden flex-col gap-2.5">
+                  <div className="flex items-center justify-between gap-2 w-full">
+                    {/* Left: Title + Mini LIVE Badge */}
+                    <div className="flex items-center gap-1.5 min-w-0 shrink">
+                      <h2 className="font-sans text-sm font-black tracking-tight text-white uppercase truncate">
+                        {isAr ? "عروض التخفيضات" : "Flash Sales"}
+                      </h2>
+                      <span className="inline-flex items-center gap-0.5 bg-[#890754] border border-pink-400/40 text-white text-[7.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full animate-pulse shrink-0">
+                        {isAr ? "مباشر" : "LIVE"}
+                      </span>
+                    </div>
+
+                    {/* Right: Slim See All Deals CTA */}
+                    <Link
+                      href="/products/flash-sales"
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] active:scale-95 transition-all text-[11px] font-bold uppercase tracking-wider shadow-xs shrink-0 whitespace-nowrap"
+                    >
+                      <span>{isAr ? "عرض الكل" : "See All"}</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+
+                  {/* Centered Urgency Countdown Strip */}
+                  <div className="flex items-center justify-center w-full pt-1.5 border-t border-pink-500/20">
+                    <FlashSaleCountdown isAr={isAr} />
+                  </div>
                 </div>
 
-                {/* Center: Slim Countdown Timer */}
-                <FlashSaleCountdown />
+                {/* Desktop & Tablet View (>= sm): Single Seamless 3-Column Header */}
+                <div className="hidden sm:flex items-center justify-between gap-4 flex-nowrap">
+                  {/* Left: Title + Mini LIVE Badge */}
+                  <div className="flex items-center gap-2.5 min-w-0 shrink-0">
+                    <h2 className="font-sans text-base md:text-xl font-black tracking-tight text-white uppercase whitespace-nowrap">
+                      {isAr ? "عروض التخفيضات" : "Flash Sales"}
+                    </h2>
+                    <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full animate-pulse shrink-0">
+                      {isAr ? "مباشر" : "LIVE"}
+                    </span>
+                  </div>
 
-                {/* Right: Slim See All Deals CTA */}
-                <Link
-                  href="/products/flash-sales"
-                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
-                >
-                  <span>See All</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                  {/* Center: Slim Countdown Timer */}
+                  <div className="shrink min-w-0 flex items-center justify-center">
+                    <FlashSaleCountdown isAr={isAr} />
+                  </div>
+
+                  {/* Right: Slim See All Deals CTA */}
+                  <Link
+                    href="/products/flash-sales"
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-xs font-bold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
+                  >
+                    <span>{isAr ? "عرض الكل" : "See All"}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
             </div>
 

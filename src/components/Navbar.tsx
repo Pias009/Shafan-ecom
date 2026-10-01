@@ -259,7 +259,7 @@ export function Navbar() {
         }}
       >
         {/* Single Top Announcement Bar: Responsive Mobile & Desktop */}
-        <div className="bg-[#2b0119] text-white/95 text-[10.5px] sm:text-[11px] py-1 px-3 sm:px-4 border-b border-pink-950/40 select-none">
+        <div className="relative z-50 bg-[#2b0119] text-white/95 text-[10.5px] sm:text-[11px] py-1 px-3 sm:px-4 border-b border-pink-950/40 select-none">
           <div className="max-w-[1536px] mx-auto flex items-center justify-between font-medium">
             {/* Mobile Animated Announcement */}
             <div className="w-full md:hidden flex items-center justify-center overflow-hidden h-4">
@@ -289,11 +289,11 @@ export function Navbar() {
               )}
             </div>
             <div className="hidden md:flex items-center gap-4 text-white/80 text-[10.5px]">
-              <div className="scale-90 origin-right">
-                <CountrySelector compact direction="down" locked={isCheckoutPage} variant="white" />
+              <div className="scale-90 origin-left">
+                <CountrySelector compact direction="down" align="left" locked={isCheckoutPage} variant="white" />
               </div>
               <span className="text-white/30">|</span>
-              <Link href="/account/orders" className="hover:text-white transition-colors">Track Order</Link>
+              <Link href={isUserAuthenticated ? "/account/orders" : "/track-order"} className="hover:text-white transition-colors">Track Order</Link>
               <span className="text-white/30">|</span>
               <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
               <span className="text-white/30">|</span>
@@ -410,6 +410,55 @@ export function Navbar() {
                       );
                     }
 
+                    if (isOffers) {
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          prefetch={true}
+                          onMouseEnter={() => router.prefetch(link.href)}
+                          className="group relative inline-flex items-center rounded-full p-[2px] overflow-hidden select-none transition-transform duration-300 hover:scale-105 active:scale-95 shadow-[0_0_14px_rgba(255,80,120,0.35)] hover:shadow-[0_0_24px_rgba(251,146,60,0.65)]"
+                        >
+                          {/* Rotating Sunset-Flame Conic Border */}
+                          <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] offer-border-spin pointer-events-none" />
+
+                          {/* Glowing Warm Aura */}
+                          <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] offer-border-aura pointer-events-none" />
+
+                          {/* Inner Pill */}
+                          <div
+                            className={`relative z-10 w-full h-full rounded-full px-3.5 py-1.5 flex items-center gap-1.5 overflow-hidden transition-all duration-300 ${
+                              isActive
+                                ? "bg-white text-[#890754] font-black shadow-sm"
+                                : "bg-gradient-to-r from-[#2c0119]/95 via-[#4a022d]/95 to-[#2c0119]/95 text-white backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.35)]"
+                            }`}
+                          >
+                            {/* Sweeping Shimmer Beam */}
+                            <div className="absolute inset-0 -translate-x-full offer-shimmer-sweep bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 pointer-events-none" />
+
+                            {/* Pulsing Live Beacon Dot */}
+                            <span className="relative flex h-2 w-2 shrink-0">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80" />
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-tr from-amber-400 to-rose-400 shadow-xs" />
+                            </span>
+
+                            {/* Sparkles icon */}
+                            <Sparkles className="w-3 h-3 text-amber-300 shrink-0 fill-amber-300/40 animate-pulse" />
+
+                            {/* Label */}
+                            <span className="text-xs font-black tracking-widest uppercase drop-shadow-xs whitespace-nowrap">
+                              OFFERS
+                            </span>
+
+                            {/* Mini % Tag */}
+                            <span className="ml-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-rose-500 text-white uppercase tracking-wider shadow-xs leading-none shrink-0">
+                              %
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    }
+
                     return (
                       <Link
                         key={link.href}
@@ -420,11 +469,8 @@ export function Navbar() {
                           isActive 
                             ? "text-[#890754] bg-white shadow-sm font-black" 
                             : "text-white/90 hover:text-white hover:bg-white/20"
-                        } ${isOffers ? "animate-pulse" : ""}`}
+                        }`}
                       >
-                        {isOffers && (
-                          <Sparkles className="inline-block w-3 h-3 mr-1 text-amber-300 animate-spin-slow" />
-                        )}
                         {link.label}
                       </Link>
                     );
@@ -560,6 +606,7 @@ export function Navbar() {
                     <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/20 px-1">Shop Collections</p>
                     <div className="flex flex-col gap-1">
                       {navLinks.map((link) => {
+                        const isOffers = link.href === "/offers";
                         const cleanLabel = link.label.replace("🎉 ", "").toUpperCase();
 
                         return (
@@ -569,8 +616,13 @@ export function Navbar() {
                             onClick={() => setMobileOpen(false)}
                             className="flex items-center justify-between py-2.5 px-4 group"
                           >
-                            <span className="text-xl font-extrabold uppercase tracking-wider text-black transition-all duration-200 group-hover:translate-x-1">
+                            <span className="text-xl font-extrabold uppercase tracking-wider text-black transition-all duration-200 group-hover:translate-x-1 flex items-center gap-2">
                               {cleanLabel}
+                              {isOffers && (
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 text-white uppercase tracking-wider shadow-xs animate-pulse">
+                                  HOT %
+                                </span>
+                              )}
                             </span>
                             <span className="w-8 h-px bg-black/10 group-hover:w-12 group-hover:bg-black transition-all duration-300" />
                           </Link>

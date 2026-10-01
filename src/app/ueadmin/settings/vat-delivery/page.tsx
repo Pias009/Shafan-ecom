@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Percent, Truck, Save, Loader2, Minus, Plus, RefreshCw } from "lucide-react";
+import { Percent, Truck, Save, Loader2, Minus, Plus, RefreshCw, Clock, Sparkles } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
 interface CountryChargeSettings {
   vatPercent: number;
   deliveryFee: number;
   freeDelivery: number;
+  deliveryTime?: string;
+  deliveryText?: string;
 }
 
 interface VATDeliverySettings {
@@ -194,6 +196,41 @@ export default function VATDeliverySettingsPage() {
                     />
                   </div>
                 </div>
+
+                {/* Country-wise Delivery Time & Urgency Text Settings */}
+                <div className="mt-4 pt-4 border-t border-black/5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Delivery Time Estimate */}
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-black/70 flex items-center gap-1.5 mb-1.5">
+                      <Clock size={12} className="text-pink-600" />
+                      <span>Estimated Delivery Time</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={country.deliveryTime ?? ""}
+                      placeholder="e.g. 1 - 2 Business Days"
+                      onChange={(e) => updateCountry(code, { deliveryTime: e.target.value })}
+                      className="w-full rounded-xl border-2 border-black/10 focus:border-black px-3.5 py-2.5 text-xs font-bold text-black outline-none bg-white transition hover:border-black/20"
+                    />
+                    <span className="text-[10px] text-black/40 mt-1 block">Renders on cart page after the product card</span>
+                  </div>
+
+                  {/* Short Highlight Text */}
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-black/70 flex items-center gap-1.5 mb-1.5">
+                      <Sparkles size={12} className="text-amber-500" />
+                      <span>Short Urgency / Courier Text</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={country.deliveryText ?? ""}
+                      placeholder="e.g. Same-Day Dispatch • Tracked Shipping"
+                      onChange={(e) => updateCountry(code, { deliveryText: e.target.value })}
+                      className="w-full rounded-xl border-2 border-black/10 focus:border-black px-3.5 py-2.5 text-xs font-bold text-black outline-none bg-white transition hover:border-black/20"
+                    />
+                    <span className="text-[10px] text-black/40 mt-1 block">Renders with smooth wipe-right animation effect</span>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -206,6 +243,7 @@ export default function VATDeliverySettingsPage() {
         <ul className="text-sm text-blue-600 mt-2 space-y-1">
           <li>• VAT is added on top of the product subtotal (and delivery charge) at checkout.</li>
           <li>• Delivery is free when the order subtotal reaches the &quot;Free Delivery Above&quot; amount.</li>
+          <li>• Delivery Time &amp; Short Text render dynamically on the Cart page right after the product cards with an animated wipe-right reveal effect based on the customer&apos;s country.</li>
           <li>• Products marked &quot;VAT Exempt&quot; or &quot;Free Delivery&quot; in the product form skip these charges.</li>
         </ul>
       </div>

@@ -3,7 +3,8 @@
 import { useCartStore } from "@/lib/cart-store";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus, MapPin, Lock } from "lucide-react";
+import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus, MapPin, Lock, ShieldCheck, Clock, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -84,6 +85,78 @@ const ACTIVE_COUNTRIES = Object.values(COUNTRY_CONFIG)
   .filter((c) => c.active && ["AE", "KW", "SA", "BH", "OM", "QA"].includes(c.code))
   .map((c) => c.name);
 
+function CartDeliveryBox({
+  deliveryTime,
+  deliveryText,
+  countryName,
+  countryCode,
+  isAr = false,
+}: {
+  deliveryTime: string;
+  deliveryText: string;
+  countryName: string;
+  countryCode?: string;
+  isAr?: boolean;
+}) {
+  const [animKey, setAnimKey] = useState(0);
+
+  useEffect(() => {
+    setAnimKey((k) => k + 1);
+  }, [deliveryTime, deliveryText, countryName, countryCode]);
+
+  return (
+    <div className="rounded-2xl lg:rounded-3xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 via-[#890754]/5 to-teal-500/10 shadow-sm p-4 sm:p-5 relative overflow-hidden select-none">
+      {/* Wipe-Right Light Beam Sweep */}
+      <motion.div
+        key={`delivery-beam-${animKey}`}
+        initial={{ x: isAr ? "100%" : "-100%" }}
+        animate={{ x: isAr ? "-200%" : "200%" }}
+        transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-emerald-400/30 to-transparent pointer-events-none z-10"
+      />
+
+      {/* Wipe-Right Content Reveal */}
+      <motion.div
+        key={`delivery-content-${animKey}`}
+        initial={{
+          opacity: 0,
+          clipPath: isAr ? "inset(0 0 0 100%)" : "inset(0 100% 0 0)",
+        }}
+        animate={{
+          opacity: 1,
+          clipPath: "inset(0 0 0 0)",
+        }}
+        transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-0 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20">
+            <Truck size={18} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs sm:text-sm font-black text-black flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span>{isAr ? `توصيل سريع إلى ${countryName}:` : `Express Delivery to ${countryName}:`}</span>
+              <span className="text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full bg-emerald-600 text-white shadow-2xs">
+                {deliveryTime}
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs font-semibold text-black/70 truncate mt-0.5 flex items-center gap-1.5">
+              <Clock size={12} className="text-emerald-600 shrink-0" />
+              <span>{deliveryText}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-800 bg-white/80 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full border border-emerald-200/60 shadow-xs shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span>{isAr ? "شحن مؤكد" : "Verified Courier"}</span>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+
 function CartPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -111,7 +184,7 @@ function CartPageContent() {
 
   const [mounted, setMounted] = useState(false);
 
-  const [countryCharges, setCountryCharges] = useState<Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number }>>({});
+  const [countryCharges, setCountryCharges] = useState<Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number; deliveryTime?: string; deliveryText?: string }>>({});
 
   const [email, setEmail] = useState("");
   const [notifyMe, setNotifyMe] = useState(false);
@@ -130,6 +203,12 @@ function CartPageContent() {
   const [saveInfo, setSaveInfo] = useState(false);
   const [shipMethod, setShipMethod] = useState<"ship" | "pickup">("ship");
   const [showRegionDropdown, setShowRegionDropdown] = useState(false);
+
+  const activeCountryCode = getCountryCode(deliveryCountry) || checkoutCountry || "AE";
+  const activeChargeConfig = countryCharges[activeCountryCode];
+  const activeCountryName = getCountryName(activeCountryCode) || deliveryCountry || "United Arab Emirates";
+  const activeDeliveryTime = activeChargeConfig?.deliveryTime || (activeCountryCode === "AE" ? "1 - 2 Business Days" : "2 - 4 Business Days");
+  const activeDeliveryText = activeChargeConfig?.deliveryText || (activeCountryCode === "AE" ? "Same-Day Dispatch for Morning Orders" : "Express Tracked Delivery");
 
   const [activePayment, setActivePayment] = useState<string | null>(null);
   const [useBillingAddress, setUseBillingAddress] = useState(true);
@@ -156,13 +235,15 @@ function CartPageContent() {
       .then((r) => r.json())
       .then((data) => {
         if (!isMounted) return;
-        const map: Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number }> = {};
+        const map: Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number; deliveryTime?: string; deliveryText?: string }> = {};
         (data?.activeCountries || []).forEach((c: any) => {
           map[c.code] = {
             deliveryFee: Number(c.deliveryFee) || 0,
             freeDelivery: Number(c.freeDelivery) || 0,
             taxRate: Number(c.taxRate) || 0,
             minOrder: Number(c.minOrder) || 0,
+            deliveryTime: c.deliveryTime || `${c.estimatedDays || 2} - ${(c.estimatedDays || 2) + 1} Business Days`,
+            deliveryText: c.deliveryText || "Same-Day Dispatch • Tracked Shipping",
           };
         });
         setCountryCharges(map);
@@ -1014,20 +1095,6 @@ function CartPageContent() {
                 currentCountry={checkoutCountry.toUpperCase()}
               />
             </div>
-
-            {!isEmpty && (
-              <button
-                onClick={() => handleCheckout()}
-                disabled={submitting}
-                className={`w-full rounded-full py-5 md:py-6 font-body text-xs md:text-sm font-black tracking-[0.25em] transition-all flex items-center justify-center gap-3 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:scale-100 ${
-                  submitting
-                    ? "bg-gray-400 text-white shadow-none"
-                    : "bg-red-600 hover:bg-red-700 text-white hover:scale-[1.03] active:scale-[0.97] shadow-2xl shadow-red-600/30"
-                }`}
-              >
-                {submitting ? "Processing..." : "Place Order"}
-              </button>
-            )}
           </div>
 
           <div className="lg:col-span-6 order-1 lg:order-2">
@@ -1119,6 +1186,17 @@ function CartPageContent() {
                   </div>
                 )}
               </div>
+
+              {/* Delivery Data Box — One box after the product box */}
+              {!isEmpty && (
+                <CartDeliveryBox
+                  deliveryTime={activeDeliveryTime}
+                  deliveryText={activeDeliveryText}
+                  countryName={activeCountryName}
+                  countryCode={activeCountryCode}
+                  isAr={isArabic}
+                />
+              )}
 
               {!isEmpty && (
                 <>
@@ -1214,6 +1292,26 @@ function CartPageContent() {
                   )}
                 </div>
               </div>
+
+              {!isEmpty && (
+                <button
+                  type="button"
+                  id="place-order-button"
+                  onClick={() => handleCheckout()}
+                  disabled={submitting}
+                  className={`w-full rounded-full py-4 sm:py-5 px-6 font-body text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-all flex items-center justify-center gap-3 cursor-pointer ${
+                    submitting
+                      ? "bg-gray-400 text-white shadow-none cursor-not-allowed"
+                      : "bg-red-600 hover:bg-red-700 text-white hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-red-600/30"
+                  }`}
+                >
+                  <Lock className="w-4 h-4 shrink-0" />
+                  <span>{submitting ? (isArabic ? "جاري المعالجة..." : "Processing...") : (isArabic ? "تأكيد الطلب" : "Place Order")}</span>
+                  <span className="ml-1 bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-black text-white shrink-0">
+                    <Price amount={total} />
+                  </span>
+                </button>
+              )}
 
                 </>
               )}

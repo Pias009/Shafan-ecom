@@ -33,6 +33,12 @@ export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
       show: true
     },
     { 
+      label: "Agent Kira (24/7 AI)", 
+      href: "/ueadmin/kira", 
+      icon: Sparkles, 
+      show: true 
+    },
+    { 
       label: "Users", 
       href: "/ueadmin/users", 
       icon: Users, 
@@ -101,7 +107,7 @@ export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
           {onClose && (
             <button
               onClick={onClose}
-              className="lg:hidden p-2 hover:bg-black/5 rounded-xl text-black/60 hover:text-black transition-colors"
+              className="p-2 hover:bg-black/5 rounded-xl text-black/60 hover:text-black transition-colors cursor-pointer"
               title="Close Menu"
             >
               <X size={18} />

@@ -214,13 +214,13 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
           <div className="absolute -top-12 -left-12 w-40 h-40 bg-pink-500/15 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -bottom-8 right-12 w-36 h-36 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
-          <div className="relative flex flex-wrap items-center justify-between gap-2 sm:gap-6">
+          <div className="relative flex items-center justify-between gap-2 sm:gap-6 flex-nowrap">
             {/* Left: Title + Mini Badge */}
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <h2 className="font-sans text-base sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase min-w-0 truncate">
+            <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink">
+              <h2 className="font-sans text-sm sm:text-lg md:text-xl font-bold tracking-tight text-white uppercase min-w-0 truncate">
                 {isAr ? "العناية اليومية" : "Routine"}
               </h2>
-              <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 bg-[#890754] border border-pink-400/40 text-white text-[8px] sm:text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 sm:px-2 rounded-full shrink-0">
                 {isAr ? "خطوات" : "STEPS"}
               </span>
             </div>
@@ -228,10 +228,10 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
             {/* Right: Slim See All CTA */}
             <Link
               href="/products?category=Skin%20Care"
-              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-[11px] sm:text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
             >
               <span>{isAr ? "عرض الكل" : "See All"}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </Link>
           </div>
         </div>

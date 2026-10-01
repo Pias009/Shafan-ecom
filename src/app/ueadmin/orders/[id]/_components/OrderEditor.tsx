@@ -47,13 +47,21 @@ function formatPrice(amount: number, currency: string): string {
   return `${code} ${(amount || 0).toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 }
 
+// Checkout stores the customer name as `fullName`; split it so the first/last inputs are populated.
+function withSplitName(addr: any) {
+  const a = addr || {};
+  if (a.first_name || a.last_name || !a.fullName) return a;
+  const [first, ...rest] = String(a.fullName).trim().split(/\s+/);
+  return { ...a, first_name: first || '', last_name: rest.join(' ') };
+}
+
 export default function OrderEditor({ order }: OrderEditorProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [shippingAddress, setShippingAddress] = useState(order.shippingAddress || {});
-  const [billingAddress, setBillingAddress] = useState(order.billingAddress || {});
+  const [shippingAddress, setShippingAddress] = useState(() => withSplitName(order.shippingAddress));
+  const [billingAddress, setBillingAddress] = useState(() => withSplitName(order.billingAddress));
   const [items, setItems] = useState(order.items || []);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -376,11 +384,11 @@ export default function OrderEditor({ order }: OrderEditorProps) {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className={lbl}>First Name</label>
-                        <input type="text" value={addr.first_name || ''} onChange={e => setAddr({...addr, first_name: e.target.value})} className={inp} />
+                        <input type="text" value={addr.first_name || ''} onChange={e => setAddr({...addr, first_name: e.target.value, fullName: `${e.target.value} ${addr.last_name || ''}`.trim()})} className={inp} />
                       </div>
                       <div>
                         <label className={lbl}>Last Name</label>
-                        <input type="text" value={addr.last_name || ''} onChange={e => setAddr({...addr, last_name: e.target.value})} className={inp} />
+                        <input type="text" value={addr.last_name || ''} onChange={e => setAddr({...addr, last_name: e.target.value, fullName: `${addr.first_name || ''} ${e.target.value}`.trim()})} className={inp} />
                       </div>
                     </div>
                     <div>
