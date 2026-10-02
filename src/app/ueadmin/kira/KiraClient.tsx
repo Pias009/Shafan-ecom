@@ -843,7 +843,6 @@ export function KiraClient() {
             setIsLocked(false);
             appendLog('KIRA', 'EXEC', 'AGENT KIRA CONSOLE UNLOCKED VIA DATABASE SECURITY TOKEN');
           }}
-          defaultTokenHint="KIRA-SEC-9842-88F1"
         />
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full border-4 border-slate-900 border-t-transparent animate-spin" />
@@ -1441,7 +1440,6 @@ export function KiraClient() {
           setIsLocked(false);
           appendLog('KIRA', 'EXEC', 'AGENT KIRA CONSOLE UNLOCKED VIA DATABASE SECURITY TOKEN');
         }}
-        defaultTokenHint="KIRA-SEC-9842-88F1"
       />
 
     </div>

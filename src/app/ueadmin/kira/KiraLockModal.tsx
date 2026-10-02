@@ -5,13 +5,10 @@ import {
   Lock,
   Unlock,
   KeyRound,
-  ShieldAlert,
   ShieldCheck,
   Clipboard,
-  Check,
   Eye,
   EyeOff,
-  Sparkles,
   AlertTriangle,
   Zap,
 } from 'lucide-react';
@@ -20,33 +17,17 @@ import { playKiraChime, playStasisAwakenSound } from '@/lib/kira/sound';
 interface KiraLockModalProps {
   isOpen: boolean;
   onUnlock: () => void;
-  defaultTokenHint?: string;
 }
 
-export function KiraLockModal({
-  isOpen,
-  onUnlock,
-  defaultTokenHint = 'KIRA-SEC-9842-88F1',
-}: KiraLockModalProps) {
+export function KiraLockModal({ isOpen, onUnlock }: KiraLockModalProps) {
   const [inputToken, setInputToken] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [hasCopied, setHasCopied] = useState(false);
   const [shake, setShake] = useState(false);
 
   if (!isOpen) return null;
-
-  const handleCopyAndFill = () => {
-    setInputToken(defaultTokenHint);
-    setErrorMessage('');
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(defaultTokenHint).catch(() => {});
-      setHasCopied(true);
-      setTimeout(() => setHasCopied(false), 2500);
-    }
-  };
 
   const handlePasteFromClipboard = async () => {
     try {
@@ -67,7 +48,7 @@ export function KiraLockModal({
     const token = inputToken.trim();
 
     if (!token) {
-      setErrorMessage('Please enter or paste your access token.');
+      setErrorMessage('Please enter your secret access token.');
       triggerShake();
       return;
     }
@@ -98,29 +79,14 @@ export function KiraLockModal({
         }, 600);
       } else {
         triggerShake();
-        setErrorMessage(data.message || 'Invalid or expired token. Access Denied.');
+        setErrorMessage(data.message || 'Invalid or unauthorized token. Access Denied.');
         setIsVerifying(false);
       }
     } catch (err) {
       console.error('Lock verification error:', err);
-      // Fail-safe check in case offline
-      const cleanInput = token.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-      const cleanDefault = defaultTokenHint.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-
-      if (cleanInput === cleanDefault) {
-        setSuccessMessage('ACCESS GRANTED // FAIL-SAFE UNLOCKED');
-        playStasisAwakenSound(0.2);
-        setTimeout(() => {
-          onUnlock();
-          setIsVerifying(false);
-          setSuccessMessage('');
-          setInputToken('');
-        }, 600);
-      } else {
-        triggerShake();
-        setErrorMessage('Verification failed. Please check your token and network.');
-        setIsVerifying(false);
-      }
+      triggerShake();
+      setErrorMessage('Verification failed. Please check network connection.');
+      setIsVerifying(false);
     }
   };
 
@@ -177,7 +143,7 @@ export function KiraLockModal({
         <form onSubmit={handleVerify} className="space-y-4">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium px-1">
-              <label htmlFor="kira-token" className="flex items-center gap-1.5 text-slate-300">
+              <label htmlFor="kira-token" className="flex items-center gap-1.5 text-slate-300 font-semibold">
                 <KeyRound className="w-3.5 h-3.5 text-fuchsia-400" />
                 Security Access Token
               </label>
@@ -199,7 +165,7 @@ export function KiraLockModal({
                   setInputToken(e.target.value);
                   setErrorMessage('');
                 }}
-                placeholder="KIRA-SEC-XXXX-XXXX"
+                placeholder="Enter or paste token..."
                 autoComplete="off"
                 autoFocus
                 className="w-full bg-slate-950/80 border-2 border-slate-700/70 focus:border-fuchsia-500 focus:shadow-[0_0_20px_rgba(217,70,239,0.3)] rounded-2xl px-4 py-3.5 text-white font-mono text-sm tracking-wider outline-none transition-all placeholder:text-slate-600 pr-12"
@@ -213,35 +179,6 @@ export function KiraLockModal({
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-          </div>
-
-          {/* Quick Token Retrieval / Auto-fill Helper */}
-          <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs">
-            <div className="min-w-0">
-              <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
-                Registered Database Token
-              </div>
-              <div className="font-mono text-fuchsia-300 font-bold text-xs truncate">
-                {defaultTokenHint}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleCopyAndFill}
-              className="shrink-0 px-3 py-1.5 rounded-xl bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 text-[11px] font-bold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-            >
-              {hasCopied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  Copied & Filled!
-                </>
-              ) : (
-                <>
-                  <Clipboard className="w-3.5 h-3.5" />
-                  Copy & Fill
-                </>
-              )}
-            </button>
           </div>
 
           {/* Error Message */}

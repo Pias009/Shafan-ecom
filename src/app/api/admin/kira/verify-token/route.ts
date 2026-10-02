@@ -66,7 +66,7 @@ export async function GET() {
     return NextResponse.json({
       status: 'LOCKED',
       tokenConfigured: !!dbData.token,
-      hint: 'Enter your classified token (format: KIRA-SEC-XXXX-XXXX) to access Agent Kira.',
+      hint: 'Enter your classified security access token to access Agent Kira.',
     });
   } catch (err: any) {
     return NextResponse.json({ status: 'LOCKED', error: err.message }, { status: 500 });
