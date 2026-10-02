@@ -5,6 +5,7 @@ import { ChevronDown, MapPin, Save, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { addressValidationSchema, addressFieldLabels, addressFieldRequired } from "@/schemas/addressValidation";
 import { z } from "zod";
+import { FlagIcon } from "@/components/FlagIcon";
 
 const COUNTRIES = [
   "United Arab Emirates",
@@ -286,9 +287,12 @@ export default function CheckoutAddressForm({
               onClick={() => setShowCountryDropdown(!showCountryDropdown)}
               className="w-full rounded-2xl px-5 py-3.5 text-left text-black font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white flex items-center justify-between relative z-[60]"
             >
-              <span className={formData.country ? "" : "text-black/30"}>
-                {formData.country || "Select Country"}
-              </span>
+              <div className="flex items-center gap-2.5">
+                {formData.country && <FlagIcon code={formData.country} size="sm" alt={formData.country} />}
+                <span className={formData.country ? "" : "text-black/30"}>
+                  {formData.country || "Select Country"}
+                </span>
+              </div>
               <ChevronDown className={`w-5 h-5 transition ${showCountryDropdown ? "rotate-180" : ""}`} />
             </button>
             {showCountryDropdown && (
@@ -301,11 +305,12 @@ export default function CheckoutAddressForm({
                       setFormData({ ...formData, country, city_name: "", area_name: "" });
                       setShowCountryDropdown(false);
                     }}
-                    className={`w-full px-5 py-3 text-left font-semibold hover:bg-black/5 transition ${
+                    className={`w-full px-5 py-3 text-left font-semibold hover:bg-black/5 transition flex items-center gap-2.5 ${
                       formData.country === country ? "bg-black text-white" : "text-black"
                     }`}
                   >
-                    {country}
+                    <FlagIcon code={country} size="sm" alt={country} className="shrink-0" />
+                    <span>{country}</span>
                   </button>
                 ))}
               </div>

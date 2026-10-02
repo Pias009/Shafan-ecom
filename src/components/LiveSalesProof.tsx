@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Sparkles, X } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { FlagIcon } from "./FlagIcon";
 
 interface ProofNotification {
   name: string;
@@ -66,8 +67,8 @@ export function LiveSalesProof() {
       >
         <div className="relative bg-white/95 backdrop-blur-xl border border-emerald-900/10 rounded-2xl p-2.5 shadow-[0_12px_32px_rgba(0,0,0,0.14)] flex items-center gap-3 text-slate-800 select-none">
           {/* Green Pulse Ring + Flag */}
-          <div className="relative w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 text-base shadow-inner">
-            <span>{current.flag}</span>
+          <div className="relative w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0 shadow-inner">
+            <FlagIcon code={current.country} size="sm" alt={current.country} />
             <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />

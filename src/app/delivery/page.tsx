@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { Truck, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { FlagIcon } from '@/components/FlagIcon';
 
 export const metadata: Metadata = {
   title: 'Delivery Information | SHANFA',
@@ -108,7 +109,7 @@ export default function DeliveryPage() {
             <div key={item.code} className="glass-panel-heavy rounded-2xl p-6 border border-black/5">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <span className="text-3xl">{item.flag}</span>
+                  <FlagIcon code={item.code} size="lg" alt={item.country} className="rounded-md" />
                   <div>
                     <h3 className="font-bold text-black text-lg">{item.country}</h3>
                     <p className="text-sm text-black/50">Shipping to {item.country}</p>

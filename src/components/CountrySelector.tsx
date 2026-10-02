@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { Check, ChevronDown, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartStore } from "@/lib/cart-store";
+import { FlagIcon } from "./FlagIcon";
 
 export function CountrySelector({
   direction = "down",
@@ -66,7 +67,7 @@ export function CountrySelector({
   if (locked) {
     return (
       <div
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold text-xs cursor-not-allowed select-none transition-all ${
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-full font-semibold text-xs cursor-not-allowed select-none transition-all ${
           variant === "white"
             ? "bg-white/10 text-white border border-white/20 shadow-sm"
             : "bg-black/5 text-black"
@@ -74,7 +75,7 @@ export function CountrySelector({
         title={`Locked to your location: ${lockedCountry.name} (${lockedCountry.currency})`}
       >
         <Lock size={11} className={variant === "white" ? "text-white/70" : "text-black/40"} />
-        <span className="text-base">{lockedCountry.flag}</span>
+        <FlagIcon code={lockedCountry.code} size="sm" alt={lockedCountry.name} />
         <span className={`font-bold uppercase tracking-wider ${variant === "white" ? "text-white" : "text-black"}`}>
           {compact ? lockedCountry.currency : `${lockedCountry.code} (${lockedCountry.currency})`}
         </span>
@@ -94,14 +95,14 @@ export function CountrySelector({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all font-semibold text-xs cursor-pointer active:scale-95 ${
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all font-semibold text-xs cursor-pointer active:scale-95 ${
           variant === "white"
             ? "bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm"
             : "bg-black/5 hover:bg-black/10 text-black"
         } ${className}`}
         aria-label="Select Country and Currency"
       >
-        <span className="text-base">{currentCountry.flag}</span>
+        <FlagIcon code={currentCountry.code} size="sm" alt={currentCountry.name} />
         <span className={`font-bold uppercase tracking-wider ${variant === "white" ? "text-white" : "text-black"}`}>
           {compact ? currentCountry.currency : `${currentCountry.code} (${currentCountry.currency})`}
         </span>
@@ -155,8 +156,8 @@ export function CountrySelector({
                         : "text-black/80 hover:bg-black/5 hover:text-black"
                     }`}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-base shrink-0">{c.flag}</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FlagIcon code={c.code} size="sm" alt={c.name} className="shrink-0" />
                       <span className="truncate">{c.name}</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 ml-2">

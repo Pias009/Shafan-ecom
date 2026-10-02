@@ -35,6 +35,32 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.shanfaglobal.com"),
   title: "SHANFA — Your Caring Skin Partner",
   description: "Premium Skin Care crafted with nature's finest ingredients for your natural beauty.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "32x32" },
+      { url: "/logo-icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+  },
+  openGraph: {
+    title: "SHANFA — Your Caring Skin Partner",
+    description: "Premium Skin Care crafted with nature's finest ingredients for your natural beauty.",
+    url: "https://www.shanfaglobal.com",
+    siteName: "SHANFA GLOBAL",
+    images: [
+      {
+        url: "/images/shanfa-logo-official.png",
+        width: 1647,
+        height: 260,
+        alt: "SHANFA GLOBAL Logo",
+      },
+    ],
+    type: "website",
+  },
   verification: {
     google: "961737d60c2e9da4",
   },

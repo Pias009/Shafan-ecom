@@ -1,0 +1,22 @@
+{
+  "name": "SHANFA GLOBAL — Your Caring Skin Partner",
+  "short_name": "SHANFA",
+  "description": "Premium Skin Care crafted with nature's finest ingredients for your natural beauty.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#890754",
+  "theme_color": "#890754",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

@@ -10,6 +10,7 @@ import { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Price } from "@/components/Price";
+import { FlagIcon } from "@/components/FlagIcon";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 import { useCountryStore, resolveGeoCountry } from "@/lib/country-store";
@@ -892,6 +893,7 @@ function CartPageContent() {
                   <div className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 border-black/5 text-black/40 bg-white flex items-center justify-between cursor-not-allowed">
                     <span className="flex items-center gap-2">
                       <Lock className="w-3 h-3 text-black/20" />
+                      <FlagIcon code={activeCountryCode} size="sm" alt={deliveryCountry} />
                       {deliveryCountry}
                     </span>
                   </div>

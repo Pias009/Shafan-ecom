@@ -23,6 +23,7 @@ import {
   FileText,
   ChevronUp,
   ChevronDown,
+  Lock,
 } from 'lucide-react';
 import {
   playKiraChime,
@@ -36,6 +37,7 @@ import { AgentTerminal, TerminalLog } from './AgentTerminal';
 import { AgentStasisPods, SubAgentId, AgentPodData } from './AgentStasisPods';
 import { AgentReportModal } from './AgentReportModal';
 import { MasterReportModal } from './MasterReportModal';
+import { KiraLockModal } from './KiraLockModal';
 
 export type AdminRole = 'HEAD' | 'SALES_MANAGER' | 'DEV_LEAD' | 'STOCK_MANAGER';
 export type AdminHonorific = 'Sir' | "Ma'am" | 'Leader';
@@ -258,6 +260,8 @@ export function KiraClient() {
   const [identity, setIdentity] = useState<AdminIdentity | null>(null);
   const [identityModalOpen, setIdentityModalOpen] = useState<boolean>(false);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
+  // Classified Security Lock State (Locked by default)
+  const [isLocked, setIsLocked] = useState<boolean>(true);
 
   // Form state for identity verification
   const [formName, setFormName] = useState<string>('Pias');
@@ -446,6 +450,41 @@ export function KiraClient() {
     }
   }, []);
 
+  // Instant Auto-Lock: locks immediately when user leaves/clicks out of the page or unfocuses
+  useEffect(() => {
+    const handleLock = () => {
+      setIsLocked(true);
+      stopKiraVoice();
+      setIsSpeaking(false);
+    };
+
+    // 1. Defocus / click outside window / switch apps
+    window.addEventListener('blur', handleLock);
+
+    // 2. Switch browser tab or minimize
+    const handleVisibility = () => {
+      if (document.hidden) {
+        handleLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // 3. Clicking sidebar navigation links to leave
+    const handleDocumentClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target.closest('aside')) {
+        handleLock();
+      }
+    };
+    document.addEventListener('click', handleDocumentClick, true);
+
+    return () => {
+      window.removeEventListener('blur', handleLock);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('click', handleDocumentClick, true);
+    };
+  }, []);
+
   // Fetch Telemetry Data
   const fetchTelemetry = useCallback(async () => {
     setTelemetryLoading(true);
@@ -576,9 +615,9 @@ export function KiraClient() {
     return () => clearInterval(streamInterval);
   }, [appendLog, telemetry]);
 
-  // Initial greeting
+  // Initial greeting once unlocked
   useEffect(() => {
-    if (identity && messages.length === 0) {
+    if (identity && !isLocked && messages.length === 0) {
       const welcomeText = `Greetings, ${identity.honorific} ${identity.name}. I am AGENT KIRA, Supreme Head of 24/7 Autonomous Operations for the Shafan Group enterprise.\n\nAll 8 sub-agent divisions (Sales, Dev, Speed & User Diagnostics, SEO, Stock, Marketing, UX Forensics, Security) are online. As ${ROLE_DETAILS[identity.role].title}, you hold supreme authority. You may dispatch any directive or ask for live audits below.`;
       
       setMessages([
@@ -594,7 +633,7 @@ export function KiraClient() {
         speakKiraVoice(welcomeText, () => setIsSpeaking(true), () => setIsSpeaking(false), !voiceEnabled);
       }
     }
-  }, [identity]);
+  }, [identity, isLocked]);
 
   // Scroll chat to bottom
   useEffect(() => {
@@ -797,7 +836,15 @@ export function KiraClient() {
 
   if (isInitializing) {
     return (
-      <div className="w-full min-h-[600px] flex items-center justify-center bg-slate-50 text-slate-950">
+      <div className="relative w-full min-h-[600px] flex items-center justify-center bg-slate-50 text-slate-950">
+        <KiraLockModal
+          isOpen={isLocked}
+          onUnlock={() => {
+            setIsLocked(false);
+            appendLog('KIRA', 'EXEC', 'AGENT KIRA CONSOLE UNLOCKED VIA DATABASE SECURITY TOKEN');
+          }}
+          defaultTokenHint="KIRA-SEC-9842-88F1"
+        />
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full border-4 border-slate-900 border-t-transparent animate-spin" />
           <span className="text-xs font-mono font-black tracking-widest text-slate-950 uppercase animate-pulse drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]">
@@ -809,7 +856,9 @@ export function KiraClient() {
   }
 
   return (
-    <div className="w-full space-y-7 text-slate-950">
+    <div className="relative w-full text-slate-950 min-h-screen">
+      {/* Underlying deck: blurred & non-interactive when locked */}
+      <div className={`w-full space-y-7 transition-all duration-300 ${isLocked ? 'filter blur-md pointer-events-none select-none opacity-40' : ''}`}>
       
       {/* ========================================================= */}
       {/* 1. HERO 3D DECK: APPLE SIRI ORB + 3D MORPHISM HUD        */}
@@ -977,6 +1026,21 @@ export function KiraClient() {
                 >
                   <RefreshCw size={13} className={`text-cyan-950 ${telemetryLoading ? 'animate-spin' : ''}`} />
                   <span>SYNC NOW</span>
+                </button>
+
+                {/* Instant Lock Console Button */}
+                <button
+                  onClick={() => {
+                    setIsLocked(true);
+                    stopKiraVoice();
+                    setIsSpeaking(false);
+                    if (chimeEnabled) playKiraChime(0.15);
+                  }}
+                  className="px-3.5 py-2.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-950 text-xs font-mono font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-[4px_4px_10px_rgba(239,68,68,0.25),_-4px_-4px_10px_rgba(255,255,255,0.95)] active:shadow-[inset_2px_2px_4px_rgba(239,68,68,0.4)] drop-shadow-xs"
+                  title="Instantly lock the Agent Kira console"
+                >
+                  <Lock size={13} className="text-red-900" />
+                  <span>LOCK</span>
                 </button>
               </div>
             </div>
@@ -1365,6 +1429,20 @@ export function KiraClient() {
           }}
         />
       )}
+
+      </div>
+
+      {/* ========================================================= */}
+      {/* 8. AGENT KIRA CLASSIFIED LOCK MODAL                      */}
+      {/* ========================================================= */}
+      <KiraLockModal
+        isOpen={isLocked}
+        onUnlock={() => {
+          setIsLocked(false);
+          appendLog('KIRA', 'EXEC', 'AGENT KIRA CONSOLE UNLOCKED VIA DATABASE SECURITY TOKEN');
+        }}
+        defaultTokenHint="KIRA-SEC-9842-88F1"
+      />
 
     </div>
   );

@@ -4,6 +4,7 @@ import { useLanguageStore, SUPPORTED_LANGUAGES, LanguageCode } from "@/lib/langu
 import { useState, useEffect, useRef } from "react";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FlagIcon } from "./FlagIcon";
 
 export function LanguageSelector({
   direction = "up",
@@ -47,7 +48,7 @@ export function LanguageSelector({
             : "bg-black/5 hover:bg-black/10 text-black"
         } ${className}`}
       >
-        <span className="text-lg">{current.flag}</span>
+        <FlagIcon code={current.code === "ar" ? "SA" : "GB"} size="sm" alt={current.name} />
         <span className={`text-sm font-semibold uppercase ${variant === "white" ? "text-white" : "text-black"}`}>{current.code}</span>
       </button>
 
@@ -76,8 +77,8 @@ export function LanguageSelector({
                       : "text-black/80 hover:bg-black/5 hover:text-black"
                     }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <span>{lang.flag}</span>
+                  <div className="flex items-center gap-2.5">
+                    <FlagIcon code={lang.code === "ar" ? "SA" : "GB"} size="sm" alt={lang.name} className="shrink-0" />
                     <span>{lang.name}</span>
                   </div>
                   {currentLanguage.code === lang.code && <Check size={12} className="text-white/40" />}

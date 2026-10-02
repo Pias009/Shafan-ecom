@@ -10,6 +10,7 @@ export interface CountryConfig {
   currencySymbol: string;
   isActive: boolean;
   flag: string;
+  flagUrl?: string;
 }
 
 export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
@@ -19,7 +20,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'AED',
     currencySymbol: 'AED',
     isActive: true,
-    flag: '🇦🇪'
+    flag: '🇦🇪',
+    flagUrl: '/flags/ae.svg'
   },
   {
     code: 'SA',
@@ -27,7 +29,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'SAR',
     currencySymbol: 'SAR',
     isActive: true,
-    flag: '🇸🇦'
+    flag: '🇸🇦',
+    flagUrl: '/flags/sa.svg'
   },
   {
     code: 'QA',
@@ -35,7 +38,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'QAR',
     currencySymbol: 'QAR',
     isActive: true,
-    flag: '🇶🇦'
+    flag: '🇶🇦',
+    flagUrl: '/flags/qa.svg'
   },
   {
     code: 'KW',
@@ -43,7 +47,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'KWD',
     currencySymbol: 'KWD',
     isActive: true,
-    flag: '🇰🇼'
+    flag: '🇰🇼',
+    flagUrl: '/flags/kw.svg'
   },
   {
     code: 'BH',
@@ -51,7 +56,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'BHD',
     currencySymbol: 'BHD',
     isActive: true,
-    flag: '🇧🇭'
+    flag: '🇧🇭',
+    flagUrl: '/flags/bh.svg'
   },
   {
     code: 'OM',
@@ -59,7 +65,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'OMR',
     currencySymbol: 'OMR',
     isActive: true,
-    flag: '🇴🇲'
+    flag: '🇴🇲',
+    flagUrl: '/flags/om.svg'
   },
   {
     code: 'US',
@@ -67,7 +74,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'USD',
     currencySymbol: '$',
     isActive: true,
-    flag: '🇺🇸'
+    flag: '🇺🇸',
+    flagUrl: '/flags/us.svg'
   },
   {
     code: 'EU',
@@ -75,7 +83,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'EUR',
     currencySymbol: '€',
     isActive: true,
-    flag: '🇪🇺'
+    flag: '🇪🇺',
+    flagUrl: '/flags/eu.svg'
   },
   {
     code: 'GB',
@@ -83,7 +92,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'GBP',
     currencySymbol: '£',
     isActive: true,
-    flag: '🇬🇧'
+    flag: '🇬🇧',
+    flagUrl: '/flags/gb.svg'
   },
   {
     code: 'BD',
@@ -91,7 +101,8 @@ export const SUPPORTED_COUNTRIES: readonly CountryConfig[] = [
     currency: 'BDT',
     currencySymbol: '৳',
     isActive: true,
-    flag: '🇧🇩'
+    flag: '🇧🇩',
+    flagUrl: '/flags/bd.svg'
   }
 ] as const;
 
