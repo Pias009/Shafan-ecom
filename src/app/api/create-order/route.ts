@@ -8,8 +8,6 @@ import { cookies } from "next/headers";
 import { createPendingCheckout } from "@/services/checkout/pending-checkout";
 import { convertCurrency } from "@/lib/currency-rates";
 import { loadCountryCharges } from "@/lib/vat-delivery-config";
-import { notifyNewOrder } from "@/lib/pusher";
-import { getOrderNumber } from "@/lib/order-number";
 
 // Helper to get currency for country
 function getCurrencyForCountry(country: string): string {
@@ -682,19 +680,6 @@ export async function POST(req: Request) {
           });
         }
       }
-
-      // Real-time instant notification to admin mobile app
-      notifyNewOrder({
-        id: order.id,
-        orderNumber: (order as any).orderNumber || getOrderNumber(order.id),
-        total: finalTotal,
-        amount: finalTotal,
-        currency: currency.toUpperCase(),
-        customerName: (finalShipping as any)?.fullName || (finalShipping as any)?.name || customerEmail || "Customer",
-        userName: (finalShipping as any)?.fullName || (finalShipping as any)?.name || customerEmail || "Customer",
-        email: customerEmail || session?.user?.email,
-        paymentMethod: payment_method_title || payment_method || "Confirmed",
-      }).catch((err) => console.error("Pusher notify error in create-order:", err));
 
       return NextResponse.json({
         success: true,

@@ -22,6 +22,7 @@ export default async function HomePage() {
         banners={data.banners}
         rejuvenateSection={data.rejuvenateSection}
         haircareSection={data.haircareSection}
+        offerSections={data.offerSections}
       />
     </Suspense>
   );

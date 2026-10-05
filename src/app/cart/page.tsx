@@ -349,17 +349,6 @@ function CartPageContent() {
         value: total,
         currency: getCurrencyForCountry(checkoutCountry),
       });
-
-      fetch("/api/events/checkout-entered", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          itemCount: items.length,
-          total: total,
-          currency: getCurrencyForCountry(checkoutCountry),
-          country: checkoutCountry,
-        }),
-      }).catch(() => {});
     }
   }, [items, checkoutCountry]);
 

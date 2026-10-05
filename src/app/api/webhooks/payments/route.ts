@@ -4,7 +4,6 @@ import { TabbyService } from "@/services/payments/tabby";
 import { TamaraService } from "@/services/payments/tamara";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { createShipmentForOrder } from "@/services/shipping/order-shipment";
-import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
@@ -43,15 +42,6 @@ async function notifyPaymentConfirmed(orderId: string, provider: string) {
     const customerName = shippingAddress?.first_name
       ? `${shippingAddress.first_name} ${shippingAddress.last_name || ""}`
       : "Customer";
-
-    // Pusher real-time notification
-    await notifyNewOrder({
-      id: order.id,
-      total: order.total ?? 0,
-      currency: order.currency,
-      userName: customerName,
-      email: order.email || undefined,
-    }).catch((err) => console.error("Pusher notification failed:", err));
 
     // Admin email notification
     if (process.env.ADMIN_EMAIL) {

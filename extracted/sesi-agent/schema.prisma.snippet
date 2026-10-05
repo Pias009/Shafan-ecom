@@ -1,0 +1,9 @@
+// Add to prisma/schema.prisma, then run `npx prisma generate`
+model SesiVote {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating    String   // "Happy", "Okay", "Sad"
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([rating])
+}

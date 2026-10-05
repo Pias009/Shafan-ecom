@@ -12,7 +12,7 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
     const session = await getServerAuthSession();
     const isSuper = session?.user?.email === "pvs178380@gmail.com";
 
-    const [product, categories, subCategories, skinTones, skinConcerns, brands] = await Promise.all([
+    const [product, categories, subCategories, skinTones, skinConcerns, brands, offerSections] = await Promise.all([
       prisma.product.findUnique({
         where: { id },
         include: {
@@ -52,6 +52,10 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       prisma.brand.findMany({
         select: { name: true },
         orderBy: { name: 'asc' }
+      }),
+      (prisma as any).offerSection.findMany({
+        select: { id: true, title: true, productIds: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       })
     ]);
 
@@ -77,10 +81,13 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       price: Number(product.price) || 0,
       discountPrice: Number(product.discountPrice) || 0,
       stockQuantity: Number(product.stockQuantity) || 0,
+      offerSectionIds: offerSections
+        .filter((s: any) => s.productIds.includes(product.id))
+        .map((s: any) => s.id),
       isSuper
     };
 
-    return <EditProductForm product={productWithGlobal} categories={categories} subCategories={subCategories} skinTones={skinTones} skinConcerns={skinConcerns} brands={brands} />;
+    return <EditProductForm product={productWithGlobal} categories={categories} subCategories={subCategories} skinTones={skinTones} skinConcerns={skinConcerns} brands={brands} offerSections={offerSections.map((s: any) => ({ id: s.id, title: s.title }))} />;
   } catch (error) {
     console.error("Error loading product:", error);
     return (

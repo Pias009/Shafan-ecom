@@ -35,7 +35,7 @@ export async function GET() {
           id: "r-4",
           author_name: "Maryam K.",
           rating: 5,
-          text: "Love their collection of Korean serums and cleansers. The Sesi skin assistant helped me find the exact routine for my skin concern.",
+          text: "Love their collection of Korean serums and cleansers.",
           relative_time_description: "3 weeks ago"
         },
         {

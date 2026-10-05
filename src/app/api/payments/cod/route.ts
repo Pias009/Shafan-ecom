@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { createAramexShipment } from "@/lib/shipping/aramex";
 import { sendEmail } from "@/lib/email";
-import { notifyNewOrder } from "@/lib/pusher";
 import { revalidatePath } from "next/cache";
 import { promoteToOrder } from "@/services/checkout/pending-checkout";
 import { getOrderNumber, formatOrderNumber } from "@/lib/order-number";
@@ -236,16 +235,6 @@ export async function POST(req: Request) {
 
       console.log(`[COD Email] Confirmation sent to ${customerEmail} for order ${orderId}`);
     }
-
-    // Notify admin of new COD order
-    // Send real-time notification via Pusher
-    await notifyNewOrder({
-      id: updatedOrder.id,
-      total: Number(updatedOrder.total) ?? 0,
-      currency: updatedOrder.currency || 'aed',
-      userName: customerName || undefined,
-      email: customerEmail || undefined,
-    }).catch(err => console.error("Pusher notification failed:", err));
 
     // Revalidate admin orders page
     revalidatePath('/ueadmin/orders');

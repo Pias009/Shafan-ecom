@@ -23,9 +23,10 @@ interface EditProductFormProps {
   skinTones: { id: string; name: string; hexColor: string | null }[];
   skinConcerns: { id: string; name: string }[];
   brands: { name: string }[];
+  offerSections?: { id: string; title: string }[];
 }
 
-export function EditProductForm({ product: initialProduct, categories, subCategories, skinTones, skinConcerns, brands }: EditProductFormProps) {
+export function EditProductForm({ product: initialProduct, categories, subCategories, skinTones, skinConcerns, brands, offerSections = [] }: EditProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [showAddBrand, setShowAddBrand] = useState(false);
@@ -74,6 +75,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
     trending: !!initialProduct.trending,
     clearanceSale: !!initialProduct.clearanceSale,
     promotion: !!initialProduct.promotion,
+    offerSectionIds: initialProduct.offerSectionIds || [],
     categoryIds: initialProduct.categories?.map((c: any) => c.id) || [],
     subCategoryIds: initialProduct.subCategory?.id ? [initialProduct.subCategory.id] : [],
     skinToneIds: initialProduct.skinTones?.map((s: any) => s.id) || [],
@@ -396,6 +398,18 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
       });
 
       if (res.ok) {
+        // Offer-section membership lives on OfferSection documents, not on
+        // Product, so it's saved via its own endpoint rather than the main
+        // product payload above.
+        if (offerSections.length > 0) {
+          await fetch(`/api/admin/products/${product.id}/offer-sections`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ offerSectionIds: product.offerSectionIds }),
+          }).catch(() => {
+            toast.error('Product saved, but offer section assignment failed');
+          });
+        }
         toast.success('Product updated successfully!');
         router.refresh();
       } else {
@@ -1073,6 +1087,38 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
               </label>
             </div>
           </section>
+
+          {offerSections.length > 0 && (
+            <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-black/5 rounded-xl"><Sparkles size={16} /></div>
+                <h3 className="font-bold">Offer Sections</h3>
+              </div>
+              <p className="text-[10px] text-black/40 -mt-4">
+                Show this product in these admin-curated sections on the Offers page and homepage.
+              </p>
+              <div className="space-y-3">
+                {offerSections.map((section) => (
+                  <label key={section.id} className="flex items-center gap-3 px-4 py-2 bg-black/5 rounded-xl cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={product.offerSectionIds.includes(section.id)}
+                      onChange={(e) =>
+                        setProduct((prev: any) => ({
+                          ...prev,
+                          offerSectionIds: e.target.checked
+                            ? [...prev.offerSectionIds, section.id]
+                            : prev.offerSectionIds.filter((sid: string) => sid !== section.id),
+                        }))
+                      }
+                      className="w-4 h-4 rounded border-black/10 text-black focus:ring-black"
+                    />
+                    <span className="text-xs font-bold uppercase tracking-wider">{section.title}</span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="glass-panel-heavy p-8 rounded-[2.5rem] border border-black/5 bg-white shadow-sm space-y-6">
             <div className="flex items-center gap-3 mb-2">

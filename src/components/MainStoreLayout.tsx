@@ -1,26 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { MobileBottomNav } from "./MobileBottomNav";
 
-import Sesi from "./Sesi";
-import SesiOnboarding from "./SesiOnboarding";
-
 export function MainStoreLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [showSesi, setShowSesi] = useState(false);
-
-  useEffect(() => {
-    setShowSesi(true);
-  }, []);
-
   const isAdmin = pathname?.startsWith("/ueadmin");
-  const isDoctorSasi = pathname?.startsWith("/doctor-sasi");
 
-  if (isAdmin || isDoctorSasi) {
+  if (isAdmin) {
     return <>{children}</>;
   }
 
@@ -32,8 +21,6 @@ export function MainStoreLayout({ children }: { children: React.ReactNode }) {
       </main>
       <Footer />
       <MobileBottomNav />
-      {showSesi && <Sesi />}
-      {showSesi && <SesiOnboarding />}
     </div>
   );
 }

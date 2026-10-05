@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
-import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
@@ -85,14 +84,6 @@ export async function POST(request: NextRequest) {
         const firstName = String(shipAddr.first_name || "");
         const lastName = String(shipAddr.last_name || "");
         const customerName = firstName ? `${firstName} ${lastName}`.trim() : "Customer";
-
-        await notifyNewOrder({
-          id: updatedOrder.id,
-          total: updatedOrder.total ?? 0,
-          currency: updatedOrder.currency,
-          userName: customerName,
-          email: updatedOrder.email || undefined,
-        }).catch((err) => console.error("[Tabby Capture] Pusher error:", err));
 
         if (process.env.ADMIN_EMAIL) {
           const adminItemsList = updatedOrder.items

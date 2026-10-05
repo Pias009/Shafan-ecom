@@ -178,7 +178,7 @@ body {
   }
 }
 
-/* Doctor Sasi brand utilities & Strict 2-Font Enforcement */
+/* Brand utilities & Strict 2-Font Enforcement */
 .font-playfair {
   font-family: var(--font-display) !important;
 }

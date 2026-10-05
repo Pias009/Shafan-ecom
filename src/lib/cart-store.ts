@@ -60,22 +60,6 @@ export const useCartStore = create<CartState>()(
           
           if (validPrice <= 0) return state;
 
-          try {
-            if (typeof window !== "undefined") {
-              fetch("/api/events/cart-added", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  productId: product.id,
-                  name: product.name || (product as any).title || "Product",
-                  quantity,
-                  price: validPrice,
-                  country: selectedCountry,
-                }),
-              }).catch(() => {});
-            }
-          } catch {}
-          
           // Preserve all product data including countryPrices for live price calculation
           const cartItem = {
             ...product,

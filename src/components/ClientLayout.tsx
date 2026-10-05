@@ -23,7 +23,6 @@ function NavigationScroll() {
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname();
-  const isDoctorSasi = pathname?.startsWith("/doctor-sasi");
   const isUeAdmin = pathname?.startsWith("/ueadmin");
 
   const isClient = useSyncExternalStore(
@@ -37,13 +36,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       {/* Lenis smooth scroll — desktop only, GSAP ticker-synced, excluded on admin */}
       {!isUeAdmin && <LenisProvider />}
 
-      {!isDoctorSasi && (
-        <Suspense fallback={null}>
-          <NavigationScroll />
-        </Suspense>
-      )}
+      <Suspense fallback={null}>
+        <NavigationScroll />
+      </Suspense>
       {children}
-      {isClient && !isDoctorSasi && !isUeAdmin && <FloatingCartButton />}
+      {isClient && !isUeAdmin && <FloatingCartButton />}
     </>
   );
 }

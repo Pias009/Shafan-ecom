@@ -15,6 +15,7 @@ import { FlashSalesSlider } from "@/components/FlashSalesSlider";
 import { RoutineSection } from "@/components/RoutineSection";
 import RejuvenateBestProductsSection from "@/components/RejuvenateBestProductsSection";
 import { BestSellersSection } from "@/components/BestSellersSection";
+import { OfferSectionBlock } from "@/components/OfferSectionBlock";
 import HairCareSpotlightSection from "@/components/HairCareSpotlightSection";
 import { HexPinwheelShowcase } from "@/components/HexPinwheelShowcase";
 import MakeupSpotlightSection from "@/components/MakeupSpotlightSection";
@@ -109,7 +110,8 @@ export default function HomeClient({
   fragranceProducts: initialFragranceProducts = [],
   banners = [],
   rejuvenateSection = null,
-  haircareSection = null
+  haircareSection = null,
+  offerSections = []
 }: {
   initialProducts: any[],
   newArrivals?: any[],
@@ -121,7 +123,8 @@ export default function HomeClient({
   fragranceProducts?: any[],
   banners?: any[],
   rejuvenateSection?: any,
-  haircareSection?: any
+  haircareSection?: any,
+  offerSections?: any[]
 }) {
   const [products] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
@@ -416,6 +419,14 @@ export default function HomeClient({
             orderNow={orderNow}
           />
         )}
+
+        {/* 4.6 Admin-curated Offer Sections */}
+        <OfferSectionBlock
+          sections={offerSections}
+          onQuickView={setQuickView}
+          addToCart={addToCart}
+          orderNow={orderNow}
+        />
 
         {/* 4.5 The Luxury Makeup Edit Spotlight Section */}
         {filteredMakeup.length > 0 && (

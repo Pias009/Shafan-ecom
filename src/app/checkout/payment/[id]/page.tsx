@@ -161,6 +161,22 @@ function PaymentPageContent() {
   const [showEditFields, setShowEditFields] = useState(false);
   const actionAreaRef = useRef<HTMLDivElement>(null);
 
+  // Kuwait customers can only pay by card — force the method back to "card"
+  // if a stale ?method= query param or prior selection points elsewhere.
+  useEffect(() => {
+    if (!order) return;
+    let orderCountry = (order?.shippingAddress as any)?.country?.toUpperCase() || "";
+    if (!orderCountry && order?.currency) {
+      const currencyToCountry: Record<string, string> = {
+        'AED': 'AE', 'SAR': 'SA', 'KWD': 'KW', 'BHD': 'BH', 'OMR': 'OM', 'QAR': 'QA', 'BDT': 'BD'
+      };
+      orderCountry = currencyToCountry[order.currency.toUpperCase()] || "";
+    }
+    if (orderCountry === "KW" && method !== "card") {
+      setMethod("card");
+    }
+  }, [order, method]);
+
   // Auto-scroll to payment form when method is selected
   useEffect(() => {
     if (method && !loading) {
@@ -190,20 +206,6 @@ function PaymentPageContent() {
         if (orderData?.error) throw new Error(orderData.error);
         setOrder(orderData);
 
-        // Alert admin mobile app immediately that customer is actively on checkout payment page
-        try {
-          fetch("/api/events/checkout-entered", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: id,
-              itemCount: orderData.items?.length || 1,
-              total: orderData.total || orderData.totalAmount || 0,
-              currency: (orderData.currency || "AED").toUpperCase(),
-              country: orderData.shippingAddress?.country || "AE",
-            }),
-          }).catch(() => {});
-        } catch {}
         const canceled = searchParams?.get("canceled");
         const failed = searchParams?.get("failed");
         const rejected = searchParams?.get("rejected");
@@ -439,6 +441,9 @@ function PaymentPageContent() {
     country = currencyToCountry[order.currency.toUpperCase()] || "";
   }
 
+  // Kuwait customers can only pay by card — COD, Tabby, and Tamara are hidden.
+  const isCardOnlyCountry = country === "KW";
+
   return (
     <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black flex flex-col">
       <main className="flex-1 max-w-6xl mx-auto px-4 md:px-6 pt-24 md:pt-32 pb-20">
@@ -523,7 +528,7 @@ function PaymentPageContent() {
             )}
 
             <div className="space-y-4">
-              {(country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+              {!isCardOnlyCountry && (country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
                 <>
                   <label className="text-[10px] font-black uppercase tracking-widest text-black/30 px-2">Express Checkout</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -597,21 +602,23 @@ function PaymentPageContent() {
                   {method === "card" && <CheckCircle2 className="text-black" size={18} />}
                 </div>
 
-                <div 
-                  onClick={() => setMethod("cod")}
-                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
-                >
-                  <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
-                    <Banknote size={20} className="md:w-6 md:h-6" />
+                {!isCardOnlyCountry && (
+                  <div
+                    onClick={() => setMethod("cod")}
+                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                  >
+                    <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
+                      <Banknote size={20} className="md:w-6 md:h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
+                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
+                    </div>
+                    {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
-                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
-                  </div>
-                  {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
-                </div>
+                )}
 
-                {(country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
+                {!isCardOnlyCountry && (country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
                   <div
                     onClick={() => setMethod("tabby")}
                     className={`flex flex-col gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-[#3ECF8E] shadow-lg" : "border-black/5 hover:border-black/10"}`}
@@ -637,8 +644,8 @@ function PaymentPageContent() {
                   </div>
                 )}
 
-                {(country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
-                  <div 
+                {!isCardOnlyCountry && (country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+                  <div
                     onClick={() => setMethod("tamara")}
                     className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-gray-900 shadow-lg" : "border-black/5 hover:border-black/10"}`}
                   >

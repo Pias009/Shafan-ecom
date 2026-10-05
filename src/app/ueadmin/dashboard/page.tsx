@@ -33,7 +33,7 @@ export default async function Dashboard() {
     totalUsersCount,
     recentOrdersRaw,
     revenueData,
-    sesiVotesRaw,
+    reviewVotesRaw,
     storesRaw,
     statusCounts,
     recentSalesOrders,
@@ -69,12 +69,12 @@ export default async function Dashboard() {
       },
       select: { total: true, currency: true },
     }),
-    // Sesi Feedback Votes
+    // Customer review sentiment (4-5 stars happy, 3 okay, 1-2 sad)
     Promise.all([
-      prisma.sesiVote.count({ where: { rating: "Happy" } }),
-      prisma.sesiVote.count({ where: { rating: "Okay" } }),
-      prisma.sesiVote.count({ where: { rating: "Sad" } }),
-      prisma.sesiVote.count(),
+      prisma.review.count({ where: { active: true, rating: { gte: 4 } } }),
+      prisma.review.count({ where: { active: true, rating: 3 } }),
+      prisma.review.count({ where: { active: true, rating: { lte: 2 } } }),
+      prisma.review.count({ where: { active: true } }),
     ]),
     // Stores / Hubs
     prisma.store.findMany({
@@ -155,8 +155,8 @@ export default async function Dashboard() {
     0
   );
 
-  // Compute Sesi feedback
-  const [happyVotes, okayVotes, sadVotes, totalVotes] = sesiVotesRaw;
+  // Compute customer review sentiment
+  const [happyVotes, okayVotes, sadVotes, totalVotes] = reviewVotesRaw;
   const satisfactionRate = totalVotes > 0
     ? Math.round(((happyVotes * 1 + okayVotes * 0.5) / totalVotes) * 100)
     : 94;
@@ -407,7 +407,7 @@ export default async function Dashboard() {
       avgOrderValue={avgOrderValue}
       satisfactionRate={satisfactionRate}
       qualityScore={qualityScore}
-      sesiVotes={{
+      reviewSentiment={{
         happy: happyVotes,
         okay: okayVotes,
         sad: sadVotes,

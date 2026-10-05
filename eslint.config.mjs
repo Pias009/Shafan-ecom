@@ -33,6 +33,7 @@ const eslintConfig = defineConfig([
     "*.js",
     "*.mjs",
     "scripts/**",
+    "extracted/**",
     "test*.js",
     "test*.mjs",
   ]),

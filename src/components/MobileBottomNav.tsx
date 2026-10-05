@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Search, ShoppingBag, UserRound, Sparkles } from "lucide-react";
+import { Home, Search, ShoppingBag, UserRound } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { useState, useSyncExternalStore } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { useSesi } from "./Sesi/useSesi";
 
 export function MobileBottomNav() {
   const pathname = usePathname();
@@ -27,15 +26,12 @@ export function MobileBottomNav() {
   const router = useRouter();
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
-  const sesiEnabled = useSesi((s) => s.enabled);
-  const openSesi = useSesi((s) => s.setOpen);
 
   if (!isClient) return null;
 
   const navItems = [
     { href: "/", icon: Home, label: t.nav.home },
     { href: "/products", icon: Search, label: t.nav.products || "Explore" },
-    ...(sesiEnabled ? [{ icon: Sparkles, label: "Sesi", isSesi: true }] : []),
     { href: "/cart", icon: ShoppingBag, label: t.nav.cart || "Cart", isCart: true },
     { href: status === "authenticated" ? "/account" : "/account", icon: UserRound, label: t.nav.account },
   ];
@@ -59,7 +55,7 @@ export function MobileBottomNav() {
             <div className="absolute inset-x-8 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none" />
 
             {navItems.map((item) => {
-              const isActive = !item.isSesi && pathname === item.href;
+              const isActive = pathname === item.href;
               const Icon = item.icon;
 
               const content = (
@@ -81,18 +77,11 @@ export function MobileBottomNav() {
                     )
                   )}
 
-                  {/* Sesi AI Accent Background */}
-                  {item.isSesi && (
-                    <div className="absolute inset-0 rounded-full bg-pink-50/80 border border-pink-200/50 pointer-events-none" />
-                  )}
-
                   {/* Icon */}
                   <div
                     className={`relative z-10 p-0.5 rounded-full transition-all duration-200 ${
                       isActive
                         ? "text-white scale-105"
-                        : item.isSesi
-                        ? "text-[#890754] group-hover:scale-110"
                         : "text-gray-700 group-hover:text-[#890754] group-active:scale-90"
                     }`}
                   >
@@ -110,21 +99,7 @@ export function MobileBottomNav() {
                 </div>
               );
 
-              if (item.isSesi) {
-                return (
-                  <button
-                    key="sesi"
-                    type="button"
-                    onClick={() => openSesi(true)}
-                    className="relative group flex-1 flex flex-col items-center justify-center active:scale-95 transition-transform"
-                    aria-label="AI Beauty Assistant"
-                  >
-                    {content}
-                  </button>
-                );
-              }
-
-              const href = item.href!;
+              const href = item.href;
               return (
                 <Link
                   key={href}

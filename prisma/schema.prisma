@@ -556,6 +556,21 @@ model EnhancedOfferBanner {
   @@index([sortOrder])
 }
 
+// Admin-curated product collection shown as its own section on /offers.
+// productIds keeps the admin's chosen display order.
+model OfferSection {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  subtitle   String?
+  productIds String[] @db.ObjectId
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
 model Discount {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   code        String? @unique // Optional discount code
@@ -915,13 +930,4 @@ model TrackingLog {
   @@index([createdAt])
   @@index([sessionId])
   @@index([userId])
-}
-
-model SesiVote {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  rating    String   // "Happy", "Okay", "Sad"
-  createdAt DateTime @default(now())
-
-  @@index([createdAt])
-  @@index([rating])
 }

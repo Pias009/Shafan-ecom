@@ -8,7 +8,7 @@ import {
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
   Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers, Palette, X
+  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers, Palette, Gift, X
 } from "lucide-react";
 
 export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
@@ -31,12 +31,6 @@ export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
       href: "/ueadmin/dashboard", 
       icon: BarChart3, 
       show: true
-    },
-    { 
-      label: "Agent Kira (24/7 AI)", 
-      href: "/ueadmin/kira", 
-      icon: Sparkles, 
-      show: true 
     },
     { 
       label: "Users", 
@@ -146,6 +140,17 @@ export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
                >
                   <Tag size={18} /> Offers & Discounts
+               </Link>
+               <Link
+                  href="/ueadmin/offer-sections"
+                  prefetch={true}
+                  className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
+                    pathname?.startsWith('/ueadmin/offer-sections')
+                      ? 'bg-black text-white shadow-xl shadow-black/10'
+                      : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
+                  }`}
+               >
+                  <Gift size={18} /> Offer Sections
                </Link>
 <Link
                    href="/ueadmin/flash-sales"

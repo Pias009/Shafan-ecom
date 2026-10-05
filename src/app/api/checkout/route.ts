@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
-import { notifyNewOrder } from "@/lib/pusher";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { cookies } from "next/headers";
 

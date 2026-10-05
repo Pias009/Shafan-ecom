@@ -29,7 +29,6 @@ import {
   ExternalLink,
   ChevronDown,
   Sparkles,
-  Bot,
   X,
   Sliders,
   DollarSign,
@@ -75,7 +74,7 @@ export interface DashboardClientProps {
   avgOrderValue: number;
   satisfactionRate: number;
   qualityScore: string;
-  sesiVotes: {
+  reviewSentiment: {
     happy: number;
     okay: number;
     sad: number;
@@ -140,7 +139,7 @@ export function DashboardClient({
   avgOrderValue,
   satisfactionRate,
   qualityScore,
-  sesiVotes,
+  reviewSentiment,
   recentOrders,
   stores,
   orderPipeline,
@@ -171,9 +170,9 @@ export function DashboardClient({
   }, []);
 
   // Customer sentiment calculations
-  const happyPercent = sesiVotes.total > 0 ? Math.round((sesiVotes.happy / sesiVotes.total) * 100) : 0;
-  const okayPercent = sesiVotes.total > 0 ? Math.round((sesiVotes.okay / sesiVotes.total) * 100) : 0;
-  const sadPercent = sesiVotes.total > 0 ? Math.round((sesiVotes.sad / sesiVotes.total) * 100) : 0;
+  const happyPercent = reviewSentiment.total > 0 ? Math.round((reviewSentiment.happy / reviewSentiment.total) * 100) : 0;
+  const okayPercent = reviewSentiment.total > 0 ? Math.round((reviewSentiment.okay / reviewSentiment.total) * 100) : 0;
+  const sadPercent = reviewSentiment.total > 0 ? Math.round((reviewSentiment.sad / reviewSentiment.total) * 100) : 0;
 
   // Crisp high-contrast light theme status badges
   const getStatusBadge = (status: string) => {
@@ -199,7 +198,7 @@ export function DashboardClient({
     { id: 'all', label: 'All Operations', icon: Sparkles, color: 'text-slate-800', border: 'border-slate-300', bg: 'bg-slate-100' },
     { id: 'stores', label: 'Country Map', icon: Globe, color: 'text-cyan-700', border: 'border-cyan-300', bg: 'bg-cyan-50', targetId: 'section-map' },
     { id: 'sales', label: 'Sales & Revenue', icon: TrendingUp, color: 'text-amber-700', border: 'border-amber-300', bg: 'bg-amber-50', targetId: 'section-sales' },
-    { id: 'standards', label: 'Fulfillment & Sesi', icon: ShieldCheck, color: 'text-purple-700', border: 'border-purple-300', bg: 'bg-purple-50', targetId: 'section-standards' },
+    { id: 'standards', label: 'Fulfillment & Reviews', icon: ShieldCheck, color: 'text-purple-700', border: 'border-purple-300', bg: 'bg-purple-50', targetId: 'section-standards' },
     { id: 'reports', label: 'Executive Reports', icon: FileText, color: 'text-emerald-700', border: 'border-emerald-300', bg: 'bg-emerald-50', targetId: 'section-reports' },
     { id: 'pipeline', label: 'Order Pipeline', icon: Layers, color: 'text-blue-700', border: 'border-blue-300', bg: 'bg-blue-50', targetId: 'section-pipeline' },
   ];
@@ -317,48 +316,6 @@ export function DashboardClient({
               <RefreshCw size={16} className="text-slate-700" />
               <span className="hidden sm:inline">Sync Data</span>
             </button>
-          </div>
-        </div>
-
-        {/* ========================================================= */}
-        {/* AGENT KIRA 24/7 AUTONOMOUS COMMAND STRIP                  */}
-        {/* ========================================================= */}
-        <div className="p-4 sm:p-5 rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-96 h-full bg-gradient-to-l from-cyan-500/10 via-purple-500/5 to-transparent pointer-events-none" />
-          
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-600 via-indigo-600 to-purple-600 p-0.5 shadow-md">
-                <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                  <Bot size={24} className="text-cyan-300" />
-                </div>
-              </div>
-              <span className="w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-slate-900 absolute -bottom-0.5 -right-0.5 animate-pulse" />
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-black uppercase tracking-wider text-white">
-                  Agent Kira &middot; 24/7 Autonomous Operations
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
-                  5 Teams Active
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 font-medium mt-0.5">
-                Monitoring sales velocity, checkout drop-offs, Middle East SEO rank &middot; 24/7 Active Eye
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 relative z-10">
-            <Link
-              href="/ueadmin/kira"
-              className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-95"
-            >
-              <Sparkles size={14} />
-              <span>Consult Agent Kira</span>
-            </Link>
           </div>
         </div>
 
@@ -654,7 +611,7 @@ export function DashboardClient({
               <span className="px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200">
                 +4.0% satisfaction
               </span>
-              <span className="text-slate-500 font-semibold">Sesi Compliance</span>
+              <span className="text-slate-500 font-semibold">From Reviews</span>
             </div>
           </div>
 
@@ -677,7 +634,7 @@ export function DashboardClient({
               <span className="px-2 py-0.5 rounded-md bg-yellow-50 border border-yellow-200">
                 ★ Top Tier Rating
               </span>
-              <span className="text-slate-500 font-semibold">{sesiVotes.total} Reviews</span>
+              <span className="text-slate-500 font-semibold">{reviewSentiment.total} Reviews</span>
             </div>
           </div>
         </div>
@@ -1169,7 +1126,7 @@ export function DashboardClient({
                   Customer Sentiment
                 </h2>
                 <span className="text-xs font-extrabold text-emerald-700 uppercase tracking-wider">
-                  {sesiVotes.total} Total Audits
+                  {reviewSentiment.total} Total Reviews
                 </span>
               </div>
 
@@ -1181,7 +1138,7 @@ export function DashboardClient({
                       <span>😊 Happy</span>
                     </span>
                     <span className="font-black text-slate-900 text-sm">
-                      {sesiVotes.happy} ({happyPercent}%)
+                      {reviewSentiment.happy} ({happyPercent}%)
                     </span>
                   </div>
                   <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5">
@@ -1199,7 +1156,7 @@ export function DashboardClient({
                       <span>😐 Neutral / Okay</span>
                     </span>
                     <span className="font-black text-slate-900 text-sm">
-                      {sesiVotes.okay} ({okayPercent}%)
+                      {reviewSentiment.okay} ({okayPercent}%)
                     </span>
                   </div>
                   <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5">
@@ -1217,7 +1174,7 @@ export function DashboardClient({
                       <span>😞 Needs Attention</span>
                     </span>
                     <span className="font-black text-slate-900 text-sm">
-                      {sesiVotes.sad} ({sadPercent}%)
+                      {reviewSentiment.sad} ({sadPercent}%)
                     </span>
                   </div>
                   <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5">

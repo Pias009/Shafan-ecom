@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
-import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
 import { promoteToOrder, expirePendingCheckout } from "@/services/checkout/pending-checkout";
 
@@ -50,14 +49,6 @@ async function notifyPaymentConfirmed(orderId: string) {
     const firstName = String(shippingAddress.first_name || "");
     const lastName = String(shippingAddress.last_name || "");
     const customerName = firstName ? `${firstName} ${lastName}`.trim() : "Customer";
-
-    await notifyNewOrder({
-      id: order.id,
-      total: order.total ?? 0,
-      currency: order.currency,
-      userName: customerName,
-      email: order.email || undefined,
-    }).catch((err) => console.error("[Tabby] Pusher notification failed:", err));
 
     if (process.env.ADMIN_EMAIL) {
       const adminItemsList = order.items

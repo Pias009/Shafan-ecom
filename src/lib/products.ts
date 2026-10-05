@@ -79,7 +79,7 @@ export async function getHomePageData(storeCode?: string) {
       };
     };
 
-    const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers, makeupProducts, fragranceProducts, banners, rejuvenateSetting, haircareSetting] = await Promise.all([
+    const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers, makeupProducts, fragranceProducts, banners, rejuvenateSetting, haircareSetting, activeOfferSections] = await Promise.all([
       prisma.product.findMany({
         where: { active: true },
         select: selectFields,
@@ -167,7 +167,32 @@ export async function getHomePageData(storeCode?: string) {
       (prisma as any).appSettings.findUnique({
         where: { type: 'haircare_section' },
       }).catch(() => null),
+      (prisma as any).offerSection.findMany({
+        where: { active: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      }).catch(() => []),
     ]);
+
+    // Resolve each section's productIds to real, active products, in the
+    // admin's chosen order — same two-phase pattern as /offers/page.tsx.
+    const sectionProductIds: string[] = Array.from(
+      new Set(activeOfferSections.flatMap((s: any) => s.productIds as string[]))
+    );
+    const sectionProducts = sectionProductIds.length
+      ? await prisma.product.findMany({
+          where: { id: { in: sectionProductIds }, active: true },
+          select: selectFields,
+        })
+      : [];
+    const sectionProductById = new Map(sectionProducts.map((p: any) => [p.id, mapProduct(p)]));
+    const offerSections = activeOfferSections
+      .map((s: any) => ({
+        id: s.id,
+        title: s.title,
+        subtitle: s.subtitle,
+        products: s.productIds.map((id: string) => sectionProductById.get(id)).filter(Boolean),
+      }))
+      .filter((s: any) => s.products.length > 0);
 
     const data = {
       products: allProducts.map(mapProduct),
@@ -181,13 +206,14 @@ export async function getHomePageData(storeCode?: string) {
       banners: (banners || []).filter((b: any) => b.imageUrl && b.imageUrl.trim() !== ""),
       rejuvenateSection: (rejuvenateSetting?.data as any) || null,
       haircareSection: (haircareSetting?.data as any) || null,
+      offerSections,
     };
 
     homepageCache = { data, timestamp: Date.now() };
     return data;
   } catch (error) {
     console.error("HomePage data fetch error:", error);
-    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [], makeupProducts: [], fragranceProducts: [], banners: [], haircareSection: null };
+    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [], makeupProducts: [], fragranceProducts: [], banners: [], haircareSection: null, offerSections: [] };
   }
 }
 

@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { PanelLeft, PanelLeftClose, Menu, X, Globe, Shield } from "lucide-react";
 import { AdminSidebar } from './AdminSidebar';
 import AdminGuard from './AdminGuard';
-import { OrderAlertListener } from './OrderAlertListener';
 
 export function UeAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -41,7 +40,6 @@ export function UeAdminLayoutContent({ children }: { children: React.ReactNode }
   if (isAuthPage) {
     return (
       <AdminGuard>
-        <OrderAlertListener />
         <div
           className="admin-scope min-h-screen flex bg-[#FAF9F6] selection:bg-black selection:text-white select-text"
           data-admin-panel="true"
@@ -57,7 +55,6 @@ export function UeAdminLayoutContent({ children }: { children: React.ReactNode }
 
   return (
     <AdminGuard>
-      <OrderAlertListener />
       <div
         className="admin-scope min-h-screen flex flex-col bg-[#FAF9F6] selection:bg-black selection:text-white select-text"
         data-admin-panel="true"

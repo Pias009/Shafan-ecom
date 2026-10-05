@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { TamaraService } from "@/services/payments/tamara";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
-import { notifyNewOrder } from "@/lib/pusher";
 import { sendEmail } from "@/lib/email";
 import { promoteToOrder, expirePendingCheckout } from "@/services/checkout/pending-checkout";
 import { TamaraCurrency } from "@/services/payments/tamara/types";
@@ -32,14 +31,6 @@ export async function notifyPaymentConfirmed(orderId: string) {
     const firstName = String(shippingAddress.first_name || shippingAddress.fullName || "");
     const lastName = String(shippingAddress.last_name || "");
     const customerName = firstName ? `${firstName} ${lastName}`.trim() : "Customer";
-
-    await notifyNewOrder({
-      id: order.id,
-      total: order.total ?? 0,
-      currency: order.currency,
-      userName: customerName,
-      email: order.email || undefined,
-    }).catch((err) => console.error("[Tamara] Pusher notification failed:", err));
 
     if (process.env.ADMIN_EMAIL) {
       const adminItemsList = order.items

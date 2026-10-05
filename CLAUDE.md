@@ -47,23 +47,8 @@ Routes that need full-screen custom layouts bypass the global nav/footer by addi
 - `src/components/MainStoreLayout.tsx` — add `pathname.startsWith('/your-route')`
 - `src/components/ClientLayout.tsx` — add same check to suppress `FloatingCartButton`
 
-`/doctor-sasi` is already wired this way.
-
-### Sesi AI Chatbot
-`src/components/Sesi/` is a complete AI skincare advisor. State lives in `useSesi` (Zustand). The chat calls `/api/sesi/chat` (Groq SDK) and `/api/sesi/recommend-products`. `SesiChat` uses a **light-themed** UI (`bg-white/80` bubbles) — it must be rendered inside a white background container or the `backdrop-blur` composites against dark backgrounds, making bubbles appear black.
-
-`SesiChat` must always be imported with `ssr: false`:
-```ts
-const SesiChat = dynamic(() => import('@/components/Sesi/SesiChat'), { ssr: false });
-```
-
-### Doctor Sasi Page (`/doctor-sasi`)
-Three-section page:
-1. **Hero** — fullscreen BG with cursor-tracking canvas spotlight (BG_2 revealed via `destination-in` composite op)
-2. **VideoSection** — 400vh scroll driver with `position:sticky` inner pane; 240 pre-loaded JPEG frames (`/public/video/frames/frame_0001.jpg`…) indexed by `window.scrollY - section.offsetTop`; canvas reads dimensions via `getBoundingClientRect()` inside the rAF loop
-3. **ChatSection** — SesiChat inside a `background:#ffffff` container
-
-Key constraint: all three sections must be in the DOM from first client render. The hero sits as `position:fixed z-index:9999` on top until clicked. Never conditionally mount/unmount `VideoSection` — scroll listeners must be live before the user can scroll there.
+### Extracted Modules
+The Sesi AI chatbot, the `/doctor-sasi` landing page, the Agent Kira admin console, and the Pusher live order notifications were removed from the site and packaged under `extracted/` (excluded from `tsconfig.json` and ESLint). See `extracted/README.md` before re-adding any of them.
 
 ### Tracking & Analytics
 All analytics events go through the GTM data layer via `src/lib/datalayer.ts`. `trackAddToCart`, `trackPurchase`, etc. are typed helpers. GTM is loaded in `src/components/GTMProvider.tsx`. Meta Pixel and GA run in parallel via their own providers. Do not call `window.dataLayer.push` directly — always use the typed helpers.
@@ -79,6 +64,4 @@ See `vercel.env.example` for the full list. Critical ones:
 - `DATABASE_URL` — MongoDB connection string
 - `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
 - `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- `PUSHER_*` — real-time notifications
 - `CLOUDINARY_*` — image uploads
-- `GROQ_API_KEY` — Sesi AI chat

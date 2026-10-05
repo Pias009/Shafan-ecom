@@ -41,6 +41,7 @@
     "node_modules",
     "tmp-radiant-skin",
     ".gemini",
-    "mobile-app"
+    "mobile-app",
+    "extracted"
   ]
 }

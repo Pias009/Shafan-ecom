@@ -80,7 +80,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${playfairDisplay.variable} ${dmSans.variable}`}>
       <head>
-        <link rel="dns-prefetch" href="https://stats.pusher.com" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <meta httpEquiv="Permissions-Policy" content="camera=(self), microphone=(self), geolocation=()" />
       </head>

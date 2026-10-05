@@ -190,6 +190,9 @@ export default function InvoicePreview({ order }: InvoicePreviewProps) {
                         <div className="font-semibold text-neutral-900 leading-snug">
                           {item.nameSnapshot || item.product?.name || "Product"}
                         </div>
+                        {item.product?.sku && (
+                          <div className="text-[9px] font-medium text-neutral-400 mt-0.5">SKU: {item.product.sku}</div>
+                        )}
                       </td>
                       <td className="py-2.5 px-2 text-center font-semibold text-neutral-700">{itemQty}</td>
                       <td className="py-2.5 px-2 text-right text-neutral-700 font-medium">

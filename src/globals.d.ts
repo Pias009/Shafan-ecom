@@ -5,7 +5,6 @@ declare module '*.svg' {
 declare module 'next/*';
 
 interface Window {
-  Pusher: any;
   gapi: any;
   tamaraWidgetConfig?: {
     publicKey: string;
@@ -15,15 +14,6 @@ interface Window {
   TamaraWidgetV2?: {
     refresh: () => void;
   };
-}
-
-interface ImportMetaEnv {
-  readonly NEXT_PUBLIC_PUSHER_KEY: string;
-  readonly NEXT_PUBLIC_PUSHER_CLUSTER: string;
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
 }
 
 declare namespace JSX {

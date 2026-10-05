@@ -15,6 +15,7 @@ interface Discount {
   countries: string[];
   active: boolean;
   status: string;
+  applyToAll: boolean;
   startDate: string | null;
   endDate: string | null;
   uses: number;
@@ -25,6 +26,19 @@ interface Discount {
     productDiscounts: number;
     categoryDiscounts: number;
   };
+}
+
+// What actually makes this discount's products show up on the Offers page.
+function getScopeLabel(discount: Discount): { label: string; tone: "all" | "scoped" | "none" } {
+  if (discount.applyToAll) return { label: "All Products", tone: "all" };
+  const productCount = discount._count?.productDiscounts || 0;
+  const categoryCount = discount._count?.categoryDiscounts || 0;
+  if (productCount > 0 && categoryCount > 0) {
+    return { label: `${productCount} Products, ${categoryCount} Categories`, tone: "scoped" };
+  }
+  if (productCount > 0) return { label: `${productCount} Product${productCount === 1 ? "" : "s"}`, tone: "scoped" };
+  if (categoryCount > 0) return { label: `${categoryCount} Categor${categoryCount === 1 ? "y" : "ies"}`, tone: "scoped" };
+  return { label: "Not shown on Offers", tone: "none" };
 }
 
 export default function DiscountsPage() {
@@ -190,7 +204,7 @@ export default function DiscountsPage() {
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Value</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Countries</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Products</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Offers Scope</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Usage</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Valid</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
@@ -237,8 +251,21 @@ export default function DiscountsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {discount._count?.productDiscounts || 0}
+                      <td className="px-6 py-4 text-sm">
+                        {(() => {
+                          const scope = getScopeLabel(discount);
+                          const toneClass =
+                            scope.tone === "all"
+                              ? "bg-green-100 text-green-800"
+                              : scope.tone === "scoped"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-500";
+                          return (
+                            <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${toneClass}`}>
+                              {scope.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {discount.uses}/{discount.maxUses ? discount.maxUses : "∞"}

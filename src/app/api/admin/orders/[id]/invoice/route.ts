@@ -280,6 +280,7 @@ export async function POST(
           const qty      = item.quantity  || 0;
           const price    = item.unitPrice || 0;
           const hsCode   = item.product?.hsCode || '33049901';
+          const sku      = item.product?.sku || '';
           const weight   = item.weightSnapshot   || 0;
           const wUnit    = item.weightUnitSnapshot || 'kg';
 
@@ -315,7 +316,7 @@ export async function POST(
           doc.fontSize(9).font('Helvetica-Bold').fillColor(C_DARK)
              .text(name, T.desc.x, rowMidY, { width: T.desc.w });
           doc.fontSize(7).font('Helvetica').fillColor(C_LIGHT)
-             .text(`Wt: ${weight} ${wUnit}`, T.desc.x, rowMidY + nameH + 2, { width: T.desc.w });
+             .text(`${sku ? `SKU: ${sku}  ·  ` : ''}Wt: ${weight} ${wUnit}`, T.desc.x, rowMidY + nameH + 2, { width: T.desc.w });
 
           // HS Code
           doc.fontSize(8.5).font('Helvetica').fillColor(C_MID)
