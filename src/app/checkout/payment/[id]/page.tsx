@@ -161,8 +161,9 @@ function PaymentPageContent() {
   const [showEditFields, setShowEditFields] = useState(false);
   const actionAreaRef = useRef<HTMLDivElement>(null);
 
-  // Kuwait customers can only pay by card — force the method back to "card"
-  // if a stale ?method= query param or prior selection points elsewhere.
+  // Kuwait customers can pay by card or COD, but not Tabby/Tamara — force the
+  // method back to "card" if a stale ?method= query param or prior selection
+  // points at one of those.
   useEffect(() => {
     if (!order) return;
     let orderCountry = (order?.shippingAddress as any)?.country?.toUpperCase() || "";
@@ -172,7 +173,7 @@ function PaymentPageContent() {
       };
       orderCountry = currencyToCountry[order.currency.toUpperCase()] || "";
     }
-    if (orderCountry === "KW" && method !== "card") {
+    if (orderCountry === "KW" && (method === "tabby" || method === "tamara")) {
       setMethod("card");
     }
   }, [order, method]);
@@ -441,8 +442,8 @@ function PaymentPageContent() {
     country = currencyToCountry[order.currency.toUpperCase()] || "";
   }
 
-  // Kuwait customers can only pay by card — COD, Tabby, and Tamara are hidden.
-  const isCardOnlyCountry = country === "KW";
+  // Kuwait customers can pay by card or COD, but Tabby/Tamara are hidden.
+  const isKuwait = country === "KW";
 
   return (
     <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black flex flex-col">
@@ -528,7 +529,7 @@ function PaymentPageContent() {
             )}
 
             <div className="space-y-4">
-              {!isCardOnlyCountry && (country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+              {!isKuwait && (country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
                 <>
                   <label className="text-[10px] font-black uppercase tracking-widest text-black/30 px-2">Express Checkout</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -602,23 +603,21 @@ function PaymentPageContent() {
                   {method === "card" && <CheckCircle2 className="text-black" size={18} />}
                 </div>
 
-                {!isCardOnlyCountry && (
-                  <div
-                    onClick={() => setMethod("cod")}
-                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
-                  >
-                    <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
-                      <Banknote size={20} className="md:w-6 md:h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
-                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
-                    </div>
-                    {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
+                <div
+                  onClick={() => setMethod("cod")}
+                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                >
+                  <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
+                    <Banknote size={20} className="md:w-6 md:h-6" />
                   </div>
-                )}
+                  <div className="flex-1">
+                    <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
+                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
+                  </div>
+                  {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
+                </div>
 
-                {!isCardOnlyCountry && (country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
+                {!isKuwait && (country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
                   <div
                     onClick={() => setMethod("tabby")}
                     className={`flex flex-col gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tabby" ? "border-[#3ECF8E] shadow-lg" : "border-black/5 hover:border-black/10"}`}
@@ -644,7 +643,7 @@ function PaymentPageContent() {
                   </div>
                 )}
 
-                {!isCardOnlyCountry && (country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+                {!isKuwait && (country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
                   <div
                     onClick={() => setMethod("tamara")}
                     className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-gray-900 shadow-lg" : "border-black/5 hover:border-black/10"}`}
