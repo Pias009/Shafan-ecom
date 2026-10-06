@@ -692,6 +692,7 @@ function CartPageContent() {
           if (sessionRes.ok && sessionData.url) {
             window.location.href = sessionData.url;
           } else {
+            useLoadingStore.getState().setRedirecting(false);
             toast.error(sessionData.error || "Failed to create payment session", { id: "checkout" });
             setSubmitting(false);
           }
@@ -711,6 +712,12 @@ function CartPageContent() {
       setSubmitting(false);
     } catch (error) {
       console.error("Checkout error:", error);
+      // If a payment-method branch already flipped on the full-screen
+      // "Redirecting..." overlay before this exception fired (e.g. the
+      // Stripe checkout-session fetch failing outright), clear it — the
+      // overlay has no other way to resolve and would otherwise stay
+      // stuck on screen with no way for the user to retry.
+      useLoadingStore.getState().setRedirecting(false);
       toast.error("Checkout failed", { id: "checkout" });
       setSubmitting(false);
     }

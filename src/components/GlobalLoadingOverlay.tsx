@@ -16,6 +16,16 @@ export function GlobalLoadingOverlay() {
     setRedirecting(false);
   }, [pathname, searchParams, setRedirecting]);
 
+  useEffect(() => {
+    // Safety net: a real redirect (Stripe/Tabby/Tamara) navigates away well
+    // within this window. If we're still here after 15s, the navigation
+    // never happened — clear the overlay so the user isn't stuck on a
+    // full-screen blocker with no way out and no visible error.
+    if (!isRedirecting) return;
+    const timeout = setTimeout(() => setRedirecting(false), 15000);
+    return () => clearTimeout(timeout);
+  }, [isRedirecting, setRedirecting]);
+
   return (
     <AnimatePresence>
       {isRedirecting && (
