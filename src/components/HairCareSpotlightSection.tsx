@@ -106,7 +106,7 @@ export default function HairCareSpotlightSection({
             {/* Right: Slim See All CTA */}
             <Link
               href="/products?category=Hair%20Care"
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-[11px] sm:text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
+              className="inline-flex items-center gap-1 sm:gap-1.5 text-white hover:text-pink-200 transition-colors text-[11px] sm:text-xs font-semibold uppercase tracking-wider active:scale-95 shrink-0 whitespace-nowrap"
             >
               <span>{isAr ? "عرض الكل" : "See All"}</span>
               <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />

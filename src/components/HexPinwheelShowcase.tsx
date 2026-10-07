@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -57,6 +58,15 @@ const PETAL_CENTERS = [
   { x: 277, y: 490 }, // 240° (Left)
   { x: 397, y: 302 }, // 300° (Top-Left vertical diamond)
 ];
+
+// How far (in SVG units) each petal slides outward at the peak of the spin.
+const PETAL_EXPAND_DISTANCE = 45;
+
+// Each piece pops in around its own centre, staggered by the parent variants.
+const PIECE_VARIANTS = {
+  hidden: { opacity: 0, scale: 0.6 },
+  show: { opacity: 1, scale: 1, transition: { type: "spring" as const, stiffness: 260, damping: 20 } },
+};
 
 export function HexPinwheelShowcase({
   products,
@@ -118,12 +128,37 @@ export function HexPinwheelShowcase({
             filter: drop-shadow(0 0 9px rgba(255, 215, 235, 0.9));
           }
         }
-        @keyframes pinwheel-ambient-drift {
-          0%, 100% {
-            transform: scale(1) rotate(0deg);
+        /* 6s loop: spin a full turn while petals spread out (0-40%),
+           fold back in as the turn finishes (40-70%), then rest (70-100%).
+           A full 360deg turn means products end every cycle upright. */
+        @keyframes pinwheel-spin {
+          0% {
+            transform: rotate(0deg);
+            animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
           }
-          50% {
-            transform: scale(1.018) rotate(1.5deg);
+          70%, 100% {
+            transform: rotate(360deg);
+          }
+        }
+        @keyframes pinwheel-petal-expand {
+          0% {
+            transform: translate(0, 0);
+            animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+          }
+          40% {
+            transform: translate(var(--petal-dx), var(--petal-dy));
+            animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);
+          }
+          70%, 100% {
+            transform: translate(0, 0);
+          }
+        }
+        @keyframes pinwheel-hex-pulse {
+          0%, 70%, 100% {
+            transform: scale(1);
+          }
+          40% {
+            transform: scale(1.08);
           }
         }
         .glass-edge-beam {
@@ -140,8 +175,28 @@ export function HexPinwheelShowcase({
         .glass-rim-pulsing {
           animation: glass-rim-glow 3.5s ease-in-out infinite;
         }
-        .pinwheel-drift {
-          animation: pinwheel-ambient-drift 18s ease-in-out infinite;
+        .pinwheel-spin {
+          animation: pinwheel-spin 6s infinite;
+        }
+        .pinwheel-petal-expand {
+          animation: pinwheel-petal-expand 6s infinite;
+        }
+        .pinwheel-hex-pulse {
+          transform-origin: 500px 500px;
+          animation: pinwheel-hex-pulse 6s ease-in-out infinite;
+        }
+        /* Hold still while the shopper is pointing at a product */
+        .pinwheel-spin:hover,
+        .pinwheel-spin:hover .pinwheel-petal-expand,
+        .pinwheel-spin:hover .pinwheel-hex-pulse {
+          animation-play-state: paused;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pinwheel-spin,
+          .pinwheel-petal-expand,
+          .pinwheel-hex-pulse {
+            animation: none;
+          }
         }
         @keyframes border-flow-travel {
           0% {
@@ -161,11 +216,11 @@ export function HexPinwheelShowcase({
         }
         .shape-color-flow-beam {
           stroke-dasharray: 230 450;
-          animation: border-flow-travel 10s linear infinite;
+          animation: border-flow-travel 5s linear infinite;
         }
         .shape-color-flow-hex {
           stroke-dasharray: 200 400;
-          animation: border-flow-travel-hex 10s linear infinite;
+          animation: border-flow-travel-hex 5s linear infinite;
         }
       `}</style>
 
@@ -178,16 +233,24 @@ export function HexPinwheelShowcase({
         </div>
 
         {/* Compact Radial Flower / Pinwheel Canvas — Scaled Down for Clean Proportions */}
+        {/* Entrance zoom lives on this wrapper; the CSS spin runs on the inner
+            div. Both on one element made the CSS animation override
+            framer-motion's transform, so the zoom-in never played. */}
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          whileInView={{ scale: 1, opacity: 1 }}
+          initial="hidden"
+          whileInView="show"
           viewport={{ once: false, amount: 0.15 }}
-          transition={{
-            duration: 1.2,
-            ease: [0.16, 1, 0.3, 1],
+          variants={{
+            hidden: { scale: 0.8, opacity: 0 },
+            show: {
+              scale: 1,
+              opacity: 1,
+              transition: { duration: 1.2, ease: [0.16, 1, 0.3, 1], staggerChildren: 0.09, delayChildren: 0.15 },
+            },
           }}
-          className="relative w-full max-w-[280px] sm:max-w-[360px] md:max-w-[430px] lg:max-w-[480px] xl:max-w-[520px] aspect-square flex items-center justify-center will-change-transform pinwheel-drift"
+          className="relative w-full max-w-[280px] sm:max-w-[360px] md:max-w-[430px] lg:max-w-[480px] xl:max-w-[520px] aspect-square"
         >
+        <div className="relative w-full h-full flex items-center justify-center will-change-transform pinwheel-spin">
           {/* Subtle Ambient Radial Glow */}
           <div className="absolute inset-2 sm:inset-4 rounded-full bg-gradient-to-tr from-[#890754]/8 via-pink-400/5 to-amber-200/8 blur-2xl pointer-events-none" />
 
@@ -294,8 +357,9 @@ export function HexPinwheelShowcase({
                 const centerImg = getImgSrc(centerProduct);
 
                 return (
+                  <motion.g key="center-hex" variants={PIECE_VARIANTS}>
+                  <g className="pinwheel-hex-pulse">
                   <g
-                    key="center-hex"
                     className="cursor-pointer select-none"
                     style={{
                       transformOrigin: "500px 500px",
@@ -356,6 +420,8 @@ export function HexPinwheelShowcase({
                       className="pointer-events-none shape-color-flow-hex"
                     />
                   </g>
+                  </g>
+                  </motion.g>
                 );
               } else {
                 // Outer Radial Petal (1 to 6)
@@ -368,8 +434,15 @@ export function HexPinwheelShowcase({
                 const imgSrc = getImgSrc(product);
 
                 return (
+                  <motion.g key={`petal-${i}`} variants={PIECE_VARIANTS}>
                   <g
-                    key={`petal-${i}`}
+                    className="pinwheel-petal-expand"
+                    style={{
+                      "--petal-dx": `${((center.x - 500) / Math.hypot(center.x - 500, center.y - 500)) * PETAL_EXPAND_DISTANCE}px`,
+                      "--petal-dy": `${((center.y - 500) / Math.hypot(center.x - 500, center.y - 500)) * PETAL_EXPAND_DISTANCE}px`,
+                    } as React.CSSProperties}
+                  >
+                  <g
                     className="cursor-pointer select-none"
                     style={{
                       transformOrigin: `${center.x}px ${center.y}px`,
@@ -433,13 +506,16 @@ export function HexPinwheelShowcase({
                       strokeLinecap="round"
                       filter="url(#laser-glow-filter)"
                       className="pointer-events-none shape-color-flow-beam"
-                      style={{ animationDelay: `${i * 1.6}s` }}
+                      style={{ animationDelay: `${i * 0.8}s` }}
                     />
                   </g>
+                  </g>
+                  </motion.g>
                 );
               }
             })}
           </svg>
+        </div>
         </motion.div>
       </div>
     </section>

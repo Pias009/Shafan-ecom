@@ -18,6 +18,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    if (pendingCheckout.status !== "OPEN") {
+      return NextResponse.json({ error: "Order is already paid or cancelled" }, { status: 400 });
+    }
+
     const totalAmount = pendingCheckout.total || 0;
     if (totalAmount <= 0) {
       return NextResponse.json({ error: "Order total must be greater than 0" }, { status: 400 });

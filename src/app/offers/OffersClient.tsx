@@ -502,7 +502,7 @@ export function OffersClient({
 
                   <Link
                     href="/products/flash-sales"
-                    className="flex items-center gap-1 px-3 py-1.5 sm:px-5 sm:py-2.5 bg-yellow-400 hover:bg-yellow-300 text-black font-black text-[11px] sm:text-xs uppercase tracking-wider rounded-full transition-all shadow-xs hover:scale-105 active:scale-95 shrink-0"
+                    className="flex items-center gap-1 text-yellow-400 hover:text-yellow-300 font-black text-[11px] sm:text-xs uppercase tracking-wider transition-colors active:scale-95 shrink-0"
                   >
                     <span>View All</span>
                     <ArrowRight size={13} />
@@ -611,10 +611,10 @@ export function OffersClient({
                                 e.stopPropagation();
                                 addToCart(product);
                               }}
-                              className="w-7 h-7 rounded-full bg-[#890754] hover:bg-[#540434] text-white flex items-center justify-center shrink-0 shadow-xs transition-all active:scale-90"
+                              className="w-11 h-11 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full bg-[#890754] hover:bg-[#540434] text-white flex items-center justify-center shrink-0 shadow-xs transition-all active:scale-90"
                               aria-label="Add to Cart"
                             >
-                              <ShoppingCart className="w-3.5 h-3.5" />
+                              <ShoppingCart className="w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" strokeWidth={2.25} />
                             </button>
                           </div>
                         </div>

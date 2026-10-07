@@ -725,6 +725,28 @@ function CartPageContent() {
 
   const isEmpty = items.length === 0;
 
+  const renderPlaceOrderButton = (visibilityClass: string) => (
+    <button
+      type="button"
+      onClick={() => handleCheckout()}
+      disabled={submitting}
+      className={`${visibilityClass} w-full rounded-full py-4 sm:py-5 px-6 font-body text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-all items-center justify-center gap-3 cursor-pointer ${
+        submitting
+          ? "bg-gray-400 text-white shadow-none cursor-not-allowed"
+          : "bg-red-600 hover:bg-red-700 text-white hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-red-600/30"
+      }`}
+    >
+      <Lock className="w-4 h-4 shrink-0" />
+      <span>{submitting ? (isArabic ? "جاري المعالجة..." : "Processing...") : (isArabic ? "تأكيد الطلب" : "Place Order")}</span>
+      {/* <Price> hardcodes its own symbol/amount colours, so force white on
+          every nested span to match the button label. */}
+      <span className="ml-1 bg-white/20 px-2.5 py-0.5 rounded-full text-xs sm:text-sm font-black tracking-[0.1em] text-white shrink-0 [&_span]:!text-white">
+        <Price amount={total} />
+      </span>
+    </button>
+  );
+
+
   if (tamaraStatus === "success") {
     return (
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50/50 flex items-center justify-center px-4">
@@ -1093,6 +1115,9 @@ function CartPageContent() {
                 currentCountry={checkoutCountry.toUpperCase()}
               />
             </div>
+
+            {/* Mobile: Place Order comes after all payment options */}
+            {!isEmpty && renderPlaceOrderButton("flex lg:hidden")}
           </div>
 
           <div className="lg:col-span-6 order-1 lg:order-2">
@@ -1291,25 +1316,10 @@ function CartPageContent() {
                 </div>
               </div>
 
-              {!isEmpty && (
-                <button
-                  type="button"
-                  id="place-order-button"
-                  onClick={() => handleCheckout()}
-                  disabled={submitting}
-                  className={`w-full rounded-full py-4 sm:py-5 px-6 font-body text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-all flex items-center justify-center gap-3 cursor-pointer ${
-                    submitting
-                      ? "bg-gray-400 text-white shadow-none cursor-not-allowed"
-                      : "bg-red-600 hover:bg-red-700 text-white hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-red-600/30"
-                  }`}
-                >
-                  <Lock className="w-4 h-4 shrink-0" />
-                  <span>{submitting ? (isArabic ? "جاري المعالجة..." : "Processing...") : (isArabic ? "تأكيد الطلب" : "Place Order")}</span>
-                  <span className="ml-1 bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-mono font-black text-white shrink-0">
-                    <Price amount={total} />
-                  </span>
-                </button>
-              )}
+              {/* Desktop: Place Order sits under the order summary. On mobile the
+                  summary renders above the form, so a second copy is rendered
+                  after the payment options instead (see below). */}
+              {!isEmpty && renderPlaceOrderButton("hidden lg:flex")}
 
                 </>
               )}

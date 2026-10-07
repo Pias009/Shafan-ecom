@@ -89,7 +89,7 @@ export function BestSellersSection({
             {/* Right: Slim See All CTA */}
             <Link
               href="/products?sort=best-selling"
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-[11px] sm:text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
+              className="inline-flex items-center gap-1 sm:gap-1.5 text-white hover:text-pink-200 transition-colors text-[11px] sm:text-xs font-semibold uppercase tracking-wider active:scale-95 shrink-0 whitespace-nowrap"
             >
               <span>{isAr ? "عرض الكل" : "See All"}</span>
               <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -289,11 +289,11 @@ export function BestSellersSection({
                             e.stopPropagation();
                             if (addToCart) addToCart(product);
                           }}
-                          className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded-full bg-[#890754] hover:bg-[#540434] text-white flex items-center justify-center shadow-xs transition-all active:scale-90 shrink-0"
+                          className="w-11 h-11 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full bg-[#890754] hover:bg-[#540434] text-white flex items-center justify-center shadow-xs transition-all active:scale-90 shrink-0"
                           title="Add to Cart"
                           aria-label="Add to Cart"
                         >
-                          <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
+                          <ShoppingCart className="w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" strokeWidth={2.25} />
                         </button>
                       </div>
                     </div>

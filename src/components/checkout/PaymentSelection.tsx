@@ -181,26 +181,13 @@ export default function PaymentSelection({
 
         {activePayment === "stripe" && (
           <div className="mt-3 px-4 pb-2 space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                placeholder="Card number"
-                readOnly
-                value="4242 4242 4242 4242"
-                className="col-span-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold border border-gray-200 bg-gray-50 text-gray-500 cursor-default"
-              />
-              <input
-                placeholder="MM / YY"
-                readOnly
-                value="12 / 28"
-                className="rounded-xl px-3.5 py-2.5 text-xs font-semibold border border-gray-200 bg-gray-50 text-gray-500 cursor-default"
-              />
-              <input
-                placeholder="CVC"
-                readOnly
-                value="123"
-                className="rounded-xl px-3.5 py-2.5 text-xs font-semibold border border-gray-200 bg-gray-50 text-gray-500 cursor-default"
-              />
-            </div>
+            {/* Card details are collected on Stripe's hosted Checkout page after
+                Place Order — no card fields are rendered here. */}
+            <p className="text-xs font-semibold text-gray-500 leading-relaxed">
+              {lang === "ar"
+                ? "سيتم تحويلك إلى صفحة الدفع الآمنة لإدخال بيانات بطاقتك بعد الضغط على تأكيد الطلب."
+                : "After you tap Place Order, you'll enter your card details on a secure payment page."}
+            </p>
             {onBillingToggle && (
               <label className="flex items-center gap-2 cursor-pointer group py-1">
                 <input

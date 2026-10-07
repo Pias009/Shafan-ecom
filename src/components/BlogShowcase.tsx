@@ -77,7 +77,7 @@ export function BlogShowcase() {
         </div>
         <Link
           href="/blog"
-          className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-black text-white text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-black/80 transition-all active:scale-95"
+          className="flex items-center gap-1.5 text-black hover:text-black/60 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-colors active:scale-95 shrink-0"
         >
           {t.home.viewAll || "View All"} <ArrowRight size={12} />
         </Link>

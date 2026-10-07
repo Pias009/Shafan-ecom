@@ -347,41 +347,17 @@ export function Navbar() {
                     const isActive = safePathname === link.href;
 
                     if (link.href === "/") {
-                      if (isActive) {
-                        return (
-                          <Link
-                            key={link.href}
-                            href={link.href}
-                            prefetch={true}
-                            onMouseEnter={() => router.prefetch(link.href)}
-                            className="group relative inline-flex rounded-full p-[2px] overflow-hidden select-none shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-transform duration-300 hover:scale-105 active:scale-95"
-                          >
-                            {/* Rotating Chromatic Rainbow Beam Border around Active Pill */}
-                            <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] rainbow-border-spin pointer-events-none" />
-                            {/* Blooming Chromatic Aura */}
-                            <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] rainbow-border-aura pointer-events-none" />
-                            {/* Dark Frosted Inner Pill */}
-                            <div className="relative z-10 w-full h-full rounded-full bg-[#180413]/90 backdrop-blur-md px-3.5 py-1.5 flex items-center gap-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35)]">
-                              <svg className="w-3.5 h-3.5 fill-white text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] shrink-0" viewBox="0 0 24 24">
-                                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                              </svg>
-                              <span className="text-xs font-black tracking-widest uppercase text-white drop-shadow-xs">
-                                {link.label}
-                              </span>
-                            </div>
-                          </Link>
-                        );
-                      }
-
                       return (
                         <Link
                           key={link.href}
                           href={link.href}
                           prefetch={true}
                           onMouseEnter={() => router.prefetch(link.href)}
-                          className="px-3.5 py-1.5 text-xs font-black tracking-widest uppercase transition-all duration-300 rounded-full text-white/90 hover:text-white hover:bg-white/20 inline-flex items-center gap-1.5"
+                          className={`px-3.5 py-1.5 text-xs font-black tracking-widest uppercase transition-all duration-300 rounded-full hover:text-white hover:bg-white/20 inline-flex items-center gap-1.5 ${
+                            isActive ? "text-white" : "text-white/90"
+                          }`}
                         >
-                          <svg className="w-3.5 h-3.5 fill-white/80 text-white/80 shrink-0" viewBox="0 0 24 24">
+                          <svg className={`w-3.5 h-3.5 shrink-0 ${isActive ? "fill-white" : "fill-white/80"}`} viewBox="0 0 24 24">
                             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
                           </svg>
                           <span>{link.label}</span>

@@ -269,7 +269,7 @@ const ProductCardComponent = function ProductCard({
                 setJustAdded(true);
                 setTimeout(() => setJustAdded(false), 1400);
               }}
-              className={`w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded-full flex items-center justify-center shrink-0 shadow-xs transition-all duration-200 active:scale-90 ${
+              className={`w-11 h-11 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full flex items-center justify-center shrink-0 shadow-xs transition-all duration-200 active:scale-90 ${
                 isNotAvailable
                   ? "bg-slate-200 text-slate-400 cursor-not-allowed"
                   : justAdded
@@ -280,11 +280,11 @@ const ProductCardComponent = function ProductCard({
               title={isNotAvailable ? "Sold Out" : "Add to Cart"}
             >
               {isNotAvailable ? (
-                <Package size={14} className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" strokeWidth={2} />
+                <Package size={14} className="w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" strokeWidth={2} />
               ) : justAdded ? (
-                <Check size={14} className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" strokeWidth={3} />
+                <Check size={14} className="w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" strokeWidth={3} />
               ) : (
-                <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
+                <ShoppingCart className="w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" strokeWidth={2.25} />
               )}
             </button>
           </div>

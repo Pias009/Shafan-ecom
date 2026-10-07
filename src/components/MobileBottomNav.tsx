@@ -60,28 +60,11 @@ export function MobileBottomNav() {
 
               const content = (
                 <div className="flex flex-col items-center justify-center gap-0.5 relative py-1 px-2 sm:px-2.5 w-full">
-                  {/* 3D Active Pill Background */}
-                  {isActive && (
-                    item.href === "/" ? (
-                      <div className="absolute inset-0 rounded-full p-[1.8px] overflow-hidden shadow-[0_4px_16px_rgba(137,7,84,0.4)] pointer-events-none">
-                        <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] rainbow-border-spin pointer-events-none" />
-                        <div className="absolute -top-[150%] -left-[150%] w-[400%] h-[400%] rainbow-border-aura pointer-events-none" />
-                        <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-b from-[#890754] via-[#7d064c] to-[#65033d] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]" />
-                      </div>
-                    ) : (
-                      <motion.div
-                        layoutId="activeTabPill"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                        className="absolute inset-0 rounded-full bg-gradient-to-b from-[#890754] via-[#7d064c] to-[#65033d] shadow-[0_3px_10px_rgba(137,7,84,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]"
-                      />
-                    )
-                  )}
-
                   {/* Icon */}
                   <div
                     className={`relative z-10 p-0.5 rounded-full transition-all duration-200 ${
                       isActive
-                        ? "text-white scale-105"
+                        ? "text-[#890754] scale-105"
                         : "text-gray-700 group-hover:text-[#890754] group-active:scale-90"
                     }`}
                   >
@@ -95,7 +78,12 @@ export function MobileBottomNav() {
                     )}
                   </div>
 
-                  {/* Text label removed as requested */}
+                  {/* Active indicator: small dot under the icon */}
+                  <span
+                    className={`w-1 h-1 rounded-full transition-opacity duration-200 ${
+                      isActive ? "bg-[#890754] opacity-100" : "opacity-0"
+                    }`}
+                  />
                 </div>
               );
 

@@ -6,9 +6,7 @@ import { CheckCircle2, CreditCard, Loader2, Banknote, Wallet, Info, X, ChevronRi
 import toast from "react-hot-toast";
 import { useRef } from "react";
 
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements, PaymentRequestButtonElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import dynamic from "next/dynamic";
+import { PaymentRequestButtonElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { Price } from "@/components/Price";
 import TabbyPromo from "@/components/TabbyPromo";
 import TabbyCard from "@/components/TabbyCard";
@@ -16,19 +14,6 @@ import TamaraWidget from "@/components/TamaraWidget";
 import { useLanguageStore } from "@/lib/language-store";
 import { trackAddPaymentInfo } from "@/lib/datalayer";
 import { getOrderNumber } from "@/lib/order-number";
-
-const StripePaymentForm = dynamic(() => import("@/components/StripePaymentForm"), {
-  ssr: false,
-  loading: () => (
-    <div className="py-12 text-center flex flex-col items-center">
-      <Loader2 className="w-8 h-8 animate-spin text-black/20 mb-3" />
-      <p className="text-[10px] font-bold uppercase tracking-widest text-black/30">Loading Secure Form...</p>
-    </div>
-  ),
-});
-
-const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 type PaymentMethod = "card" | "digital" | "cod" | "tabby" | "tamara";
 
@@ -149,7 +134,7 @@ function PaymentPageContent() {
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [cardLoading, setCardLoading] = useState(false);
   const [method, setMethod] = useState<PaymentMethod>(initialMethod);
   const [codLoading, setCodLoading] = useState(false);
   const [tabbyLoading, setTabbyLoading] = useState(false);
@@ -247,22 +232,6 @@ function PaymentPageContent() {
           }
         }
 
-        if (method === "card") {
-          try {
-            const stripeRes = await fetch("/api/payments/stripe/create-intent", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: id }),
-            });
-
-            const stripeData = await stripeRes.json();
-            if (stripeData.clientSecret) {
-              setClientSecret(stripeData.clientSecret);
-            }
-          } catch (stripeErr) {
-            console.error("Stripe initialization failed:", stripeErr);
-          }
-        }
       } catch (err: any) {
         toast.error(err.message || "Failed to load order details");
       } finally {
@@ -271,6 +240,38 @@ function PaymentPageContent() {
     }
     fetchOrderAndStripe();
   }, [id, router]);
+
+  const handleCardPayment = async () => {
+    setCardLoading(true);
+    if (order) {
+      trackAddPaymentInfo({
+        id: order.id,
+        value: order.total,
+        currency: order.currency?.toUpperCase(),
+        paymentMethod: "card",
+        items: (order.items || []).map((item: any) => ({
+          id: item.productId,
+          name: item.nameSnapshot || "Product",
+          price: Number(item.unitPrice) || 0,
+          quantity: item.quantity,
+        })),
+      });
+    }
+    try {
+      // Card details are entered on Stripe's hosted Checkout page, not here.
+      const res = await fetch("/api/payments/stripe/checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "Failed to start card payment");
+      window.location.href = data.url;
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start card payment");
+      setCardLoading(false);
+    }
+  };
 
   const handleCODPayment = async () => {
     setCodLoading(true);
@@ -669,34 +670,32 @@ function PaymentPageContent() {
               ref={actionAreaRef}
               className="glass-panel-heavy rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 border border-black/5 bg-white shadow-xl scroll-mt-24"
             >
-              {method === "card" && clientSecret && stripePromise && (
-                <Elements 
-                  key={clientSecret} 
-                  stripe={stripePromise} 
-                  options={{ 
-                    clientSecret,
-                    appearance: {
-                      theme: 'stripe',
-                      variables: {
-                        colorPrimary: '#000000',
-                      }
-                    }
-                  }}
-                >
-                  <StripePaymentForm orderId={id} order={order} />
-                </Elements>
-              )}
-
-              {method === "card" && !clientSecret && stripePromise && (
-                <div className="py-12 text-center flex flex-col items-center gap-4">
-                  <Loader2 className="w-8 h-8 animate-spin text-black/10" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-black/30">Initializing Secure Card Form...</p>
-                </div>
-              )}
-
-              {method === "card" && !stripePromise && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs md:text-sm font-bold border border-red-200 text-center">
-                  Stripe configuration is missing.
+              {method === "card" && (
+                <div className="py-8 text-center space-y-6 max-w-md mx-auto">
+                  <div className="flex justify-center">
+                    <div className="w-16 h-16 rounded-full bg-black/5 flex items-center justify-center">
+                      <CreditCard className="w-8 h-8 text-black" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-bold text-lg">Pay by Card</p>
+                    <p className="font-body text-sm text-black/60 font-medium leading-relaxed">
+                      You&apos;ll enter your card details on Stripe&apos;s secure payment page.
+                    </p>
+                  </div>
+                  <div className="bg-black/5 rounded-2xl p-4 space-y-2">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-black/30">Order Total</div>
+                    <div className="font-black text-2xl">
+                      <Price amount={order.total} currency={order.currency} />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCardPayment}
+                    disabled={cardLoading}
+                    className="w-full h-14 md:h-16 rounded-full bg-black hover:bg-black/85 text-white font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] transition-all hover:scale-[1.02] shadow-xl shadow-black/20 disabled:opacity-50 flex items-center justify-center gap-3"
+                  >
+                    {cardLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Continue to Card Payment"}
+                  </button>
                 </div>
               )}
 

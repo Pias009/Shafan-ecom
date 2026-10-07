@@ -200,14 +200,14 @@ export default function RejuvenateBestProductsSection({
                       <button
                         type="button"
                         onClick={(e) => handleAddToCart(e, p)}
-                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 transition-all shadow-2xs active:scale-90 ${
+                        className={`w-11 h-11 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 transition-all shadow-2xs active:scale-90 ${
                           isAdded
                             ? "bg-emerald-600 text-white"
                             : "bg-white text-[#890754] hover:bg-[#890754] hover:text-white"
                         }`}
                         title={isAr ? "إضافة" : "Add to Cart"}
                       >
-                        {isAdded ? <Check size={11} /> : <ShoppingBag size={11} />}
+                        {isAdded ? <Check className="w-4 h-4 sm:w-[18px] sm:h-[18px]" /> : <ShoppingBag className="w-4 h-4 sm:w-[18px] sm:h-[18px]" strokeWidth={2.25} />}
                       </button>
                     </div>
 

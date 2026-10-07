@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, ChevronLeft, ChevronRight, Layers, Sparkles, Star } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Layers, Sparkles, ShoppingCart, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ProductCard } from './ProductCard';
 import { Price } from './Price';
@@ -228,7 +228,7 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
             {/* Right: Slim See All CTA */}
             <Link
               href="/products?category=Skin%20Care"
-              className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-pink-300/30 bg-white/10 hover:bg-white text-white hover:text-[#540434] hover:scale-105 transition-all text-[11px] sm:text-xs font-semibold uppercase tracking-wider shadow-xs active:scale-95 shrink-0 whitespace-nowrap"
+              className="inline-flex items-center gap-1 sm:gap-1.5 text-white hover:text-pink-200 transition-colors text-[11px] sm:text-xs font-semibold uppercase tracking-wider active:scale-95 shrink-0 whitespace-nowrap"
             >
               <span>{isAr ? "عرض الكل" : "See All"}</span>
               <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -455,19 +455,35 @@ export function RoutineSection({ products, banners = [], onQuickView, addToCart,
                               {product.name}
                             </h4>
 
-                            {/* Price Row */}
-                            <div className="flex items-baseline gap-1 pt-0.5 mt-0.5">
-                              <Price
-                                amount={routinePrice}
-                                className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
-                                countryPrices={product.countryPrices}
-                                currency={routineCurrency}
-                              />
-                              {routineHasDiscount && (
-                                <span className="text-[9px] sm:text-[10px] text-red-400 line-through font-semibold">
-                                  <Price amount={routineOriginalPrice} countryPrices={product.countryPrices} currency={routineCurrency} />
-                                </span>
-                              )}
+                            {/* Price & Cart Icon Row */}
+                            <div className="flex items-center justify-between gap-2 pt-0.5 mt-0.5">
+                              <div className="flex items-baseline min-w-0">
+                                <Price
+                                  amount={routinePrice}
+                                  className="text-xs sm:text-sm lg:text-base font-bold text-[#890754] tracking-tight leading-none"
+                                  countryPrices={product.countryPrices}
+                                  currency={routineCurrency}
+                                />
+                                {routineHasDiscount && (
+                                  <span className="ml-1 text-[9px] sm:text-[10px] text-red-400 line-through font-semibold">
+                                    <Price amount={routineOriginalPrice} countryPrices={product.countryPrices} currency={routineCurrency} />
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Cart Icon Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(product);
+                                }}
+                                className="w-11 h-11 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-full bg-[#890754] hover:bg-[#540434] text-white flex items-center justify-center shadow-xs transition-all active:scale-90 shrink-0"
+                                title="Add to Cart"
+                                aria-label="Add to Cart"
+                              >
+                                <ShoppingCart className="w-4 h-4 sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" strokeWidth={2.25} />
+                              </button>
                             </div>
                           </div>
                         </div>
