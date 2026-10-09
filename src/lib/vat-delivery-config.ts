@@ -4,6 +4,8 @@ import { COUNTRY_CONFIG } from "@/lib/address-config";
 export const VAT_DELIVERY_SETTINGS_TYPE = "vat_delivery";
 
 export interface CountryChargeSettings {
+  /** Minimum order subtotal (country currency). 0 = no minimum. */
+  minOrder: number;
   vatPercent: number;
   deliveryFee: number;
   freeDelivery: number;
@@ -38,6 +40,7 @@ export function buildDefaultVATDeliverySettings(): VATDeliverySettings {
       deliveryText: "Express Tracked Delivery",
     };
     countries[country.code] = {
+      minOrder: country.minOrder,
       vatPercent: Math.round(country.taxRate * 100 * 100) / 100,
       deliveryFee: country.deliveryFee,
       freeDelivery: country.freeDelivery,
@@ -64,6 +67,7 @@ export function mergeVATDeliverySettings(saved: unknown): VATDeliverySettings {
     const override = data.countries[code];
     if (!override) continue;
     merged[code] = {
+      minOrder: Math.max(0, toFiniteNumber(override.minOrder, merged[code].minOrder)),
       vatPercent: toFiniteNumber(override.vatPercent, merged[code].vatPercent),
       deliveryFee: toFiniteNumber(override.deliveryFee, merged[code].deliveryFee),
       freeDelivery: toFiniteNumber(override.freeDelivery, merged[code].freeDelivery),
@@ -103,8 +107,8 @@ export interface CountryChargeConfig {
 }
 
 /**
- * Effective per-country charge config: hardcoded base values (active, minOrder,
- * regions, etc.) with admin-editable deliveryFee / freeDelivery / taxRate applied.
+ * Effective per-country charge config: hardcoded base values (active, regions,
+ * etc.) with admin-editable minOrder / deliveryFee / freeDelivery / taxRate applied.
  * This is the single source of truth used by checkout + order creation.
  */
 export async function loadCountryCharges(): Promise<Record<string, CountryChargeConfig>> {
@@ -115,7 +119,7 @@ export async function loadCountryCharges(): Promise<Record<string, CountryCharge
     const cs = settings.countries[country.code];
     const defInfo = DEFAULT_DELIVERY_INFO[country.code];
     charges[country.code] = {
-      minOrder: country.minOrder,
+      minOrder: cs?.minOrder ?? country.minOrder,
       deliveryFee: cs?.deliveryFee ?? country.deliveryFee,
       freeDelivery: cs?.freeDelivery ?? country.freeDelivery,
       taxRate: (cs?.vatPercent ?? country.taxRate * 100) / 100,

@@ -8,7 +8,7 @@ import {
   BookOpen,
   Tag, Image as ImageIcon, Briefcase,
   Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers, Palette, Gift, X, Store
+  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers, Palette, Gift, X, Store, ShoppingCart
 } from "lucide-react";
 
 export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
@@ -257,6 +257,13 @@ export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
                       className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
                    >
                       <Percent size={18} /> VAT & Delivery
+                   </Link>
+                   <Link
+                      href="/ueadmin/settings/vat-delivery#min-order"
+                      prefetch={true}
+                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
+                   >
+                      <ShoppingCart size={18} /> Minimum Order
                    </Link>
                    <Link
                       href="/ueadmin/settings/pickup"

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Percent, Truck, Save, Loader2, Minus, Plus, RefreshCw, Clock, Sparkles } from "lucide-react";
+import { Percent, Truck, Save, Loader2, Minus, Plus, RefreshCw, Clock, Sparkles, ShoppingCart } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
 interface CountryChargeSettings {
+  minOrder: number;
   vatPercent: number;
   deliveryFee: number;
   freeDelivery: number;
@@ -37,6 +38,13 @@ export default function VATDeliverySettingsPage() {
     loadSettings();
   }, []);
 
+  // Sidebar "Minimum Order" links to #min-order, which only exists once loaded
+  useEffect(() => {
+    if (!loading && window.location.hash === "#min-order") {
+      document.getElementById("min-order")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [loading]);
+
   async function loadSettings() {
     setLoading(true);
     try {
@@ -61,7 +69,7 @@ export default function VATDeliverySettingsPage() {
       countries: {
         ...prev.countries,
         [code]: {
-          ...(prev.countries[code] || { vatPercent: 0, deliveryFee: 0, freeDelivery: 0 }),
+          ...(prev.countries[code] || { minOrder: 0, vatPercent: 0, deliveryFee: 0, freeDelivery: 0 }),
           ...patch,
         },
       },
@@ -103,7 +111,7 @@ export default function VATDeliverySettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-black">VAT & Delivery Settings</h1>
+          <h1 className="text-2xl font-black">VAT, Delivery & Minimum Order</h1>
           <p className="text-sm text-black/70">
             These amounts are applied by default to every product&apos;s order total. Customers pay them on top of the
             subtotal at checkout. Edit a country to increase or decrease its VAT rate and delivery charges.
@@ -136,6 +144,45 @@ export default function VATDeliverySettingsPage() {
         </div>
       ) : (
         <div className="space-y-4">
+          {/* Minimum Order Value */}
+          <section id="min-order" className="bg-white rounded-2xl border border-black/10 p-5 md:p-6 scroll-mt-24">
+            <div className="flex items-start gap-3 mb-5">
+              <div className="w-11 h-11 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
+                <ShoppingCart size={18} />
+              </div>
+              <div>
+                <div className="font-black text-sm">Minimum Order Value</div>
+                <div className="text-xs text-black/50">
+                  Customers can&apos;t place an order until the cart subtotal (before delivery, VAT and discounts) reaches
+                  this amount. Set 0 to remove the minimum for a country.
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {countryCodes.map((code) => {
+                const currency = CURRENCIES[code] || "";
+                const minOrder = settings.countries[code].minOrder ?? 0;
+                return (
+                  <div key={code}>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-black/60 flex items-center justify-between gap-2 mb-1.5">
+                      <span>{countryNames[code] || code}</span>
+                      <span className={minOrder > 0 ? "text-black/40" : "text-green-600"}>
+                        {minOrder > 0 ? currency : "No minimum"}
+                      </span>
+                    </label>
+                    <StepperInput
+                      value={minOrder}
+                      step={1}
+                      min={0}
+                      onChange={(v) => updateCountry(code, { minOrder: v })}
+                      prefix={currency ? `${currency} ` : ""}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
           {countryCodes.map((code) => {
             const country = settings.countries[code];
             const currency = CURRENCIES[code] || "";
@@ -241,6 +288,7 @@ export default function VATDeliverySettingsPage() {
       <div className="rounded-2xl p-6 border border-blue-100 bg-blue-50">
         <div className="font-bold text-blue-700">How it works</div>
         <ul className="text-sm text-blue-600 mt-2 space-y-1">
+          <li>• Orders below a country&apos;s Minimum Order Value are blocked at checkout and on the server (admin-created orders are exempt).</li>
           <li>• VAT is added on top of the product subtotal (and delivery charge) at checkout.</li>
           <li>• Delivery is free when the order subtotal reaches the &quot;Free Delivery Above&quot; amount.</li>
           <li>• Delivery Time &amp; Short Text render dynamically on the Cart page right after the product cards with an animated wipe-right reveal effect based on the customer&apos;s country.</li>

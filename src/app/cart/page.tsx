@@ -567,7 +567,7 @@ function CartPageContent() {
       const taxAmountLocal = Math.round(Math.max(0, (taxableSub * discRatio) + shippingFee) * taxRateLocal * 100) / 100;
       const totalLocal = Number((calculatedSubtotal - discountAmount + shippingFee + taxAmountLocal).toFixed(2));
 
-      const minOrderValue = deliveryConfigLocal?.minOrder || 80;
+      const minOrderValue = deliveryConfigLocal?.minOrder ?? 80;
       if (calculatedSubtotal < minOrderValue) {
         toast.error(`Minimum order is ${getCurrencyForCountry(checkoutCountry)} ${minOrderValue}. Add more items!`, { id: "checkout" });
         return;

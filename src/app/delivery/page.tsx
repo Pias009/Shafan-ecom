@@ -1,6 +1,10 @@
 import { Metadata } from 'next';
 import { Truck, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { FlagIcon } from '@/components/FlagIcon';
+import { loadCountryCharges } from '@/lib/vat-delivery-config';
+
+// Amounts are admin-editable (VAT, Delivery & Minimum Order settings)
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Delivery Information | SHANFA',
@@ -64,7 +68,15 @@ const deliveryData = [
   },
 ];
 
-export default function DeliveryPage() {
+export default async function DeliveryPage() {
+  const charges = await loadCountryCharges();
+  const rows = deliveryData.map((item) => {
+    const charge = charges[item.code];
+    return charge
+      ? { ...item, minOrder: charge.minOrder, deliveryFee: charge.deliveryFee, freeDelivery: charge.freeDelivery }
+      : item;
+  });
+
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
       <h1 className="text-4xl md:text-5xl font-black text-black mb-4 tracking-tight">
@@ -105,7 +117,7 @@ export default function DeliveryPage() {
       <section className="mb-12">
         <h2 className="text-2xl font-black text-black mb-6">Delivery by Country</h2>
         <div className="space-y-4">
-          {deliveryData.map((item) => (
+          {rows.map((item) => (
             <div key={item.code} className="glass-panel-heavy rounded-2xl p-6 border border-black/5">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex items-center gap-4">
@@ -118,7 +130,7 @@ export default function DeliveryPage() {
                 <div className="grid grid-cols-3 gap-4 md:gap-8">
                   <div className="text-center">
                     <div className="text-xs font-bold uppercase tracking-wider text-black/40 mb-1">Min. Order</div>
-                    <div className="font-black text-black">{item.currency} {item.minOrder}</div>
+                    <div className="font-black text-black">{item.minOrder > 0 ? `${item.currency} ${item.minOrder}` : 'None'}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-xs font-bold uppercase tracking-wider text-black/40 mb-1">Delivery Fee</div>
