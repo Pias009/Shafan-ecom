@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TamaraService, TamaraRegion, TamaraCurrency } from "@/services/payments/tamara";
 import { getOrderNumber, formatOrderNumber } from "@/lib/order-number";
+import { reopenPendingCheckoutForRetry } from "@/services/checkout/pending-checkout";
 
 const COUNTRY_TO_REGION: Record<string, { region: TamaraRegion; currency: TamaraCurrency; phonePrefix: string }> = {
   AE: { region: "UAE", currency: "AED", phonePrefix: "+971" },
@@ -34,7 +35,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (pendingCheckout.status !== "OPEN") {
+    // A cancelled/declined earlier attempt leaves the checkout EXPIRED —
+    // reopen it so the customer can retry; only a paid (CONSUMED) one is final.
+    if (!(await reopenPendingCheckoutForRetry(pendingCheckout.id))) {
       return NextResponse.json({ error: "Order is already processed" }, { status: 400 });
     }
 
@@ -204,7 +207,9 @@ export async function POST(request: NextRequest) {
       data: {
         paymentMethod: "tamara",
         paymentMethodTitle: `Tamara ${currency} Installments`,
-        tamaraCheckoutId: session.checkout_id,
+        // Tamara's /orders/{id}, authorise, capture, refund and webhook payloads
+        // all use order_id — storing checkout_id here broke verify/cron lookups.
+        tamaraCheckoutId: session.order_id || session.checkout_id,
       },
     });
 

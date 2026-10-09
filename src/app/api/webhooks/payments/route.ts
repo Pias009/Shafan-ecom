@@ -5,6 +5,7 @@ import { TamaraService } from "@/services/payments/tamara";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { createShipmentForOrder } from "@/services/shipping/order-shipment";
 import { sendEmail } from "@/lib/email";
+import { renderPickupAdminRow } from "@/lib/pickup";
 
 export async function POST(request: NextRequest) {
   const tabbySignature = request.headers.get("x-tabby-signature");
@@ -61,6 +62,7 @@ async function notifyPaymentConfirmed(orderId: string, provider: string) {
               <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${order.currency.toUpperCase()} ${order.total?.toFixed(2)}</strong></td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">${provider}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
+              ${renderPickupAdminRow(order)}
             </table>
             <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || "https://www.shanfaglobal.com"}/ueadmin/orders/${order.id}" style="background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order</a></p>
           </div>

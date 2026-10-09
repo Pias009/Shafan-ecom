@@ -3,13 +3,14 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/cart-store";
-import { CheckCircle2, Package, Home, Heart, Sparkles, Gift, ArrowRight, Loader2, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Package, Home, Heart, Sparkles, Gift, ArrowRight, Loader2, Clock, XCircle, Store, MapPin } from "lucide-react";
 import Link from "next/link";
 import { Loader } from "@/components/Loader";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackPurchase } from "@/lib/datalayer";
 import { firePurchaseCAPI } from "@/app/actions/meta-capi";
 import Script from "next/script";
+import { formatReadyBy, getPickupDetails, type PickupDetails } from "@/lib/pickup";
 
 const CONFETTI_COLORS = ["#f472b6", "#a78bfa", "#34d399", "#fbbf24", "#60a5fa", "#fb7185"];
 
@@ -32,6 +33,7 @@ function SuccessContent() {
     deliveryCountry: string;
     estimatedDeliveryDate: string;
     items: Array<{ productId: string; name: string; quantity: number; unitPrice: number | null; gtin?: string }>;
+    pickup: PickupDetails | null;
   } | null>(null);
   const purchaseFiredRef = useRef(false);
 
@@ -78,6 +80,7 @@ function SuccessContent() {
         unitPrice: item.unitPrice,
         gtin: (item.product?.sku && /^\d{8,14}$/.test(item.product.sku)) ? item.product.sku : undefined,
       })) ?? [],
+      pickup: getPickupDetails(data),
     });
 
     // Celebrate ONLY when the payment is actually complete:
@@ -301,6 +304,8 @@ function SuccessContent() {
     }
   }, [paymentState, orderData]);
 
+  const pickup = orderData?.pickup ?? null;
+
   if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -479,7 +484,7 @@ function SuccessContent() {
               </h2>
               <p className="relative text-sm text-black/60 font-medium mb-1">
                 {isCodOrder
-                  ? "Your order is confirmed — pay with cash when your delivery arrives."
+                  ? (pickup ? "Your order is confirmed — pay with cash when you collect it." : "Your order is confirmed — pay with cash when your delivery arrives.")
                   : "Payment received! Your order is confirmed and being prepared."}
               </p>
               {orderId && (
@@ -523,7 +528,7 @@ function SuccessContent() {
           </h1>
           <p className="text-base text-black/60 font-medium mb-2">
             {isCodOrder
-              ? "Your order is confirmed. Pay with cash when your delivery arrives."
+              ? (pickup ? "Your order is confirmed. Pay with cash when you collect it." : "Your order is confirmed. Pay with cash when your delivery arrives.")
               : "Your payment was received and your order is being processed."}
           </p>
 
@@ -531,6 +536,32 @@ function SuccessContent() {
             <p className="text-[10px] font-black uppercase tracking-widest text-black/20 mb-6">
               Order Ref: #{orderId.substring(0, 12)}
             </p>
+          )}
+
+          {pickup && (
+            <div className="text-left rounded-2xl border-2 border-blue-100 bg-blue-50/60 p-5 mb-6">
+              <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
+                <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-700">
+                  <Store className="w-4 h-4" /> Store Pickup
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white bg-blue-600 px-2.5 py-1 rounded-full">
+                  Ready from {formatReadyBy(pickup.readyBy)}
+                </span>
+              </div>
+              <p className="text-sm font-bold text-black">{pickup.name}</p>
+              <p className="flex items-start gap-1.5 text-xs font-semibold text-black/60 mt-1 leading-relaxed">
+                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                {[pickup.address, pickup.city].filter(Boolean).join(", ")}
+              </p>
+              {pickup.hours && <p className="text-[11px] font-semibold text-black/40 mt-1">{pickup.hours}</p>}
+              {pickup.phone && <p className="text-[11px] font-semibold text-black/40">{pickup.phone}</p>}
+              {pickup.instructions && <p className="text-[11px] font-semibold text-black/50 mt-2">{pickup.instructions}</p>}
+              {pickup.mapUrl && (
+                <a href={pickup.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-[10px] font-black uppercase tracking-widest text-blue-700 underline">
+                  Open in Maps →
+                </a>
+              )}
+            </div>
           )}
 
           {/* Countdown bar */}
@@ -597,8 +628,8 @@ function SuccessContent() {
         {[
           { label: "Order Placed", active: true },
           { label: "Processing", active: !isCodOrder },
-          { label: "Shipping", active: false },
-          { label: "Delivered", active: false },
+          { label: pickup ? "Ready for Pickup" : "Shipping", active: false },
+          { label: pickup ? "Collected" : "Delivered", active: false },
         ].map((step, i) => (
           <div key={i} className="flex items-center gap-2">
             <div className="flex flex-col items-center gap-1">

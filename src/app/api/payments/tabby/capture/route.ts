@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
+import { renderPickupAdminRow } from "@/lib/pickup";
 
 export async function POST(request: NextRequest) {
   try {
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
                   <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${updatedOrder.currency?.toUpperCase()} ${updatedOrder.total?.toFixed(2)}</strong></td></tr>
                   <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">Tabby</td></tr>
                   <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
+                  ${renderPickupAdminRow(updatedOrder)}
                 </table>
                 <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || "https://www.shanfaglobal.com"}/ueadmin/orders/${updatedOrder.id}" style="background: #3ECF8E; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order</a></p>
               </div>

@@ -57,6 +57,9 @@ export function CreateOrderForm() {
   const [couponCode, setCouponCode] = useState("");
   const [discountInfo, setDiscountInfo] = useState<{ code: string; type: string; discount: number; maxLimitAmount?: number } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  // Manual admin discount, applied on top of any coupon
+  const [customDiscountType, setCustomDiscountType] = useState<"FIXED" | "PERCENT">("FIXED");
+  const [customDiscountValue, setCustomDiscountValue] = useState(0);
   const [countryCharges, setCountryCharges] = useState<Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number }>>({});
 
   // Load admin-editable VAT & delivery charges for the selectable countries
@@ -172,7 +175,7 @@ export function CreateOrderForm() {
     }
   }, [subtotal, selectedCountry, countryCharges, shippingCustom]);
 
-  const discountAmount = useMemo(() => {
+  const couponDiscount = useMemo(() => {
     if (!discountInfo) return 0;
     let amount = 0;
     if (discountInfo.type === "PERCENTAGE") {
@@ -187,6 +190,14 @@ export function CreateOrderForm() {
     }
     return amount;
   }, [subtotal, discountInfo]);
+
+  const customDiscount = Math.max(0,
+    customDiscountType === "PERCENT"
+      ? subtotal * Math.min(100, customDiscountValue) / 100
+      : customDiscountValue
+  );
+  // Combined discount can never exceed the item subtotal
+  const discountAmount = Math.round(Math.min(subtotal, couponDiscount + customDiscount) * 1000) / 1000;
 
   const preTaxTotal = subtotal + (discountInfo?.type === "FREE_SHIPPING" ? 0 : Number(shippingFee)) - discountAmount;
   const defaultTaxRate = getChargeConfig(selectedCountry).taxRate || 0;
@@ -647,11 +658,51 @@ export function CreateOrderForm() {
               <span>Subtotal</span>
               <span className="text-black">{selectedCountry} {(subtotal || 0).toFixed(2)}</span>
             </div>
-            {discountAmount > 0 && (
+            {couponDiscount > 0 && (
               <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-green-600">
-                <span>Discount ({discountInfo?.code})</span>
-                <span>-{selectedCountry} {discountAmount.toFixed(2)}</span>
+                <span>Coupon ({discountInfo?.code})</span>
+                <span>-{selectedCountry} {couponDiscount.toFixed(2)}</span>
               </div>
+            )}
+            <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-green-600">
+              <span className="flex items-center gap-1.5">
+                Extra Discount
+                {customDiscountValue > 0 && (
+                  <button onClick={() => setCustomDiscountValue(0)} className="text-[9px] font-black text-red-500 hover:underline">Clear</button>
+                )}
+              </span>
+              <div className="flex items-center gap-1">
+                <select
+                  value={customDiscountType}
+                  onChange={e => setCustomDiscountType(e.target.value as "FIXED" | "PERCENT")}
+                  className="bg-white border border-green-200 rounded-lg px-1 py-1 text-[10px] font-black text-black focus:ring-2 focus:ring-green-300 outline-none"
+                  aria-label="Discount type"
+                >
+                  <option value="FIXED">{selectedCountry}</option>
+                  <option value="PERCENT">%</option>
+                </select>
+                <input
+                  type="number"
+                  min="0"
+                  max={customDiscountType === "PERCENT" ? 100 : undefined}
+                  step="0.01"
+                  value={customDiscountValue}
+                  onChange={e => {
+                    const v = parseFloat(e.target.value);
+                    setCustomDiscountValue(isNaN(v) ? 0 : Math.max(0, v));
+                  }}
+                  className="w-20 bg-white border border-green-200 rounded-lg px-2 py-1 text-xs font-black text-black text-right focus:ring-2 focus:ring-green-300 outline-none"
+                  aria-label="Extra discount value"
+                />
+              </div>
+            </div>
+            {customDiscount > 0 && customDiscountType === "PERCENT" && (
+              <div className="flex justify-end text-[10px] font-bold text-green-600 -mt-2">
+                -{selectedCountry} {customDiscount.toFixed(2)}
+              </div>
+            )}
+            {couponDiscount + customDiscount > subtotal && subtotal > 0 && (
+              <p className="text-[10px] font-bold text-orange-600 -mt-2 text-right">Discount capped at subtotal</p>
             )}
             <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-black/40">
               <span className="flex items-center gap-1.5">

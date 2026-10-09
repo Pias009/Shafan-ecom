@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { computeReadyBy, DELIVERY_METHOD_PICKUP, type PickupDetails } from "@/lib/pickup";
 
 const PENDING_CHECKOUT_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -30,6 +31,8 @@ export type CreatePendingCheckoutInput = {
   paymentMethodTitle?: string | null;
   billingAddress: any;
   shippingAddress: any;
+  deliveryMethod?: string | null;
+  pickupDetails?: PickupDetails | null;
   items: PendingCheckoutItemSnapshot[];
   discountId?: string | null;
   discountAmount?: number | null;
@@ -55,6 +58,8 @@ export async function createPendingCheckout(input: CreatePendingCheckoutInput) {
       paymentMethodTitle: input.paymentMethodTitle || "Pending Selection",
       billingAddress: input.billingAddress || {},
       shippingAddress: input.shippingAddress || {},
+      deliveryMethod: input.deliveryMethod || null,
+      pickupDetails: input.pickupDetails || null,
       items: input.items,
       discountId: input.discountId || null,
       discountAmount: input.discountAmount || null,
@@ -117,6 +122,14 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
   }
 
   const items = (pc.items as unknown as PendingCheckoutItemSnapshot[]) || [];
+  const isPickup = pc.deliveryMethod === DELIVERY_METHOD_PICKUP;
+  // Ready-by counts from when the order becomes real, not when checkout began.
+  const pickupDetails: PickupDetails | null = isPickup && pc.pickupDetails
+    ? {
+        ...(pc.pickupDetails as PickupDetails),
+        readyBy: computeReadyBy(Number((pc.pickupDetails as PickupDetails).readyInDays) || 0).toISOString(),
+      }
+    : null;
 
   const order = await prisma.order.create({
     data: {
@@ -135,6 +148,8 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
       totalWeight: pc.totalWeight || 0,
       billingAddress: pc.billingAddress || {},
       shippingAddress: pc.shippingAddress || {},
+      deliveryMethod: pc.deliveryMethod || null,
+      pickupDetails: (pickupDetails as any) ?? undefined,
       paymentMethod: opts.paymentMethod || pc.paymentMethod || null,
       paymentMethodTitle: opts.paymentMethodTitle || pc.paymentMethodTitle || null,
       stripePaymentIntentId: opts.stripePaymentIntentId || null,
@@ -187,16 +202,24 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
     }).catch((err: any) => console.error("[promoteToOrder] discount.uses increment failed:", err));
   }
 
-  // Create shipment.
+  // Create shipment (pickup orders get a non-courier record, no tracking URL).
   const trackingCode = generateTrackingCode();
   const shipment = await prisma.shipment.create({
-    data: {
-      orderId: order.id,
-      courier: "GLOBAL_COURIER",
-      trackingCode,
-      trackingUrl: `https://global-courier.com/track/${trackingCode}`,
-      status: "Created",
-    },
+    data: isPickup
+      ? {
+          orderId: order.id,
+          courier: "STORE_PICKUP",
+          trackingCode,
+          trackingUrl: null,
+          status: "Created",
+        }
+      : {
+          orderId: order.id,
+          courier: "GLOBAL_COURIER",
+          trackingCode,
+          trackingUrl: `https://global-courier.com/track/${trackingCode}`,
+          status: "Created",
+        },
   });
 
   await (prisma as any).pendingCheckout.update({
@@ -205,6 +228,26 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
   });
 
   return { order: { ...order, shipment }, alreadyPromoted: false };
+}
+
+/**
+ * Re-open an EXPIRED checkout so the customer can retry payment (e.g. they
+ * cancelled on Tamara/Tabby/Stripe and came back to pick another method).
+ * Returns false if the checkout is already CONSUMED (a real Order exists).
+ */
+export async function reopenPendingCheckoutForRetry(pendingCheckoutId: string): Promise<boolean> {
+  const pc = await (prisma as any).pendingCheckout.findUnique({
+    where: { id: pendingCheckoutId },
+    select: { status: true },
+  });
+  if (!pc || pc.status === "CONSUMED") return false;
+  if (pc.status === "EXPIRED") {
+    await (prisma as any).pendingCheckout.updateMany({
+      where: { id: pendingCheckoutId, status: "EXPIRED" },
+      data: { status: "OPEN", expiresAt: new Date(Date.now() + PENDING_CHECKOUT_TTL_MS) },
+    });
+  }
+  return true;
 }
 
 export async function expirePendingCheckout(pendingCheckoutId: string) {

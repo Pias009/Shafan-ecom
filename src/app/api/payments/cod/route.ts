@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { promoteToOrder } from "@/services/checkout/pending-checkout";
 import { getOrderNumber, formatOrderNumber } from "@/lib/order-number";
+import { formatReadyBy, getPickupDetails, renderPickupAdminRow, renderPickupEmailBlock } from "@/lib/pickup";
 
 function generateTrackingCode(): string {
   const prefix = "GL";
@@ -50,11 +51,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to load promoted order" }, { status: 500 });
     }
 
-    // Create shipment for COD order
+    const pickupDetails = getPickupDetails(updatedOrder);
+
+    // Create shipment for COD order (store pickup needs no courier)
     let trackingCode = generateTrackingCode();
     let trackingUrl = `https://global-courier.com/track/${trackingCode}`;
 
-    try {
+    if (!pickupDetails) try {
       const shippingAddress = updatedOrder.shippingAddress as any;
       const countryCode = shippingAddress?.country || "AE";
       const gulfCountries = ['AE', 'KW', 'SA', 'BH', 'QA', 'OM'];
@@ -149,7 +152,7 @@ export async function POST(req: Request) {
 
           <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 16px 16px; border: 1px solid #e9ecef;">
             <p style="color: #495057; font-size: 16px; margin: 0 0 20px;">Hello <strong>${customerName}</strong>,</p>
-            <p style="color: #495057; margin: 0 0 24px;">Thank you for your order! Please have the payment ready upon delivery.</p>
+            <p style="color: #495057; margin: 0 0 24px;">Thank you for your order! Please have the payment ready upon ${pickupDetails ? 'collection' : 'delivery'}.</p>
 
             <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -165,8 +168,8 @@ export async function POST(req: Request) {
                   <div style="color: #333; font-weight: 600;">Cash on Delivery</div>
                 </div>
                 <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
-                  <span style="color: #6c757d;">Estimated Delivery</span>
-                  <div style="color: #333; font-weight: 600;">2-3 business days</div>
+                  <span style="color: #6c757d;">${pickupDetails ? 'Ready for Pickup' : 'Estimated Delivery'}</span>
+                  <div style="color: #333; font-weight: 600;">${pickupDetails ? formatReadyBy(pickupDetails.readyBy) : '2-3 business days'}</div>
                 </div>
               </div>
             </div>
@@ -197,7 +200,7 @@ export async function POST(req: Request) {
               </div>
             </div>
 
-            ${shippingAddr ? `
+            ${pickupDetails ? renderPickupEmailBlock(pickupDetails) : shippingAddr ? `
             <div style="background: white; padding: 24px; border-radius: 12px; margin: 0 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
               <h3 style="color: #333; margin: 0 0 12px; font-size: 16px;">Shipping Address</h3>
               <p style="color: #495057; margin: 0; line-height: 1.6;">
@@ -252,6 +255,7 @@ export async function POST(req: Request) {
               <tr><td style="padding: 8px 0; color: #666;">Customer</td><td style="padding: 8px 0;">${customerEmail || 'Guest'} — ${customerName}</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${(updatedOrder.currency || 'aed').toUpperCase()} ${Number(updatedOrder.total).toFixed(2)}</strong></td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
+              ${renderPickupAdminRow(updatedOrder)}
             </table>
             <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/ueadmin/orders/${updatedOrder.id}" style="background: #d97706; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order →</a></p>
           </div>

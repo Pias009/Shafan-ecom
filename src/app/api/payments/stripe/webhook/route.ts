@@ -7,6 +7,7 @@ import { sendEmail } from "@/lib/email";
 import { createAramexShipment } from "@/lib/shipping/aramex";
 import { promoteToOrder } from "@/services/checkout/pending-checkout";
 import { getOrderNumber, formatOrderNumber } from "@/lib/order-number";
+import { getPickupDetails, renderPickupAdminRow, renderPickupEmailBlock } from "@/lib/pickup";
 
 function generateTrackingCode(): string {
   const prefix = "GL";
@@ -149,9 +150,10 @@ export async function POST(req: Request) {
         const countryCode = shippingAddress?.country || "AE";
         const gulfCountries = ["AE", "KW", "SA", "BH", "QA", "OM"];
         const trackingCode = generateTrackingCode();
+        const isPickup = Boolean(getPickupDetails(updatedOrder));
         let aramexResult = null;
 
-        if (gulfCountries.includes(countryCode.toUpperCase())) {
+        if (!isPickup && gulfCountries.includes(countryCode.toUpperCase())) {
           try {
             aramexResult = await createAramexShipment({
               orderId,
@@ -185,11 +187,13 @@ export async function POST(req: Request) {
         await prisma.shipment.create({
           data: {
             orderId,
-            courier: shipmentTracking ? "ARAMEX" : "GLOBAL_COURIER",
+            courier: isPickup ? "STORE_PICKUP" : shipmentTracking ? "ARAMEX" : "GLOBAL_COURIER",
             trackingCode: shipmentTracking || trackingCode,
-            trackingUrl: shipmentTracking
-              ? `https://www.aramex.com/track/${shipmentTracking}`
-              : `https://global-courier.com/track/${trackingCode}`,
+            trackingUrl: isPickup
+              ? null
+              : shipmentTracking
+                ? `https://www.aramex.com/track/${shipmentTracking}`
+                : `https://global-courier.com/track/${trackingCode}`,
             status: "Created",
           },
         }).catch((err) => console.error("[Stripe Webhook] Shipment create error:", err));
@@ -241,6 +245,8 @@ export async function POST(req: Request) {
           .filter(Boolean)
           .join(", ");
 
+        const pickupDetails = getPickupDetails(updatedOrder);
+
         const emailHtml = `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
             <div style="background:linear-gradient(135deg,#28a745 0%,#20c997 100%);padding:40px 30px;border-radius:16px 16px 0 0;">
@@ -276,7 +282,7 @@ export async function POST(req: Request) {
                   </table>
                 </div>
               </div>
-              ${addressLines ? `
+              ${pickupDetails ? renderPickupEmailBlock(pickupDetails) : addressLines ? `
               <div style="background:white;padding:24px;border-radius:12px;margin:0 0 24px;">
                 <h3 style="color:#333;margin:0 0 12px;font-size:16px;">Shipping Address</h3>
                 <p style="color:#495057;margin:0;line-height:1.6;">${customerName}<br>${addressLines}${shippingAddr?.phone ? `<br>📞 ${shippingAddr.phone}` : ""}</p>
@@ -308,6 +314,7 @@ export async function POST(req: Request) {
                 <tr><td style="padding:8px 0;color:#666;">Order ID</td><td><strong>#${updatedOrder.id}</strong></td></tr>
                 <tr><td style="padding:8px 0;color:#666;">Customer</td><td>${customerEmail || "Guest"}</td></tr>
                 <tr><td style="padding:8px 0;color:#666;">Amount</td><td><strong style="font-size:18px;color:#28a745;">${updatedOrder.currency.toUpperCase()} ${(updatedOrder.total || 0).toFixed(2)}</strong></td></tr>
+                ${renderPickupAdminRow(updatedOrder)}
               </table>
               <p style="margin-top:20px;"><a href="https://shanfaglobal.com/ueadmin/orders/${updatedOrder.id}" style="background:#667eea;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;">View Order →</a></p>
             </div>`,

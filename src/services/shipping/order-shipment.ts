@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { createNaqelShipment, NaqelShipmentRequest } from "./naqel-api";
+import { isPickupOrder } from "@/lib/pickup";
 
 export async function createShipmentForOrder(orderId: string) {
   const order = await prisma.order.findUnique({
@@ -8,6 +9,7 @@ export async function createShipmentForOrder(orderId: string) {
   });
 
   if (!order) throw new Error(`Order ${orderId} not found`);
+  if (isPickupOrder(order)) return { success: true, trackingNumber: null, labelUrl: null, skipped: "store_pickup" };
 
   const shippingAddress = order.shippingAddress as any;
   const billingAddress = order.billingAddress as any;

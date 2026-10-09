@@ -378,6 +378,8 @@ model Order {
   paymentMethodTitle    String?
   billingAddress        Json?
   shippingAddress       Json?
+  deliveryMethod        String? // "SHIP" (default when null) | "PICKUP"
+  pickupDetails         Json? // snapshot of the chosen pickup location + ready-by date
   stripePaymentIntentId String?
   tabbyPaymentId        String?
   tabbySessionId        String?
@@ -457,6 +459,8 @@ model PendingCheckout {
   paymentMethodTitle String?
   billingAddress     Json
   shippingAddress    Json
+  deliveryMethod     String? // "SHIP" | "PICKUP"
+  pickupDetails      Json?
   items              Json // snapshot: [{productId, quantity, unitPrice, nameSnapshot, imageSnapshot, categoryNameSnapshot, weightSnapshot, weightUnitSnapshot}]
   totalWeight        Float?    @default(0)
   discountId         String?   @db.ObjectId

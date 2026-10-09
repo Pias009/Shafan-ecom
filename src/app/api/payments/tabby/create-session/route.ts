@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TabbyService, TabbyRegion, TabbyCurrency } from "@/services/payments/tabby";
 import type { PendingCheckoutItemSnapshot } from "@/services/checkout/pending-checkout";
+import { reopenPendingCheckoutForRetry } from "@/services/checkout/pending-checkout";
 import { formatOrderNumber } from "@/lib/order-number";
 
 const COUNTRY_TO_REGION: Record<string, { region: TabbyRegion; currency: TabbyCurrency }> = {
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (pendingCheckout.status !== "OPEN") {
+    // Reopen a cancelled/declined earlier attempt; only a paid checkout is final.
+    if (!(await reopenPendingCheckoutForRetry(pendingCheckout.id))) {
       return NextResponse.json({ error: "Order is not pending payment" }, { status: 400 });
     }
 

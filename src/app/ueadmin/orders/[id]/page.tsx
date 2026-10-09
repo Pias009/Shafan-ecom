@@ -11,6 +11,7 @@ import RequestAlerts from './RequestAlerts';
 import OrderEditor from './_components/OrderEditor';
 import TamaraRefundAction from './_components/TamaraRefundAction';
 import { formatOrderNumber } from '@/lib/order-number';
+import { formatReadyBy, getPickupDetails } from '@/lib/pickup';
 
 function formatPrice(amount: number, currency: string): string {
   const code = currency?.toUpperCase() || 'USD';
@@ -73,6 +74,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   const billing = order.billingAddress as Record<string, unknown> | null;
   const shipping = order.shippingAddress as Record<string, unknown> | null;
+  const pickup = getPickupDetails(order);
   const customerName = order.user?.name
     || (billing?.fullName as string)
     || (billing?.first_name ? `${billing.first_name} ${billing.last_name || ''}`.trim() : 'Guest')
@@ -110,6 +112,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               }`}>
                 {order.status?.replace(/_/g, ' ') || 'UNKNOWN'}
               </span>
+              {pickup && (
+                <span className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border bg-blue-600 text-white border-blue-700 inline-flex items-center gap-1.5">
+                  <Store size={12} /> Store Pickup
+                </span>
+              )}
             </div>
             <p className="text-slate-500 text-xs font-medium mt-2 flex items-center gap-2">
               <Clock size={14} /> Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Dubai' })}
@@ -239,7 +246,25 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </div>
           </section>
 
+          {/* Store Pickup */}
+          {pickup && (
+          <section className="glass-panel-heavy p-6 rounded-2xl border-2 border-blue-200 shadow-sm bg-blue-50/40 min-w-0">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2 bg-blue-100 rounded-xl text-blue-700 flex-shrink-0"><Store size={18} /></div>
+              <h3 className="font-black text-xs uppercase tracking-widest text-slate-900">Store Pickup</h3>
+            </div>
+            <div className="space-y-3">
+              <AddressField label="Store" value={pickup.name} />
+              <AddressField label="Address" value={[pickup.address, pickup.city].filter(Boolean).join(', ')} />
+              <AddressField label="Ready" value={`${formatReadyBy(pickup.readyBy)} (${pickup.readyInDays} day${pickup.readyInDays === 1 ? '' : 's'})`} />
+              {pickup.hours && <AddressField label="Hours" value={pickup.hours} />}
+              {pickup.phone && <AddressField label="Store Ph" value={pickup.phone} />}
+            </div>
+          </section>
+          )}
+
           {/* Shipping Address */}
+          {!pickup && (
           <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white min-w-0">
             <div className="flex items-center gap-3 mb-5">
               <div className="p-2 bg-black/5 rounded-xl text-slate-700 flex-shrink-0"><MapPin size={18} /></div>
@@ -270,6 +295,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <p className="italic text-slate-400 text-xs">No shipping address</p>
             )}
           </section>
+          )}
 
           {/* Billing Address */}
           <section className="glass-panel-heavy p-6 rounded-2xl border border-black/5 shadow-sm bg-white min-w-0">

@@ -3,7 +3,7 @@
 import { useCartStore } from "@/lib/cart-store";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus, MapPin, Lock, ShieldCheck, Clock, Sparkles } from "lucide-react";
+import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus, MapPin, Lock, ShieldCheck, Clock, Sparkles, Store, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { Suspense, useEffect, useState } from "react";
@@ -22,6 +22,7 @@ import type { CartItem } from "@/lib/cart-store";
 import PaymentSelection from "@/components/checkout/PaymentSelection";
 import TabbyPromo from "@/components/TabbyPromo";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
+import { computeReadyBy, DELIVERY_METHOD_PICKUP, DELIVERY_METHOD_SHIP, formatReadyBy, formatReadyInDays, type PublicPickupConfig } from "@/lib/pickup";
 
 const COUNTRY_CODES: Record<string, string> = {
   "United Arab Emirates": "+971",
@@ -203,7 +204,17 @@ function CartPageContent() {
   const [deliveryCountry, setDeliveryCountry] = useState(getCountryName(checkoutCountry));
   const [saveInfo, setSaveInfo] = useState(false);
   const [shipMethod, setShipMethod] = useState<"ship" | "pickup">("ship");
+  const [pickupConfigs, setPickupConfigs] = useState<Record<string, PublicPickupConfig>>({});
+  const [pickupLocationId, setPickupLocationId] = useState<string | null>(null);
   const [showRegionDropdown, setShowRegionDropdown] = useState(false);
+
+  // Pickup is offered only where the admin enabled it with at least one active store
+  const pickupConfig = pickupConfigs[checkoutCountry?.toUpperCase()];
+  const pickupAvailable = Boolean(pickupConfig?.enabled && pickupConfig.locations.length > 0);
+  const isPickup = shipMethod === "pickup" && pickupAvailable;
+  const selectedPickupLocation = isPickup
+    ? pickupConfig!.locations.find((l) => l.id === pickupLocationId) || null
+    : null;
 
   const activeCountryCode = getCountryCode(deliveryCountry) || checkoutCountry || "AE";
   const activeChargeConfig = countryCharges[activeCountryCode];
@@ -237,7 +248,9 @@ function CartPageContent() {
       .then((data) => {
         if (!isMounted) return;
         const map: Record<string, { deliveryFee: number; freeDelivery: number; taxRate: number; minOrder: number; deliveryTime?: string; deliveryText?: string }> = {};
+        const pickupMap: Record<string, PublicPickupConfig> = {};
         (data?.activeCountries || []).forEach((c: any) => {
+          if (c.pickup) pickupMap[c.code] = c.pickup;
           map[c.code] = {
             deliveryFee: Number(c.deliveryFee) || 0,
             freeDelivery: Number(c.freeDelivery) || 0,
@@ -248,10 +261,23 @@ function CartPageContent() {
           };
         });
         setCountryCharges(map);
+        setPickupConfigs(pickupMap);
       })
       .catch(() => {});
     return () => { isMounted = false; };
   }, []);
+
+  // Fall back to shipping if pickup isn't offered here; default to the first store
+  useEffect(() => {
+    if (shipMethod !== "pickup") return;
+    if (!pickupAvailable) {
+      setShipMethod("ship");
+      return;
+    }
+    if (!pickupConfig!.locations.some((l) => l.id === pickupLocationId)) {
+      setPickupLocationId(pickupConfig!.locations[0].id);
+    }
+  }, [shipMethod, pickupAvailable, pickupConfig, pickupLocationId]);
 
   useEffect(() => {
     if (tamaraStatus === "success") {
@@ -370,7 +396,9 @@ function CartPageContent() {
 
   const deliveryConfig = getChargeConfig(checkoutCountry);
   const allItemsFreeDelivery = items.length > 0 && items.every((i) => i.deliveryFeeOption === "FREE");
-  const shipping = allItemsFreeDelivery ? 0 : (subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee);
+  const shipping = isPickup
+    ? pickupConfig!.fee
+    : (allItemsFreeDelivery ? 0 : (subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee));
 
   const countryTaxRate = deliveryConfig.taxRate || 0;
   const taxableSubtotal = items.reduce((acc, item) => {
@@ -455,26 +483,31 @@ function CartPageContent() {
     if (!firstName.trim() || !lastName.trim()) {
       errors.name = "Please enter your first and last name";
     }
-    if (fConfig.houseBuilding === true && !houseBuilding.trim()) {
-      errors.houseBuilding = "Please enter your house / building name";
+    if (isPickup && !selectedPickupLocation) {
+      errors.pickupLocation = "Please choose a pickup location";
     }
-    if (!streetAddress.trim()) {
-      errors.street = "Please enter your street / road";
-    }
-    if (fConfig.blockNo === true && !blockNo.trim()) {
-      errors.blockNo = "Please enter your block number";
-    }
-    if (fConfig.areaName !== false && !areaName.trim()) {
-      errors.areaName = fConfig.cityName === false ? "Please enter your area / city name" : "Please enter your area name";
-    }
-    if (fConfig.cityName !== false && !city.trim()) {
-      errors.city = "Please enter your city name";
-    }
-    if (fConfig.region === "dropdown" && !region.trim()) {
-      errors.region = "Please select your emirate";
-    }
-    if (fConfig.region === true && !region.trim()) {
-      errors.region = "Please enter your region";
+    if (!isPickup) {
+      if (fConfig.houseBuilding === true && !houseBuilding.trim()) {
+        errors.houseBuilding = "Please enter your house / building name";
+      }
+      if (!streetAddress.trim()) {
+        errors.street = "Please enter your street / road";
+      }
+      if (fConfig.blockNo === true && !blockNo.trim()) {
+        errors.blockNo = "Please enter your block number";
+      }
+      if (fConfig.areaName !== false && !areaName.trim()) {
+        errors.areaName = fConfig.cityName === false ? "Please enter your area / city name" : "Please enter your area name";
+      }
+      if (fConfig.cityName !== false && !city.trim()) {
+        errors.city = "Please enter your city name";
+      }
+      if (fConfig.region === "dropdown" && !region.trim()) {
+        errors.region = "Please select your emirate";
+      }
+      if (fConfig.region === true && !region.trim()) {
+        errors.region = "Please enter your region";
+      }
     }
     const countryCode = COUNTRY_CODES[deliveryCountry] || "+971";
     let rawPhone = phone;
@@ -498,7 +531,7 @@ function CartPageContent() {
     toast.loading(t.cart.creatingOrder, { id: "checkout" });
 
     try {
-      await saveAddressToBackend(addr);
+      if (!isPickup) await saveAddressToBackend(addr);
 
       const orderItems = items.map((i: CartItem) => {
         const { price: itemPrice } = getDisplayPrice(i, checkoutCountry);
@@ -514,7 +547,12 @@ function CartPageContent() {
       const deliveryConfigLocal = getChargeConfig(checkoutCountry);
       const allItemsFree = items.length > 0 && items.every((i: CartItem) => i.deliveryFeeOption === "FREE");
       const freeDeliveryThreshold = deliveryConfigLocal?.freeDelivery || 150;
-      const shippingFee = allItemsFree ? 0 : (calculatedSubtotal >= freeDeliveryThreshold ? 0 : (deliveryConfigLocal?.deliveryFee || 10));
+      const shippingFee = isPickup
+        ? pickupConfig!.fee
+        : (allItemsFree ? 0 : (calculatedSubtotal >= freeDeliveryThreshold ? 0 : (deliveryConfigLocal?.deliveryFee || 10)));
+      const deliveryPayload = isPickup
+        ? { deliveryMethod: DELIVERY_METHOD_PICKUP, pickupLocationId: selectedPickupLocation?.id }
+        : { deliveryMethod: DELIVERY_METHOD_SHIP };
 
       const discountAmount = Math.min(calculatedSubtotal * couponDiscount, couponMaxLimit ?? Infinity);
 
@@ -554,6 +592,7 @@ function CartPageContent() {
             billing: addr,
             shipping: addr,
             country: checkoutCountry,
+            ...deliveryPayload,
             payment_method: "tamara",
             payment_method_title: `Tamara ${getCurrencyForCountry(checkoutCountry)} Installments`,
           }),
@@ -609,6 +648,7 @@ function CartPageContent() {
           billing: addr,
           shipping: addr,
           country: checkoutCountry,
+          ...deliveryPayload,
           ...paymentMethodData,
         }),
       });
@@ -873,34 +913,81 @@ function CartPageContent() {
                   <Truck className="w-4 h-4" />
                   Ship
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShipMethod("pickup")}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 md:py-3 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-widest transition cursor-pointer active:scale-[0.98] ${
-                    shipMethod === "pickup"
-                      ? "bg-black text-white shadow-sm"
-                      : "text-black/40 hover:text-black/70"
-                  }`}
-                >
-                  Pickup
-                </button>
+                {pickupAvailable && (
+                  <button
+                    type="button"
+                    onClick={() => setShipMethod("pickup")}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 md:py-3 rounded-lg text-[10px] md:text-xs font-black uppercase tracking-widest transition cursor-pointer active:scale-[0.98] ${
+                      isPickup
+                        ? "bg-black text-white shadow-sm"
+                        : "text-black/40 hover:text-black/70"
+                    }`}
+                  >
+                    <Store className="w-4 h-4" />
+                    Pickup
+                    {pickupConfig!.fee === 0 && (
+                      <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${isPickup ? "bg-white/20" : "bg-green-100 text-green-700"}`}>Free</span>
+                    )}
+                  </button>
+                )}
               </div>
 
-              {shipMethod === "pickup" && (
-                <div className="mb-5 rounded-xl lg:rounded-2xl border-2 border-black/10 bg-blue-50/50 p-4 md:p-5">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-bold text-black mb-1">Pick-up option will be available only for UAE.</p>
-                      <p className="text-xs font-semibold text-black/60 leading-relaxed">
-                        Address: office 405, al diyafa shopping center, satwa roundabout, Dubai
-                      </p>
-                    </div>
+              {isPickup && (
+                <div className="mb-5 space-y-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40">Choose a pickup store *</p>
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-full">
+                      <Clock className="w-3 h-3" />
+                      Ready in {formatReadyInDays(pickupConfig!.readyInDays)} · {formatReadyBy(computeReadyBy(pickupConfig!.readyInDays))}
+                    </span>
                   </div>
+                  <div role="radiogroup" aria-label="Pickup store" className="space-y-2">
+                    {pickupConfig!.locations.map((loc) => {
+                      const selected = loc.id === pickupLocationId;
+                      return (
+                        <button
+                          key={loc.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => { setPickupLocationId(loc.id); setFieldErrors(prev => ({...prev, pickupLocation: ''})); }}
+                          className={`w-full text-left rounded-xl lg:rounded-2xl border-2 p-4 transition cursor-pointer flex items-start gap-3 ${
+                            selected ? "border-black bg-black/[0.02]" : fieldErrors.pickupLocation ? "border-red-500" : "border-black/10 hover:border-black/30"
+                          }`}
+                        >
+                          <span className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? "border-black bg-black text-white" : "border-black/20"}`}>
+                            {selected && <Check className="w-3 h-3" />}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-bold text-black">{loc.name}</span>
+                            <span className="flex items-start gap-1.5 text-xs font-semibold text-black/60 leading-relaxed mt-0.5">
+                              <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                              {[loc.address, loc.city].filter(Boolean).join(", ")}
+                            </span>
+                            {loc.hours && <span className="block text-[11px] font-semibold text-black/40 mt-1">{loc.hours}</span>}
+                            {loc.phone && <span className="block text-[11px] font-semibold text-black/40">{loc.phone}</span>}
+                            {selected && loc.mapUrl && (
+                              <a
+                                href={loc.mapUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-block mt-1.5 text-[10px] font-black uppercase tracking-widest text-blue-700 underline"
+                              >
+                                Open in Maps →
+                              </a>
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {pickupConfig!.instructions && (
+                    <p className="text-[11px] font-semibold text-black/50 leading-relaxed">{pickupConfig!.instructions}</p>
+                  )}
                 </div>
               )}
 
-              {shipMethod === "ship" && (
               <div className="grid gap-4 md:grid-cols-2">
                 {/* Country — locked to the geo-detected store; not user-changeable */}
                 <div className="relative md:col-span-2">
@@ -939,125 +1026,128 @@ function CartPageContent() {
                   />
                 </div>
 
-                {/* House / Building Name — all countries */}
-                <div className="md:col-span-2">
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">House No. / Building Name *</label>
-                  <input
-                    value={houseBuilding}
-                    onChange={(e) => { setHouseBuilding(e.target.value); setFieldErrors(prev => ({...prev, houseBuilding: ''})); }}
-                    placeholder="House number or building name"
-                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.houseBuilding ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
-                  />
-                </div>
+                {!isPickup && (<>
+                  {/* House / Building Name — all countries */}
+                  <div className="md:col-span-2">
+                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">House No. / Building Name *</label>
+                    <input
+                      value={houseBuilding}
+                      onChange={(e) => { setHouseBuilding(e.target.value); setFieldErrors(prev => ({...prev, houseBuilding: ''})); }}
+                      placeholder="House number or building name"
+                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.houseBuilding ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                    />
+                  </div>
 
-                {/* Street / Road — all countries */}
-                <div className="md:col-span-2">
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Street / Road *</label>
-                  <input
-                    value={streetAddress}
-                    onChange={(e) => { setStreetAddress(e.target.value); setFieldErrors(prev => ({...prev, street: ''})); }}
-                    placeholder="Street name or road"
-                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.street ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
-                  />
-                </div>
+                  {/* Street / Road — all countries */}
+                  <div className="md:col-span-2">
+                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Street / Road *</label>
+                    <input
+                      value={streetAddress}
+                      onChange={(e) => { setStreetAddress(e.target.value); setFieldErrors(prev => ({...prev, street: ''})); }}
+                      placeholder="Street name or road"
+                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.street ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                    />
+                  </div>
 
-                {/* Block No. — Kuwait (mandatory), Bahrain (optional) */}
-                {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.blockNo !== false) && (
+                  {/* Block No. — Kuwait (mandatory), Bahrain (optional) */}
+                  {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.blockNo !== false) && (
+                    <div className="md:col-span-2">
+                      <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
+                        Block No.{COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.blockNo === "optional" ? " (Optional)" : " *"}
+                      </label>
+                      <input
+                        value={blockNo}
+                        onChange={(e) => { setBlockNo(e.target.value); setFieldErrors(prev => ({...prev, blockNo: ''})); }}
+                        placeholder="Block number"
+                        className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.blockNo ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                      />
+                    </div>
+                  )}
+
+                  {/* Zone — Qatar (optional) */}
+                  {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.zone !== false) && (
+                    <div className="md:col-span-2">
+                      <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Zone (Optional)</label>
+                      <input
+                        value={zone}
+                        onChange={(e) => setZone(e.target.value)}
+                        placeholder="Zone"
+                        className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white cursor-text active:border-black/30"
+                      />
+                    </div>
+                  )}
+
+                  {/* Area Name — all countries. Label differs for Kuwait */}
                   <div className="md:col-span-2">
                     <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                      Block No.{COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.blockNo === "optional" ? " (Optional)" : " *"}
+                      {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "Area / City Name *" : "Area Name *"}
                     </label>
                     <input
-                      value={blockNo}
-                      onChange={(e) => { setBlockNo(e.target.value); setFieldErrors(prev => ({...prev, blockNo: ''})); }}
-                      placeholder="Block number"
-                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.blockNo ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                      value={areaName}
+                      onChange={(e) => { setAreaName(e.target.value); setFieldErrors(prev => ({...prev, areaName: ''})); }}
+                      placeholder={COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "Area or city name" : "Area name"}
+                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.areaName ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
                     />
                   </div>
-                )}
 
-                {/* Zone — Qatar (optional) */}
-                {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.zone !== false) && (
-                  <div className="md:col-span-2">
-                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Zone (Optional)</label>
-                    <input
-                      value={zone}
-                      onChange={(e) => setZone(e.target.value)}
-                      placeholder="Zone"
-                      className="w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 border-black/10 focus:border-black transition outline-none bg-white cursor-text active:border-black/30"
-                    />
-                  </div>
-                )}
+                  {/* City Name — all except Kuwait */}
+                  {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName !== false) && (
+                    <div className="md:col-span-2">
+                      <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">City Name *</label>
+                      <input
+                        value={city}
+                        onChange={(e) => { setCity(e.target.value); setFieldErrors(prev => ({...prev, city: ''})); }}
+                        placeholder="City"
+                        className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.city ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                      />
+                    </div>
+                  )}
 
-                {/* Area Name — all countries. Label differs for Kuwait */}
-                <div className="md:col-span-2">
-                  <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                    {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "Area / City Name *" : "Area Name *"}
-                  </label>
-                  <input
-                    value={areaName}
-                    onChange={(e) => { setAreaName(e.target.value); setFieldErrors(prev => ({...prev, areaName: ''})); }}
-                    placeholder={COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName === false ? "Area or city name" : "Area name"}
-                    className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.areaName ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
-                  />
-                </div>
+                  {/* UAE Region — mandatory dropdown */}
+                  {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.region === "dropdown" && (
+                    <div className="relative md:col-span-2">
+                      <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
+                        Emirate / Region *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => { setShowRegionDropdown(!showRegionDropdown); }}
+                        className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 ${fieldErrors.region ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white flex items-center justify-between cursor-pointer active:border-black/30`}
+                      >
+                        <span className={region ? "" : "text-black/30"}>{region || "Select Emirate"}</span>
+                        <ChevronDown className={`w-4 h-4 text-black/30 transition shrink-0 ${showRegionDropdown ? "rotate-180" : ""}`} />
+                      </button>
+                      {showRegionDropdown && (
+                        <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
+                          {UAE_REGIONS.map((r) => (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => { setRegion(r); setShowRegionDropdown(false); setFieldErrors(prev => ({...prev, region: ''})); }}
+                              className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${region === r ? "bg-black text-white hover:bg-black" : "text-black"}`}
+                            >
+                              {r}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                {/* City Name — all except Kuwait */}
-                {(COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.cityName !== false) && (
-                  <div className="md:col-span-2">
-                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">City Name *</label>
-                    <input
-                      value={city}
-                      onChange={(e) => { setCity(e.target.value); setFieldErrors(prev => ({...prev, city: ''})); }}
-                      placeholder="City"
-                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.city ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
-                    />
-                  </div>
-                )}
+                  {/* SA Region — mandatory text input */}
+                  {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.region === true && (
+                    <div className="md:col-span-2">
+                      <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Region *</label>
+                      <input
+                        value={region}
+                        onChange={(e) => { setRegion(e.target.value); setFieldErrors(prev => ({...prev, region: ''})); }}
+                        placeholder="e.g. Riyadh, Jeddah, Dammam"
+                        className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.region ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
+                      />
+                    </div>
+                  )}
 
-                {/* UAE Region — mandatory dropdown */}
-                {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.region === "dropdown" && (
-                  <div className="relative md:col-span-2">
-                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">
-                      Emirate / Region *
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => { setShowRegionDropdown(!showRegionDropdown); }}
-                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-left text-sm font-semibold border-2 ${fieldErrors.region ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white flex items-center justify-between cursor-pointer active:border-black/30`}
-                    >
-                      <span className={region ? "" : "text-black/30"}>{region || "Select Emirate"}</span>
-                      <ChevronDown className={`w-4 h-4 text-black/30 transition shrink-0 ${showRegionDropdown ? "rotate-180" : ""}`} />
-                    </button>
-                    {showRegionDropdown && (
-                      <div className="absolute z-[100] w-full mt-1.5 bg-white border-2 border-black/10 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
-                        {UAE_REGIONS.map((r) => (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => { setRegion(r); setShowRegionDropdown(false); setFieldErrors(prev => ({...prev, region: ''})); }}
-                            className={`w-full px-4 py-2.5 text-left text-sm font-semibold hover:bg-black/5 transition cursor-pointer active:bg-black/10 ${region === r ? "bg-black text-white hover:bg-black" : "text-black"}`}
-                          >
-                            {r}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* SA Region — mandatory text input */}
-                {COUNTRY_FIELD_CONFIG[getCountryCode(deliveryCountry)]?.region === true && (
-                  <div className="md:col-span-2">
-                    <label className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-black/40 mb-1.5 block">Region *</label>
-                    <input
-                      value={region}
-                      onChange={(e) => { setRegion(e.target.value); setFieldErrors(prev => ({...prev, region: ''})); }}
-                      placeholder="e.g. Riyadh, Jeddah, Dammam"
-                      className={`w-full rounded-xl lg:rounded-2xl px-4 py-3.5 text-sm font-semibold border-2 ${fieldErrors.region ? 'border-red-500' : 'border-black/10'} focus:border-black transition outline-none bg-white cursor-text active:border-black/30`}
-                    />
-                  </div>
-                )}
+                </>)}
 
                 {/* Phone */}
                 <div className="md:col-span-2">
@@ -1081,7 +1171,6 @@ function CartPageContent() {
                   </div>
                 </div>
               </div>
-              )}
             </div>
 
             <label className="flex items-center gap-2.5 cursor-pointer group px-1 py-1 active:opacity-70">
@@ -1211,7 +1300,24 @@ function CartPageContent() {
               </div>
 
               {/* Delivery Data Box — One box after the product box */}
-              {!isEmpty && (
+              {!isEmpty && isPickup && selectedPickupLocation && (
+                <div className="rounded-2xl lg:rounded-3xl border border-blue-500/20 bg-blue-500/5 shadow-sm p-4 sm:p-5 flex items-center gap-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-600/20">
+                    <Store size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs sm:text-sm font-black text-black flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <span>{isArabic ? "استلام من المتجر:" : "Store Pickup:"}</span>
+                      <span className="text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full bg-blue-600 text-white">
+                        Ready in {formatReadyInDays(pickupConfig!.readyInDays)}
+                      </span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs font-semibold text-black/70 truncate mt-0.5">{selectedPickupLocation.name}</p>
+                  </div>
+                </div>
+              )}
+
+              {!isEmpty && !isPickup && (
                 <CartDeliveryBox
                   deliveryTime={activeDeliveryTime}
                   deliveryText={activeDeliveryText}
@@ -1281,7 +1387,7 @@ function CartPageContent() {
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-black/40">Delivery</span>
+                    <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-black/40">{isPickup ? "Store Pickup" : "Delivery"}</span>
                     <span className={`font-black text-sm md:text-base ${shipping === 0 ? "text-green-600" : "text-black"}`}>
                       {shipping === 0 ? "FREE" : <Price amount={shipping} />}
                     </span>

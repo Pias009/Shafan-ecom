@@ -8,6 +8,8 @@ import { cookies } from "next/headers";
 import { createPendingCheckout } from "@/services/checkout/pending-checkout";
 import { convertCurrency } from "@/lib/currency-rates";
 import { loadCountryCharges } from "@/lib/vat-delivery-config";
+import { resolvePickupSelection } from "@/lib/pickup-config";
+import { DELIVERY_METHOD_PICKUP, DELIVERY_METHOD_SHIP, type PickupDetails } from "@/lib/pickup";
 
 // Helper to get currency for country
 function getCurrencyForCountry(country: string): string {
@@ -275,7 +277,13 @@ export async function POST(req: Request) {
       taxRate: clientTaxRate,
       taxAmount: clientTaxAmount,
       isAdminCreated,
+      deliveryMethod: rawDeliveryMethod,
+      pickupLocationId,
     } = body;
+
+    const deliveryMethod = String(rawDeliveryMethod || "").toUpperCase() === DELIVERY_METHOD_PICKUP
+      ? DELIVERY_METHOD_PICKUP
+      : DELIVERY_METHOD_SHIP;
 
     // Allow guest orders
 
@@ -298,6 +306,19 @@ export async function POST(req: Request) {
         },
         { status: 400 }
       );
+    }
+
+    // Store pickup: the location must exist and be active for this country.
+    // The fee is taken from admin settings, never from the client.
+    let pickupDetails: PickupDetails | null = null;
+    let pickupFee = 0;
+    if (deliveryMethod === DELIVERY_METHOD_PICKUP) {
+      const pickup = await resolvePickupSelection(countryCode, pickupLocationId);
+      if (!pickup.ok) {
+        return NextResponse.json({ error: pickup.error }, { status: 400 });
+      }
+      pickupDetails = pickup.details;
+      pickupFee = pickup.fee;
     }
 
     // Fetch user's address if not provided in request
@@ -535,6 +556,10 @@ export async function POST(req: Request) {
       shippingFee = 0;
       freeDelivery = true;
     }
+    if (pickupDetails) {
+      shippingFee = pickupFee;
+      freeDelivery = pickupFee === 0;
+    }
     
     // Check if minimum order requirement is met (Skip for Admins to allow manual order flexibility)
     const deliveryConfig = charges[countryCode.toUpperCase()];
@@ -639,6 +664,8 @@ export async function POST(req: Request) {
           total: finalTotal,
           billingAddress: finalBilling || {},
           shippingAddress: finalShipping || {},
+          deliveryMethod,
+          pickupDetails: (pickupDetails as any) ?? undefined,
           paymentMethod: payment_method || null,
           paymentMethodTitle: payment_method_title || "Pending Selection",
           totalWeight,
@@ -664,9 +691,9 @@ export async function POST(req: Request) {
       const shipment = await prisma.shipment.create({
         data: {
           orderId: order.id,
-          courier: "GLOBAL_COURIER",
+          courier: pickupDetails ? "STORE_PICKUP" : "GLOBAL_COURIER",
           trackingCode,
-          trackingUrl: `https://global-courier.com/track/${trackingCode}`,
+          trackingUrl: pickupDetails ? null : `https://global-courier.com/track/${trackingCode}`,
           status: "Created",
         },
       });
@@ -717,6 +744,8 @@ export async function POST(req: Request) {
       paymentMethodTitle: payment_method_title || "Pending Selection",
       billingAddress: finalBilling || {},
       shippingAddress: finalShipping || {},
+      deliveryMethod,
+      pickupDetails,
       items: orderItemsData,
       discountId: discountIdApplied,
       discountAmount: couponCodeApplied ? effectiveDiscount : null,

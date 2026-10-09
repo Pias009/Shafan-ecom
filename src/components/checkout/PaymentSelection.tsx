@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Script from "next/script";
 import { CreditCard, ShieldCheck } from "lucide-react";
+import { isTamaraAvailable } from "@/lib/tamara-availability";
 
 interface PaymentSelectionProps {
   currentCurrency: string;
@@ -86,7 +87,7 @@ export default function PaymentSelection({
     lang,
     currentCountry,
   }: PaymentSelectionProps) {
-    // Kuwait customers can pay by card or COD, but not Tabby/Tamara (BNPL).
+    // Kuwait customers can only pay by card — COD, Tabby, and Tamara are hidden.
     // All other GCC countries get every method.
     const isKuwait = (currentCountry?.toUpperCase() || "") === "KW";
     const showInstallments = !isKuwait && (["AE", "SA", "KW", "BH", "QA", "OM"].includes(currentCountry?.toUpperCase() || "") || ["AED", "SAR", "KWD"].includes(currentCurrency?.toUpperCase() || ""));
@@ -257,8 +258,8 @@ export default function PaymentSelection({
         )}
       </div>}
 
-      {/* Tamara — UAE & SA only */}
-      {showInstallments && <div>
+      {/* Tamara — only where the merchant account supports it (UAE & SA) */}
+      {showInstallments && isTamaraAvailable(currentCountry) && <div>
         <button
           type="button"
           onClick={() => onPaymentSelect("tamara")}
@@ -299,42 +300,44 @@ export default function PaymentSelection({
         )}
       </div>}
 
-      {/* Cash on Delivery — available in every country, including Kuwait */}
-      <div>
-        <button
-          type="button"
-          onClick={() => onPaymentSelect("cod")}
-          className={`w-full bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer select-none hover:bg-gray-50/50 transition-all shadow-sm ${
-            activePayment === "cod" ? "ring-2 ring-black" : ""
-          }`}
-        >
-          <div className="flex items-center flex-1 min-w-0">
-            <div className="w-12 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center shadow-sm shrink-0">
-              <span className="text-lg font-bold text-gray-400">$</span>
-            </div>
-            <span className="flex-1 pl-4 text-left text-sm font-medium text-gray-900">
-              Cash on Delivery
-            </span>
-          </div>
-          <div
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3 transition-colors ${
-              activePayment === "cod" ? "border-black" : "border-gray-300"
+      {/* Cash on Delivery — hidden for Kuwait */}
+      {!isKuwait && (
+        <div>
+          <button
+            type="button"
+            onClick={() => onPaymentSelect("cod")}
+            className={`w-full bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between cursor-pointer select-none hover:bg-gray-50/50 transition-all shadow-sm ${
+              activePayment === "cod" ? "ring-2 ring-black" : ""
             }`}
           >
-            {activePayment === "cod" && (
-              <div className="w-2.5 h-2.5 rounded-full bg-black" />
-            )}
-          </div>
-        </button>
+            <div className="flex items-center flex-1 min-w-0">
+              <div className="w-12 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center shadow-sm shrink-0">
+                <span className="text-lg font-bold text-gray-400">$</span>
+              </div>
+              <span className="flex-1 pl-4 text-left text-sm font-medium text-gray-900">
+                Cash on Delivery
+              </span>
+            </div>
+            <div
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ml-3 transition-colors ${
+                activePayment === "cod" ? "border-black" : "border-gray-300"
+              }`}
+            >
+              {activePayment === "cod" && (
+                <div className="w-2.5 h-2.5 rounded-full bg-black" />
+              )}
+            </div>
+          </button>
 
-        {activePayment === "cod" && (
-          <div className="mt-3 px-4 pb-2">
-            <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
-              Pay with cash or card when your order arrives at your doorstep.
-            </p>
-          </div>
-        )}
-      </div>
+          {activePayment === "cod" && (
+            <div className="mt-3 px-4 pb-2">
+              <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                Pay with cash or card when your order arrives at your doorstep.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { TamaraService } from "@/services/payments/tamara";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
+import { renderPickupAdminRow } from "@/lib/pickup";
 import { promoteToOrder, expirePendingCheckout } from "@/services/checkout/pending-checkout";
 import { TamaraCurrency } from "@/services/payments/tamara/types";
 
@@ -49,6 +50,7 @@ export async function notifyPaymentConfirmed(orderId: string) {
               <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong style="font-size: 18px;">${order.currency?.toUpperCase()} ${order.total?.toFixed(2)}</strong></td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Payment</td><td style="padding: 8px 0;">Tamara Installments</td></tr>
               <tr><td style="padding: 8px 0; color: #666;">Items</td><td style="padding: 8px 0;">${adminItemsList}</td></tr>
+              ${renderPickupAdminRow(order)}
             </table>
             <p style="margin-top: 20px;"><a href="${process.env.NEXTAUTH_URL || "https://www.shanfaglobal.com"}/ueadmin/orders/${order.id}" style="background: #000; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">View Order</a></p>
           </div>
@@ -75,9 +77,9 @@ export async function capturePendingTamaraCheckout(
   if (pc.status === "CONSUMED" && pc.consumedOrderId) {
     return { ok: true, alreadyCaptured: true };
   }
-  if (pc.status === "EXPIRED") {
-    return { ok: false, reason: "not_payable", status: "EXPIRED" };
-  }
+  // EXPIRED is not final here: an earlier attempt's cancel/expiry may have
+  // landed first. If Tamara says this payment is approved, still promote it —
+  // promoteToOrder accepts OPEN or EXPIRED.
 
   const tamaraId = opts?.tamaraCheckoutId || pc.tamaraCheckoutId;
   if (!tamaraId) return { ok: false, reason: "no_tamara_id" };

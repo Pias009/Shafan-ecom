@@ -54,6 +54,8 @@ export async function GET(req: Request) {
         trackingUrl: (o.shipment as any)?.trackingUrl,
       } : null,
       shippingAddress: o.shippingAddress || {},
+      deliveryMethod: o.deliveryMethod,
+      pickupDetails: o.pickupDetails,
       items: o.items.map((it: any) => ({
         id: it.id,
         name: it.nameSnapshot || (it.product as any)?.name || "Unknown Product",

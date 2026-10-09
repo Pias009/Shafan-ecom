@@ -2,12 +2,13 @@ import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CreditCard, User, MapPin, CheckCircle2, ShoppingBag, Truck } from "lucide-react";
+import { ArrowLeft, CreditCard, User, MapPin, CheckCircle2, ShoppingBag, Truck, Store } from "lucide-react";
 import OrderActions from "./OrderActions";
 import OrderStatusBadge from "./OrderStatusBadge";
 import CancelItemButton from "./CancelItemButton";
 import ScrollToProduct from "./ScrollToProduct";
 import { formatOrderNumber } from "@/lib/order-number";
+import { formatReadyBy, getPickupDetails } from "@/lib/pickup";
 
 function formatPrice(amount: number, currency?: string): string {
   const code = currency?.toUpperCase() || "AED";
@@ -86,6 +87,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
 
   const billing = order.billingAddress || {};
   const shipping = order.shippingAddress || {};
+  const pickup = getPickupDetails(order);
   const adminAddedItems = (order.items || []).filter((it: any) => it.adminAddedAt);
   const shipment = order.shipment || {};
   const totalPaid = order.items
@@ -130,6 +132,29 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
 
       {/* Address & Delivery Section */}
       <div className="grid md:grid-cols-2 gap-6">
+        {pickup ? (
+        <section className="rounded-2xl border-2 border-blue-100 bg-blue-50/40 p-5 shadow-sm">
+          <div className="flex items-center gap-3 border-b border-black/5 pb-4 mb-4">
+            <div className="p-2 bg-blue-100 rounded-xl"><Store size={16} className="text-blue-700" /></div>
+            <h3 className="font-black uppercase tracking-widest text-xs">Store Pickup</h3>
+          </div>
+          <div className="text-[11px] font-bold text-black/60 leading-relaxed">
+            <div className="inline-block mb-2 text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest bg-blue-600 text-white">
+              Ready from {formatReadyBy(pickup.readyBy)}
+            </div>
+            <div className="text-black">{pickup.name}</div>
+            <div>{[pickup.address, pickup.city].filter(Boolean).join(", ")}</div>
+            {pickup.hours && <div className="text-black/40">{pickup.hours}</div>}
+            {pickup.phone && <div className="text-black/40">Store phone: {pickup.phone}</div>}
+            {pickup.instructions && <div className="mt-2 text-black/50">{pickup.instructions}</div>}
+            {pickup.mapUrl && (
+              <a href={pickup.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-[10px] font-black uppercase tracking-widest text-blue-700 underline">
+                Open in Maps →
+              </a>
+            )}
+          </div>
+        </section>
+        ) : (
         <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3 border-b border-black/5 pb-4 mb-4">
             <div className="p-2 bg-black/5 rounded-xl"><MapPin size={16} className="text-black/40" /></div>
@@ -144,6 +169,7 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
             {shipping.phone && <div className="mt-2 text-black/40 text-[10px]">Phone: {shipping.phone}</div>}
           </div>
         </section>
+        )}
 
         <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3 border-b border-black/5 pb-4 mb-4">
@@ -152,16 +178,16 @@ export default async function UserOrderDetailPage({ params, searchParams }: { pa
           </div>
           <div className="space-y-2 text-[11px]">
             <div className="flex justify-between">
-              <span className="font-bold text-black/40">Courier</span>
-              <span className="font-bold">{shipment.courier || "Standard"}</span>
+              <span className="font-bold text-black/40">{pickup ? "Method" : "Courier"}</span>
+              <span className="font-bold">{pickup ? "Store Pickup" : shipment.courier || "Standard"}</span>
             </div>
-            {shipment.trackingCode && (
+            {!pickup && shipment.trackingCode && (
               <div className="flex justify-between">
                 <span className="font-bold text-black/40">Waybill</span>
                 <span className="font-bold font-mono text-[10px]">{shipment.trackingCode}</span>
               </div>
             )}
-            {shipment.trackingUrl && (
+            {!pickup && shipment.trackingUrl && (
               <a href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-1 text-[10px] font-black uppercase tracking-widest text-black underline hover:text-black/60">
                 Track Package →
               </a>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { reopenPendingCheckoutForRetry } from "@/services/checkout/pending-checkout";
 
 export async function POST(req: Request) {
   try {
@@ -18,8 +19,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (pendingCheckout.status !== "OPEN") {
-      return NextResponse.json({ error: "Order is already paid or cancelled" }, { status: 400 });
+    // Reopen a cancelled earlier attempt; only a paid checkout is final.
+    if (!(await reopenPendingCheckoutForRetry(pendingCheckout.id))) {
+      return NextResponse.json({ error: "Order is already paid" }, { status: 400 });
     }
 
     const totalAmount = pendingCheckout.total || 0;

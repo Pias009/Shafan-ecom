@@ -49,6 +49,8 @@ export function HeroSlider({ initialBanners = [] }: { initialBanners?: SliderBan
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loaded, setLoaded] = useState(initialBanners.length > 0);
+  // Natural width/height ratio per banner image, so the container matches the artwork exactly
+  const [ratios, setRatios] = useState<Record<string, number>>({});
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Touch swipe support for mobile
@@ -130,6 +132,8 @@ export function HeroSlider({ initialBanners = [] }: { initialBanners?: SliderBan
   const slide = activeBanners[current] || activeBanners[0];
   if (!slide) return null;
   const slideLink = normalizeLink(slide?.link);
+  // Fallback matches the standard 2048x768 banner upload size until the real ratio is read
+  const aspectRatio = ratios[slide.imageUrl] ?? 2048 / 768;
 
   return (
     <section
@@ -138,9 +142,10 @@ export function HeroSlider({ initialBanners = [] }: { initialBanners?: SliderBan
       onMouseLeave={resume}
       suppressHydrationWarning
     >
-      {/* Banner Container: 2:1 Native Aspect Ratio to fit banner graphics perfectly without cropping */}
+      {/* Banner Container: sized to the image's own aspect ratio so the artwork is never cropped */}
       <div
-        className="relative w-full aspect-[2/1] sm:aspect-[2.1/1] md:aspect-[2.2/1] lg:aspect-[2.3/1] max-h-[calc(100vh-210px)] flex items-center select-none"
+        className="relative w-full flex items-center select-none"
+        style={{ aspectRatio }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -167,8 +172,14 @@ export function HeroSlider({ initialBanners = [] }: { initialBanners?: SliderBan
                 src={slide.imageUrl}
                 alt={slide.title || "SHANFA GLOBAL"}
                 fill
-                className="object-cover object-center"
+                className="object-contain object-center"
                 priority={current === 0}
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+                  if (!img.naturalWidth || !img.naturalHeight) return;
+                  const ratio = img.naturalWidth / img.naturalHeight;
+                  setRatios((r) => (r[slide.imageUrl] === ratio ? r : { ...r, [slide.imageUrl]: ratio }));
+                }}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1536px"
               />
             </Link>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { COUNTRY_CONFIG, getActiveCountries } from '@/lib/address-config';
 import { loadCountryCharges } from '@/lib/vat-delivery-config';
+import { getPickupSettings, toPublicPickupConfig } from '@/lib/pickup-config';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const activeCountries = getActiveCountries();
-    const charges = await loadCountryCharges();
+    const [charges, pickupSettings] = await Promise.all([loadCountryCharges(), getPickupSettings()]);
 
     const countriesData = activeCountries.map((country) => {
       const charge = charges[country.code];
@@ -27,6 +28,7 @@ export async function GET() {
         deliveryTime: charge?.deliveryTime || `${country.estimatedDays || 2} - ${(country.estimatedDays || 2) + 1} Business Days`,
         deliveryText: charge?.deliveryText || "Same-Day Dispatch • Tracked Shipping",
         regions: country.regions || [],
+        pickup: toPublicPickupConfig(pickupSettings.countries[country.code]),
       };
     });
 

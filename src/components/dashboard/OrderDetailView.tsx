@@ -7,7 +7,9 @@ import {
   Truck,
   MapPin,
   ExternalLink,
+  Store,
 } from "lucide-react";
+import { formatReadyBy, getPickupDetails } from "@/lib/pickup";
 
 function formatPrice(amountCents: number, currency: string): string {
   const code = currency?.toUpperCase() || "USD";
@@ -64,6 +66,8 @@ interface OrderDetailViewProps {
     paymentMethodTitle?: string;
     shippingAddress?: Record<string, any>;
     billingAddress?: Record<string, any>;
+    deliveryMethod?: string | null;
+    pickupDetails?: unknown;
     trackingId?: string;
     trackingUrl?: string;
     shipment?: {
@@ -89,6 +93,7 @@ interface OrderDetailViewProps {
 export default function OrderDetailView({ order }: OrderDetailViewProps) {
   const shipping = order.shippingAddress || {};
   const billing = order.billingAddress || {};
+  const pickup = getPickupDetails(order);
   const shipment = order.shipment;
 
   const trackingUrl =
@@ -231,14 +236,30 @@ export default function OrderDetailView({ order }: OrderDetailViewProps) {
         </section>
       </div>
 
-      {/* Delivery Address */}
-      <section className="rounded-xl border border-black/5 bg-white p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <MapPin className="w-4 h-4 text-black/40" />
-          <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40">Delivery Address</h4>
-        </div>
-        {formatAddress(shipping)}
-      </section>
+      {/* Delivery Address / Store Pickup */}
+      {pickup ? (
+        <section className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Store className="w-4 h-4 text-blue-700" />
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-700">
+              Store Pickup · Ready from {formatReadyBy(pickup.readyBy)}
+            </h4>
+          </div>
+          <div className="text-xs font-semibold text-black/60 leading-relaxed">
+            <div className="font-bold text-black">{pickup.name}</div>
+            <div>{[pickup.address, pickup.city].filter(Boolean).join(", ")}</div>
+            {pickup.hours && <div className="text-black/40">{pickup.hours}</div>}
+          </div>
+        </section>
+      ) : (
+        <section className="rounded-xl border border-black/5 bg-white p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <MapPin className="w-4 h-4 text-black/40" />
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-black/40">Delivery Address</h4>
+          </div>
+          {formatAddress(shipping)}
+        </section>
+      )}
 
       {/* Billing Info (compact) */}
       {billing?.first_name && (

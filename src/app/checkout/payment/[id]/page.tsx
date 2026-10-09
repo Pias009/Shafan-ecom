@@ -14,6 +14,7 @@ import TamaraWidget from "@/components/TamaraWidget";
 import { useLanguageStore } from "@/lib/language-store";
 import { trackAddPaymentInfo } from "@/lib/datalayer";
 import { getOrderNumber } from "@/lib/order-number";
+import { isTamaraAvailable } from "@/lib/tamara-availability";
 
 type PaymentMethod = "card" | "digital" | "cod" | "tabby" | "tamara";
 
@@ -146,9 +147,8 @@ function PaymentPageContent() {
   const [showEditFields, setShowEditFields] = useState(false);
   const actionAreaRef = useRef<HTMLDivElement>(null);
 
-  // Kuwait customers can pay by card or COD, but not Tabby/Tamara — force the
-  // method back to "card" if a stale ?method= query param or prior selection
-  // points at one of those.
+  // Kuwait customers can only pay by card — force the method back to "card"
+  // if a stale ?method= query param or prior selection points elsewhere.
   useEffect(() => {
     if (!order) return;
     let orderCountry = (order?.shippingAddress as any)?.country?.toUpperCase() || "";
@@ -158,7 +158,10 @@ function PaymentPageContent() {
       };
       orderCountry = currencyToCountry[order.currency.toUpperCase()] || "";
     }
-    if (orderCountry === "KW" && (method === "tabby" || method === "tamara")) {
+    if (orderCountry === "KW" && method !== "card") {
+      setMethod("card");
+    } else if (method === "tamara" && !isTamaraAvailable(orderCountry) && orderCountry !== "BD") {
+      // Tamara isn't enabled for this country on the merchant account.
       setMethod("card");
     }
   }, [order, method]);
@@ -443,8 +446,11 @@ function PaymentPageContent() {
     country = currencyToCountry[order.currency.toUpperCase()] || "";
   }
 
-  // Kuwait customers can pay by card or COD, but Tabby/Tamara are hidden.
+  // Kuwait customers can only pay by card — COD, Tabby, and Tamara are hidden.
   const isKuwait = country === "KW";
+  const showTabby = country === "AE" || country === "SA" || country === "KW" || country === "BD";
+  // BD is kept for local testing (create-session forces AE outside production).
+  const showTamara = isTamaraAvailable(country) || country === "BD";
 
   return (
     <div className="min-h-screen bg-white/40 backdrop-blur-sm text-black flex flex-col">
@@ -530,11 +536,11 @@ function PaymentPageContent() {
             )}
 
             <div className="space-y-4">
-              {!isKuwait && (country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+              {!isKuwait && (showTabby || showTamara) && (
                 <>
                   <label className="text-[10px] font-black uppercase tracking-widest text-black/30 px-2">Express Checkout</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {(country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
+                    {showTabby && (
                       <button
                         onClick={() => handleTabbyPayment()}
                         disabled={tabbyLoading}
@@ -549,7 +555,7 @@ function PaymentPageContent() {
                       </button>
                     )}
 
-                    {(country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+                    {showTamara && (
                       <button
                         onClick={() => handleTamaraPayment()}
                         disabled={tamaraLoading}
@@ -604,19 +610,21 @@ function PaymentPageContent() {
                   {method === "card" && <CheckCircle2 className="text-black" size={18} />}
                 </div>
 
-                <div
-                  onClick={() => setMethod("cod")}
-                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
-                >
-                  <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
-                    <Banknote size={20} className="md:w-6 md:h-6" />
+                {!isKuwait && (
+                  <div
+                    onClick={() => setMethod("cod")}
+                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                  >
+                    <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
+                      <Banknote size={20} className="md:w-6 md:h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
+                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
+                    </div>
+                    {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
-                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
-                  </div>
-                  {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
-                </div>
+                )}
 
                 {!isKuwait && (country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
                   <div
@@ -644,7 +652,7 @@ function PaymentPageContent() {
                   </div>
                 )}
 
-                {!isKuwait && (country === "AE" || country === "SA" || country === "KW" || country === "BH" || country === "QA" || country === "OM" || country === "BD") && (
+                {!isKuwait && showTamara && (
                   <div
                     onClick={() => setMethod("tamara")}
                     className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "tamara" ? "border-gray-900 shadow-lg" : "border-black/5 hover:border-black/10"}`}
