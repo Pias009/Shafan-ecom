@@ -208,7 +208,14 @@ function SuccessContent() {
         }
         if ((attempts === 1 || attempts === 3) && data.status === "OPEN") {
           const paymentParam = searchParams?.get("payment");
-          if (paymentParam === "tamara" || !paymentParam) {
+          if (sessionId) {
+            // Stripe Checkout return — confirm with Stripe in case the webhook is late/missing
+            fetch("/api/payments/stripe/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ pendingCheckoutId, sessionId }),
+            }).catch(() => {});
+          } else if (paymentParam === "tamara" || !paymentParam) {
             fetch("/api/payments/tamara/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -232,7 +239,7 @@ function SuccessContent() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [valid, paymentState, orderId, pendingCheckoutId]);
+  }, [valid, paymentState, orderId, pendingCheckoutId, sessionId]);
 
   // Clear the cart only once the payment is genuinely confirmed,
   // so a failed/abandoned payment lets the user retry from the cart.

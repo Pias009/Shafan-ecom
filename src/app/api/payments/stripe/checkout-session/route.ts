@@ -63,7 +63,9 @@ export async function POST(req: Request) {
       payment_intent_data: {
         metadata: { pendingCheckoutId: pendingCheckout.id },
       },
-      success_url: `${baseUrl}/checkout/success?pcid=${pendingCheckout.id}`,
+      // session_id lets the success page confirm the payment with Stripe
+      // directly (/api/payments/stripe/verify) if the webhook is late or missing.
+      success_url: `${baseUrl}/checkout/success?pcid=${pendingCheckout.id}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cart?canceled=stripe`,
     });
 

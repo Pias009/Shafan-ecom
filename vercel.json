@@ -66,6 +66,10 @@
     {
       "path": "/api/cron/tamara-verify",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/stripe-verify",
+      "schedule": "0 6 * * *"
     }
   ],
   "git": {
