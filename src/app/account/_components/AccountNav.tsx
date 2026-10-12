@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { User, Package, Shield, LayoutDashboard, MapPin } from "lucide-react";
+import { User, Package, Shield, LayoutDashboard, MapPin, Truck } from "lucide-react";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
 
@@ -19,12 +19,14 @@ export function AccountNav() {
     { href: "/account/profile", label: t.account.profile, icon: User },
     { href: "/account/address", label: t.account.address, icon: MapPin },
     { href: "/account/orders", label: t.account.orders, icon: Package },
+    { href: "/account/track", label: "Track Order", icon: Truck },
   ];
   
   if (!data?.user) {
     links = [
       { href: "/account", label: t.account.overview, icon: LayoutDashboard },
       { href: "/account/address", label: t.account.address, icon: MapPin },
+      { href: "/account/track", label: "Track Order", icon: Truck },
     ];
   }
 

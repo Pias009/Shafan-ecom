@@ -18,13 +18,10 @@ import {
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useSession } from "next-auth/react";
 import { Logo } from "./Logo";
 
 export function Footer() {
   const { currentLanguage } = useLanguageStore();
-  const { data: session, status } = useSession();
-  const isUserAuthenticated = status === "authenticated" && session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPERADMIN";
   const isClient = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -59,7 +56,7 @@ export function Footer() {
       title: t.footer.customerService || "Customer Care",
       links: [
         { label: t.footer.contactUs || "Contact Us", href: "/contact" },
-        { label: "Track Your Order", href: isUserAuthenticated ? "/account/orders" : "/track-order" },
+        { label: "Track Your Order", href: "/account/track" },
         { label: t.footer.delivery || "Shipping & Delivery", href: "/delivery" },
         { label: t.footer.exchangeReturn || "Exchange & Return", href: "/returns" },
         { label: t.footer.payment || "Payment Methods", href: "/payment" },

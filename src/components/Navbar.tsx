@@ -293,7 +293,7 @@ export function Navbar() {
                 <CountrySelector compact direction="down" align="left" locked={isCheckoutPage} variant="white" />
               </div>
               <span className="text-white/30">|</span>
-              <Link href={isUserAuthenticated ? "/account/orders" : "/track-order"} className="hover:text-white transition-colors">Track Order</Link>
+              <Link href="/account/track" className="hover:text-white transition-colors">Track Order</Link>
               <span className="text-white/30">|</span>
               <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
               <span className="text-white/30">|</span>
