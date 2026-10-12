@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { Zap, ShieldCheck, Truck, Lock, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface EnhancedOfferBanner {
@@ -100,145 +98,29 @@ export function OfferBannersSection() {
     return () => clearInterval(t);
   }, [banners.length]);
 
+  // Admin-managed only (Home Banner page). No banner → render nothing.
+  if (banners.length === 0) return null;
+
   return (
     <section className="mx-auto w-full max-w-[1536px] px-1 sm:px-3 pt-4 sm:pt-6 pb-6 sm:pb-8">
-      {banners.length > 0 ? (
-        <div className="relative w-full px-1 md:px-0">
-          <AnimatePresence mode="wait">
-            {banners.map((banner, index) => (
-              index === active && (
-                <motion.div
-                  key={banner.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="relative w-full flex justify-center"
-                >
-                  <BannerCard banner={banner} />
-                </motion.div>
-              )
-            ))}
-          </AnimatePresence>
-        </div>
-      ) : (
-        /* Advanced Flash Sale Banner matching User's Reference Screenshot 1:1 */
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="relative w-full bg-gradient-to-r from-[#3b0222] via-[#540434] to-[#260117] rounded-[2rem] md:rounded-[2.75rem] p-5 sm:p-8 md:p-10 text-white shadow-[0_20px_50px_rgba(84,4,52,0.25)] overflow-hidden border border-pink-500/25"
-        >
-          {/* Decorative Curved Glass White Backing Arc on Left */}
-          <div className="absolute top-0 left-0 bottom-0 w-full lg:w-[58%] bg-gradient-to-r from-white/[0.08] via-white/[0.03] to-transparent pointer-events-none rounded-r-full" />
-          
-          {/* Subtle Ambient Radial Highlight */}
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-[radial-gradient(circle,rgba(255,200,230,0.15)_0%,transparent_70%)] pointer-events-none" />
-
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            
-            {/* Left Content Area (7 Cols) */}
-            <div className="lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left">
-              
-              {/* Limited Time Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-pink-200 shadow-sm">
-                <Zap size={14} className="text-amber-300 fill-amber-300" />
-                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-pink-100">
-                  LIMITED TIME PRIVILEGE
-                </span>
-              </div>
-
-              {/* Main Display Headline */}
-              <div className="space-y-1 sm:space-y-2">
-                <div className="flex items-center justify-center lg:justify-start">
-                  <h2 className="font-serif font-bold text-3xl sm:text-5xl lg:text-6xl leading-tight text-white tracking-tight">
-                    FLASH SALE
-                  </h2>
-                </div>
-                
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1">
-                  <span className="font-black text-2xl sm:text-4xl text-amber-300 tracking-tight">
-                    UP TO <span className="text-3xl sm:text-5xl font-black text-white">40%</span> OFF
-                  </span>
-                  
-                  {/* Category Pill Tag */}
-                  <span className="inline-flex items-center gap-1.5 bg-[#890754] border border-pink-400/40 text-white px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md">
-                    <span>on Bestselling Skincare</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* CTA Action Button */}
-              <div className="pt-2 flex justify-center lg:justify-start">
-                <Link
-                  href="/products/flash-sales"
-                  className="group relative inline-flex items-center gap-3 bg-white hover:bg-pink-50 text-[#890754] hover:text-[#540434] px-8 sm:px-10 py-3.5 sm:py-4 rounded-full font-black text-xs sm:text-sm uppercase tracking-widest transition-all shadow-[0_10px_25px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95 border border-white"
-                >
-                  <span>SHOP FLASH SALE</span>
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-
-              {/* Bottom Trust Micro-Bar */}
-              <div className="pt-3 border-t border-white/15 grid grid-cols-3 gap-2 text-[9px] sm:text-[11px] font-bold text-white/70 uppercase tracking-wider">
-                <div className="flex items-center justify-center lg:justify-start gap-1.5">
-                  <ShieldCheck size={14} className="text-pink-300 shrink-0" />
-                  <span>100% AUTHENTIC</span>
-                </div>
-                <div className="flex items-center justify-center lg:justify-start gap-1.5">
-                  <Truck size={14} className="text-pink-300 shrink-0" />
-                  <span>RAPID GCC DISPATCH</span>
-                </div>
-                <div className="flex items-center justify-center lg:justify-start gap-1.5">
-                  <Lock size={14} className="text-pink-300 shrink-0" />
-                  <span>SECURE CHECKOUT</span>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Right Showcase Area (5 Cols) */}
-            <div className="lg:col-span-5 relative flex items-center justify-center min-h-[260px] sm:min-h-[340px]">
-              
-              {/* Round Save Up To Badge Overlay */}
-              <motion.div 
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-2 left-2 sm:left-4 z-20 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#890754] text-white flex flex-col items-center justify-center p-2 text-center shadow-2xl border-2 border-white/80"
-              >
-                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-amber-200">SAVE UP TO</span>
-                <span className="text-xl sm:text-2xl font-black leading-none text-white">40%</span>
-              </motion.div>
-
-              {/* Main Skincare Product Pedestal Showcase Image */}
-              <div className="relative w-full h-[240px] sm:h-[320px] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 group">
-                <Image
-                  src="/images/banner-skincare-pedestal.png"
-                  alt="Bestselling Skincare Products Set"
-                  fill
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                  priority
-                />
-              </div>
-
-              {/* Glowing Skin Badge Overlay Pill Bottom Right */}
+      <div className="relative w-full px-1 md:px-0">
+        <AnimatePresence mode="wait">
+          {banners.map((banner, index) => (
+            index === active && (
               <motion.div
-                animate={{ y: [0, 6, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute -bottom-3 right-2 sm:right-4 z-20 bg-white/95 backdrop-blur-xl px-4 py-2 rounded-full shadow-xl border border-pink-200 flex items-center gap-2"
+                key={banner.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="relative w-full flex justify-center"
               >
-                <span className="w-2 h-2 rounded-full bg-[#890754] animate-pulse" />
-                <span className="text-[10px] sm:text-xs font-black text-[#890754] uppercase tracking-wider">
-                  GLOWING SKIN STARTS HERE
-                </span>
+                <BannerCard banner={banner} />
               </motion.div>
-
-            </div>
-
-          </div>
-        </motion.div>
-      )}
+            )
+          ))}
+        </AnimatePresence>
+      </div>
     </section>
   );
 }
