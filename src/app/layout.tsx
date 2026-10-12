@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, DM_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
 import { MainStoreLayout } from "@/components/MainStoreLayout";
@@ -15,19 +15,24 @@ import { MetaPixelProvider } from "@/components/MetaPixelProvider";
 import ContentProtection from "@/components/ContentProtection";
 import ReferralTracker from "@/components/ReferralTracker";
 
-const playfairDisplay = Playfair_Display({
+// Self-hosted (Fontsource variable fonts, OFL) instead of next/font/google:
+// the Google fetch at build time broke Vercel builds when Google changed its
+// font CSS URL format, and bundled files also avoid a third-party request.
+const playfairDisplay = localFont({
   variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  style: ["normal", "italic"],
+  src: [
+    { path: "./fonts/playfair-display-latin-wght-normal.woff2", weight: "400 900", style: "normal" },
+    { path: "./fonts/playfair-display-latin-wght-italic.woff2", weight: "400 900", style: "italic" },
+  ],
   display: 'swap',
 });
 
-const dmSans = DM_Sans({
+const dmSans = localFont({
   variable: "--font-dm-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  style: ["normal", "italic"],
+  src: [
+    { path: "./fonts/dm-sans-latin-wght-normal.woff2", weight: "100 1000", style: "normal" },
+    { path: "./fonts/dm-sans-latin-wght-italic.woff2", weight: "100 1000", style: "italic" },
+  ],
   display: 'swap',
 });
 
