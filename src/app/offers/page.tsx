@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { OffersClient } from "./OffersClient";
+import { filterByPlacement } from "@/lib/banner-placement";
 
 export const revalidate = 600;
 
@@ -228,7 +229,7 @@ export default async function OffersPage() {
       where: { active: true },
       orderBy: [{ sortOrder: "asc" }, { priority: "desc" }],
     });
-    offerBanners = allActiveBanners
+    offerBanners = filterByPlacement(allActiveBanners, "OFFERS")
       .filter(
         (b: any) =>
           (!b.startDate || new Date(b.startDate) <= now) &&

@@ -330,6 +330,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     
     revalidatePath('/');
+    revalidatePath('/offers');
     revalidatePath('/products');
     revalidatePath(`/products/${id}`);
     await clearProductCache(id);
@@ -398,6 +399,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
 
     revalidatePath('/');
+    revalidatePath('/offers');
     revalidatePath('/products');
     revalidatePath(`/products/${id}`);
     await clearProductCache(id);

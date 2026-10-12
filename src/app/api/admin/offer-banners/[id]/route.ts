@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { parseBannerPlacement } from "@/lib/banner-placement";
+import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       startDate,
       endDate,
       priority,
-      discountId
+      discountId,
+      placement
     } = body;
     
     if (!imageUrl) {
@@ -53,9 +56,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         endDate: endDate ? new Date(endDate) : null,
         priority: priority || 1,
         discountId: discountId || null,
+        // Older callers (e.g. the products slider page) don't send a placement —
+        // leave the banner where it is rather than resetting it.
+        ...(parseBannerPlacement(placement) ? { placement: parseBannerPlacement(placement) } : {}),
       },
     });
     
+    revalidateOfferSurfaces();
     return NextResponse.json(banner);
   } catch (error) {
     console.error("Error updating banner:", error);
@@ -72,6 +79,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     await prisma.enhancedOfferBanner.delete({ where: { id } });
+    revalidateOfferSurfaces();
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Error deleting banner:", error);

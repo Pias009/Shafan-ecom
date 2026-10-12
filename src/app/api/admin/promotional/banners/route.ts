@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
 export const dynamic = "force-dynamic";
 
@@ -224,6 +225,7 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+    revalidateOfferSurfaces();
     console.log("[DEBUG] POST: Banner created successfully:", banner.id);
 
     return NextResponse.json(banner, { status: 201 });

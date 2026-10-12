@@ -214,6 +214,20 @@ export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
                   <ImageIcon size={18} /> Hero Banners
                </Link>
                <Link
+                  href="/ueadmin/banners/home"
+                  prefetch={true}
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
+               >
+                  <ImageIcon size={18} /> Home Banner
+               </Link>
+               <Link
+                  href="/ueadmin/banners/offers"
+                  prefetch={true}
+                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
+               >
+                  <ImageIcon size={18} /> Offers Banners
+               </Link>
+               <Link
                   href="/ueadmin/banners/slider"
                   prefetch={true}
                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"

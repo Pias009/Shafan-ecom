@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
 export const dynamic = "force-dynamic";
 
@@ -287,6 +288,7 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+    revalidateOfferSurfaces();
 
     return NextResponse.json(discount, { status: 201 });
   } catch (error) {

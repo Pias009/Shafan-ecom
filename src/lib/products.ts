@@ -1,4 +1,5 @@
 import { prisma, prismaWithRetry } from "./prisma";
+import { filterByPlacement } from "@/lib/banner-placement";
 
 export const revalidate = 300;
 
@@ -159,6 +160,7 @@ export async function getHomePageData(storeCode?: string) {
           link: true,
           backgroundColor: true,
           textColor: true,
+          placement: true,
         },
       }),
       (prisma as any).appSettings.findUnique({
@@ -203,7 +205,8 @@ export async function getHomePageData(storeCode?: string) {
       bestSellers: bestSellers.map(mapProduct),
       makeupProducts: makeupProducts.map(mapProduct),
       fragranceProducts: fragranceProducts.map(mapProduct),
-      banners: (banners || []).filter((b: any) => b.imageUrl && b.imageUrl.trim() !== ""),
+      // Hero slider only — home-middle and offers-page banners have their own placements
+      banners: filterByPlacement(banners || [], "HERO").filter((b: any) => b.imageUrl && b.imageUrl.trim() !== ""),
       rejuvenateSection: (rejuvenateSetting?.data as any) || null,
       haircareSection: (haircareSetting?.data as any) || null,
       offerSections,

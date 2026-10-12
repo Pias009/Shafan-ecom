@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
 export const dynamic = "force-dynamic";
 
@@ -188,6 +189,7 @@ export async function POST(
         },
       },
     });
+    revalidateOfferSurfaces();
 
     return NextResponse.json({
       success: true,
@@ -238,6 +240,7 @@ export async function DELETE(
       await prisma.productDiscount.deleteMany({
         where: { discountId: id },
       });
+      revalidateOfferSurfaces();
 
       return NextResponse.json({
         success: true,
@@ -261,6 +264,7 @@ export async function DELETE(
         },
       },
     });
+    revalidateOfferSurfaces();
 
     return NextResponse.json({
       success: true,

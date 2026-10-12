@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { filterByPlacement, parseBannerPlacement } from "@/lib/banner-placement";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get("limit") || "10");
     const priority = searchParams.get("priority"); // Optional: filter by priority
+    const placement = parseBannerPlacement(searchParams.get("placement")); // Optional: HERO | HOME_MID | OFFERS
 
 
     // Build where clause for active banners
@@ -26,16 +28,18 @@ export async function GET(req: NextRequest) {
 
 
     // Get active banners
-    const banners = await prisma.enhancedOfferBanner.findMany({
+    const allBanners = await prisma.enhancedOfferBanner.findMany({
       where,
       orderBy: [
         { priority: "desc" }, // Higher priority first
         { sortOrder: "asc" }, // Then by sort order
         { createdAt: "desc" }, // Then by creation date
       ],
-      take: limit,
+      // With a placement filter, limit is applied after filtering (below)
+      ...(placement ? {} : { take: limit }),
       select: {
         id: true,
+        placement: true,
         imageUrl: true,
         title: true,
         subtitle: true,
@@ -52,6 +56,8 @@ export async function GET(req: NextRequest) {
       },
     });
 
+
+    const banners = placement ? filterByPlacement(allBanners, placement).slice(0, limit) : allBanners;
 
     // Increment click count for analytics (simulated - would be done on actual click)
     // This is just for tracking impressions/views

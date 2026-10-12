@@ -548,6 +548,9 @@ model EnhancedOfferBanner {
   // Display
   sortOrder Int @default(0)
   priority  Int @default(1) // 1=Low, 2=Medium, 3=High
+  // Where the banner shows: HERO (top slider) | HOME_MID (home, above Routine) | OFFERS (/offers).
+  // Optional: banners created before this field existed have none and count as HERO.
+  placement String?
 
   // Tracking
   clicks      Int @default(0)

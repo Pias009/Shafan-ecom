@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
 export const dynamic = "force-dynamic";
 
@@ -172,6 +173,7 @@ export async function PUT(
         },
       },
     });
+    revalidateOfferSurfaces();
 
     return NextResponse.json(updatedBanner);
   } catch (error) {
@@ -213,6 +215,7 @@ export async function DELETE(
     await prisma.enhancedOfferBanner.delete({
       where: { id },
     });
+    revalidateOfferSurfaces();
 
     return NextResponse.json(
       { message: "Banner deleted successfully" },

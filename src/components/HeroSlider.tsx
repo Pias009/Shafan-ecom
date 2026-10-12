@@ -58,7 +58,7 @@ export function HeroSlider({ initialBanners = [] }: { initialBanners?: SliderBan
   const touchEndX = useRef<number | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/offer-banners?active=true")
+    fetch("/api/admin/offer-banners?active=true&placement=HERO")
       .then((r) => (r.ok ? r.json() : []))
       .then((data: SliderBanner[]) => {
         const heroOnes = data.filter(

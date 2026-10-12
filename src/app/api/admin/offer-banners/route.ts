@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { filterByPlacement, parseBannerPlacement, DEFAULT_BANNER_PLACEMENT } from "@/lib/banner-placement";
+import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +11,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const isHero = searchParams.get('isHero');
     const activeOnly = searchParams.get('active');
+    // ?placement=HERO|HOME_MID|OFFERS limits to one surface; isHero=true is the
+    // legacy slider filter and also means "HERO surface only".
+    const placement = parseBannerPlacement(searchParams.get('placement')) ?? (isHero === 'true' ? DEFAULT_BANNER_PLACEMENT : null);
 
     const where: any = {};
     
@@ -21,11 +26,12 @@ export async function GET(request: NextRequest) {
       where.active = true;
     }
 
-    const banners = await prisma.enhancedOfferBanner.findMany({
+    const allBanners = await prisma.enhancedOfferBanner.findMany({
       where,
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       select: {
         id: true,
+        placement: true,
         imageUrl: true,
         title: true,
         subtitle: true,
@@ -46,6 +52,7 @@ export async function GET(request: NextRequest) {
         discountId: true,
       },
     });
+    const banners = placement ? filterByPlacement(allBanners, placement) : allBanners;
     return NextResponse.json(banners);
   } catch (error) {
     console.error("Error fetching banners:", error);
@@ -76,7 +83,8 @@ export async function POST(req: NextRequest) {
       startDate,
       endDate,
       priority,
-      discountId
+      discountId,
+      placement
     } = body;
     
     if (!imageUrl) {
@@ -100,9 +108,11 @@ export async function POST(req: NextRequest) {
         endDate: endDate ? new Date(endDate) : null,
         priority: priority || 1,
         discountId: discountId || null,
+        placement: parseBannerPlacement(placement) ?? DEFAULT_BANNER_PLACEMENT,
       },
     });
     
+    revalidateOfferSurfaces();
     return NextResponse.json(banner, { status: 201 });
   } catch (error) {
     console.error("Error creating banner:", error);

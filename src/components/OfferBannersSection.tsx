@@ -52,7 +52,7 @@ export function OfferBannersSection() {
       safeAbort();
     }, 10000);
     
-    fetch("/api/promotional/banners?limit=5", {
+    fetch("/api/promotional/banners?limit=5&placement=HOME_MID", {
       signal,
       headers: {
         'Accept': 'application/json',

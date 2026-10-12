@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
 import { prisma } from "@/lib/prisma";
+import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
 export const dynamic = "force-dynamic";
 
@@ -282,6 +283,7 @@ export async function PUT(
         },
       },
     });
+    revalidateOfferSurfaces();
 
     return NextResponse.json(updatedDiscount);
   } catch (error) {
@@ -339,6 +341,7 @@ export async function DELETE(
     await prisma.discount.delete({
       where: { id },
     });
+    revalidateOfferSurfaces();
 
     return NextResponse.json(
       { message: "Discount deleted successfully" },

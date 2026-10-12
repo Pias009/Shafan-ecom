@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { filterByPlacement, parseBannerPlacement, DEFAULT_BANNER_PLACEMENT } from "@/lib/banner-placement";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +24,14 @@ export async function GET(request: Request) {
     where.active = true;
   }
 
-  const banners = await prisma.enhancedOfferBanner.findMany({
+  const allBanners = await prisma.enhancedOfferBanner.findMany({
     where,
     orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
   });
+
+  // The products slider asks for isHero=true; keep home-middle / offers-page banners out of it.
+  const placement = parseBannerPlacement(searchParams.get('placement')) ?? (isHero === 'true' ? DEFAULT_BANNER_PLACEMENT : null);
+  const banners = placement ? filterByPlacement(allBanners, placement) : allBanners;
 
   const validBanners = (banners || []).map((b: any) => ({
     ...b,
