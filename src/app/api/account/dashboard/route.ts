@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
+import { getWelcomeOffer, hasUsedWelcomeOffer, welcomeOfferLabel } from "@/lib/welcome-offer";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -81,7 +82,22 @@ export async function GET(req: Request) {
       refunded: dbOrders.filter((o) => o.status === "REFUNDED").length,
     };
 
-    return NextResponse.json({ orders, stats });
+    // Footer welcome coupon, shown as a card on the dashboard with its redemption status
+    const offer = await getWelcomeOffer().catch(() => null);
+    const welcomeOffer = offer
+      ? {
+          code: offer.code,
+          label: welcomeOfferLabel(offer),
+          minimumOrderValue: offer.minimumOrderValue,
+          endDate: offer.endDate?.toISOString() ?? null,
+          used: await hasUsedWelcomeOffer(offer, {
+            userId: session?.user?.id,
+            email: session?.user?.email || guestEmail,
+          }),
+        }
+      : null;
+
+    return NextResponse.json({ orders, stats, welcomeOffer });
   } catch (error) {
     console.error("Dashboard API Error:", error);
     return NextResponse.json({ orders: [], stats: { pending: 0, shipped: 0, delivered: 0, refunded: 0 } });

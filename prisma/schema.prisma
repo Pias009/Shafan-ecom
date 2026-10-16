@@ -578,6 +578,35 @@ model OfferSection {
   @@index([active, sortOrder])
 }
 
+// Admin-built homepage product rows ("New Arrivals", "Hot Picks"…), rendered
+// with the Flash Sales slider UI. categoryId only drives the admin product
+// picker filter and the "See All" link; productIds keeps the chosen order.
+model HomeSection {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  badge      String?
+  categoryId String?  @db.ObjectId
+  productIds String[] @db.ObjectId
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
+// Footer "Claim 10%" sign-ups. welcomeCode records which coupon was emailed;
+// emailSentAt guards against re-sending the code to the same address.
+model NewsletterSubscriber {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  email       String    @unique
+  userId      String?   @db.ObjectId
+  welcomeCode String?
+  emailSentAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 model Discount {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   code        String? @unique // Optional discount code

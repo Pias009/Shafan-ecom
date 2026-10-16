@@ -30,6 +30,8 @@ export function Footer() {
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeError, setSubscribeError] = useState<string | null>(null);
 
   const t = translations[(isClient ? currentLanguage.code : "en") as keyof typeof translations];
 
@@ -89,13 +91,26 @@ export function Footer() {
     setOpenSection(openSection === id ? null : id);
   };
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes("@")) return;
-    setSubscribed(true);
-    setTimeout(() => {
+    if (!email || !email.includes("@") || subscribing) return;
+    setSubscribing(true);
+    setSubscribeError(null);
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Something went wrong. Please try again.");
+      setSubscribed(true);
       setEmail("");
-    }, 4000);
+    } catch (err) {
+      setSubscribeError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   return (
@@ -133,7 +148,7 @@ export function Footer() {
                   <CheckCircle2 size={22} className="text-emerald-400 shrink-0" />
                   <div>
                     <h4 className="font-bold text-xs sm:text-sm text-white">Welcome to Shanfa Privé!</h4>
-                    <p className="text-[11px] text-emerald-200/80">Your 10% privilege code is on its way to your inbox.</p>
+                    <p className="text-[11px] text-emerald-200/80">Your 10% privilege code is on its way to your inbox. You can also find it in your account dashboard.</p>
                   </div>
                 </div>
               ) : (
@@ -150,15 +165,20 @@ export function Footer() {
                     />
                     <button
                       type="submit"
+                      disabled={subscribing}
                       className="h-10 sm:h-11 px-4 sm:px-6 rounded-full bg-gradient-to-r from-[#890754] to-[#a8146c] hover:from-[#a8146c] hover:to-[#890754] text-white font-black text-[11px] sm:text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md hover:scale-[1.03] active:scale-95 shrink-0 border border-pink-400/30 cursor-pointer"
                     >
-                      <span>Claim 10%</span>
+                      <span>{subscribing ? "Sending…" : "Claim 10%"}</span>
                       <ArrowRight size={13} />
                     </button>
                   </div>
-                  <p className="text-[10px] text-white/40 text-center lg:text-left mt-2 px-3">
-                    Instant delivery to your inbox • Zero spam, unsubscribe anytime.
-                  </p>
+                  {subscribeError ? (
+                    <p className="text-[11px] text-pink-300 text-center lg:text-left mt-2 px-3">{subscribeError}</p>
+                  ) : (
+                    <p className="text-[10px] text-white/40 text-center lg:text-left mt-2 px-3">
+                      Instant delivery to your inbox • Zero spam, unsubscribe anytime.
+                    </p>
+                  )}
                 </form>
               )}
             </div>

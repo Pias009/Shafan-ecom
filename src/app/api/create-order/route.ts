@@ -6,6 +6,7 @@ import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { cookies } from "next/headers";
 import { createPendingCheckout } from "@/services/checkout/pending-checkout";
+import { customerUsageError } from "@/lib/discount-usage";
 import { convertCurrency } from "@/lib/currency-rates";
 import { loadCountryCharges } from "@/lib/vat-delivery-config";
 import { resolvePickupSelection } from "@/lib/pickup-config";
@@ -126,7 +127,7 @@ async function applyDiscount(
   subtotal: number,
   userId?: string,
   userEmail?: string
-): Promise<{ discount: number; discountCodeUsed?: string; error?: string }> {
+): Promise<{ discount: number; discountCodeUsed?: string; error?: string; usageLimitReached?: boolean }> {
   if (!couponCode) {
     return { discount: 0 };
   }
@@ -182,29 +183,11 @@ async function applyDiscount(
       }
     }
 
-    // Check per-user usage limits (SINGLE_USE or MULTI_USE)
-    const usageType = discount.usageType || "MULTI_USE";
-    
-    if (userId || userEmail) {
-      // Check user's usage count for this discount
-      const userUsageCount = await (prisma as any).discountUsage.count({
-        where: {
-          discountId: discount.id,
-          OR: userId ? [{ userId }] : [{ email: userEmail }],
-        },
-      });
-
-      // Check maxUsesPerUser limit
-      if (discount.maxUsesPerUser && userUsageCount >= discount.maxUsesPerUser) {
-        console.warn(`User has reached max uses for this discount: ${couponCode}`);
-        return { discount: 0, error: `You can only use this code ${discount.maxUsesPerUser} time(s)` };
-      }
-
-      // For SINGLE_USE coupons - only one use per user ever
-      if (usageType === "SINGLE_USE" && userUsageCount > 0) {
-        console.warn(`SINGLE_USE coupon already used by user: ${couponCode}`);
-        return { discount: 0, error: "This code can only be used once per customer" };
-      }
+    // Check per-customer usage limits (SINGLE_USE or maxUsesPerUser) by user id OR email
+    const usageError = await customerUsageError(discount, { userId, email: userEmail });
+    if (usageError) {
+      console.warn(`Customer has reached usage limit for discount: ${couponCode}`);
+      return { discount: 0, error: usageError, usageLimitReached: true };
     }
 
     // Calculate discount amount
@@ -587,8 +570,11 @@ export async function POST(req: Request) {
           countryCode,
           subtotal,
           session?.user?.id || undefined,
-          session?.user?.email || undefined
+          session?.user?.email || billing?.email || shipping?.email || undefined
         );
+        if (discountResult.usageLimitReached) {
+          return NextResponse.json({ error: discountResult.error }, { status: 400 });
+        }
         discount = discountResult.discount || 0;
         couponCodeApplied = couponCode;
         discountIdApplied = discountResult.discountCodeUsed || null;

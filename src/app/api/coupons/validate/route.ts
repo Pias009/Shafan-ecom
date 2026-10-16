@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerAuthSession } from "@/lib/auth";
+import { customerUsageError } from "@/lib/discount-usage";
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,6 +47,16 @@ export async function GET(request: NextRequest) {
     // Check usage limit
     if (discount.maxUses && discount.uses >= discount.maxUses) {
       return NextResponse.json({ valid: false, error: "Coupon usage limit reached" }, { status: 400 });
+    }
+
+    // Per-customer limit (e.g. a welcome code that was already redeemed)
+    const session = await getServerAuthSession().catch(() => null);
+    const usageError = await customerUsageError(discount, {
+      userId: session?.user?.id,
+      email: session?.user?.email || searchParams.get("email"),
+    });
+    if (usageError) {
+      return NextResponse.json({ valid: false, error: usageError }, { status: 400 });
     }
 
     // Get country-specific max limit if available

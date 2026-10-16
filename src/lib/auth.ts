@@ -7,7 +7,6 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { sendAdminLoginAlertEmail } from "@/lib/email/service";
 
 
 // User site auth config - cookie only for user paths
@@ -268,17 +267,6 @@ export const adminAuthOptions: NextAuthOptions = {
         const isSuperAdmin = user.role === 'SUPERADMIN';
         const shouldBypassMFA = (isDeveloper || isMasterAdmin) && isSuperAdmin;
         
-        // Send admin login alert
-        try {
-          sendAdminLoginAlertEmail(
-            user.email!,
-            user.name || "Admin",
-            new Date().toLocaleString(),
-            "Unknown",
-            "Unknown"
-          ).catch(console.error);
-        } catch {}
-
         return {
           id: user.id,
           email: user.email,

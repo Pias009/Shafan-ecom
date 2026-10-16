@@ -14,7 +14,7 @@ import { TrendingNowSlider } from "@/components/TrendingNowSlider";
 import { FlashSalesSlider } from "@/components/FlashSalesSlider";
 import { RoutineSection } from "@/components/RoutineSection";
 import RejuvenateBestProductsSection from "@/components/RejuvenateBestProductsSection";
-import { BestSellersSection } from "@/components/BestSellersSection";
+import { HomeSectionBlock } from "@/components/HomeSectionBlock";
 import { OfferSectionBlock } from "@/components/OfferSectionBlock";
 import HairCareSpotlightSection from "@/components/HairCareSpotlightSection";
 import { HexPinwheelShowcase } from "@/components/HexPinwheelShowcase";
@@ -111,7 +111,8 @@ export default function HomeClient({
   banners = [],
   rejuvenateSection = null,
   haircareSection = null,
-  offerSections = []
+  offerSections = [],
+  homeSections = []
 }: {
   initialProducts: any[],
   newArrivals?: any[],
@@ -124,7 +125,8 @@ export default function HomeClient({
   banners?: any[],
   rejuvenateSection?: any,
   haircareSection?: any,
-  offerSections?: any[]
+  offerSections?: any[],
+  homeSections?: any[]
 }) {
   const [products] = useState<any[]>(initialProducts || []);
   const [quickView, setQuickView] = useState<any | null>(null);
@@ -157,6 +159,12 @@ export default function HomeClient({
   const filteredBestSellers = useMemo(() => {
     return bestSellerProducts.filter((p) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p));
   }, [bestSellerProducts, selectedCountry]);
+
+  const filteredHomeSections = useMemo(() => {
+    return homeSections
+      .map((s) => ({ ...s, products: s.products.filter((p: any) => hasValidPrice(p, selectedCountry) && !isDummyProduct(p)) }))
+      .filter((s) => s.products.length > 0);
+  }, [homeSections, selectedCountry]);
 
   const filteredMakeup = useMemo(() => {
     const list = (initialMakeupProducts && initialMakeupProducts.length > 0)
@@ -374,15 +382,17 @@ export default function HomeClient({
           orderNow={orderNow}
         />
 
-        {/* 4. Best Sellers Section */}
-        {filteredBestSellers.length > 0 && (
-          <BestSellersSection
-            products={filteredBestSellers}
+        {/* 4. Admin-built Homepage Sections (/ueadmin/home-sections), Flash Sales UI */}
+        {filteredHomeSections.map((section) => (
+          <HomeSectionBlock
+            key={section.id}
+            section={section}
+            isAr={isAr}
             onQuickView={setQuickView}
             addToCart={addToCart}
             orderNow={orderNow}
           />
-        )}
+        ))}
 
         {/* 4.6 Admin-curated Offer Sections */}
         <OfferSectionBlock

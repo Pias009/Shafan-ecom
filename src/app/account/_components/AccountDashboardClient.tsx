@@ -4,7 +4,8 @@ import { useCartStore } from "@/lib/cart-store";
 import { useEffect, useState, useCallback } from "react";
 import {
   Package, Truck, CheckCircle2, RotateCcw,
-  Loader2, ShoppingBag, ChevronDown, CreditCard, MapPin, ExternalLink
+  Loader2, ShoppingBag, ChevronDown, CreditCard, MapPin, ExternalLink,
+  Gift, Copy, Check
 } from "lucide-react";
 import Link from "next/link";
 
@@ -42,6 +43,64 @@ function formatAddress(shipping: Record<string, any>): string {
   parts.push(c || "Unknown");
   if (co) parts.push(co);
   return parts.join(", ");
+}
+
+function WelcomeOfferCard({ offer }: { offer: { code: string; label: string; minimumOrderValue: number | null; endDate: string | null; used: boolean } }) {
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(offer.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard can be blocked (http, permissions); the code is still visible to copy by hand.
+    }
+  };
+
+  return (
+    <div className={`relative overflow-hidden rounded-3xl p-5 md:p-6 border shadow-xl ${offer.used ? "bg-white border-black/5" : "bg-gradient-to-r from-[#3e0325] via-[#540434] to-[#890754] border-pink-500/20"}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2.5 rounded-2xl shrink-0 ${offer.used ? "bg-black/5" : "bg-white/15"}`}>
+            <Gift className={`w-5 h-5 ${offer.used ? "text-black/30" : "text-pink-200"}`} />
+          </div>
+          <div>
+            <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${offer.used ? "text-black/30" : "text-pink-200"}`}>
+              Welcome Gift
+            </div>
+            <div className={`text-lg md:text-xl font-black ${offer.used ? "text-black/40" : "text-white"}`}>
+              {offer.label} your first order
+            </div>
+            <div className={`text-[11px] font-medium ${offer.used ? "text-black/30" : "text-white/60"}`}>
+              {offer.used
+                ? "Already used. Thank you for shopping with us!"
+                : [
+                    offer.minimumOrderValue && offer.minimumOrderValue > 1 ? `Min. order ${offer.minimumOrderValue}` : null,
+                    offer.endDate ? `Valid until ${new Date(offer.endDate).toLocaleDateString()}` : null,
+                    "One use per customer",
+                  ].filter(Boolean).join(" • ")}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={copyCode}
+          disabled={offer.used}
+          className={`flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-5 py-3 font-black tracking-[0.25em] text-base transition shrink-0 ${
+            offer.used
+              ? "border-black/10 text-black/25 line-through cursor-not-allowed"
+              : "border-pink-300/60 bg-white/10 text-white hover:bg-white/20 active:scale-95"
+          }`}
+          title={offer.used ? "Already used" : "Copy code"}
+        >
+          {offer.code}
+          {!offer.used && (copied ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4 text-pink-200" />)}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function getItemImage(item: any): string | null {
@@ -105,6 +164,9 @@ export default function AccountDashboardClient() {
           </div>
         ))}
       </div>
+
+      {/* Welcome Coupon (same code the footer sign-up emails) */}
+      {data?.welcomeOffer && <WelcomeOfferCard offer={data.welcomeOffer} />}
 
       {/* Cart Summary Bar */}
       {cartItems.length > 0 && (

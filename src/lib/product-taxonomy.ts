@@ -83,3 +83,14 @@ export const OFFICIAL_SKIN_CONCERNS = [
   "Pigmentation",
   "Redness"
 ] as const;
+
+// Merge OFFICIAL_BRANDS with DB brand names for admin dropdowns, deduplicating
+// case-insensitively and preferring the DB spelling ("Cerave" over "CeraVe").
+export function mergeBrandNames(dbNames: string[]): { name: string }[] {
+  const byLower = new Map<string, string>();
+  for (const name of dbNames) byLower.set(name.toLowerCase(), name);
+  for (const name of OFFICIAL_BRANDS) {
+    if (!byLower.has(name.toLowerCase())) byLower.set(name.toLowerCase(), name);
+  }
+  return Array.from(byLower.values()).map(name => ({ name }));
+}

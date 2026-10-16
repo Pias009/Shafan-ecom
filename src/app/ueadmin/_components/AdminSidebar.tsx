@@ -152,6 +152,17 @@ export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
                >
                   <Gift size={18} /> Offer Sections
                </Link>
+               <Link
+                  href="/ueadmin/home-sections"
+                  prefetch={true}
+                  className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
+                    pathname?.startsWith('/ueadmin/home-sections')
+                      ? 'bg-black text-white shadow-xl shadow-black/10'
+                      : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
+                  }`}
+               >
+                  <Layers size={18} /> Add New on Homepage
+               </Link>
 <Link
                    href="/ueadmin/flash-sales"
                    prefetch={true}

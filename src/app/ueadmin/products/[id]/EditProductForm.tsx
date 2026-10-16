@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { parseCommaSeparatedPriceInput, formatPriceForAdmin } from '@/lib/money';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import {
-  OFFICIAL_BRANDS,
+  mergeBrandNames,
   OFFICIAL_CATEGORIES,
   OFFICIAL_SUBCATEGORIES,
   OFFICIAL_SKIN_TYPES,
@@ -34,9 +34,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
   const [activeDescTab, setActiveDescTab] = useState<'short' | 'benefits' | 'ingredients' | 'howToUse'>('short');
   
   // Merge official brands with props brands, deduplicating
-  const mergedBrands = Array.from(
-    new Set([...OFFICIAL_BRANDS, ...brands.map(b => b.name)])
-  ).map(name => ({ name }));
+  const mergedBrands = mergeBrandNames(brands.map(b => b.name));
   const [availableBrands, setAvailableBrands] = useState(mergedBrands);
   
   // Ensure numeric fields are properly converted to numbers

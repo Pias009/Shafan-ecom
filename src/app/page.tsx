@@ -23,6 +23,7 @@ export default async function HomePage() {
         rejuvenateSection={data.rejuvenateSection}
         haircareSection={data.haircareSection}
         offerSections={data.offerSections}
+        homeSections={data.homeSections}
       />
     </Suspense>
   );

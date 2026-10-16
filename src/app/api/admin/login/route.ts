@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { sendAdminLoginAlertEmail } from "@/lib/email/service";
 
 export async function POST(req: Request) {
   try {
@@ -36,17 +35,6 @@ export async function POST(req: Request) {
 
     // Generate token for admin session
     const token = Buffer.from(`${user.id}:${Date.now()}:admin`).toString('base64');
-
-    // Send admin login alert
-    try {
-      sendAdminLoginAlertEmail(
-        user.email!,
-        user.name || "Admin",
-        new Date().toLocaleString(),
-        "Unknown",
-        "Unknown"
-      ).catch(console.error);
-    } catch {}
 
     const adminData = { 
       id: user.id, 

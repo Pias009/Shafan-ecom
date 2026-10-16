@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { uploadFromUrl } from '@/lib/cloudinary';
 import { revalidatePath } from 'next/cache';
 import { clearProductCache } from '@/lib/optimized-products';
+import { resolveBrandId } from '@/lib/brand-utils';
 
 const UpdateSchema = z.object({
   name: z.string().optional(),
@@ -174,9 +175,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         updates.variants = v;
       }
     }
-    if (parsed.data.brandName) {
-      const b = await prisma.brand.findFirst({ where: { name: parsed.data.brandName } });
-      if (b) updates.brandId = b.id;
+    if (parsed.data.brandName !== undefined) {
+      updates.brandId = await resolveBrandId(parsed.data.brandName);
     }
     if (parsed.data.subCategoryId !== undefined) {
       updates.subCategoryId = parsed.data.subCategoryId || null;

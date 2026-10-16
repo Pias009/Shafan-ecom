@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
 import { Plus, Trash2, Edit2, Copy, Search, Filter } from "lucide-react";
+import { WelcomeOfferSetting } from "./_components/WelcomeOfferSetting";
 
 interface Discount {
   id: string;
@@ -152,6 +153,8 @@ export default function DiscountsPage() {
               New Discount
             </Link>
           </div>
+
+          <WelcomeOfferSetting />
 
           {/* Filters */}
           <div className="flex flex-col md:flex-row gap-4">

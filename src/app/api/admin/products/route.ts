@@ -4,6 +4,7 @@ import { uploadFromUrl } from '@/lib/cloudinary';
 import { getAdminApiSession, getAdminStoreAccess } from '@/lib/admin-session';
 import { SUPPORTED_COUNTRIES, isValidCountryCode, getCurrencyForCountry } from '@/lib/countries';
 import { revalidatePath } from 'next/cache';
+import { resolveBrandId } from '@/lib/brand-utils';
 
 /**
  * Generate a URL-friendly slug from a product name
@@ -120,6 +121,17 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const select = searchParams.get('select');
+
+    // Homepage-section picker: newest first, with category ids for the category filter
+    if (select === 'picker') {
+      const products = await prisma.product.findMany({
+        where: { active: true },
+        select: { id: true, name: true, sku: true, mainImage: true, images: true, createdAt: true, productCategories: { select: { categoryId: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 1000,
+      });
+      return new Response(JSON.stringify(products), { headers: { 'Content-Type': 'application/json' } });
+    }
 
     // Lightweight select for dropdowns/selectors
     if (select === 'name,id' || select === 'name,id,sku' || select === 'name,id,sku,price,images,weight,weightUnit') {
@@ -307,8 +319,7 @@ export async function POST(req: Request) {
     // Resolve brand by name if provided
     let brandId: string | null = null;
     if (productData.brandName && productData.brandName !== 'All') {
-      const b = await prisma.brand.findFirst({ where: { name: productData.brandName } });
-      brandId = b?.id || null;
+      brandId = await resolveBrandId(productData.brandName);
     }
 
     // Resolve sub-category by ID if provided
