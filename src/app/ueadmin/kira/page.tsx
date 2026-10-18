@@ -3,8 +3,8 @@ import { Metadata } from 'next';
 import { KiraClient } from './KiraClient';
 
 export const metadata: Metadata = {
-  title: 'Agent Kira',
-  description: 'AI operations assistant for the SHANFA admin team, grounded in live store data.',
+  title: 'Kira HQ',
+  description: 'Agent Kira and her AI teams: live store operations, by voice or text.',
 };
 
 export default function AgentKiraPage() {

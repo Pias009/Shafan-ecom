@@ -14,6 +14,8 @@ export type KiraVoiceSettings = {
   conversation: boolean;
   /** Listen in the background for "Hey Kira". */
   wakeWord: boolean;
+  /** Kira greets you out loud and starts the conversation when you open HQ. */
+  autoGreet: boolean;
   language: 'en' | 'auto';
 };
 
@@ -23,6 +25,7 @@ export const DEFAULT_VOICE_SETTINGS: KiraVoiceSettings = {
   rate: 1,
   conversation: true,
   wakeWord: false,
+  autoGreet: true,
   language: 'en',
 };
 

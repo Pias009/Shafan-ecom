@@ -4,6 +4,7 @@ import { useEffect, Suspense, useSyncExternalStore } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FloatingCartButton } from "./FloatingCartButton";
 import { LenisProvider } from "./LenisProvider";
+import SiteHealthReporter from "./SiteHealthReporter";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -41,6 +42,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       </Suspense>
       {children}
       {isClient && !isUeAdmin && <FloatingCartButton />}
+      {/* Real-user speed + JS errors for Kira's Engineering team (storefront only) */}
+      {!isUeAdmin && <SiteHealthReporter />}
     </>
   );
 }

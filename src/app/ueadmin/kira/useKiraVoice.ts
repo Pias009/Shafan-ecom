@@ -19,6 +19,7 @@ export function useKiraVoice({
   muted,
   onCommand,
   onWake,
+  onSilence,
 }: {
   /** False while Kira is locked: everything stops and the mic is released. */
   active: boolean;
@@ -26,6 +27,8 @@ export function useKiraVoice({
   muted: boolean;
   onCommand: (text: string) => void;
   onWake?: () => void;
+  /** Kira listened but the admin said nothing (e.g. didn't answer her greeting). */
+  onSilence?: () => void;
 }) {
   const [settings, setSettingsState] = useState<KiraVoiceSettings>(DEFAULT_VOICE_SETTINGS);
   const [phase, setPhase] = useState<VoicePhase>('idle');
@@ -40,11 +43,13 @@ export function useKiraVoice({
   const settingsRef = useRef(settings);
   const commandRef = useRef(onCommand);
   const wakeRef = useRef(onWake);
+  const silenceRef = useRef(onSilence);
   /** True while the mic is in use or its permission prompt is open (Kira's blur auto-lock ignores blur then). */
   const micBusyRef = useRef(false);
 
   commandRef.current = onCommand;
   wakeRef.current = onWake;
+  silenceRef.current = onSilence;
   settingsRef.current = settings;
 
   const setPhaseBoth = useCallback((p: VoicePhase) => {
@@ -103,6 +108,7 @@ export function useKiraVoice({
         } else {
           setPhaseBoth('idle');
           setInterim('');
+          silenceRef.current?.();
         }
       },
       onError: (msg) => {
@@ -129,12 +135,15 @@ export function useKiraVoice({
     setPhaseBoth('idle');
   }, [setPhaseBoth]);
 
-  /** Speak a reply. With `viaVoice` and hands-free on, listens again afterwards. */
+  /**
+   * Speak a reply. Listens again afterwards when `listenAfter` is set (Kira asked a
+   * question) or, with hands-free on, when the admin was talking by voice.
+   */
   const speak = useCallback(
-    (text: string, opts: { viaVoice?: boolean } = {}) => {
+    (text: string, opts: { viaVoice?: boolean; listenAfter?: boolean } = {}) => {
       const speaker = speakerRef.current;
       const resumeListening = () => {
-        if (opts.viaVoice && settingsRef.current.conversation && phaseRef.current === 'idle') {
+        if ((opts.listenAfter || (opts.viaVoice && settingsRef.current.conversation)) && phaseRef.current === 'idle') {
           setTimeout(() => { if (phaseRef.current === 'idle') startListening(); }, 350);
         }
       };

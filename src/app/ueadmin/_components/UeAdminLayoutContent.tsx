@@ -78,6 +78,17 @@ export function UeAdminLayoutContent({ user, children }: { user: AdminUser | nul
 
   if (!user) return null;
 
+  // Kira HQ is a full-screen workspace with its own top bar (and a link back to the admin).
+  if (pathname?.startsWith("/ueadmin/kira")) {
+    return (
+      <AdminSessionProvider user={user}>
+        <div className="admin-scope adm-raw select-text" data-admin-panel="true" data-lenis-prevent="true">
+          {children}
+        </div>
+      </AdminSessionProvider>
+    );
+  }
+
   return (
     <AdminSessionProvider user={user}>
       <div

@@ -5,13 +5,12 @@ import { Loader2, Mic, Settings2, Square, Volume2, X } from 'lucide-react';
 import { NATURAL_VOICES } from '@/lib/kira/voice';
 import type { KiraVoice } from './useKiraVoice';
 
-/** Round mic button: tap to talk, tap again to finish, tap while Kira speaks to interrupt. */
+/** Mic button: tap to talk, tap again to finish, tap while Kira speaks to interrupt. */
 export function KiraMicButton({ voice, size = 'md' }: { voice: KiraVoice; size?: 'sm' | 'md' }) {
   const { phase } = voice;
   const busy = phase === 'transcribing' || phase === 'thinking';
-  const dim = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
-  const icon = size === 'sm' ? 13 : 17;
-
+  const dim = size === 'sm' ? 'h-8 w-8' : 'h-10 w-10';
+  const icon = size === 'sm' ? 14 : 17;
   const label =
     phase === 'listening' ? 'Finish speaking' :
     phase === 'speaking' ? 'Interrupt Kira and speak' :
@@ -25,19 +24,18 @@ export function KiraMicButton({ voice, size = 'md' }: { voice: KiraVoice; size?:
       title={label}
       aria-label={label}
       aria-pressed={phase === 'listening'}
-      className={`relative ${dim} shrink-0 rounded-xl flex items-center justify-center transition-colors cursor-pointer disabled:cursor-wait ${
+      className={`relative grid ${dim} shrink-0 place-items-center rounded-md border transition-colors disabled:cursor-wait ${
         phase === 'listening'
-          ? 'bg-rose-500 text-white shadow-[0_0_0_4px_rgba(244,63,94,0.18),0_0_24px_rgba(244,63,94,0.45)]'
-          : 'bg-gradient-to-br from-cyan-400 to-violet-500 text-white shadow-[0_0_20px_rgba(34,211,238,0.25)] hover:brightness-110'
+          ? 'border-[#F2B33D] bg-[#F2B33D] text-[#0C0D0F]'
+          : 'border-[#2A2D34] bg-[#131418] text-[#ECEAE4] hover:border-[#3A3D45] hover:bg-[#1A1C21]'
       }`}
     >
-      {phase === 'listening' && <span className="absolute inset-0 rounded-xl bg-rose-500 animate-ping opacity-30" />}
       {busy ? (
-        <Loader2 size={icon} className="animate-spin" />
+        <Loader2 size={icon} className="animate-spin text-[#A9ACB4]" />
       ) : phase === 'listening' ? (
-        <Square size={icon - 3} className="relative fill-current" />
+        <Square size={icon - 4} className="fill-current" />
       ) : (
-        <Mic size={icon} className="relative" />
+        <Mic size={icon} strokeWidth={1.75} />
       )}
     </button>
   );
@@ -52,8 +50,7 @@ function LevelBars({ getLevel }: { getLevel: () => number }) {
       const bars = ref.current?.children;
       if (bars) {
         for (let i = 0; i < bars.length; i++) {
-          const h = 4 + Math.min(1, lvl * (0.6 + ((i * 37) % 10) / 10)) * 14;
-          (bars[i] as HTMLElement).style.height = `${h}px`;
+          (bars[i] as HTMLElement).style.height = `${3 + Math.min(1, lvl * (0.6 + ((i * 37) % 10) / 10)) * 12}px`;
         }
       }
       raf = requestAnimationFrame(tick);
@@ -62,20 +59,18 @@ function LevelBars({ getLevel }: { getLevel: () => number }) {
     return () => cancelAnimationFrame(raf);
   }, [getLevel]);
   return (
-    <div ref={ref} className="flex items-center gap-[3px] h-5" aria-hidden>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <span key={i} className="w-[3px] rounded-full bg-current transition-[height] duration-75" style={{ height: 4 }} />
-      ))}
+    <div ref={ref} className="flex h-4 items-center gap-[2px]" aria-hidden>
+      {Array.from({ length: 5 }).map((_, i) => <span key={i} className="w-[2px] bg-current" style={{ height: 3 }} />)}
     </div>
   );
 }
 
-/** Live status line: listening with captions, thinking, speaking, or an error. */
+/** One-line live status: listening (with captions), transcribing, thinking, speaking, or an error. */
 export function KiraVoiceStatus({ voice }: { voice: KiraVoice }) {
   const { phase, interim, error } = voice;
   if (error) {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-rose-400/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+      <div className="flex items-start gap-2 rounded-md border border-[#EC8A80]/30 bg-[#EC8A80]/[0.06] px-3 py-2 text-[12.5px] text-[#F2B5AE]">
         <span className="flex-1">{error}</span>
         <button onClick={voice.clearError} className="p-0.5 hover:text-white" aria-label="Dismiss"><X size={13} /></button>
       </div>
@@ -83,26 +78,26 @@ export function KiraVoiceStatus({ voice }: { voice: KiraVoice }) {
   }
   if (phase === 'idle') return null;
 
-  const tone =
-    phase === 'listening' ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-100' :
-    phase === 'speaking' ? 'border-cyan-400/25 bg-cyan-400/10 text-cyan-100' : 'border-white/10 bg-white/[0.04] text-slate-300';
-
+  const color = phase === 'listening' ? 'text-[#F2B33D]' : 'text-[#ECEAE4]';
   return (
-    <div className={`flex items-center gap-3 rounded-lg border px-3 py-2 text-xs ${tone}`} aria-live="polite">
-      {phase === 'listening' || phase === 'speaking' ? <LevelBars getLevel={voice.level} /> : <Loader2 size={14} className="animate-spin" />}
+    <div className="flex items-center gap-3 rounded-md border border-[#23252B] bg-[#121317] px-3 py-2" aria-live="polite">
+      <span className={color}>
+        {phase === 'listening' || phase === 'speaking' ? <LevelBars getLevel={voice.level} /> : <Loader2 size={14} className="animate-spin" />}
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="font-medium">
-          {phase === 'listening' && 'Listening… speak naturally, I’ll stop when you pause'}
-          {phase === 'transcribing' && 'Got it, transcribing…'}
-          {phase === 'thinking' && 'Kira is checking live data…'}
+        <div className={`kira-mono text-[11px] uppercase tracking-[0.1em] ${color}`}>
+          {phase === 'listening' && 'Listening'}
+          {phase === 'transcribing' && 'Transcribing'}
+          {phase === 'thinking' && 'Checking live data'}
           {phase === 'speaking' && 'Kira is speaking'}
         </div>
-        {interim && phase !== 'speaking' && <div className="truncate italic opacity-80">“{interim}”</div>}
+        {interim && phase !== 'speaking' && <div className="truncate text-[13px] text-[#D9D7D1]">“{interim}”</div>}
+        {phase === 'listening' && !interim && <div className="text-[12px] text-[#8A8E98]">Speak naturally. I’ll stop when you pause.</div>}
       </div>
       {(phase === 'listening' || phase === 'speaking') && (
         <button
           onClick={phase === 'speaking' ? voice.stopSpeaking : voice.cancel}
-          className="rounded-md border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium hover:bg-white/10"
+          className="rounded border border-[#2A2D34] px-2.5 py-1 text-[11.5px] font-medium text-[#D4D2CC] hover:bg-[#1A1C21] hover:text-white"
         >
           {phase === 'speaking' ? 'Stop' : 'Cancel'}
         </button>
@@ -113,25 +108,28 @@ export function KiraVoiceStatus({ voice }: { voice: KiraVoice }) {
 
 function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
   return (
-    <label className="flex items-start gap-3 cursor-pointer py-1.5">
+    <label className="flex cursor-pointer items-start gap-3 py-2">
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors ${checked ? 'bg-cyan-500' : 'bg-slate-600'}`}
+        className={`mt-0.5 inline-flex h-[18px] w-8 shrink-0 items-center rounded-full border p-[2px] transition-colors ${checked ? 'border-[#ECEAE4] bg-[#ECEAE4]' : 'border-[#3A3D45] bg-[#1A1C21]'}`}
       >
-        <span className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : ''}`} />
+        <span className={`h-3 w-3 rounded-full transition-transform ${checked ? 'translate-x-[14px] bg-[#0C0D0F]' : 'bg-[#8A8E98]'}`} />
       </button>
       <span>
-        <span className="block text-xs font-medium text-slate-100">{label}</span>
-        {hint && <span className="block text-[11px] text-slate-400 leading-snug">{hint}</span>}
+        <span className="block text-[13px] font-medium text-[#ECEAE4]">{label}</span>
+        {hint && <span className="block text-[12px] leading-snug text-[#8A8E98]">{hint}</span>}
       </span>
     </label>
   );
 }
 
-/** Gear button + popover with voice, speed, hands-free and wake-word settings. */
+const selectCls =
+  'w-full rounded-md border border-[#262930] bg-[#0E0F12] px-2.5 py-2 text-[13px] text-[#ECEAE4] focus:border-[#4A4E57] focus:outline-none [&>option]:bg-[#0E0F12]';
+
+/** Voice settings: Kira's voice, speed, language, greeting, hands-free and wake word. */
 export function KiraVoiceSettings({ voice }: { voice: KiraVoice }) {
   const [open, setOpen] = useState(false);
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -166,31 +164,31 @@ export function KiraVoiceSettings({ voice }: { voice: KiraVoice }) {
         title="Voice settings"
         aria-label="Voice settings"
         aria-expanded={open}
-        className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/10 hover:text-white cursor-pointer"
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-md border border-[#2A2D34] bg-[#131418] text-[#A9ACB4] hover:border-[#3A3D45] hover:text-white"
       >
-        <Settings2 size={17} />
+        <Settings2 size={16} strokeWidth={1.75} />
       </button>
 
       {open && (
-        <div className="absolute bottom-12 right-0 z-40 w-[320px] rounded-xl border border-white/10 bg-[#0E1426] p-4 shadow-2xl shadow-black/50 text-slate-200">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold text-white">Voice assistant</div>
-            <button onClick={() => setOpen(false)} className="p-1 text-slate-400 hover:text-white" aria-label="Close"><X size={15} /></button>
+        <div className="absolute bottom-12 right-0 z-40 w-[330px] rounded-md border border-[#262930] bg-[#121317] p-4 text-[#ECEAE4] shadow-2xl shadow-black/60">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="kira-label">Voice assistant</div>
+            <button onClick={() => setOpen(false)} className="p-1 text-[#8A8E98] hover:text-white" aria-label="Close"><X size={15} /></button>
           </div>
 
-          <div className={`mb-3 rounded-lg px-3 py-2 text-[11px] leading-snug ${naturalVoice === false ? 'bg-amber-400/10 text-amber-200' : 'bg-emerald-400/10 text-emerald-200'}`}>
+          <p className={`mb-3 text-[12px] leading-snug ${naturalVoice === false ? 'text-[#F2B33D]' : 'text-[#8FC79E]'}`}>
             {naturalVoice === false
               ? <>Using your browser’s voice. {naturalVoiceNote || 'The natural voice is unavailable.'}</>
               : naturalVoice
-                ? 'Natural voice is active (Groq Orpheus).'
-                : 'Natural voice will be used if available, otherwise your browser’s voice.'}
-          </div>
+                ? 'Natural voice active (Groq Orpheus).'
+                : 'Natural voice when available, otherwise your browser’s voice.'}
+          </p>
 
-          <label className="block text-[11px] font-medium text-slate-400 mb-1">Kira’s voice</label>
+          <label className="mb-1 block text-[12px] text-[#A9ACB4]">Kira’s voice</label>
           <select
             value={naturalVoice === false ? settings.browserVoiceURI : settings.voice}
             onChange={(e) => (naturalVoice === false ? updateSettings({ browserVoiceURI: e.target.value }) : updateSettings({ voice: e.target.value }))}
-            className="w-full mb-3 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-slate-100 [&>option]:bg-[#0E1426]"
+            className={`${selectCls} mb-3`}
           >
             {naturalVoice === false ? (
               <>
@@ -202,28 +200,32 @@ export function KiraVoiceSettings({ voice }: { voice: KiraVoice }) {
             )}
           </select>
 
-          <label className="block text-[11px] font-medium text-slate-400 mb-1">Speaking speed · {settings.rate.toFixed(2)}×</label>
-          <input
-            type="range"
-            min={0.8}
-            max={1.4}
-            step={0.05}
-            value={settings.rate}
-            onChange={(e) => updateSettings({ rate: Number(e.target.value) })}
-            className="w-full mb-2 accent-cyan-400"
-          />
+          <div className="mb-3 grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-[12px] text-[#A9ACB4]">Speed · <span className="kira-mono">{settings.rate.toFixed(2)}×</span></label>
+              <input
+                type="range" min={0.8} max={1.4} step={0.05}
+                value={settings.rate}
+                onChange={(e) => updateSettings({ rate: Number(e.target.value) })}
+                className="mt-2 w-full accent-[#ECEAE4]"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[12px] text-[#A9ACB4]">I’ll speak in</label>
+              <select value={settings.language} onChange={(e) => updateSettings({ language: e.target.value as 'en' | 'auto' })} className={selectCls}>
+                <option value="en">English</option>
+                <option value="auto">Auto-detect</option>
+              </select>
+            </div>
+          </div>
 
-          <label className="block text-[11px] font-medium text-slate-400 mb-1">I’ll speak in</label>
-          <select
-            value={settings.language}
-            onChange={(e) => updateSettings({ language: e.target.value as 'en' | 'auto' })}
-            className="w-full mb-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-slate-100 [&>option]:bg-[#0E1426]"
-          >
-            <option value="en">English</option>
-            <option value="auto">Auto-detect (English, Arabic, …)</option>
-          </select>
-
-          <div className="border-t border-white/10 mt-2 pt-1">
+          <div className="border-t border-[#23252B] pt-1">
+            <Toggle
+              checked={settings.autoGreet}
+              onChange={(v) => updateSettings({ autoGreet: v })}
+              label="Greet me when I open Kira"
+              hint="Kira says hello, listens for your answer, then gives today’s briefing."
+            />
             <Toggle
               checked={settings.conversation}
               onChange={(v) => updateSettings({ conversation: v })}
@@ -234,14 +236,14 @@ export function KiraVoiceSettings({ voice }: { voice: KiraVoice }) {
               checked={settings.wakeWord}
               onChange={(v) => updateSettings({ wakeWord: v })}
               label="“Hey Kira” wake word"
-              hint="Keeps the mic on while this console is open and unlocked. Short clips of speech are sent to Groq to detect “Hey Kira”."
+              hint="Mic stays on while Kira is open and unlocked; short speech clips go to Groq to detect “Hey Kira”."
             />
           </div>
 
           <button
             type="button"
             onClick={voice.testVoice}
-            className="mt-3 w-full rounded-lg bg-white/10 py-2 text-xs font-medium text-white hover:bg-white/15 flex items-center justify-center gap-1.5"
+            className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md border border-[#2A2D34] py-2 text-[13px] font-medium text-[#ECEAE4] hover:bg-[#1A1C21]"
           >
             <Volume2 size={14} /> Test voice
           </button>
