@@ -1,0 +1,253 @@
+/*
+ * Admin design normalisation.
+ *
+ * The admin pages were written with very loud utilities (font-black, all-caps
+ * tracking-widest labels at 9–10px, 40px radii, scale-on-hover buttons). Rather
+ * than rewriting ~26k lines, these scoped rules pull every page toward one calm,
+ * dense, readable system. Unlayered CSS beats Tailwind's layered utilities.
+ *
+ * Opt out for a bespoke screen by adding `adm-raw` to a wrapper.
+ */
+
+.admin-scope {
+  --adm-bg: #f6f7f9;
+  --adm-surface: #ffffff;
+  --adm-border: #e5e7eb;
+  --adm-border-strong: #d1d5db;
+  --adm-text: #0f172a;
+  --adm-muted: #64748b;
+  --adm-accent: #9c0f55;
+  --adm-accent-soft: #fdf2f8;
+  --adm-radius-lg: 14px;
+  --adm-radius: 10px;
+  --adm-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --adm-shadow-pop: 0 18px 40px -12px rgba(15, 23, 42, 0.22);
+
+  color: var(--adm-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- Typography ---------- */
+
+.admin-scope :is(.font-black, .font-extrabold):not(.adm-raw *) {
+  font-weight: 650;
+}
+
+.admin-scope .uppercase:is(.tracking-widest, .tracking-\[0\.2em\], .tracking-\[0\.3em\], .tracking-\[0\.25em\]):not(.adm-raw *) {
+  letter-spacing: 0.06em;
+}
+
+.admin-scope :is(.text-\[8px\], .text-\[9px\], .text-\[10px\]):not(.adm-raw *) {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.admin-scope .italic.font-black:not(.adm-raw *),
+.admin-scope .italic.uppercase:not(.adm-raw *) {
+  font-style: normal;
+}
+
+.admin-scope main h1:not(.adm-raw *) {
+  font-size: 1.625rem;
+  line-height: 2.1rem;
+  font-weight: 650;
+  letter-spacing: -0.018em;
+  text-transform: none;
+  font-style: normal;
+}
+
+.admin-scope main h2:is(.text-3xl, .text-4xl, .text-5xl):not(.adm-raw *) {
+  font-size: 1.375rem;
+  line-height: 1.85rem;
+  letter-spacing: -0.012em;
+}
+
+.admin-scope :is(td, .tabular-nums, .font-mono):not(.adm-raw *) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Surfaces ---------- */
+
+.admin-scope :is(.rounded-\[2\.5rem\], .rounded-\[3rem\], .rounded-\[2rem\], .rounded-3xl):not(.adm-raw *) {
+  border-radius: var(--adm-radius-lg);
+}
+
+.admin-scope .rounded-2xl:not(.adm-raw *) {
+  border-radius: 12px;
+}
+
+.admin-scope :is(.glass-panel, .glass-panel-heavy):not(.adm-raw *) {
+  background: var(--adm-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--adm-border);
+  box-shadow: var(--adm-shadow);
+}
+
+.admin-scope :is(.border-black\/5, .border-black\/\[0\.04\], .border-black\/\[0\.06\]):not(.adm-raw *) {
+  border-color: var(--adm-border);
+}
+
+.admin-scope .shadow-2xl:not(.adm-raw *),
+.admin-scope .shadow-xl:not(.adm-raw *) {
+  box-shadow: var(--adm-shadow-pop);
+}
+
+/* Cards shouldn't float; reserve big shadows for popovers/modals. */
+.admin-scope :is(.bg-white, .glass-panel-heavy):is(.shadow-2xl, .shadow-xl, .shadow-lg):not(.fixed *, .fixed, .absolute, .adm-raw *) {
+  box-shadow: var(--adm-shadow);
+}
+
+/* ---------- Interaction ---------- */
+
+.admin-scope :is(.hover\:scale-105, .hover\:scale-110, .hover\:scale-\[1\.02\]):hover:not(.adm-raw *),
+.admin-scope :is(.active\:scale-95, .active\:scale-90, .active\:scale-\[0\.98\]):active:not(.adm-raw *),
+.admin-scope .scale-105:not(.adm-raw *) {
+  scale: none;
+}
+
+.admin-scope :is(button, a, [role="button"]):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--adm-accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.admin-scope :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not(.adm-bare):not(.adm-raw *):focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--adm-accent) 55%, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--adm-accent) 16%, transparent);
+}
+
+.admin-scope input[type="checkbox"]:not(.adm-raw *) {
+  accent-color: #0f172a;
+}
+
+/* ---------- Tables ---------- */
+
+.admin-scope thead.bg-black:not(.adm-raw *),
+.admin-scope thead > tr.bg-black:not(.adm-raw *) {
+  background: #f8fafc;
+  color: var(--adm-muted);
+  box-shadow: inset 0 -1px 0 var(--adm-border);
+}
+
+.admin-scope thead.bg-black th:not(.adm-raw *),
+.admin-scope thead > tr.bg-black th:not(.adm-raw *) {
+  color: var(--adm-muted);
+  font-weight: 600;
+}
+
+/* ---------- Shell helpers ---------- */
+
+.adm-dark-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+.adm-dark-scroll::-webkit-scrollbar { width: 6px; }
+.adm-dark-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 6px; }
+
+@keyframes adm-pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.adm-pop { animation: adm-pop-in 140ms ease-out; }
+
+@keyframes adm-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.adm-skeleton {
+  background: linear-gradient(90deg, #eef0f3 0px, #f6f7f9 160px, #eef0f3 320px);
+  background-size: 800px 100%;
+  animation: adm-shimmer 1.3s linear infinite;
+  border-radius: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-pop, .adm-skeleton { animation: none; }
+}
+
+/* ---------- Readable text ----------
+ * Legacy pages used faded text (text-black/20–70, slate/gray-300–500) that was hard to
+ * read. On light backgrounds it is mapped to solid slate tones that pass WCAG AA.
+ * Dark areas (sidebar, login, Kira, dark cards) are excluded so they don't go dark-on-dark.
+ */
+:is(
+.admin-scope .text-black\/5,
+.admin-scope .text-black\/10,
+.admin-scope .text-black\/20,
+.admin-scope .text-black\/25,
+.admin-scope .text-black\/30,
+.admin-scope .text-black\/40,
+.admin-scope .text-black\/50,
+.admin-scope .text-slate-300,
+.admin-scope .text-slate-400,
+.admin-scope .text-slate-500,
+.admin-scope .text-gray-300,
+.admin-scope .text-gray-400,
+.admin-scope .text-gray-500,
+.admin-scope .text-neutral-300,
+.admin-scope .text-neutral-400,
+.admin-scope .text-neutral-500,
+.admin-scope .text-zinc-400,
+.admin-scope .text-zinc-500,
+.admin-scope .text-stone-400,
+.admin-scope .text-stone-500,
+.admin-scope .text-slate-700\/60
+):not(:hover):not(.adm-raw *):not(.adm-dark *):not(:is(.bg-black, .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-zinc-900) *) {
+  color: #475569; /* slate-600 */
+}
+
+:is(
+.admin-scope .text-black\/60,
+.admin-scope .text-black\/70
+):not(:hover):not(.adm-raw *):not(.adm-dark *):not(:is(.bg-black, .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-zinc-900) *) {
+  color: #334155; /* slate-700 */
+}
+
+:is(
+.admin-scope .text-black\/80,
+.admin-scope .text-black\/90
+):not(:hover):not(.adm-raw *):not(.adm-dark *):not(:is(.bg-black, .bg-slate-900, .bg-slate-950, .bg-gray-900, .bg-gray-950, .bg-neutral-900, .bg-zinc-900) *) {
+  color: #1e293b; /* slate-800 */
+}
+
+/* Translucent white text on dark buttons/cards: make it nearly solid. */
+:is(
+.admin-scope .text-white\/20,
+.admin-scope .text-white\/30,
+.admin-scope .text-white\/40,
+.admin-scope .text-white\/50,
+.admin-scope .text-white\/60,
+.admin-scope .text-white\/70
+):not(.adm-raw *) {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.admin-scope :is(input, textarea)::placeholder {
+  color: #64748b; /* slate-500 */
+  opacity: 1;
+}
+.admin-scope :is(.adm-dark, .adm-raw) :is(input, textarea)::placeholder {
+  color: #94a3b8; /* slate-400 on dark */
+}
+
+/* ---------- Agent Kira console ---------- */
+@layer components {
+  .kira-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 150ms, border-color 150ms, color 150ms;
+  }
+  .kira-tool:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+  .kira-tool:disabled { opacity: 0.5; }
+}

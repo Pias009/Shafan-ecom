@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
+import { requireAdminApi } from '@/lib/admin-session';
 import { prisma } from "@/lib/prisma";
 import { OrderStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
+    const auth = await requireAdminApi();
+    if (auth instanceof NextResponse) return auth;
     const body = await req.json();
     const { orderId, courier, trackingCode, trackingUrl } = body;
 

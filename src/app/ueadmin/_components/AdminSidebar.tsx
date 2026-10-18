@@ -1,336 +1,154 @@
 "use client";
 
 import Link from "next/link";
-import { useAdminSession } from "./useAdminSession";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  BarChart3, Users, Package,
-  BookOpen,
-  Tag, Image as ImageIcon, Briefcase,
-  Terminal, Bell as BellIcon, Settings as SettingsIcon, LogOut,
-  Zap, Flame, ScanFace, Activity, Sparkles, Percent, Layers, Palette, Gift, X, Store, ShoppingCart
-} from "lucide-react";
+import { LogOut, Search, X } from "lucide-react";
+import { useAdminSession } from "./AdminSessionContext";
+import { isActive, visibleGroups } from "./admin-nav";
+import { initials } from "./ui";
 
-export function AdminSidebar({ onClose }: { onClose?: () => void } = {}) {
+export function AdminSidebar({
+  collapsed = false,
+  onClose,
+  onOpenSearch,
+}: {
+  collapsed?: boolean;
+  onClose?: () => void;
+  onOpenSearch?: () => void;
+}) {
   const { data: session } = useAdminSession();
   const pathname = usePathname();
   const router = useRouter();
+  const groups = visibleGroups(session?.role === "SUPERADMIN");
 
   const handleLogout = async () => {
     try {
       await fetch("/api/admin/logout", { method: "POST" });
-      router.push("/ueadmin/login");
-    } catch (error) {
-      console.error("Logout failed", error);
+    } finally {
+      router.replace("/ueadmin/login");
+      router.refresh();
     }
   };
 
-  const links = [
-    { 
-      label: "Dashboard", 
-      href: "/ueadmin/dashboard", 
-      icon: BarChart3, 
-      show: true
-    },
-    { 
-      label: "Users", 
-      href: "/ueadmin/users", 
-      icon: Users, 
-      show: true 
-}, 
-    { 
-      label: "Products", 
-      href: "/ueadmin/products", 
-      icon: Package, 
-      show: true 
-    },
-    { 
-      label: "Brands", 
-      href: "/ueadmin/brands", 
-      icon: Tag, 
-      show: true 
-    },
-    { 
-      label: "Categories", 
-      href: "/ueadmin/categories", 
-      icon: Layers, 
-      show: true 
-    },
-{ 
-      label: "Orders", 
-      href: "/ueadmin/orders", 
-      icon: Briefcase, 
-      show: true 
-    },
-    { 
-      label: "Analytics", 
-      href: "/ueadmin/analytics", 
-      icon: Activity, 
-      show: true 
-    },
-    { 
-      label: "Face Login", 
-      href: "/ueadmin/super/face", 
-      icon: ScanFace, 
-      show: (session?.role === 'SUPERADMIN') 
-    },
-  ];
-
   return (
     <aside
-      className="w-80 h-full border-r border-black/5 bg-white p-8 lg:p-10 flex flex-col space-y-10 shrink-0 glass-panel overflow-y-auto custom-scrollbar"
+      className={`adm-dark flex h-full flex-col bg-[#0E1013] text-slate-200 transition-[width] duration-200 ${collapsed ? "w-[68px]" : "w-[260px]"}`}
       data-lenis-prevent="true"
+      aria-label="Admin navigation"
     >
-       <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1 group cursor-pointer">
-             <div className="w-11 h-11 bg-black rounded-2xl flex items-center justify-center text-white font-black text-lg shadow-xl shadow-black/20 group-hover:rotate-12 transition-transform">S</div>
-             <div className="flex-1">
-               <div className="flex items-center justify-between">
-                 <h2 className="font-black text-xs uppercase tracking-widest text-black">SHANFA Admin</h2>
-                 <button 
-                   onClick={() => window.location.reload()}
-                   className="p-1.5 hover:bg-black/5 rounded-lg text-black/40 hover:text-black transition-colors"
-                   title="Sync Data Now"
-                 >
-                   <BarChart3 size={14} className="animate-pulse" />
-                 </button>
-               </div>
-               <p className="text-[10px] font-bold text-black/60 uppercase tracking-[0.2em]">Admin Panel</p>
-             </div>
-          </div>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-black/5 rounded-xl text-black/60 hover:text-black transition-colors cursor-pointer"
-              title="Close Menu"
-            >
-              <X size={18} />
-            </button>
+      {/* Brand */}
+      <div className={`flex h-14 shrink-0 items-center gap-3 border-b border-white/[0.06] ${collapsed ? "justify-center" : "px-4"}`}>
+        <Link href="/ueadmin/dashboard" className="flex min-w-0 items-center gap-3" onClick={() => onClose?.()}>
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-[#a3115f] to-[#5c0438] text-[13px] font-bold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+            S
+          </span>
+          {!collapsed && (
+            <span className="min-w-0 leading-tight">
+              <span className="block text-[13px] font-semibold tracking-wide text-white">SHANFA</span>
+              <span className="block text-[11px] text-slate-400">Store admin</span>
+            </span>
           )}
-       </div>
+        </Link>
+        {onClose && !collapsed && (
+          <button
+            onClick={onClose}
+            className="ml-auto rounded-md p-1.5 text-slate-400 hover:bg-white/5 hover:text-white lg:hidden"
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
 
-       <nav className="flex-1 space-y-2">
-           {links.filter(l => l.show).map((link) => {
-            const Icon = link.icon;
-            const active = pathname === link.href;
-            
-            return (
-              <Link
-                 key={link.href}
-                 href={link.href}
-                 prefetch={true}
-                 onClick={() => onClose?.()}
-                 className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
-                   active 
-                     ? "bg-black text-white shadow-xl shadow-black/10 scale-105 border border-black/20" 
-                     : "hover:bg-black/5 text-slate-600 hover:text-slate-900"
-                 }`}
-               >
-                <Icon size={18} />
-                {link.label}
-              </Link>
-            );
-          })}
+      {/* Search trigger */}
+      <div className="shrink-0 px-3 pt-3">
+        <button
+          onClick={onOpenSearch}
+          className={`flex h-9 w-full items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] text-[13px] text-slate-300 transition-colors hover:border-white/15 hover:text-white ${collapsed ? "justify-center" : "px-3"}`}
+          title="Search (Ctrl/⌘ K)"
+        >
+          <Search size={15} />
+          {!collapsed && (
+            <>
+              <span>Jump to…</span>
+              <kbd className="ml-auto rounded border border-white/10 px-1.5 text-[10px] font-medium text-slate-400">⌘K</kbd>
+            </>
+          )}
+        </button>
+      </div>
 
-<div className="pt-8 space-y-4">
-               <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">Promotions</div>
-               <Link
-                  href="/ueadmin/discounts"
-                  prefetch={true}
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-               >
-                  <Tag size={18} /> Offers & Discounts
-               </Link>
-               <Link
-                  href="/ueadmin/offer-sections"
-                  prefetch={true}
-                  className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
-                    pathname?.startsWith('/ueadmin/offer-sections')
-                      ? 'bg-black text-white shadow-xl shadow-black/10'
-                      : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
-                  }`}
-               >
-                  <Gift size={18} /> Offer Sections
-               </Link>
-               <Link
-                  href="/ueadmin/home-sections"
-                  prefetch={true}
-                  className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
-                    pathname?.startsWith('/ueadmin/home-sections')
-                      ? 'bg-black text-white shadow-xl shadow-black/10'
-                      : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
-                  }`}
-               >
-                  <Layers size={18} /> Add New on Homepage
-               </Link>
-<Link
-                   href="/ueadmin/flash-sales"
-                   prefetch={true}
-                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                >
-                   <Zap size={18} /> Flash Sales
-                </Link>
-                <Link
-                   href="/ueadmin/fresh-from-shelf"
-                   prefetch={true}
-                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                >
-                   <Package size={18} /> Fresh From Shelf
-                </Link>
-                <Link
-                   href="/ueadmin/routine"
-                   prefetch={true}
-                   className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
-                     pathname === '/ueadmin/routine'
-                       ? 'bg-violet-500 text-white shadow-xl shadow-violet-200'
-                       : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
-                   }`}
-                >
-                   <Sparkles size={18} /> Routine
-                </Link>
-                <Link
-                   href="/ueadmin/rejuvenate-section"
-                   prefetch={true}
-                   className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
-                     pathname === '/ueadmin/rejuvenate-section'
-                       ? 'bg-[#890754] text-white shadow-xl shadow-[#890754]/25 scale-105 border border-[#890754]/20'
-                       : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
-                   }`}
-                >
-                   <Sparkles size={18} className="text-pink-400" /> Refresh Your Mind
-                </Link>
-                <Link
-                   href="/ueadmin/trending"
-                   prefetch={true}
-                   className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                >
-                   <Flame size={18} /> Trending Now
-                </Link>
-                <Link
-                   href="/ueadmin/haircare-section"
-                   prefetch={true}
-                   className={`flex items-center gap-4 px-6 py-4 rounded-3xl transition-all font-black text-[11px] uppercase tracking-widest ${
-                     pathname === '/ueadmin/haircare-section'
-                       ? 'bg-[#890754] text-white shadow-xl shadow-[#890754]/25 scale-105 border border-[#890754]/20'
-                       : 'hover:bg-black/5 text-slate-600 hover:text-slate-900'
-                   }`}
-                >
-                   <Palette size={18} className="text-pink-400" /> Herbal Haircare
-                </Link>
-               <Link
-                  href="/ueadmin/banners"
-                  prefetch={true}
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-               >
-                  <ImageIcon size={18} /> Hero Banners
-               </Link>
-               <Link
-                  href="/ueadmin/banners/home"
-                  prefetch={true}
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-               >
-                  <ImageIcon size={18} /> Home Banner
-               </Link>
-               <Link
-                  href="/ueadmin/banners/offers"
-                  prefetch={true}
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-               >
-                  <ImageIcon size={18} /> Offers Banners
-               </Link>
-               <Link
-                  href="/ueadmin/banners/slider"
-                  prefetch={true}
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-               >
-                  <ImageIcon size={18} /> Products Slider
-               </Link>
-               <Link
-                  href="/ueadmin/banners/products"
-                  prefetch={true}
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-               >
-                  <ImageIcon size={18} /> Products Banners
-               </Link>
-               <Link
-                  href="/ueadmin/notices"
-                  prefetch={true}
-                  className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-               >
-                  <BellIcon size={18} /> Notice Board
-               </Link>
-
-                <div className="pt-8 space-y-4">
-                   <div className="px-6 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">System Configuration</div>
-                   <Link
-                      href="/ueadmin/tracking"
-                      prefetch={true}
-                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                   >
-                      <Activity size={18} /> Tracking & Analytics
-                   </Link>
-                   <Link
-                      href="/ueadmin/settings/shipping"
-                      prefetch={true}
-                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                   >
-                      <SettingsIcon size={18} /> Shipping Settings
-                   </Link>
-                   <Link
-                      href="/ueadmin/settings/vat-delivery"
-                      prefetch={true}
-                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                   >
-                      <Percent size={18} /> VAT & Delivery
-                   </Link>
-                   <Link
-                      href="/ueadmin/settings/vat-delivery#min-order"
-                      prefetch={true}
-                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                   >
-                      <ShoppingCart size={18} /> Minimum Order
-                   </Link>
-                   <Link
-                      href="/ueadmin/settings/pickup"
-                      prefetch={true}
-                      className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                   >
-                      <Store size={18} /> Store Pickup
-                   </Link>
-<Link
-                     href="/ueadmin/blog"
-                     prefetch={true}
-                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                   >
-                      <BookOpen size={18} /> Blog
-                   </Link>
-                  <Link
-                    href="/ueadmin/email-test"
-                    prefetch={true}
-                     className="flex items-center gap-4 px-6 py-4 rounded-3xl hover:bg-black/5 text-slate-600 hover:text-slate-900 transition-all font-black text-[11px] uppercase tracking-widest"
-                  >
-                     <Terminal size={18} /> Email Test
-                  </Link>
-               </div>
-           </div>
-        </nav>
-
-       <div className="p-6 bg-black/[0.02] rounded-[2rem] border border-black/5">
-          <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center font-black text-[10px]">P</div>
-             <div className="min-w-0 flex-1">
-                 <div className="font-black text-[10px] uppercase tracking-tighter truncate">{session?.email}</div>
-                 <div className="text-[8px] font-bold text-slate-600 uppercase">{session?.role}</div>
-             </div>
-             <button
-               onClick={handleLogout}
-               className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors shrink-0"
-               title="Log Out"
-             >
-               <LogOut size={16} />
-             </button>
+      {/* Navigation */}
+      <nav className="adm-dark-scroll flex-1 overflow-y-auto px-3 pb-4 pt-2">
+        {groups.map((group) => (
+          <div key={group.title} className="mt-4 first:mt-2">
+            {!collapsed ? (
+              <div className="px-2 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                {group.title}
+              </div>
+            ) : (
+              <div className="mx-auto mb-2 h-px w-6 bg-white/[0.06]" />
+            )}
+            <ul className="space-y-0.5">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item, pathname);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => onClose?.()}
+                      title={collapsed ? item.label : undefined}
+                      aria-current={active ? "page" : undefined}
+                      className={`group relative flex h-9 items-center gap-3 rounded-lg text-[13.5px] transition-colors ${
+                        collapsed ? "justify-center" : "px-2.5"
+                      } ${
+                        active
+                          ? "bg-white/[0.08] font-medium text-white"
+                          : "text-slate-300 hover:bg-white/[0.05] hover:text-white"
+                      }`}
+                    >
+                      {active && (
+                        <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-[#d6338a]" />
+                      )}
+                      <Icon
+                        size={17}
+                        strokeWidth={active ? 2.2 : 1.8}
+                        className={active ? "text-[#f06aae]" : "text-slate-400 group-hover:text-slate-200"}
+                      />
+                      {!collapsed && <span className="truncate">{item.label}</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
-       </div>
+        ))}
+      </nav>
+
+      {/* Account */}
+      <div className="shrink-0 border-t border-white/[0.06] p-3">
+        <div className={`flex items-center gap-3 ${collapsed ? "flex-col" : "px-1.5 py-1"}`}>
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-700/60 text-[11px] font-semibold text-slate-100">
+            {initials(session?.name, session?.email)}
+          </span>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-medium text-slate-100">{session?.name || "Admin"}</div>
+              <div className="truncate text-[11px] text-slate-400">
+                {session?.role === "SUPERADMIN" ? "Super admin" : "Admin"} · {session?.email}
+              </div>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-white/5 hover:text-rose-400"
+            title="Sign out"
+            aria-label="Sign out"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
+      </div>
     </aside>
   );
 }

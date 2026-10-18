@@ -1,43 +1,23 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { AdminSessionUnavailableError, getAdminSession } from "@/lib/admin-session";
 
-export async function GET(req: Request) {
+export const dynamic = "force-dynamic";
+
+export async function GET() {
   try {
-    const adminCookie = req.headers.get("cookie")?.match(/admin-session=([^;]+)/);
-
-    if (!adminCookie) {
+    const user = await getAdminSession();
+    if (!user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const token = Buffer.from(adminCookie[1], 'base64').toString();
-    const [userId] = token.split(':');
-
-    if (!userId) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, name: true, role: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
-    }
-
-    if (user.role !== 'ADMIN' && user.role !== 'SUPERADMIN') {
-      return NextResponse.json({ error: "Not an admin" }, { status: 401 });
-    }
-
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-    });
+    return NextResponse.json(
+      { user: { id: user.id, email: user.email, name: user.name, role: user.role } },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
   } catch (error) {
+    if (error instanceof AdminSessionUnavailableError) {
+      return NextResponse.json({ error: "Temporarily unavailable, please retry" }, { status: 503, headers: { "Retry-After": "5" } });
+    }
     console.error("Admin session check error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

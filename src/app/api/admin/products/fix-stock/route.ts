@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-session';
 import { prisma } from '@/lib/prisma';
 
 export async function POST() {
   try {
+    const auth = await requireAdminApi({ superAdmin: true });
+    if (auth instanceof NextResponse) return auth;
     const result = await (prisma as any).product.updateMany({
       where: { stockQuantity: { equals: 0 } },
       data: { stockQuantity: 100 },

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getAdminApiSession } from '@/lib/admin-session';
+import { getAdminApiSession, invalidateAdminUser } from '@/lib/admin-session';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 
@@ -48,7 +48,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
       updates.email = parsed.data.email;
     }
-    if (typeof parsed.data.role !== 'undefined') updates.role = parsed.data.role;
+    if (typeof parsed.data.role !== 'undefined') {
+      if (session.user.role !== 'SUPERADMIN') {
+        const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+        if (parsed.data.role === 'SUPERADMIN' || target?.role === 'SUPERADMIN') {
+          return new Response(JSON.stringify({ error: 'Only a super admin can grant or revoke super admin' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+      }
+      updates.role = parsed.data.role;
+    }
     if (typeof parsed.data.password !== 'undefined') {
       updates.passwordHash = await bcrypt.hash(parsed.data.password, 10);
     }
@@ -56,6 +64,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
     const updated = await (prisma as any).user.update({ where: { id: id }, data: updates });
+    invalidateAdminUser(id);
     // Audit log for the update
     try {
       await (prisma as any).auditLog.create({

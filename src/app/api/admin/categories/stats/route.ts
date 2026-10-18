@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdminApi } from '@/lib/admin-session';
 import { prisma } from "@/lib/prisma";
 import { hasValidPrice } from "@/lib/product-utils";
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireAdminApi();
+    if (auth instanceof NextResponse) return auth;
     // Get all products with their categories (admin view)
     const allProducts = await prisma.product.findMany({
       select: {

@@ -79,6 +79,14 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Agent Kira's voice assistant needs the microphone; the storefront keeps it blocked.
+        // (Later entries override earlier ones for the same header key.)
+        source: '/ueadmin/:path*',
+        headers: [
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=()' },
+        ],
+      },
+      {
         source: '/api/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'no-store, private' },

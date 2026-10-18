@@ -4,6 +4,11 @@ import React, { useState } from "react";
 import { FaceLogin } from "@/components/face/FaceLogin";
 import { User } from "lucide-react";
 
+function nextPath() {
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/ueadmin/") && !next.startsWith("//") ? next : "/ueadmin/dashboard";
+}
+
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +30,7 @@ export default function AdminLogin() {
       const data = await res.json();
 
       if (res.ok) {
-        window.location.href = "/ueadmin/dashboard";
+        window.location.href = nextPath();
       } else {
         setError(data.error || "Invalid credentials");
       }
@@ -42,15 +47,15 @@ export default function AdminLogin() {
   }
 
   function handleFaceLoginSuccess() {
-    window.location.href = "/ueadmin/dashboard";
+    window.location.href = nextPath();
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
+    <div className="adm-dark min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-black text-white tracking-tight">SHANFA</h1>
-          <p className="text-gray-500 text-sm mt-1">Admin Panel</p>
+          <p className="text-gray-300 text-sm mt-1">Admin Panel</p>
         </div>
         
         {/* Login method toggle */}
@@ -60,7 +65,7 @@ export default function AdminLogin() {
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
               loginMethod === 'password' 
                 ? 'bg-white text-black' 
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-300 hover:text-white'
             }`}
           >
             Password
@@ -70,7 +75,7 @@ export default function AdminLogin() {
             className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
               loginMethod === 'face' 
                 ? 'bg-white text-black' 
-                : 'text-gray-400 hover:text-white'
+                : 'text-gray-300 hover:text-white'
             }`}
           >
             <User size={16} /> Face
@@ -92,7 +97,7 @@ export default function AdminLogin() {
                   onChange={(e) => setEmail(e.target.value)} 
                   type="email" 
                   placeholder="Email"
-                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white placeholder:text-gray-500 text-sm font-medium outline-none focus:border-white/30 transition-colors"
+                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white placeholder:text-gray-400 text-sm font-medium outline-none focus:border-white/30 transition-colors"
                 />
               </div>
               <div>
@@ -101,7 +106,7 @@ export default function AdminLogin() {
                   onChange={(e) => setPassword(e.target.value)} 
                   type="password" 
                   placeholder="Password"
-                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white placeholder:text-gray-500 text-sm font-medium outline-none focus:border-white/30 transition-colors"
+                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-white placeholder:text-gray-400 text-sm font-medium outline-none focus:border-white/30 transition-colors"
                 />
               </div>
               <button 
@@ -119,7 +124,7 @@ export default function AdminLogin() {
           </div>
         )}
         
-        <p className="text-center text-gray-600 text-xs mt-6">
+        <p className="text-center text-gray-400 text-xs mt-6">
           Restricted access only
         </p>
       </div>

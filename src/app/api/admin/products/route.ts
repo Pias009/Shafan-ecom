@@ -196,6 +196,19 @@ export async function GET(req: Request) {
       return new Response(JSON.stringify([]), { headers: { 'Content-Type': 'application/json' } });
     }
 
+    // Manual order form: only what it renders/prices with (same visibility rules).
+    if (select === 'id,name,sku,mainImage,price,weight,weightUnit,countryPrices') {
+      const products = await prisma.product.findMany({
+        where: whereClause,
+        select: {
+          id: true, name: true, sku: true, mainImage: true, price: true, weight: true, weightUnit: true,
+          countryPrices: { select: { country: true, price: true, currency: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      return new Response(JSON.stringify(products), { headers: { 'Content-Type': 'application/json' } });
+    }
+
     const products = await (prisma as any).product.findMany({
       where: whereClause,
       include: {
@@ -213,7 +226,8 @@ export async function GET(req: Request) {
     
     return new Response(JSON.stringify(products), { headers: { 'Content-Type': 'application/json' } });
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 401 });
+    console.error('Admin products GET failed:', error);
+    return new Response(JSON.stringify({ error: 'Failed to load products' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { ADMIN_COOKIE, ADMIN_SESSION_MAX_AGE, signAdminToken } from "@/lib/admin-token";
 
 export async function POST(req: Request) {
   try {
@@ -33,8 +34,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Access denied. This account does not have Admin privileges." }, { status: 403 });
     }
 
-    // Generate token for admin session
-    const token = Buffer.from(`${user.id}:${Date.now()}:admin`).toString('base64');
+    const token = await signAdminToken(user.id);
 
     const adminData = { 
       id: user.id, 
@@ -51,12 +51,12 @@ export async function POST(req: Request) {
     });
 
     // Set admin session cookie
-    response.cookies.set("admin-session", token, {
+    response.cookies.set(ADMIN_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: ADMIN_SESSION_MAX_AGE,
     });
 
     return response;

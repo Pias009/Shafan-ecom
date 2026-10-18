@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { getAdminApiSession } from '@/lib/admin-session';
+import { getAdminApiSession, invalidateAdminUser } from '@/lib/admin-session';
 
 const UserCreateSchema = z.object({ email: z.string().email(), name: z.string().optional(), password: z.string().min(6), role: z.enum(['USER','ADMIN','SUPERADMIN']).optional() });
 
@@ -23,12 +23,20 @@ export async function POST(req: Request) {
     const parsed = UserCreateSchema.safeParse(body);
     if (!parsed.success) return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 });
     const { email, name, password, role } = parsed.data;
+    // Upsert can overwrite an existing account, so only super admins may touch super admins.
+    if (session.user.role !== 'SUPERADMIN') {
+      const existing = await prisma.user.findUnique({ where: { email }, select: { role: true } });
+      if (role === 'SUPERADMIN' || existing?.role === 'SUPERADMIN') {
+        return new Response(JSON.stringify({ error: 'Only a super admin can manage super admin accounts' }), { status: 403 });
+      }
+    }
     const hashed = await (await import('bcryptjs')).default.hash(password, 10);
     const user = await (prisma as any).user.upsert({
       where: { email },
       update: { name, passwordHash: hashed, role: (role ?? 'USER') },
       create: { email, name, passwordHash: hashed, role: (role ?? 'USER') },
     });
+    invalidateAdminUser(user.id);
     return new Response(JSON.stringify({ id: user.id, email: user.email }), { status: 201, headers: { 'Content-Type': 'application/json' } });
   } catch (e) {
     return new Response(JSON.stringify({ error: 'Server error' }), { status: 500 });

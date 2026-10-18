@@ -113,7 +113,7 @@ export default function AdminBlogPage() {
     setEditing(post.id);
     setShowForm(true);
     setImageTab("url");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    (document.getElementById("admin-main") ?? window).scrollTo({ top: 0, behavior: "smooth" });
   }
 
   const previewSrc = isValidImageSrc(form.coverImage) ? form.coverImage : null;

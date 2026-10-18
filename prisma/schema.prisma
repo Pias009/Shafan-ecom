@@ -118,6 +118,7 @@ model User {
   activityLogs   AdminActivityLog[]
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
+  @@index([role, createdAt])
 }
 
 model AdminActivityLog {
@@ -176,6 +177,7 @@ model Account {
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -425,6 +427,7 @@ model Order {
   @@index([userId])
   @@index([total])
   @@index([referralSource])
+  @@index([storeId, createdAt])
 }
 
 model OrderItem {
@@ -441,6 +444,8 @@ model OrderItem {
   adminAddedAt   DateTime?
   order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product        Product  @relation(fields: [productId], references: [id])
+  @@index([orderId])
+  @@index([productId])
 }
 
 model PendingCheckout {
@@ -507,6 +512,7 @@ model StoreInventory {
   updatedAt DateTime @updatedAt
 
   @@unique([storeId, productId])
+  @@index([productId])
 }
 
 model OfferBanner {

@@ -279,17 +279,33 @@ export async function getAnalyticsData({
     allProducts,
     recentTrackingLogs,
   ] = await Promise.all([
+    // Only the columns the aggregation below reads; full orders carry large JSON blobs.
     prisma.order.findMany({
       where: currentOrderWhere,
-      include: {
-        items: true,
+      select: {
+        id: true,
+        createdAt: true,
+        status: true,
+        total: true,
+        currency: true,
+        paymentMethod: true,
+        referralSource: true,
+        shippingAddress: true,
+        billingAddress: true,
+        items: { select: { productId: true, quantity: true, unitPrice: true } },
       },
       orderBy: { createdAt: 'asc' },
     }),
     prevOrderWhere
       ? prisma.order.findMany({
           where: prevOrderWhere,
-          include: { items: true },
+          select: {
+            createdAt: true,
+            status: true,
+            total: true,
+            currency: true,
+            items: { select: { productId: true, quantity: true, unitPrice: true } },
+          },
           orderBy: { createdAt: 'asc' },
         })
       : Promise.resolve([]),

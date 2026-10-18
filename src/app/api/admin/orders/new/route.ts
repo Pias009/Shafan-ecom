@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getAccessibleStoreIds } from "@/lib/admin-session";
+import { getAccessibleStoreIds, requireAdminApi } from "@/lib/admin-session";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {
-    const session = await getServerAuthSession();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const auth = await requireAdminApi();
+    if (auth instanceof NextResponse) return auth;
 
     const { searchParams } = new URL(req.url);
     const sinceTimestamp = searchParams.get('since');
@@ -43,7 +40,8 @@ export async function GET(req: Request) {
         shipping: true,
         user: { select: { name: true, email: true } }
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 20,
     });
 
     return NextResponse.json({

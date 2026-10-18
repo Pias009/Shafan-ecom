@@ -187,7 +187,7 @@ export function BannerManager({ placement, config }: { placement: BannerPlacemen
     setEditing(banner.id);
     setShowForm(true);
     setFormTab("image");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    (document.getElementById("admin-main") ?? window).scrollTo({ top: 0, behavior: "smooth" });
   }
 
   const previewSrc = isValidImageSrc(form.imageUrl) ? form.imageUrl : null;

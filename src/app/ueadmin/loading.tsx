@@ -1,23 +1,38 @@
-import React from 'react'
-
 export default function AdminLoading() {
   return (
-    <div className="w-full h-full flex flex-col gap-8 animate-pulse p-4">
-      {/* Header Skeleton */}
-      <div className="flex justify-between items-center">
-        <div className="h-10 w-64 bg-black/5 rounded-2xl"></div>
-        <div className="h-10 w-32 bg-black/5 rounded-2xl"></div>
+    <div className="space-y-6" aria-busy="true" aria-label="Loading">
+      <div className="flex items-end justify-between gap-4">
+        <div className="space-y-2">
+          <div className="adm-skeleton h-7 w-56" />
+          <div className="adm-skeleton h-4 w-80 max-w-full" />
+        </div>
+        <div className="adm-skeleton hidden h-9 w-32 sm:block" />
       </div>
 
-      {/* Grid Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-32 bg-black/5 rounded-3xl"></div>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="adm-skeleton h-3.5 w-24" />
+            <div className="adm-skeleton mt-3 h-7 w-32" />
+          </div>
         ))}
       </div>
 
-      {/* Content Skeleton */}
-      <div className="h-[400px] w-full bg-black/5 rounded-[2.5rem]"></div>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 p-4">
+          <div className="adm-skeleton h-9 w-72 max-w-full" />
+        </div>
+        <div className="divide-y divide-slate-100">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-4 py-3.5">
+              <div className="adm-skeleton h-4 w-20" />
+              <div className="adm-skeleton h-4 flex-1" />
+              <div className="adm-skeleton hidden h-4 w-24 sm:block" />
+              <div className="adm-skeleton h-6 w-20 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  )
+  );
 }

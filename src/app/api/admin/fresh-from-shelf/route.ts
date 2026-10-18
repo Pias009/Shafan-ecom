@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAdminApi } from '@/lib/admin-session';
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAdminApi();
+    if (auth instanceof NextResponse) return auth;
     const body = await request.json();
     const { productId } = body;
 
@@ -24,6 +27,8 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireAdminApi();
+    if (auth instanceof NextResponse) return auth;
     const body = await request.json();
     const { productId } = body;
 

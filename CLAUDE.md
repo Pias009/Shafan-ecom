@@ -40,7 +40,11 @@ Three payment providers coexist:
 Order creation is in `/api/create-order`. Payment is finalised at `/checkout/payment/[orderId]`. Webhook endpoints are in `/api/payment/`.
 
 ### Admin Panel
-Lives at `/ueadmin`. Completely bypasses `MainStoreLayout` and `ClientLayout` (checked via `pathname.startsWith('/ueadmin')` in both). Protected in `middleware.ts` via session check. Controlled by `ACTIVE_ADMIN_PANELS` env var — if unset, all panels are accessible.
+Lives at `/ueadmin`. Completely bypasses `MainStoreLayout` and `ClientLayout` (checked via `pathname.startsWith('/ueadmin')` in both). Controlled by `ACTIVE_ADMIN_PANELS` env var — middleware returns 403 for `/ueadmin` unless it is `"true"`.
+
+- **Auth:** the `admin-session` cookie is an HMAC-signed token (`src/lib/admin-token.ts`, keyed by `ADMIN_SESSION_SECRET` or `NEXTAUTH_SECRET`). Middleware verifies the signature for `/ueadmin` pages; `src/lib/admin-session.ts` resolves the user (20s in-memory cache). Every `/api/admin/*` route must guard itself with `requireAdminApi()` / `getAdminApiSession()` — middleware does not cover API routes.
+- **Shell:** `ueadmin/layout.tsx` resolves the session once on the server and passes it to the client shell (`_components/UeAdminLayoutContent.tsx`). Read it with `useAdminSession()` (context, no fetch). Navigation lives in `_components/admin-nav.ts` (sidebar, breadcrumbs and ⌘K palette all read it).
+- **Styling:** `ueadmin/admin.css` normalises legacy loud utilities inside `.admin-scope`; add `adm-raw` to a wrapper to opt a bespoke screen out. New pages should use the primitives in `_components/ui.tsx`.
 
 ### Layout Bypass Pattern
 Routes that need full-screen custom layouts bypass the global nav/footer by adding their path prefix to two files:
@@ -48,7 +52,7 @@ Routes that need full-screen custom layouts bypass the global nav/footer by addi
 - `src/components/ClientLayout.tsx` — add same check to suppress `FloatingCartButton`
 
 ### Extracted Modules
-The Sesi AI chatbot, the `/doctor-sasi` landing page, the Agent Kira admin console, and the Pusher live order notifications were removed from the site and packaged under `extracted/` (excluded from `tsconfig.json` and ESLint). See `extracted/README.md` before re-adding any of them.
+The Sesi AI chatbot, the `/doctor-sasi` landing page, and the Pusher live order notifications were removed from the site and packaged under `extracted/` (excluded from `tsconfig.json` and ESLint). See `extracted/README.md` before re-adding any of them. Agent Kira (`/ueadmin/kira`) was re-integrated; its unlock token comes from `KIRA_ACCESS_TOKEN` or the `kira_lock_security` AppSettings row. Kira's voice assistant (`src/lib/kira/voice.ts`, `ueadmin/kira/useKiraVoice.ts`) records in the browser and transcribes via `/api/admin/kira/transcribe` (Groq Whisper); spoken replies use `/api/admin/kira/speak` (Groq Orpheus) and fall back to the browser voice. The microphone is allowed only on `/ueadmin/*` via `Permissions-Policy` in both `next.config.ts` and `vercel.json` — keep them in sync.
 
 ### Tracking & Analytics
 All analytics events go through the GTM data layer via `src/lib/datalayer.ts`. `trackAddToCart`, `trackPurchase`, etc. are typed helpers. GTM is loaded in `src/components/GTMProvider.tsx`. Meta Pixel and GA run in parallel via their own providers. Do not call `window.dataLayer.push` directly — always use the typed helpers.

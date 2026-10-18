@@ -1,12 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getServerAuthSession } from "@/lib/auth";
+import { getAdminSession } from "@/lib/admin-session";
 import { revalidatePath } from "next/cache";
 
 export async function approveLoginRequest(formData: FormData) {
   try {
-    const session = await getServerAuthSession();
+    const adminUser = await getAdminSession();
+    const session = adminUser ? { user: adminUser } : null;
     
     if (!session || !session.user || session.user.role !== "SUPERADMIN") {
       throw new Error("Unauthorized");
@@ -62,7 +63,8 @@ export async function approveLoginRequest(formData: FormData) {
 
 export async function rejectLoginRequest(formData: FormData) {
   try {
-    const session = await getServerAuthSession();
+    const adminUser = await getAdminSession();
+    const session = adminUser ? { user: adminUser } : null;
     
     if (!session || !session.user || session.user.role !== "SUPERADMIN") {
       throw new Error("Unauthorized");

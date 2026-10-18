@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server'
+import { ADMIN_COOKIE, verifyAdminToken } from '@/lib/admin-token'
 
 const DEFAULT_SECRET_PATH = '/master-shanfa-global-secure';
 const SECRET_PATH = process.env.SECRET_LOCK_PATH || DEFAULT_SECRET_PATH;
@@ -44,10 +45,15 @@ export async function middleware(req: NextRequest) {
                        pathname.startsWith('/ueadmin/setup')
 
     if (!isAuthPage) {
-      const adminCookie = req.cookies.get('admin-session')
-      if (!adminCookie) {
+      // Signature + expiry check only (no DB); pages and APIs re-check the user.
+      const token = req.cookies.get(ADMIN_COOKIE)?.value
+      const valid = await verifyAdminToken(token)
+      if (!valid) {
         url.pathname = '/ueadmin/login'
-        return NextResponse.redirect(url)
+        url.search = pathname !== '/ueadmin' ? `?next=${encodeURIComponent(pathname)}` : ''
+        const res = NextResponse.redirect(url)
+        if (token) res.cookies.delete(ADMIN_COOKIE)
+        return res
       }
     }
   }

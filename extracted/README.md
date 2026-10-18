@@ -1,12 +1,13 @@
 # Extracted Modules — Integration Guide
 
-These four features were removed from the live store and packaged here so they can be re-added later, here or in another Next.js app.
+These features were removed from the live store and packaged here so they can be re-added later, here or in another Next.js app.
+
+> **Agent Kira has been re-integrated** into `src/app/ueadmin/kira` and `src/app/api/admin/kira` (admin-session guarded, no hard-coded token, live data only). Its extracted copy was removed; the original is in git history at the commit before re-integration.
 
 | Module | What it is | Depends on |
 |---|---|---|
 | [`sesi-agent/`](#1-sesi-agent-ai-skincare-chatbot) | Sesi, the AI skincare chatbot: floating chat, onboarding overlay, product recommendations, feedback votes | — |
 | [`doctor-sasi/`](#2-doctor-sasi-landing-page) | `/doctor-sasi` cinematic landing page (hero spotlight, scroll-driven video, chat) | **sesi-agent** (embeds `SesiChat`) |
-| [`kira-agent/`](#3-agent-kira-admin-ai-console) | Agent Kira, the admin AI operations console at `/ueadmin/kira` | **sesi-agent** schema (`SesiVote`) |
 | [`live-notifications/`](#4-live-notifications-pusher-websocket) | Pusher WebSocket new-order alerts (sound + toast) in the admin panel | — |
 
 The site keeps working without any of them. Nothing outside this folder imports them, and `extracted/` is excluded from `tsconfig.json` and `eslint.config.mjs`.

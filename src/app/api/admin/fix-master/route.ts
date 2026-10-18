@@ -1,31 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { timingSafeEqual } from "crypto";
 
 export async function POST(req: Request) {
   try {
-    // Simple security check - could be improved with a secret token
-    const authHeader = req.headers.get("authorization");
-    const expectedToken = process.env.ADMIN_FIX_TOKEN || "emergency-fix-2024";
-    
-    if (authHeader !== `Bearer ${expectedToken}`) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    // Disabled unless every emergency variable is explicitly configured.
+    const expectedToken = process.env.ADMIN_FIX_TOKEN;
+    const MASTER_ADMIN_EMAIL = process.env.DEMO_SUPERADMIN_EMAIL;
+    const MASTER_ADMIN_PASSWORD = process.env.DEMO_SUPERADMIN_PASSWORD;
+    if (!expectedToken || expectedToken.length < 24 || !MASTER_ADMIN_EMAIL || !MASTER_ADMIN_PASSWORD) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Use environment variables for emergency admin credentials
-    const MASTER_ADMIN_EMAIL = process.env.DEMO_SUPERADMIN_EMAIL || "superadmin@example.com";
-    const MASTER_ADMIN_PASSWORD = process.env.DEMO_SUPERADMIN_PASSWORD || "superadmin123";
-    
-    if (!MASTER_ADMIN_EMAIL || !MASTER_ADMIN_PASSWORD) {
-      return NextResponse.json(
-        { error: "Emergency admin credentials not configured" },
-        { status: 500 }
-      );
+    const provided = Buffer.from(req.headers.get("authorization") || "");
+    const expected = Buffer.from(`Bearer ${expectedToken}`);
+    if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     console.log("🛠️ Fixing super admin account...");
     
     // Check if user exists
@@ -79,11 +72,7 @@ export async function POST(req: Request) {
         lockUntil: user.lockUntil,
       },
       passwordVerification: passwordMatch ? "OK" : "FAILED",
-      credentials: {
-        email: MASTER_ADMIN_EMAIL,
-        password: MASTER_ADMIN_PASSWORD,
-      },
-      instructions: "Use these credentials at /ueadmin/login",
+      instructions: "Sign in at /ueadmin/login with the DEMO_SUPERADMIN_* credentials",
     });
     
   } catch (error: any) {
@@ -91,20 +80,13 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { 
         error: "Failed to fix master admin",
-        details: error.message,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+        details: process.env.NODE_ENV === "development" ? error.message : undefined
       },
       { status: 500 }
     );
   }
 }
 
-// GET method for testing
-export async function GET(req: Request) {
-  return NextResponse.json({
-    message: "Master admin fix endpoint",
-    usage: "POST with Authorization: Bearer <ADMIN_FIX_TOKEN>",
-    note: "Set ADMIN_FIX_TOKEN environment variable for security",
-    defaultToken: "emergency-fix-2024",
-  });
+export async function GET() {
+  return NextResponse.json({ error: "Not found" }, { status: 404 });
 }

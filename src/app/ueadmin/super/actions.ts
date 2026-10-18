@@ -1,12 +1,17 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getServerAuthSession } from "@/lib/auth";
+import { getAdminSession, invalidateAdminUser } from "@/lib/admin-session";
+
+async function getSuperSession() {
+  const user = await getAdminSession();
+  return user ? { user } : null;
+}
 import { revalidatePath } from "next/cache";
 import { EmailService } from "@/lib/email/service";
 
 export async function inviteAdmin(formData: FormData) {
-  const session = await getServerAuthSession();
+  const session = await getSuperSession();
   
   // Check if user is SUPERADMIN (not based on hardcoded email)
   if (session?.user?.role !== "SUPERADMIN") {
@@ -73,7 +78,7 @@ export async function inviteAdmin(formData: FormData) {
 }
 
 export async function updateAdminRole(formData: FormData) {
-  const session = await getServerAuthSession();
+  const session = await getSuperSession();
   
   // Check if user is SUPERADMIN (not based on hardcoded email)
   if (session?.user?.role !== "SUPERADMIN") {
@@ -95,12 +100,13 @@ export async function updateAdminRole(formData: FormData) {
     where: { id: userId },
     data: { role: role as any }
   });
+  invalidateAdminUser(userId);
 
   revalidatePath("/ueadmin/super/admins");
 }
 
 export async function deleteAdmin(formData: FormData) {
-  const session = await getServerAuthSession();
+  const session = await getSuperSession();
   
   // Check if user is SUPERADMIN (not based on hardcoded email)
   if (session?.user?.role !== "SUPERADMIN") {
@@ -121,12 +127,13 @@ export async function deleteAdmin(formData: FormData) {
     where: { id: userId },
     data: { role: 'USER' }
   });
+  invalidateAdminUser(userId);
 
   revalidatePath("/ueadmin/super/admins");
 }
 
 export async function resendInvite(formData: FormData) {
-  const session = await getServerAuthSession();
+  const session = await getSuperSession();
   
   // Check if user is SUPERADMIN (not based on hardcoded email)
   if (session?.user?.role !== "SUPERADMIN") {
