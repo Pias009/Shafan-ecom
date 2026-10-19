@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/lib/admin-session';
 import { getKiraInsights } from '@/lib/kira/insights';
+import { getPausedTeams } from '@/lib/kira/team-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +11,8 @@ export async function GET() {
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const insights = await getKiraInsights();
-    return NextResponse.json({ success: true, ...insights }, { headers: { 'Cache-Control': 'private, no-store' } });
+    const [insights, paused] = await Promise.all([getKiraInsights(), getPausedTeams()]);
+    return NextResponse.json({ success: true, ...insights, paused }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error: any) {
     console.error('Kira insights failed:', error?.message || error);
     return NextResponse.json({ success: false, error: 'Live data is temporarily unavailable' }, { status: 503 });

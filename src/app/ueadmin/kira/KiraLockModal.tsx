@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertTriangle, Clipboard, Eye, EyeOff, Loader2, Lock } from 'lucide-react';
 import { playKiraChime } from '@/lib/kira/sound';
+import { getLocalVoiceState, onLocalVoiceState, type LocalVoiceState } from '@/lib/kira/voice';
 
 interface KiraLockModalProps {
   isOpen: boolean;
@@ -15,6 +16,12 @@ export function KiraLockModal({ isOpen, onUnlock }: KiraLockModalProps) {
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
+  const [voiceState, setVoiceState] = useState<LocalVoiceState>({ status: 'idle', progress: 0 });
+
+  useEffect(() => {
+    setVoiceState(getLocalVoiceState());
+    return onLocalVoiceState(setVoiceState);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -118,6 +125,16 @@ export function KiraLockModal({ isOpen, onUnlock }: KiraLockModalProps) {
           <p className="mt-4 text-[12px] leading-relaxed text-[#7E828C]">
             Kira greets you by voice after unlocking (you can mute her). She locks again when you switch tabs or leave the window.
           </p>
+          {voiceState.status === 'loading' && (
+            <div className="mt-3" aria-live="polite">
+              <div className="kira-mono flex justify-between text-[11px] text-[#A9ACB4]">
+                <span>Preparing Kira’s voice</span><span>{voiceState.progress}%</span>
+              </div>
+              <div className="mt-1.5 h-[3px] overflow-hidden rounded-full bg-[#23252B]">
+                <div className="h-full bg-[#F2B33D] transition-[width] duration-300" style={{ width: `${voiceState.progress}%` }} />
+              </div>
+            </div>
+          )}
         </form>
       </div>
 

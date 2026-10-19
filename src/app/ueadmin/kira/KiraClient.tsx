@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, ArrowLeft, ArrowRight, Download, Lock, RefreshCw, Send, Volume2, VolumeX, X } from 'lucide-react';
 import { playCommandDispatchSound, playKiraChime, stopKiraVoice } from '@/lib/kira/sound';
-import { DEPARTMENTS, TEAMS, TEAM_BY_ID, routeQuestion, type TeamId } from '@/lib/kira/teams';
+import { DEPARTMENTS, TEAMS, TEAM_BY_ID, parseTeamToggle, routeQuestion, type TeamId } from '@/lib/kira/teams';
 import type { KiraInsights } from '@/lib/kira/insights';
 import { KiraLockModal } from './KiraLockModal';
 import { useKiraVoice } from './useKiraVoice';
@@ -60,12 +60,14 @@ function loadIdentity(): Identity | null {
 const addressOf = (i: Identity) => `${i.honorific ? `${i.honorific} ` : ''}${i.name}`;
 
 /** Spoken + written briefing Kira gives when the admin doesn't answer her greeting. */
-function briefingText(insights: KiraInsights | null) {
+function briefingText(insights: KiraInsights | null, paused: TeamId[] = []) {
   if (!insights) return 'Live data is still loading. Ask me anything when you are ready.';
-  const att = TEAMS.filter((t) => insights.teams[t.id]?.status === 'attention');
+  const live = TEAMS.filter((t) => !paused.includes(t.id));
+  if (!live.length) return 'All teams are switched off right now. Turn a team on and I will brief you.';
+  const att = live.filter((t) => insights.teams[t.id]?.status === 'attention');
   const lead = att.length
-    ? `${att.length} of ${TEAMS.length} teams need your attention.`
-    : `All ${TEAMS.length} teams are on track.`;
+    ? `${att.length} of ${live.length} active teams need your attention.`
+    : `All ${live.length} active teams are on track.`;
   const items = att.slice(0, 3).map((t) => `${t.short}: ${insights.teams[t.id].headline}.`).join(' ');
   return `Here is today's briefing. ${lead} ${items} What would you like to look at first?`;
 }
@@ -87,6 +89,10 @@ export function KiraClient() {
   const [chatLoading, setChatLoading] = useState(false);
   const [workingTeam, setWorkingTeam] = useState<TeamId | null>(null);
   const [openTeam, setOpenTeam] = useState<TeamId | null>(null);
+  const [pausedTeams, setPausedTeams] = useState<TeamId[]>([]);
+  const [toggling, setToggling] = useState<TeamId | 'all' | null>(null);
+  const pausedRef = useRef<TeamId[]>([]);
+  pausedRef.current = pausedTeams;
 
   const messagesRef = useRef<HTMLDivElement>(null);
   const messagesStateRef = useRef<ChatMessage[]>([]);
@@ -108,7 +114,7 @@ export function KiraClient() {
     onSilence: () => {
       if (stageRef.current !== 'greeting') return;
       stageRef.current = 'briefed';
-      const text = `No worries. ${briefingText(insightsRef.current)}`;
+      const text = `No worries. ${briefingText(insightsRef.current, pausedRef.current)}`;
       addKira(text);
       voice.speak(text, { listenAfter: true });
     },
@@ -131,6 +137,7 @@ export function KiraClient() {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Live data unavailable');
       setInsights(data);
+      if (Array.isArray(data.paused)) setPausedTeams(data.paused);
       setInsightsError('');
     } catch (e: any) {
       setInsightsError(e?.message || 'Live data unavailable');
@@ -193,7 +200,7 @@ export function KiraClient() {
       voice.speak(greeting, { listenAfter: true });
     } else {
       stageRef.current = 'briefed';
-      addKira(`Good ${partOfDay()}, ${who}. ${briefingText(insightsRef.current)}`);
+      addKira(`Good ${partOfDay()}, ${who}. ${briefingText(insightsRef.current, pausedRef.current)}`);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity, isLocked]);
@@ -203,6 +210,36 @@ export function KiraClient() {
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages, chatLoading]);
 
+  /* ---------------- team on / off ---------------- */
+  /** Switch teams on or off (shared for every admin). Returns false if it couldn't be saved. */
+  const setTeamsActive = async (teams: TeamId[] | 'all', active: boolean): Promise<boolean> => {
+    const before = pausedRef.current;
+    const ids = teams === 'all' ? TEAMS.map((t) => t.id) : teams;
+    setPausedTeams((prev) => (active ? prev.filter((id) => !ids.includes(id)) : Array.from(new Set([...prev, ...ids]))));
+    setToggling(teams === 'all' || teams.length > 1 ? 'all' : teams[0]);
+    if (active) playKiraChime(0.12);
+    try {
+      let paused: TeamId[] = before;
+      for (const team of teams === 'all' ? ['all' as const] : teams) {
+        const res = await fetch('/api/admin/kira/teams', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ team, active }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(data.error);
+        paused = data.paused;
+      }
+      setPausedTeams(paused);
+      return true;
+    } catch {
+      setPausedTeams(before);
+      return false;
+    } finally {
+      setToggling(null);
+    }
+  };
+
   /* ---------------- ask Kira ---------------- */
   const ask = async (text: string, opts: { viaVoice?: boolean; team?: TeamId } = {}) => {
     const question = text.trim();
@@ -210,6 +247,26 @@ export function KiraClient() {
       if (opts.viaVoice) voice.resetAfterCommand();
       return;
     }
+
+    // "Kira, turn off the pricing team" — handled right here, no AI round-trip.
+    const toggle = stageRef.current === 'greeting' ? null : parseTeamToggle(question);
+    if (toggle) {
+      setMessages((prev) => [...prev, { id: `u${Date.now()}`, sender: 'user', text: question, time: clock(), spoken: opts.viaVoice }]);
+      setInput('');
+      const ok = await setTeamsActive(toggle.teams, toggle.active);
+      const names = toggle.teams === 'all' ? null : toggle.teams.map((id) => TEAM_BY_ID[id].name);
+      const who = names ? `The ${names.join(' and ')} team${names.length > 1 ? 's are' : ' is'}` : `All ${TEAMS.length} teams are`;
+      const reply = !ok
+        ? 'Sorry, I could not save that change. Please try again.'
+        : toggle.active
+          ? `Done. ${who} back on duty.`
+          : `Done. ${who} now switched off. I will leave ${names && names.length === 1 ? 'it' : 'them'} out of my briefings until you turn ${names && names.length === 1 ? 'it' : 'them'} back on.`;
+      addKira(reply);
+      if (voiceEnabled || opts.viaVoice) voice.speak(reply, { viaVoice: opts.viaVoice, force: opts.viaVoice });
+      else if (opts.viaVoice) voice.resetAfterCommand();
+      return;
+    }
+
     const greetingReply = stageRef.current === 'greeting';
     if (greetingReply) stageRef.current = 'briefed';
     const team = opts.team || routeQuestion(question);
@@ -237,10 +294,11 @@ export function KiraClient() {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'No answer');
       addKira(data.reply, { team: greetingReply ? undefined : data.team, liveData: data.liveData });
-      if (voiceEnabled || opts.viaVoice) voice.speak(data.reply, { viaVoice: opts.viaVoice, listenAfter: greetingReply });
+      // A spoken question always gets a spoken answer, even when muted.
+      if (voiceEnabled || opts.viaVoice) voice.speak(data.reply, { viaVoice: opts.viaVoice, listenAfter: greetingReply, force: opts.viaVoice });
     } catch {
       addKira('Sorry, I could not get an answer just now. Please try again.');
-      if (opts.viaVoice) voice.speak('Sorry, I could not get an answer just now.');
+      if (opts.viaVoice) voice.speak('Sorry, I could not get an answer just now.', { force: true });
     } finally {
       setChatLoading(false);
       setWorkingTeam(null);
@@ -280,7 +338,8 @@ export function KiraClient() {
     URL.revokeObjectURL(url);
   };
 
-  const attention = insights ? TEAMS.filter((t) => insights.teams[t.id]?.status === 'attention') : [];
+  const attention = insights ? TEAMS.filter((t) => !pausedTeams.includes(t.id) && insights.teams[t.id]?.status === 'attention') : [];
+  const activeCount = TEAMS.length - pausedTeams.length;
   const o = insights?.overview;
   const kpis: { label: string; value: string; tone?: string }[] = [
     { label: 'Revenue 30d', value: o ? `AED ${o.revenue30.toLocaleString()}` : '—' },
@@ -375,12 +434,18 @@ export function KiraClient() {
                   <p className="mt-2 text-[15px] text-[#A9ACB4]">
                     {insights
                       ? attention.length
-                        ? <><span className="text-[#F2B33D]">{attention.length} of {TEAMS.length} teams</span> need your attention today.</>
-                        : <>All {TEAMS.length} teams are on track today.</>
+                        ? <><span className="text-[#F2B33D]">{attention.length} of {activeCount} active teams</span> need your attention today.</>
+                        : <>All {activeCount} active teams are on track today.</>
                       : 'Loading live store data…'}
                   </p>
                   <p className="kira-mono mt-3 text-[11.5px] text-[#7E828C]">
-                    {voice.phase === 'listening' ? 'LISTENING · speak now' : voiceEnabled ? 'VOICE ON · tap the core or the mic to talk' : 'MUTED · Kira replies in text'}
+                    {voice.phase === 'listening'
+                      ? 'LISTENING · speak now'
+                      : !voiceEnabled
+                        ? 'MUTED · typed questions get text replies; spoken ones are still answered aloud'
+                        : voice.localVoice.status === 'loading' && voice.naturalVoice !== true
+                          ? `VOICE ON · preparing Kira’s voice ${voice.localVoice.progress}%`
+                          : 'VOICE ON · tap the core or the mic to talk'}
                   </p>
                   {insightsError && (
                     <p className="mt-3 flex items-center gap-2 text-[12.5px] text-[#F2B33D]"><AlertTriangle size={14} /> {insightsError}. Retrying automatically.</p>
@@ -430,6 +495,30 @@ export function KiraClient() {
                   <div>
                     <h2 className="text-[18px] font-semibold tracking-tight">Teams</h2>
                     <p className="mt-0.5 text-[13px] text-[#A9ACB4]">{DEPARTMENTS.length} departments, {TEAMS.length} AI teams. Every number is live store data.</p>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-3">
+                      <span className="kira-mono inline-flex items-center gap-2 rounded-md border border-[#2A3A30] bg-[#111A14] px-2.5 py-1 text-[11.5px] text-[#7FDCA0]">
+                        <span className="relative flex h-2 w-2">
+                          {activeCount > 0 && <span className="kira-ping absolute inline-flex h-full w-full rounded-full bg-[#5FD08A]" />}
+                          <span className={`relative inline-flex h-2 w-2 rounded-full ${activeCount > 0 ? 'bg-[#5FD08A]' : 'bg-[#5E626B]'}`} />
+                        </span>
+                        {activeCount} of {TEAMS.length} teams active
+                      </span>
+                      <button
+                        onClick={() => setTeamsActive('all', true)}
+                        disabled={!!toggling || activeCount === TEAMS.length}
+                        className="rounded border border-[#2A2D34] px-2.5 py-1 text-[12px] font-medium text-[#D4D2CC] hover:bg-[#1A1C21] hover:text-white disabled:cursor-not-allowed disabled:text-[#6B6F78]"
+                      >
+                        All on
+                      </button>
+                      <button
+                        onClick={() => setTeamsActive('all', false)}
+                        disabled={!!toggling || activeCount === 0}
+                        className="rounded border border-[#2A2D34] px-2.5 py-1 text-[12px] font-medium text-[#D4D2CC] hover:bg-[#1A1C21] hover:text-white disabled:cursor-not-allowed disabled:text-[#6B6F78]"
+                      >
+                        All off
+                      </button>
+                      <span className="text-[12px] text-[#8A8E98]">Or say “Kira, turn off the pricing team”.</span>
+                    </div>
                   </div>
                   <div className="kira-mono flex items-center gap-4 text-[11px] text-[#8A8E98]">
                     {(['attention', 'ok', 'limited'] as const).map((s) => (
@@ -437,7 +526,15 @@ export function KiraClient() {
                     ))}
                   </div>
                 </div>
-                <TeamsOrgChart insights={insights} workingTeam={workingTeam} onOpen={setOpenTeam} onBrief={(id) => ask(TEAM_BY_ID[id].questions[0], { team: id })} />
+                <TeamsOrgChart
+                  insights={insights}
+                  workingTeam={workingTeam}
+                  paused={pausedTeams}
+                  toggling={toggling}
+                  onToggle={(id, active) => setTeamsActive([id], active)}
+                  onOpen={setOpenTeam}
+                  onBrief={(id) => ask(TEAM_BY_ID[id].questions[0], { team: id })}
+                />
               </section>
             </div>
           </main>
@@ -523,6 +620,9 @@ export function KiraClient() {
         team={openTeam ? TEAM_BY_ID[openTeam] : null}
         insight={openTeam ? insights?.teams[openTeam] : undefined}
         busy={chatLoading}
+        active={!!openTeam && !pausedTeams.includes(openTeam)}
+        toggling={!!openTeam && (toggling === openTeam || toggling === 'all')}
+        onToggle={(id, active) => setTeamsActive([id], active)}
         onClose={() => setOpenTeam(null)}
         onAsk={(id, q) => { setOpenTeam(null); ask(q, { team: id }); }}
       />

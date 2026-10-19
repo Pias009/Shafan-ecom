@@ -21,6 +21,7 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@lottiefiles/react-lottie-player": "^3.6.0",
+    "@mintplex-labs/piper-tts-web": "^1.0.5",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@next/third-parties": "^16.2.4",
     "@prisma/client": "^6.19.1",
@@ -54,6 +55,7 @@
     "next-themes": "^0.4.6",
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.13",
+    "onnxruntime-web": "1.30.0",
     "pdfkit": "^0.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/lib/admin-session';
 import { getKiraInsights, insightsForPrompt, type KiraInsights } from '@/lib/kira/insights';
 import { TEAMS, TEAM_BY_ID, routeQuestion, type TeamId } from '@/lib/kira/teams';
+import { getPausedTeams } from '@/lib/kira/team-state';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,12 +49,31 @@ export async function POST(req: Request) {
     const voice = body.mode === 'voice';
     // The admin is answering Kira's opening "how are you?" when they open HQ.
     const greetingReply = body.stage === 'greeting-reply';
-    const team: TeamId = TEAMS.some((t) => t.id === body.team) ? body.team : routeQuestion(message);
+    const [insights, paused] = await Promise.all([getKiraInsights(), getPausedTeams()]);
+    const activeTeams = TEAMS.filter((t) => !paused.includes(t.id));
+    const explicitTeam: TeamId | null = TEAMS.some((t) => t.id === body.team) ? body.team : null;
+    let team: TeamId = explicitTeam || routeQuestion(message);
 
-    const insights = await getKiraInsights();
+    // A switched-off team doesn't work. Asked directly, say so; otherwise Kira answers herself.
+    if (paused.includes(team)) {
+      if (explicitTeam && !greetingReply) {
+        const name = TEAM_BY_ID[team].name;
+        return NextResponse.json({
+          success: true,
+          reply: `The ${name} team is switched off right now, so they have no report. Turn the team on and ask me again.`,
+          model: 'Kira',
+          liveData: sourceLine(insights),
+          team,
+          teamName: name,
+          paused,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      team = activeTeams[0]?.id ?? team;
+    }
 
     const systemPrompt = `You are AGENT KIRA, chief of staff for the SHANFA store admin team (a skincare and beauty e-commerce business in six GCC countries).
-You lead ${TEAMS.length} AI teams: ${TEAMS.map((t) => t.name).join(', ')}. Each team's live metrics and findings are in LIVE DATA.
+You lead ${TEAMS.length} AI teams. Active: ${activeTeams.map((t) => t.name).join(', ') || 'none'}.${paused.length ? ` Switched off by the admin: ${paused.map((id) => TEAM_BY_ID[id].name).join(', ')} (they are not working; do not report on them, and say so if asked).` : ''} Each active team's live metrics and findings are in LIVE DATA.
 This question was routed to the ${TEAM_BY_ID[team].name} team (mission: ${TEAM_BY_ID[team].mission}). Answer from that team's perspective, using other teams' data when relevant.
 
 ADMIN: ${adminName} · ${adminRole} · address them as "${honorific} ${adminName}".
@@ -72,9 +92,9 @@ ${voice
   : '- Be concise: at most 2–3 short paragraphs or a tight bullet list. Bold the key figures.'}
 
 LIVE DATA (JSON)
-${JSON.stringify(insightsForPrompt(insights))}`;
+${JSON.stringify(insightsForPrompt(insights, paused))}`;
 
-    const base = { liveData: sourceLine(insights), team, teamName: TEAM_BY_ID[team].name, timestamp: new Date().toISOString() };
+    const base = { liveData: sourceLine(insights), team, teamName: TEAM_BY_ID[team].name, paused, timestamp: new Date().toISOString() };
 
     const groqKey = process.env.GROQ_API_KEY;
     if (groqKey) {

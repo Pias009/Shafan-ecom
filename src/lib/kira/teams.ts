@@ -262,3 +262,36 @@ export function routeQuestion(text: string): TeamId {
   for (const id of priority) if (TEAM_BY_ID[id].keywords.test(q)) return id;
   return 'research';
 }
+
+/** How admins name each team out loud ("pause the pricing team"). */
+const TEAM_ALIASES: Record<TeamId, RegExp> = {
+  social: /\bsocial( media)?( marketing)?\b|\bmarketing\b/,
+  conversion: /\bconversions?\b/,
+  recommendations: /\brecommendations?\b/,
+  trending: /\btrend(ing|s)?\b/,
+  research: /\b(product )?research\b/,
+  pricing: /\b(best )?pric(ing|e)\b/,
+  stock: /\bstock( management)?\b|\binventory\b/,
+  web: /\bweb(site)?\b|\bui\b|\banalytics\b/,
+  orders: /\borders?\b|\bfulfil?ment\b/,
+  care: /\b(customer )?care\b|\breviews?\b|\bsupport\b/,
+  engineering: /\bengineer(ing|s)?\b|\bperformance\b/,
+};
+
+export type TeamToggle = { teams: TeamId[] | 'all'; active: boolean };
+
+/**
+ * Recognises "turn off the pricing team", "pause social and stock teams",
+ * "Kira, activate all teams". Requires the word "team" so ordinary questions
+ * ("why did orders stop?") are never mistaken for a switch.
+ */
+export function parseTeamToggle(text: string): TeamToggle | null {
+  const q = text.toLowerCase();
+  if (!/\bteams?\b/.test(q)) return null;
+  const off = /\b(turn|switch|shut)(\s+\w+){0,4}\s+off\b|\b(turn|switch|shut) off\b|\bpause\b|\bdeactivate\b|\bdisable\b|\bstop\b|\bsleep\b/.test(q);
+  const on = /\b(turn|switch)(\s+\w+){0,4}\s+on\b|\b(turn|switch) on\b|\bresume\b|\bactivate\b|\benable\b|\bunpause\b|\bwake\b|\brestart\b/.test(q);
+  if (off === on) return null;
+  if (/\b(all|every|whole)\b/.test(q)) return { teams: 'all', active: on };
+  const teams = TEAMS.map((t) => t.id).filter((id) => TEAM_ALIASES[id].test(q));
+  return teams.length ? { teams, active: on } : null;
+}

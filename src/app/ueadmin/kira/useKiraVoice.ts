@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  DEFAULT_VOICE_SETTINGS, KiraListener, KiraSpeaker, loadVoiceSettings, saveVoiceSettings,
-  type KiraVoiceSettings,
+  DEFAULT_VOICE_SETTINGS, KiraListener, KiraSpeaker, getLocalVoiceState, loadVoiceSettings, onLocalVoiceState,
+  prepareLocalVoice, saveVoiceSettings, type KiraVoiceSettings, type LocalVoiceState, type VoiceProvider,
 } from '@/lib/kira/voice';
 
 export type VoicePhase = 'idle' | 'listening' | 'transcribing' | 'thinking' | 'speaking';
@@ -36,6 +36,10 @@ export function useKiraVoice({
   const [error, setError] = useState('');
   const [naturalVoice, setNaturalVoice] = useState<boolean | null>(null);
   const [naturalVoiceNote, setNaturalVoiceNote] = useState('');
+  const [localVoice, setLocalVoice] = useState<LocalVoiceState>({ status: 'idle', progress: 0 });
+  const [provider, setProvider] = useState<VoiceProvider>(null);
+  /** False between "speaking" starting and the first sound (e.g. the built-in voice still loading). */
+  const [audible, setAudible] = useState(false);
 
   const speakerRef = useRef<KiraSpeaker | null>(null);
   const listenerRef = useRef<KiraListener | null>(null);
@@ -62,7 +66,12 @@ export function useKiraVoice({
     listenerRef.current = new KiraListener();
     setSettingsState(loadVoiceSettings());
     setNaturalVoice(speakerRef.current.naturalAvailable);
+    // Get the built-in voice ready while the lock screen is up, so Kira can talk the moment she opens.
+    setLocalVoice(getLocalVoiceState());
+    const off = onLocalVoiceState(setLocalVoice);
+    prepareLocalVoice();
     return () => {
+      off();
       speakerRef.current?.stop();
       listenerRef.current?.stop(true);
     };
@@ -138,16 +147,17 @@ export function useKiraVoice({
   /**
    * Speak a reply. Listens again afterwards when `listenAfter` is set (Kira asked a
    * question) or, with hands-free on, when the admin was talking by voice.
+   * `force` speaks even when muted: a spoken question always gets a spoken answer.
    */
   const speak = useCallback(
-    (text: string, opts: { viaVoice?: boolean; listenAfter?: boolean } = {}) => {
+    (text: string, opts: { viaVoice?: boolean; listenAfter?: boolean; force?: boolean } = {}) => {
       const speaker = speakerRef.current;
       const resumeListening = () => {
         if ((opts.listenAfter || (opts.viaVoice && settingsRef.current.conversation)) && phaseRef.current === 'idle') {
           setTimeout(() => { if (phaseRef.current === 'idle') startListening(); }, 350);
         }
       };
-      if (!speaker || muted) {
+      if (!speaker || (muted && !opts.force)) {
         setPhaseBoth('idle');
         setInterim('');
         resumeListening();
@@ -155,10 +165,16 @@ export function useKiraVoice({
       }
       setPhaseBoth('speaking');
       setInterim('');
+      setAudible(false);
       speaker.speak(text, settingsRef.current, {
-        onStart: () => setNaturalVoice(speaker.naturalAvailable),
+        onStart: () => {
+          setAudible(true);
+          setNaturalVoice(speaker.naturalAvailable);
+          setProvider(speaker.provider);
+        },
         onEnd: () => {
           setNaturalVoice(speaker.naturalAvailable);
+          setProvider(speaker.provider);
           if (speaker.lastNaturalError) setNaturalVoiceNote(speaker.lastNaturalError);
           if (phaseRef.current === 'speaking') {
             setPhaseBoth('idle');
@@ -238,7 +254,7 @@ export function useKiraVoice({
   }, []);
 
   const testVoice = useCallback(() => {
-    speak('Hi, I am Kira. This is how I will sound when I answer you.');
+    speak('Hi, I am Kira. This is how I will sound when I answer you.', { force: true });
   }, [speak]);
 
   return {
@@ -250,6 +266,11 @@ export function useKiraVoice({
     updateSettings,
     naturalVoice,
     naturalVoiceNote,
+    /** Built-in voice download / load state. */
+    localVoice,
+    /** Which engine voiced the last reply. */
+    provider,
+    audible,
     micBusyRef,
     level,
     startListening,

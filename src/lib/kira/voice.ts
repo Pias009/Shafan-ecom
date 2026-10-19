@@ -1,7 +1,8 @@
 'use client';
 
 // Voice engine for Agent Kira: speech in (mic → silence detection → Groq Whisper),
-// speech out (Groq Orpheus natural voice, falling back to the browser's voice),
+// speech out (Groq Orpheus natural voice, then a built-in in-browser voice, then
+// the browser's own speech synthesis),
 // and an optional "Hey Kira" wake word.
 
 export type KiraVoiceSettings = {
@@ -126,10 +127,90 @@ function rmsOf(analyser: AnalyserNode, buf: Float32Array<ArrayBuffer>): number {
 }
 
 /* ------------------------------------------------------------------ */
+/* Built-in voice (Piper, runs in the browser)                         */
+/* ------------------------------------------------------------------ */
+
+// Guarantees Kira can always talk: no API key or model terms, and it works in
+// browsers with no speech voices installed (Chrome on Linux has none). The model
+// (~60 MB) downloads once while the lock screen shows, then lives in OPFS.
+const LOCAL_VOICE_ID = 'en_US-hfc_female-medium';
+// Must match the installed onnxruntime-web version (package.json pins it).
+const LOCAL_WASM_PATHS = {
+  onnxWasm: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/',
+  piperData: 'https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.data',
+  piperWasm: 'https://cdn.jsdelivr.net/npm/@diffusionstudio/piper-wasm@1.0.0/build/piper_phonemize.wasm',
+};
+
+export type LocalVoiceState = { status: 'idle' | 'loading' | 'ready' | 'failed'; progress: number; error?: string };
+
+type PiperSession = { predict: (text: string) => Promise<Blob> };
+
+let localState: LocalVoiceState = { status: 'idle', progress: 0 };
+let localSession: Promise<PiperSession | null> | null = null;
+let localQueue: Promise<unknown> = Promise.resolve();
+const localListeners = new Set<(s: LocalVoiceState) => void>();
+
+function setLocalState(s: LocalVoiceState) {
+  localState = s;
+  localListeners.forEach((fn) => fn(s));
+}
+
+export function getLocalVoiceState() {
+  return localState;
+}
+
+export function onLocalVoiceState(fn: (s: LocalVoiceState) => void): () => void {
+  localListeners.add(fn);
+  return () => { localListeners.delete(fn); };
+}
+
+/** Load the built-in voice (downloads the model the first time). Safe to call repeatedly. */
+export function prepareLocalVoice(): Promise<PiperSession | null> {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  if (localSession) return localSession;
+  setLocalState({ status: 'loading', progress: 0 });
+  localSession = (async () => {
+    try {
+      const { TtsSession } = await import('@mintplex-labs/piper-tts-web');
+      const session = await TtsSession.create({
+        voiceId: LOCAL_VOICE_ID,
+        wasmPaths: LOCAL_WASM_PATHS,
+        progress: (p) => {
+          if (p.url.startsWith('tts://') || !p.total || localState.status !== 'loading') return;
+          setLocalState({ status: 'loading', progress: Math.min(99, Math.round((p.loaded / p.total) * 100)) });
+        },
+      });
+      // Warm up the phonemizer and model so the first real sentence starts quickly.
+      await session.predict('Hi.').catch(() => {});
+      setLocalState({ status: 'ready', progress: 100 });
+      return session;
+    } catch (e: any) {
+      console.warn('Kira: built-in voice failed to load', e);
+      setLocalState({ status: 'failed', progress: 0, error: e?.message || 'Could not load the built-in voice' });
+      localSession = null; // allow a retry later
+      return null;
+    }
+  })();
+  return localSession;
+}
+
+/** One synthesis at a time: the ONNX session can't run two inferences at once. */
+function synthesizeLocal(session: PiperSession, text: string): Promise<Blob> {
+  const run = localQueue.then(() => session.predict(text));
+  localQueue = run.catch(() => {});
+  return run;
+}
+
+function browserVoicesAvailable(): boolean {
+  return typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.getVoices().length > 0;
+}
+
+/* ------------------------------------------------------------------ */
 /* Speaker                                                             */
 /* ------------------------------------------------------------------ */
 
 export type SpeakHandlers = { onStart?: () => void; onEnd?: () => void };
+export type VoiceProvider = 'natural' | 'local' | 'browser' | null;
 
 export class KiraSpeaker {
   private generation = 0;
@@ -140,6 +221,8 @@ export class KiraSpeaker {
   /** null = not tried yet this session */
   naturalAvailable: boolean | null = null;
   lastNaturalError = '';
+  /** Which engine voiced the last reply. */
+  provider: VoiceProvider = null;
 
   constructor() {
     try {
@@ -169,18 +252,36 @@ export class KiraSpeaker {
   async speak(text: string, settings: KiraVoiceSettings, handlers: SpeakHandlers = {}) {
     this.stop();
     const gen = this.generation;
-    const chunks = splitForSpeech(cleanForSpeech(text));
+    let chunks = splitForSpeech(cleanForSpeech(text));
     if (chunks.length === 0) { handlers.onEnd?.(); return; }
 
     let started = false;
     const markStart = () => { if (!started) { started = true; handlers.onStart?.(); } };
 
     try {
+      // 1. Groq natural voice.
       if (this.naturalAvailable !== false) {
-        const ok = await this.speakNatural(chunks, settings, gen, markStart);
-        if (ok || gen !== this.generation) return;
+        const played = await this.playChunks(chunks, (t) => this.fetchChunk(t, settings.voice), settings, gen, markStart, true);
+        if (played > 0) this.provider = 'natural';
+        if (gen !== this.generation) return;
+        if (played === chunks.length) return;
+        chunks = chunks.slice(played);
       }
-      if (gen !== this.generation) return;
+
+      // 2. Built-in voice if it's ready, or if the browser has no voice to fall back on (wait for it).
+      if (localState.status === 'ready' || !browserVoicesAvailable()) {
+        const session = await prepareLocalVoice();
+        if (gen !== this.generation) return;
+        if (session) {
+          const played = await this.playChunks(chunks, (t) => synthesizeLocal(session, t), settings, gen, markStart);
+          if (played > 0) this.provider = 'local';
+          if (gen !== this.generation || played === chunks.length) return;
+          chunks = chunks.slice(played);
+        }
+      }
+
+      // 3. Browser speech synthesis.
+      this.provider = 'browser';
       await this.speakBrowser(chunks, settings, gen, markStart);
     } finally {
       if (gen === this.generation) handlers.onEnd?.();
@@ -202,47 +303,54 @@ export class KiraSpeaker {
     });
   }
 
-  /** Returns false if nothing could be played (caller falls back to the browser voice). */
-  private async speakNatural(chunks: string[], settings: KiraVoiceSettings, gen: number, markStart: () => void): Promise<boolean> {
-    const pending: Promise<Blob>[] = [this.fetchChunk(chunks[0], settings.voice)];
-    let playedAny = false;
+  /**
+   * Plays chunks as audio, producing the next one while the current one plays.
+   * Returns how many chunks were played; the caller voices the rest another way.
+   */
+  private async playChunks(
+    chunks: string[],
+    produce: (text: string) => Promise<Blob>,
+    settings: KiraVoiceSettings,
+    gen: number,
+    markStart: () => void,
+    natural = false,
+  ): Promise<number> {
+    const pending: Promise<Blob>[] = [produce(chunks[0])];
+    pending[0].catch(() => {});
 
     for (let i = 0; i < chunks.length; i++) {
-      if (gen !== this.generation) return true;
-      if (i + 1 < chunks.length) pending[i + 1] = this.fetchChunk(chunks[i + 1], settings.voice);
+      if (gen !== this.generation) return i;
+      if (i + 1 < chunks.length) {
+        pending[i + 1] = produce(chunks[i + 1]);
+        pending[i + 1].catch(() => {});
+      }
 
       let blob: Blob;
       try {
         blob = await pending[i];
       } catch (e: any) {
         // Permanent problems (terms not accepted, bad voice, not configured): stop trying this session.
-        if (e?.status !== 429 && e?.status !== 500) {
+        if (natural && e?.status !== 429 && e?.status !== 500) {
           this.naturalAvailable = false;
           this.lastNaturalError = e?.code === 'model_terms_required'
             ? 'Natural voice needs the Groq model terms accepted by your Groq org admin.'
             : `Natural voice unavailable (${e?.code || e?.message || 'error'}).`;
           try { sessionStorage.setItem(NATURAL_OFF_KEY, '1'); } catch {}
         }
-        if (playedAny) {
-          // Finish the rest with the browser voice.
-          await this.speakBrowser(chunks.slice(i), settings, gen, markStart);
-          return true;
-        }
-        return false;
+        return i;
       }
-      this.naturalAvailable = true;
+      if (natural) this.naturalAvailable = true;
 
       const url = URL.createObjectURL(blob);
       try {
         await this.playUrl(url, settings.rate, gen, markStart);
-        playedAny = true;
       } catch {
-        if (!playedAny) return false;
+        return i;
       } finally {
         URL.revokeObjectURL(url);
       }
     }
-    return true;
+    return chunks.length;
   }
 
   private playUrl(url: string, rate: number, gen: number, markStart: () => void): Promise<void> {
@@ -252,7 +360,9 @@ export class KiraSpeaker {
       audio.playbackRate = rate;
       this.audio = audio;
       const ctx = audioCtx();
-      if (ctx) {
+      // Only route through the analyser when the context is running; a suspended
+      // context would swallow the sound.
+      if (ctx && ctx.state === 'running') {
         try {
           const src = ctx.createMediaElementSource(audio);
           const analyser = ctx.createAnalyser();

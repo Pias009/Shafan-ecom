@@ -67,7 +67,9 @@ function LevelBars({ getLevel }: { getLevel: () => number }) {
 
 /** One-line live status: listening (with captions), transcribing, thinking, speaking, or an error. */
 export function KiraVoiceStatus({ voice }: { voice: KiraVoice }) {
-  const { phase, interim, error } = voice;
+  const { phase, interim, error, localVoice } = voice;
+  // Kira is about to speak but her built-in voice is still downloading (first visit only).
+  const preparing = phase === 'speaking' && !voice.audible && localVoice.status === 'loading';
   if (error) {
     return (
       <div className="flex items-start gap-2 rounded-md border border-[#EC8A80]/30 bg-[#EC8A80]/[0.06] px-3 py-2 text-[12.5px] text-[#F2B5AE]">
@@ -89,8 +91,9 @@ export function KiraVoiceStatus({ voice }: { voice: KiraVoice }) {
           {phase === 'listening' && 'Listening'}
           {phase === 'transcribing' && 'Transcribing'}
           {phase === 'thinking' && 'Checking live data'}
-          {phase === 'speaking' && 'Kira is speaking'}
+          {phase === 'speaking' && (preparing ? `Preparing Kira’s voice · ${localVoice.progress}%` : 'Kira is speaking')}
         </div>
+        {preparing && <div className="text-[12px] text-[#8A8E98]">One-time download. She’ll start talking as soon as it’s ready.</div>}
         {interim && phase !== 'speaking' && <div className="truncate text-[13px] text-[#D9D7D1]">“{interim}”</div>}
         {phase === 'listening' && !interim && <div className="text-[12px] text-[#8A8E98]">Speak naturally. I’ll stop when you pause.</div>}
       </div>
@@ -176,12 +179,16 @@ export function KiraVoiceSettings({ voice }: { voice: KiraVoice }) {
             <button onClick={() => setOpen(false)} className="p-1 text-[#8A8E98] hover:text-white" aria-label="Close"><X size={15} /></button>
           </div>
 
-          <p className={`mb-3 text-[12px] leading-snug ${naturalVoice === false ? 'text-[#F2B33D]' : 'text-[#8FC79E]'}`}>
-            {naturalVoice === false
-              ? <>Using your browser’s voice. {naturalVoiceNote || 'The natural voice is unavailable.'}</>
-              : naturalVoice
+          <p className={`mb-3 text-[12px] leading-snug ${naturalVoice === false && voice.localVoice.status === 'failed' ? 'text-[#F2B33D]' : 'text-[#8FC79E]'}`}>
+            {naturalVoice !== false
+              ? naturalVoice
                 ? 'Natural voice active (Groq Orpheus).'
-                : 'Natural voice when available, otherwise your browser’s voice.'}
+                : 'Natural voice when available, otherwise Kira’s built-in voice.'
+              : voice.localVoice.status === 'ready'
+                ? <>Built-in voice active. {naturalVoiceNote}</>
+                : voice.localVoice.status === 'loading'
+                  ? <>Downloading Kira’s built-in voice · {voice.localVoice.progress}%</>
+                  : <>Using your browser’s voice. {naturalVoiceNote || 'The natural voice is unavailable.'}</>}
           </p>
 
           <label className="mb-1 block text-[12px] text-[#A9ACB4]">Kira’s voice</label>

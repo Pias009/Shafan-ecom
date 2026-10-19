@@ -21,6 +21,12 @@ const nextConfig: NextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  turbopack: {
+    resolveAlias: {
+      // Kira's built-in voice ships Emscripten code with Node-only `require("fs")` branches.
+      fs: { browser: './src/lib/empty-module.ts' },
+    },
+  },
   experimental: {
     optimizePackageImports: [
       'lucide-react',

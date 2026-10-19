@@ -601,12 +601,12 @@ async function computeInsights(): Promise<KiraInsights> {
 }
 
 /** Compact, model-friendly version for the chat prompt. */
-export function insightsForPrompt(i: KiraInsights) {
+export function insightsForPrompt(i: KiraInsights, paused: TeamId[] = []) {
   return {
     window: 'last 30 days unless stated',
     overview: i.overview,
     teams: Object.fromEntries(
-      TEAMS.map((t) => [
+      TEAMS.filter((t) => !paused.includes(t.id)).map((t) => [
         t.name,
         {
           metrics: Object.fromEntries(i.teams[t.id].metrics.map((m) => [m.label, m.value])),
