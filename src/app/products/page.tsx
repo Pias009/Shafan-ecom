@@ -39,9 +39,10 @@ export default async function ProductsPage({
   const brand = params.brand;
   const sort = params.sort;
 
-  // Parallelize products, total count and all filter options
+  // Load the whole catalog regardless of category/brand: ProductsClient filters it
+  // locally, so changing a filter never swaps in a narrower list from the server.
   const [products, totalCount, allCategories, allSubCategories, allBrands, allSkinTones, allSkinConcerns] = await Promise.all([
-    getProducts(storeCode, page, limit, category, brand, isTrending),
+    getProducts(storeCode, page, limit, undefined, undefined, isTrending),
     isTrending ? 0 : getProductCount(storeCode),
     prisma.category.findMany({ select: { name: true } }),
     prisma.subCategory.findMany({ select: { name: true } }),

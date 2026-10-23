@@ -6,6 +6,7 @@
  * - Caching integration
  */
 
+import { cache } from "react";
 import { prisma } from "./prisma";
 import { productCache } from "./cache-optimizer";
 
@@ -297,15 +298,11 @@ export async function getOptimizedProducts(
   }
 }
 
-export async function getOptimizedProduct(idOrSlug: string, storeCode?: string) {
-  const cacheKey = `product:${idOrSlug}:${storeCode || 'all'}`;
-  
-  // Try cache first
-  const cached = await productCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
+// Deduped per request only (generateMetadata and the page share one query). Not cached
+// across requests: the in-memory cache is per server instance, so admin edits stayed stale.
+export const getOptimizedProduct = cache(loadOptimizedProduct);
 
+async function loadOptimizedProduct(idOrSlug: string, storeCode?: string) {
   try {
     let product: any = null;
     
@@ -436,9 +433,6 @@ export async function getOptimizedProduct(idOrSlug: string, storeCode?: string) 
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };
-
-    // Cache the result
-    await productCache.set(cacheKey, transformedProduct, CACHE_TTL.PRODUCT_DETAIL);
 
     return transformedProduct;
   } catch (error) {

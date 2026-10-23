@@ -3,6 +3,7 @@ import { getAdminApiSession } from '@/lib/admin-session';
 import { z } from 'zod';
 import { uploadFromUrl } from '@/lib/cloudinary';
 import { revalidatePath } from 'next/cache';
+import { bustHomepageCache } from '@/lib/products';
 import { clearProductCache } from '@/lib/optimized-products';
 import { resolveBrandId } from '@/lib/brand-utils';
 
@@ -329,6 +330,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       // ignore audit log failures for now
     }
     
+    bustHomepageCache();
     revalidatePath('/');
     revalidatePath('/offers');
     revalidatePath('/products');
@@ -398,6 +400,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       // Continue even if audit log fails
     }
 
+    bustHomepageCache();
     revalidatePath('/');
     revalidatePath('/offers');
     revalidatePath('/products');

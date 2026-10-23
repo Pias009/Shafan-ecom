@@ -4,6 +4,7 @@ import { uploadFromUrl } from '@/lib/cloudinary';
 import { getAdminApiSession, getAdminStoreAccess } from '@/lib/admin-session';
 import { SUPPORTED_COUNTRIES, isValidCountryCode, getCurrencyForCountry } from '@/lib/countries';
 import { revalidatePath } from 'next/cache';
+import { bustHomepageCache } from '@/lib/products';
 import { resolveBrandId } from '@/lib/brand-utils';
 
 /**
@@ -629,6 +630,7 @@ export async function POST(req: Request) {
     }
 
     
+    bustHomepageCache();
     revalidatePath('/');
     revalidatePath('/products');
     

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { getAdminApiSession } from '@/lib/admin-session';
 import { revalidatePath } from 'next/cache';
+import { bustHomepageCache } from '@/lib/products';
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,6 +24,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       data: { freshFromShelf }
     });
 
+    bustHomepageCache();
     revalidatePath('/');
     revalidatePath('/products');
     revalidatePath('/ueadmin/fresh-from-shelf');

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
@@ -12,10 +12,9 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useLanguageStore } from "@/lib/language-store";
 import { translations } from "@/lib/translations";
-import { useCountryStore } from "@/lib/country-store";
-import { useSearchStore } from "@/lib/search-store";
+import { useCountryStore, useCountryStoreReady } from "@/lib/country-store";
 import { trackAddToCart } from "@/lib/datalayer";
-import { getDisplayPrice } from "@/lib/product-utils";
+import { getDisplayPrice, hasValidPrice, resolveProductPrice } from "@/lib/product-utils";
 
 const MAINTAINED_CATEGORIES = ["Skin Care", "Makeup", "Fragrances", "Hair Care", "Body Care"];
 
@@ -58,79 +57,52 @@ export default function ProductsClient({
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { query: q } = useSearchStore();
   const isRoutines = isRoutinesPage;
   const [hydrated, setHydrated] = useState(false);
+  // Last query string this component wrote, so its own URL updates aren't re-applied as navigation
+  const lastWrittenSearch = useRef<string | null>(null);
 
   const { addItem, hasAddress } = useCartStore();
   const { currentLanguage } = useLanguageStore();
   const isAr = currentLanguage?.code === "ar";
   const t = translations[currentLanguage.code as keyof typeof translations];
   const { selectedCountry } = useCountryStore();
-
-  useEffect(() => {
-    if (q) {
-      setSearchInput(q);
-    }
-  }, [q]);
+  const countryReady = useCountryStoreReady();
 
   // Sync products when initialProducts change (from server-side navigation)
   useEffect(() => {
-    if (initialProducts) {
-      setProducts(initialProducts);
-      
-      // Update local filter states to match URL params from server
-      setSelectedCategory(category || "All");
-      setBrand(initialBrand || "All");
-      setSortOrder(sort || "newest");
-    }
-  }, [initialProducts, category, initialBrand, sort]);
+    if (initialProducts) setProducts(initialProducts);
+  }, [initialProducts]);
 
-  // Initialize filters from URL params on mount
   useEffect(() => {
     setHydrated(true);
-    const params = new URLSearchParams(window.location.search);
-    const urlBrand = params.get("brand");
-    const urlCategory = params.get("category");
-    const urlSubcategory = params.get("subcategory");
-    const urlSkinTone = params.get("skinTone");
-    const urlConcern = params.get("concern");
-    const urlMaxPrice = params.get("maxPrice");
-    const urlSort = params.get("sort");
-    
-    if (urlBrand) setBrand(urlBrand);
-    if (urlCategory) setSelectedCategory(urlCategory);
-    if (urlSubcategory) setSelectedSubCategory(urlSubcategory);
-    if (urlSkinTone) setSelectedSkinTone(urlSkinTone);
-    if (urlConcern) setSelectedSkinConcern(urlConcern);
-    if (urlMaxPrice) setMaxPrice(Number(urlMaxPrice));
-    if (urlSort) setSortOrder(urlSort);
   }, []);
 
-  // React to URL changes (when clicking navbar links)
+  // The URL is the source of truth for filters on mount and on navigation (navbar links,
+  // search overlay, back/forward). Params missing from the URL reset to their defaults, so
+  // a filter or search from an earlier visit can't linger and hide every product.
   useEffect(() => {
     if (!searchParams) return;
-    
-    const urlBrand = searchParams.get("brand");
-    const urlCategory = searchParams.get("category");
-    const urlSubcategory = searchParams.get("subcategory");
-    const urlSkinTone = searchParams.get("skinTone");
-    const urlConcern = searchParams.get("concern");
-    const urlMaxPrice = searchParams.get("maxPrice");
-    const urlSort = searchParams.get("sort");
-    const urlQ = searchParams.get("q");
+    if (searchParams.toString() === lastWrittenSearch.current) return;
 
-    if (urlBrand) setBrand(urlBrand);
-    if (urlCategory) setSelectedCategory(urlCategory);
-    if (urlSubcategory) setSelectedSubCategory(urlSubcategory);
-    if (urlSkinTone) setSelectedSkinTone(urlSkinTone);
-    if (urlConcern) setSelectedSkinConcern(urlConcern);
-    if (urlMaxPrice) setMaxPrice(Number(urlMaxPrice));
-    if (urlSort) setSortOrder(urlSort);
-    if (urlQ) setSearchInput(urlQ);
-  }, [searchParams]);
+    const urlMaxPrice = Number(searchParams.get("maxPrice"));
+    setBrand(searchParams.get("brand") || initialBrand || "All");
+    setSelectedCategory(searchParams.get("category") || category || "All");
+    setSelectedSubCategory(searchParams.get("subcategory") || subcategory || "All");
+    setSelectedSkinTone(searchParams.get("skinTone") || "All");
+    setSelectedSkinConcern(searchParams.get("concern") || "All");
+    setMaxPrice(urlMaxPrice > 0 ? urlMaxPrice : 100000);
+    setSortOrder(searchParams.get("sort") || sort || "newest");
+    setSearchInput(searchParams.get("q") || "");
+  }, [searchParams, initialBrand, category, subcategory, sort]);
 
-  // REMOVED clearQuery on unmount as it causes loops during router.replace remounts
+  // Filtering is fully client-side, so update the URL without a server round-trip.
+  // router.replace re-rendered the page and raced with quick filter clicks.
+  const writeSearch = useCallback((params: URLSearchParams) => {
+    const search = params.toString();
+    lastWrittenSearch.current = search;
+    window.history.replaceState(null, "", search ? `?${search}` : window.location.pathname);
+  }, []);
 
   // Sync immediate filters to URL
   useEffect(() => {
@@ -159,10 +131,8 @@ export default function ProductsClient({
     syncImmediate("concern", selectedSkinConcern, "All");
     syncImmediate("sort", sortOrder, "newest");
 
-    if (changed) {
-      router.replace(`?${params.toString()}`, { scroll: false });
-    }
-  }, [brand, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, sortOrder, router, hydrated]);
+    if (changed) writeSearch(params);
+  }, [brand, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, sortOrder, writeSearch, hydrated]);
 
   // Sync debounced filters (search, price) to URL
   useEffect(() => {
@@ -192,13 +162,11 @@ export default function ProductsClient({
         changed = true;
       }
 
-      if (changed) {
-        router.replace(`?${params.toString()}`, { scroll: false });
-      }
+      if (changed) writeSearch(params);
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [searchInput, maxPrice, router, hydrated]);
+  }, [searchInput, maxPrice, writeSearch, hydrated]);
 
 
 
@@ -279,6 +247,11 @@ export default function ProductsClient({
 
   const filtered = useMemo(() => {
     const filtered = products.filter((p) => {
+      // Same gate as ProductCard (which renders nothing otherwise), so section counts and
+      // the empty state match what's actually on screen.
+      if (countryReady && !(hasValidPrice(p, selectedCountry) && resolveProductPrice(p, selectedCountry).available)) {
+        return false;
+      }
       const price = p.discountPrice ?? p.price ?? 0;
       const matchesSearch = !searchInput || 
         p.name.toLowerCase().includes(searchInput.toLowerCase()) ||
@@ -328,7 +301,7 @@ export default function ProductsClient({
     });
 
 return sorted;
-  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, sortOrder]);
+  }, [searchInput, brand, maxPrice, products, t.product.all, selectedCategory, selectedSubCategory, selectedSkinTone, selectedSkinConcern, sortOrder, countryReady, selectedCountry]);
 
 
   function addToCart(product: any) {
@@ -755,7 +728,8 @@ return sorted;
                       setSelectedCategory("All");
                       setSelectedSubCategory('All');
                       setSelectedSkinTone('All');
-                      setMaxPrice(100000); 
+                      setSelectedSkinConcern('All');
+                      setMaxPrice(100000);
                     }} 
                     className="mt-6 text-[#890754] hover:text-[#540434] underline font-bold underline-offset-4 text-sm tracking-wider uppercase"
                 >

@@ -47,12 +47,10 @@ export class CacheOptimizer {
       return entry.value;
     }
 
-    // If entry is stale but within revalidate window, return stale value
-    // and mark for revalidation
+    // If entry is stale but within the grace window, return the stale value.
+    // Don't extend its life here: doing so kept busy keys stale forever.
     if (age < (entry.ttl + entry.staleWhileRevalidate) * 1000) {
       this.hits++;
-      // Fire and forget revalidation
-      this.revalidate(key, entry).catch(() => {});
       return entry.value;
     }
 
@@ -104,13 +102,6 @@ export class CacheOptimizer {
     this.cache.clear();
     this.hits = 0;
     this.misses = 0;
-  }
-
-  private async revalidate(key: string, entry: CacheEntry): Promise<void> {
-    // This would typically fetch fresh data
-    // For now, we just update the timestamp to extend life
-    entry.timestamp = Date.now();
-    this.cache.set(key, entry);
   }
 
   getStats() {
