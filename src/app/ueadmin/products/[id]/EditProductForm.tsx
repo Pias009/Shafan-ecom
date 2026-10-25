@@ -340,6 +340,11 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
   };
 
   const handleSave = async () => {
+    if (!product.name || !product.name.trim()) {
+      toast.error('Product title/name is required');
+      return;
+    }
+
     const validCountryPrices = (product.countryPrices || []).filter((cp: any) => Number(cp.price) > 0);
     if (validCountryPrices.length === 0) {
       toast.error('At least one country price must be set. Product will not be visible without prices.');
@@ -458,7 +463,7 @@ export function EditProductForm({ product: initialProduct, categories, subCatego
                     <label className="text-[10px] font-black uppercase tracking-widest text-black/40 px-2">Product Name</label>
                     <input 
                       name="name"
-                      value={product.name}
+                      value={product.name || ''}
                       onChange={handleChange}
                       className="w-full bg-black/5 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-black outline-none transition-all"
                     />

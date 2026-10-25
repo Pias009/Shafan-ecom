@@ -9,6 +9,7 @@ import { resolveBrandId } from '@/lib/brand-utils';
 
 const UpdateSchema = z.object({
   name: z.string().optional(),
+  title: z.string().optional(),
   slug: z.string().optional(),
   sku: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
@@ -126,14 +127,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       (parsed.data as any).features = ((parsed.data as any).features as string).split(',').map((s: string) => s.trim()).filter((s: string) => s);
     }
     const updates: any = {};
-    if (typeof parsed.data.slug !== 'undefined') {
+    const productName = parsed.data.name ?? (parsed.data as any).title;
+    if (typeof productName !== 'undefined') {
+      updates.name = productName;
+    }
+    if (typeof parsed.data.slug !== 'undefined' && parsed.data.slug) {
       updates.slug = parsed.data.slug;
-    } else if (typeof parsed.data.name !== 'undefined') {
-      updates.name = parsed.data.name;
+    } else if (typeof productName !== 'undefined' && productName) {
       // Only regenerate slug if product doesn't have one yet (keep existing slug stable)
       const existing = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
       if (!existing?.slug) {
-        updates.slug = parsed.data.name
+        updates.slug = productName
           .toLowerCase().trim()
           .replace(/[^\w\s-]/g, '')
           .replace(/\s+/g, '-')
