@@ -69,6 +69,13 @@ export async function POST(req: Request) {
       cancel_url: `${baseUrl}/cart?canceled=stripe`,
     });
 
+    // Keep the session id so an unpaid checkout can be traced to its Stripe
+    // session (abandoned vs declined) from the dashboard or a script.
+    await (prisma as any).pendingCheckout.update({
+      where: { id: pendingCheckout.id },
+      data: { stripeCheckoutSessionId: session.id, paymentMethod: pendingCheckout.paymentMethod || "stripe" },
+    }).catch((err: any) => console.error("Failed to save Stripe session id:", err));
+
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
     console.error("Stripe Checkout Session failed:", error);

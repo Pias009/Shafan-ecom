@@ -78,6 +78,10 @@
       "schedule": "0 0 * * *"
     },
     {
+      "path": "/api/cron/tabby-verify",
+      "schedule": "0 3 * * *"
+    },
+    {
       "path": "/api/cron/stripe-verify",
       "schedule": "0 6 * * *"
     }

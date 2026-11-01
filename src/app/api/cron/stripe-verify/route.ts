@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 import { finalizeStripePayment } from "@/services/payments/stripe/process";
+import { recoverStuckPendingCheckout } from "@/services/checkout/pending-checkout";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -28,12 +29,19 @@ export async function GET(request: Request) {
 
     const pc = await (prisma as any).pendingCheckout.findUnique({
       where: { id: pendingCheckoutId },
-      select: { status: true },
+      select: { status: true, consumedOrderId: true },
     });
-    if (!pc || pc.status === "CONSUMED") continue;
+    if (!pc) continue;
 
     const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
     if (!paymentIntentId) continue;
+
+    // CONSUMED with no Order means an earlier promotion crashed mid-way —
+    // repair it so the paid customer still gets their order.
+    if (pc.status === "CONSUMED") {
+      if (pc.consumedOrderId) continue;
+      if (!(await recoverStuckPendingCheckout(pendingCheckoutId, paymentIntentId))) continue;
+    }
 
     try {
       const { orderId } = await finalizeStripePayment({ pendingCheckoutId, paymentIntentId, source: "cron" });

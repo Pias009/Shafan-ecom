@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { computeReadyBy, DELIVERY_METHOD_PICKUP, type PickupDetails } from "@/lib/pickup";
+import { sendServerPurchase } from "@/lib/ga-server";
 
 const PENDING_CHECKOUT_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -38,6 +39,8 @@ export type CreatePendingCheckoutInput = {
   discountAmount?: number | null;
   couponCode?: string | null;
   referralSource?: string | null;
+  gaClientId?: string | null;
+  gaSessionId?: string | null;
 };
 
 export async function createPendingCheckout(input: CreatePendingCheckoutInput) {
@@ -65,6 +68,8 @@ export async function createPendingCheckout(input: CreatePendingCheckoutInput) {
       discountAmount: input.discountAmount || null,
       couponCode: input.couponCode || null,
       referralSource: input.referralSource || null,
+      gaClientId: input.gaClientId || null,
+      gaSessionId: input.gaSessionId || null,
       status: "OPEN",
       expiresAt: new Date(Date.now() + PENDING_CHECKOUT_TTL_MS),
     },
@@ -103,6 +108,7 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
   }
 
   // Atomic claim — only one caller can move OPEN/EXPIRED -> CONSUMED.
+  const claimedFrom = pc.status;
   const claim = await (prisma as any).pendingCheckout.updateMany({
     where: { id: pendingCheckoutId, status: { in: ["OPEN", "EXPIRED"] } },
     data: { status: "CONSUMED" },
@@ -131,56 +137,80 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
       }
     : null;
 
-  const order = await prisma.order.create({
-    data: {
-      userId: pc.userId || null,
-      email: pc.email || null,
-      storeId: pc.storeId || null,
-      status: opts.status,
-      paymentStatus: opts.paymentStatus,
-      currency: pc.currency,
-      subtotal: pc.subtotal,
-      shipping: pc.shipping,
-      discount: pc.discount,
-      taxRate: pc.taxRate,
-      taxAmount: pc.taxAmount,
-      total: pc.total,
-      totalWeight: pc.totalWeight || 0,
-      billingAddress: pc.billingAddress || {},
-      shippingAddress: pc.shippingAddress || {},
-      deliveryMethod: pc.deliveryMethod || null,
-      pickupDetails: (pickupDetails as any) ?? undefined,
-      paymentMethod: opts.paymentMethod || pc.paymentMethod || null,
-      paymentMethodTitle: opts.paymentMethodTitle || pc.paymentMethodTitle || null,
-      stripePaymentIntentId: opts.stripePaymentIntentId || null,
-      tabbyPaymentId: opts.tabbyPaymentId || pc.tabbyPaymentId || null,
-      tabbySessionId: opts.tabbySessionId || pc.tabbySessionId || null,
-      tamaraCheckoutId: opts.tamaraCheckoutId || pc.tamaraCheckoutId || null,
-      ...(pc.couponCode ? { couponCode: pc.couponCode, discountAmount: pc.discountAmount } : {}),
-      referralSource: pc.referralSource || null,
-      items: {
-        create: items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          nameSnapshot: item.nameSnapshot,
-          imageSnapshot: item.imageSnapshot,
-          weightSnapshot: item.weightSnapshot,
-          weightUnitSnapshot: item.weightUnitSnapshot,
-        })),
+  // If the Order can't be created, release the claim so the webhook retry,
+  // return-page verify or cron can try again. Leaving it CONSUMED with no
+  // consumedOrderId would orphan a paid checkout for good.
+  let order;
+  try {
+    order = await prisma.order.create({
+      data: {
+        userId: pc.userId || null,
+        email: pc.email || null,
+        storeId: pc.storeId || null,
+        status: opts.status,
+        paymentStatus: opts.paymentStatus,
+        currency: pc.currency,
+        subtotal: pc.subtotal,
+        shipping: pc.shipping,
+        discount: pc.discount,
+        taxRate: pc.taxRate,
+        taxAmount: pc.taxAmount,
+        total: pc.total,
+        totalWeight: pc.totalWeight || 0,
+        billingAddress: pc.billingAddress || {},
+        shippingAddress: pc.shippingAddress || {},
+        deliveryMethod: pc.deliveryMethod || null,
+        pickupDetails: (pickupDetails as any) ?? undefined,
+        paymentMethod: opts.paymentMethod || pc.paymentMethod || null,
+        paymentMethodTitle: opts.paymentMethodTitle || pc.paymentMethodTitle || null,
+        stripePaymentIntentId: opts.stripePaymentIntentId || null,
+        tabbyPaymentId: opts.tabbyPaymentId || pc.tabbyPaymentId || null,
+        tabbySessionId: opts.tabbySessionId || pc.tabbySessionId || null,
+        tamaraCheckoutId: opts.tamaraCheckoutId || pc.tamaraCheckoutId || null,
+        ...(pc.couponCode ? { couponCode: pc.couponCode, discountAmount: pc.discountAmount } : {}),
+        referralSource: pc.referralSource || null,
+        items: {
+          create: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            nameSnapshot: item.nameSnapshot,
+            imageSnapshot: item.imageSnapshot,
+            weightSnapshot: item.weightSnapshot,
+            weightUnitSnapshot: item.weightUnitSnapshot,
+          })),
+        },
       },
-    },
-    include: { items: true },
+      include: { items: true },
+    });
+  } catch (err) {
+    await (prisma as any).pendingCheckout.updateMany({
+      where: { id: pendingCheckoutId, status: "CONSUMED", consumedOrderId: null },
+      data: { status: claimedFrom === "EXPIRED" ? "EXPIRED" : "OPEN" },
+    }).catch((revertErr: any) => console.error("[promoteToOrder] claim revert failed:", revertErr));
+    throw err;
+  }
+
+  // Link the Order immediately — from here on duplicates return this Order,
+  // so nothing below may leave the checkout unlinked.
+  await (prisma as any).pendingCheckout.update({
+    where: { id: pendingCheckoutId },
+    data: { consumedOrderId: order.id },
   });
 
-  // Decrement stock now that the order is real.
+  // Decrement stock now that the order is real. Non-fatal: the payment is
+  // already taken, so a stock write must never undo the order.
   for (const item of items) {
-    const product = await prisma.product.findUnique({ where: { id: item.productId } });
-    if (product && product.stockQuantity !== null) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: { stockQuantity: Math.max(0, product.stockQuantity - item.quantity) },
-      });
+    try {
+      const product = await prisma.product.findUnique({ where: { id: item.productId } });
+      if (product && product.stockQuantity !== null) {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: { stockQuantity: Math.max(0, product.stockQuantity - item.quantity) },
+        });
+      }
+    } catch (err) {
+      console.error(`[promoteToOrder] stock decrement failed for ${item.productId} (order ${order.id}):`, err);
     }
   }
 
@@ -203,6 +233,7 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
   }
 
   // Create shipment (pickup orders get a non-courier record, no tracking URL).
+  // Non-fatal: the Stripe/COD flows upsert a shipment afterwards if missing.
   const trackingCode = generateTrackingCode();
   const shipment = await prisma.shipment.create({
     data: isPickup
@@ -220,14 +251,61 @@ export async function promoteToOrder(pendingCheckoutId: string, opts: PromoteToO
           trackingUrl: `https://global-courier.com/track/${trackingCode}`,
           status: "Created",
         },
+  }).catch((err: any) => {
+    console.error(`[promoteToOrder] shipment.create failed for order ${order.id}:`, err);
+    return null;
   });
 
-  await (prisma as any).pendingCheckout.update({
-    where: { id: pendingCheckoutId },
-    data: { consumedOrderId: order.id },
+  // GA4 purchase from the server — the browser event is lost whenever the
+  // buyer leaves /checkout/success early. Never throws; no-op without GA4_API_SECRET.
+  await sendServerPurchase({
+    id: order.id,
+    total: order.total,
+    currency: order.currency,
+    shipping: order.shipping,
+    taxAmount: order.taxAmount,
+    couponCode: pc.couponCode,
+    paymentMethod: order.paymentMethod,
+    items: order.items,
+    gaClientId: pc.gaClientId,
+    gaSessionId: pc.gaSessionId,
   });
 
   return { order: { ...order, shipment }, alreadyPromoted: false };
+}
+
+/**
+ * Repair a checkout left CONSUMED with no consumedOrderId (a promotion that
+ * crashed before this was made safe). Links it to the Order that holds the same
+ * Stripe PaymentIntent if one exists, otherwise reopens it so it can be
+ * promoted again. Skips recent rows, which may be a promotion still running.
+ * Returns true if the checkout is now OPEN and ready to promote.
+ */
+export async function recoverStuckPendingCheckout(pendingCheckoutId: string, stripePaymentIntentId: string): Promise<boolean> {
+  const pc = await (prisma as any).pendingCheckout.findUnique({
+    where: { id: pendingCheckoutId },
+    select: { status: true, consumedOrderId: true, updatedAt: true },
+  });
+  if (!pc || pc.status !== "CONSUMED" || pc.consumedOrderId) return false;
+  if (Date.now() - new Date(pc.updatedAt).getTime() < 10 * 60 * 1000) return false;
+
+  const existingOrder = await prisma.order.findFirst({
+    where: { stripePaymentIntentId },
+    select: { id: true },
+  });
+  if (existingOrder) {
+    await (prisma as any).pendingCheckout.update({
+      where: { id: pendingCheckoutId },
+      data: { consumedOrderId: existingOrder.id },
+    });
+    return false;
+  }
+
+  const reopened = await (prisma as any).pendingCheckout.updateMany({
+    where: { id: pendingCheckoutId, status: "CONSUMED", consumedOrderId: null },
+    data: { status: "OPEN" },
+  });
+  return reopened.count === 1;
 }
 
 /**

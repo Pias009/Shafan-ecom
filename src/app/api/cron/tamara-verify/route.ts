@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { captureAuthorizedTamaraOrder, capturePendingTamaraCheckout } from "@/services/payments/tamara";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { alertLateCronCaptures } from "@/lib/cron-alerts";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
 /**
- * Tamara Verification Fallback Cron (runs periodically via Vercel Crons).
+ * Tamara Verification Fallback Cron (daily via vercel.json crons — the Hobby
+ * plan allows one run per day, fired anywhere within the scheduled hour).
  *
- * Scans recent pending Tamara checkouts/orders to ensure payments approved on Tamara
+ * Scans pending Tamara checkouts/orders to ensure payments approved on Tamara
  * are captured and promoted even if webhooks were delayed or missed.
  */
 export async function GET(request: Request) {
@@ -17,7 +19,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const since = new Date(Date.now() - 6 * 60 * 60 * 1000); // 6 hours lookback
+  // 25h: covers the full gap between two daily runs (up to 24h59m with the
+  // Hobby ±59 min jitter). Overlap is harmless — captured checkouts leave OPEN.
+  const since = new Date(Date.now() - 25 * 60 * 60 * 1000);
 
   // PendingCheckouts not yet promoted to a real Order
   const pendingCheckouts = await (prisma as any).pendingCheckout.findMany({
@@ -45,14 +49,14 @@ export async function GET(request: Request) {
   });
 
   const results: Array<{ orderId: string; status: string }> = [];
-  let captured = 0;
+  const capturedIds: string[] = [];
 
   for (const pc of pendingCheckouts) {
     try {
       const result = await capturePendingTamaraCheckout(pc.id, {
         tamaraCheckoutId: pc.tamaraCheckoutId || undefined,
       });
-      if (result.ok && result.captured) captured += 1;
+      if (result.ok && result.captured) capturedIds.push(pc.id);
       results.push({
         orderId: pc.id,
         status: result.ok ? result.status || "ok" : result.reason,
@@ -68,7 +72,7 @@ export async function GET(request: Request) {
       const result = await captureAuthorizedTamaraOrder(order.id, {
         tamaraCheckoutId: order.tamaraCheckoutId || undefined,
       });
-      if (result.ok && result.captured) captured += 1;
+      if (result.ok && result.captured) capturedIds.push(order.id);
       results.push({
         orderId: order.id,
         status: result.ok ? result.status || "ok" : result.reason,
@@ -79,10 +83,12 @@ export async function GET(request: Request) {
     }
   }
 
+  await alertLateCronCaptures("Tamara", capturedIds);
+
   return NextResponse.json({
     success: true,
     scanned: pendingCheckouts.length + pendingOrders.length,
-    captured,
+    captured: capturedIds.length,
     results,
   });
 }

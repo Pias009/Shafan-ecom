@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { captureAuthorizedTabbyOrder, capturePendingTabbyCheckout } from "@/services/payments/tabby";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { alertLateCronCaptures } from "@/lib/cron-alerts";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
 /**
- * Retrieve Request fallback (runs every 20 minutes via vercel.json crons).
+ * Retrieve Request fallback (daily via vercel.json crons — the Hobby plan
+ * allows one run per day, fired anywhere within the scheduled hour).
  *
  * Covers the corner case where the browser never returns to the success
  * callback (closed tab, network drop) AND the webhook is missed. For each
  * pending Tabby order it calls the Retrieve Request and captures if AUTHORIZED.
- * A Tabby checkout session expires ~30 minutes after creation, so we only scan a
- * recent window.
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -20,9 +20,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Look back far enough to catch a payment authorized just before expiry, but
-  // not so far that we keep polling long-dead sessions.
-  const since = new Date(Date.now() - 6 * 60 * 60 * 1000); // 6 hours
+  // 25h: covers the full gap between two daily runs (up to 24h59m with the
+  // Hobby ±59 min jitter). Overlap is harmless — captured checkouts leave OPEN.
+  const since = new Date(Date.now() - 25 * 60 * 60 * 1000);
 
   // New path — PendingCheckouts not yet promoted to a real Order.
   const pendingCheckouts = await (prisma as any).pendingCheckout.findMany({
@@ -50,14 +50,14 @@ export async function GET(request: Request) {
   });
 
   const results: Array<{ orderId: string; status: string }> = [];
-  let captured = 0;
+  const capturedIds: string[] = [];
 
   for (const pc of pendingCheckouts) {
     try {
       const result = await capturePendingTabbyCheckout(pc.id, {
         paymentId: pc.tabbyPaymentId || undefined,
       });
-      if (result.ok && result.captured) captured += 1;
+      if (result.ok && result.captured) capturedIds.push(pc.id);
       results.push({
         orderId: pc.id,
         status: result.ok ? result.status || "ok" : result.reason,
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
       const result = await captureAuthorizedTabbyOrder(order.id, {
         paymentId: order.tabbyPaymentId || undefined,
       });
-      if (result.ok && result.captured) captured += 1;
+      if (result.ok && result.captured) capturedIds.push(order.id);
       results.push({
         orderId: order.id,
         status: result.ok ? result.status || "ok" : result.reason,
@@ -84,10 +84,12 @@ export async function GET(request: Request) {
     }
   }
 
+  await alertLateCronCaptures("Tabby", capturedIds);
+
   return NextResponse.json({
     success: true,
     scanned: pendingCheckouts.length + pendingOrders.length,
-    captured,
+    captured: capturedIds.length,
     results,
   });
 }

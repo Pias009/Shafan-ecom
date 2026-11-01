@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Trash2, ChevronDown, Truck, Plus, Minus, MapPin, Lock, ShieldCheck, Clock, Sparkles, Store, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Price } from "@/components/Price";
@@ -357,8 +357,13 @@ function CartPageContent() {
     useCartStore.getState().refreshPrices().catch(() => {});
   }, [checkoutCountry]);
 
+  // begin_checkout fires once per visit. `items` changes on every price
+  // refresh / quantity edit, and re-firing on each change inflated GA's
+  // Checkouts far above Add to carts.
+  const beginCheckoutFiredRef = useRef(false);
   useEffect(() => {
-    if (items.length > 0) {
+    if (items.length > 0 && !beginCheckoutFiredRef.current) {
+      beginCheckoutFiredRef.current = true;
       const total = items.reduce((acc, item) => {
         const { price: itemPrice } = getDisplayPrice(item, checkoutCountry);
         return acc + (Number(itemPrice) * item.quantity);
@@ -656,22 +661,6 @@ function CartPageContent() {
       const data = await orderRes.json();
 
       if (orderRes.ok && data.pendingCheckoutId) {
-        trackBeginCheckout({
-          value: totalLocal,
-          currency: getCurrencyForCountry(checkoutCountry),
-          items: items.map((i: CartItem) => {
-            const { price: itemPrice } = getDisplayPrice(i, checkoutCountry);
-            return {
-              id: i.id,
-              name: i.name || "Product",
-              price: Number(itemPrice) || 0,
-              quantity: Number(i.quantity) || 1,
-              category: i.category,
-              brand: i.brand,
-            };
-          }),
-        });
-
         if (activeMethod === "cod") {
           // Confirm the COD order — this is the moment the real Order is
           // created (promoted from the PendingCheckout); without this call

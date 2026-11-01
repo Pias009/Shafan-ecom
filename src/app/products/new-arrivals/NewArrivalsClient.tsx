@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useCountryStore } from "@/lib/country-store";
 import { hasValidPrice, getDisplayPrice } from "@/lib/product-utils";
-import { fbEvent } from "@/lib/fpixel";
+import { trackAddToCart } from "@/lib/datalayer";
 import { useLoadingStore } from "@/lib/loading-store";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -54,12 +54,15 @@ export default function NewArrivalsClient({ products }: NewArrivalsClientProps) 
     addItem(cartItem, 1);
 
     const { price: eventPrice, currency: eventCurrency } = getDisplayPrice(product, selectedCountry);
-    fbEvent('AddToCart', {
-      content_ids: [product.id],
-      content_type: 'product',
-      content_name: product.name,
-      value: eventPrice || product.price || 0,
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: eventPrice || product.price || 0,
       currency: eventCurrency,
+      category: product.categoryName,
+      brand: cartItem.brand,
+      quantity: 1,
+      sku: product.sku || undefined,
     });
     
     toast.success(`${product.name} added to cart`);

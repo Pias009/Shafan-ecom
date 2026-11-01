@@ -472,7 +472,10 @@ model PendingCheckout {
   discountAmount     Float?
   couponCode         String?
   referralSource     String?
+  gaClientId         String? // GA4 client_id from the _ga cookie, for the server-side purchase event
+  gaSessionId        String? // GA4 session_id from the _ga_<id> cookie
   stripePaymentIntentId String?
+  stripeCheckoutSessionId String?
   tabbySessionId     String?
   tabbyPaymentId     String?
   tamaraCheckoutId   String?

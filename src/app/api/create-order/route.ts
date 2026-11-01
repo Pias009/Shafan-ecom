@@ -6,6 +6,7 @@ import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { cookies } from "next/headers";
 import { createPendingCheckout } from "@/services/checkout/pending-checkout";
+import { readGaIds } from "@/lib/ga-server";
 import { customerUsageError } from "@/lib/discount-usage";
 import { convertCurrency } from "@/lib/currency-rates";
 import { loadCountryCharges } from "@/lib/vat-delivery-config";
@@ -737,6 +738,7 @@ export async function POST(req: Request) {
       discountAmount: couponCodeApplied ? effectiveDiscount : null,
       couponCode: couponCodeApplied,
       referralSource,
+      ...readGaIds(cookieStore),
     });
 
     return NextResponse.json({

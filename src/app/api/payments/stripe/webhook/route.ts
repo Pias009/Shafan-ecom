@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  // Step 2 — process event. Always return 200 regardless of internal errors.
+  // Step 2 — process event. A processing failure returns 500 so Stripe
+  // retries; finalizeStripePayment is idempotent, so a retry never duplicates.
   try {
     // Two event types can signal a completed card payment:
     // - payment_intent.succeeded: fires for both the embedded-Elements flow
@@ -85,8 +86,10 @@ export async function POST(req: Request) {
       });
     }
   } catch (processingError: any) {
-    // Log internally but still return 200 so Stripe stops retrying
+    // A paid checkout that failed to become an Order must be retried —
+    // returning 200 here would tell Stripe to give up on a charged customer.
     console.error("[Stripe Webhook] Processing error:", processingError.message, processingError);
+    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

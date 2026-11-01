@@ -26,7 +26,7 @@ import { ProductQuickViewModal } from "@/components/ProductQuickViewModal";
 import { useCartStore } from "@/lib/cart-store";
 import { useUserCountry } from "@/lib/country-detection";
 import { getDisplayPrice, hasValidPrice, resolveProductPrice } from "@/lib/product-utils";
-import { fbEvent } from "@/lib/fpixel";
+import { trackAddToCart } from "@/lib/datalayer";
 import { Price } from "@/components/Price";
 import { getOptimizedUrl } from "@/lib/cloudinary-url";
 import { useCountryStore } from "@/lib/country-store";
@@ -213,12 +213,15 @@ export function OffersClient({
     addItem(cartItem, 1);
 
     const { price: eventPrice, currency: eventCurrency } = getDisplayPrice(product, userCountry);
-    fbEvent("AddToCart", {
-      content_ids: [product.id],
-      content_type: "product",
-      content_name: product.name,
-      value: eventPrice || product.price || 0,
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      price: eventPrice || product.price || 0,
       currency: eventCurrency,
+      category: product.categoryName,
+      brand: cartItem.brand,
+      quantity: 1,
+      sku: product.sku || undefined,
     });
 
     toast.success(`${product.name} added to cart`);
