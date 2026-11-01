@@ -1,86 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getServerAuthSession } from "@/lib/auth";
-import { customerUsageError } from "@/lib/discount-usage";
+import { resolveCoupon } from "@/lib/coupon";
 
+// GET /api/coupons/validate?code=X&country=AE&products=id1,id2
+// `products` are the cart's product ids; the response says which of them the
+// code covers (eligibleProductIds: null = whole cart).
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const code = searchParams.get("code")?.toUpperCase();
+    const code = searchParams.get("code") || "";
     const country = searchParams.get("country") || "AE";
+    const productIds = (searchParams.get("products") || "").split(",").map((s) => s.trim()).filter(Boolean);
 
-    if (!code) {
+    if (!code.trim()) {
       return NextResponse.json({ valid: false, error: "Coupon code required" }, { status: 400 });
     }
 
-    const now = new Date();
-
-    // Find active discount with matching code
-    const discount = await prisma.discount.findFirst({
-      where: {
-        code: { equals: code, mode: "insensitive" },
-        active: true,
-        status: "ACTIVE",
-        countries: {
-          has: country.toUpperCase()
-        },
-        OR: [
-          { startDate: null },
-          { startDate: { lte: now } }
-        ]
-      }
-    });
-
-    // Check if discount exists and is valid
-    if (!discount) {
-      return NextResponse.json({ valid: false, error: "Invalid or expired coupon" }, { status: 400 });
-    }
-
-    // Check date validity
-    if (discount.startDate && discount.startDate > now) {
-      return NextResponse.json({ valid: false, error: "Coupon not yet active" }, { status: 400 });
-    }
-    if (discount.endDate && discount.endDate < now) {
-      return NextResponse.json({ valid: false, error: "Coupon has expired" }, { status: 400 });
-    }
-
-    // Check usage limit
-    if (discount.maxUses && discount.uses >= discount.maxUses) {
-      return NextResponse.json({ valid: false, error: "Coupon usage limit reached" }, { status: 400 });
-    }
-
-    // Per-customer limit (e.g. a welcome code that was already redeemed)
     const session = await getServerAuthSession().catch(() => null);
-    const usageError = await customerUsageError(discount, {
+    const result = await resolveCoupon({
+      code,
+      country,
+      productIds,
       userId: session?.user?.id,
       email: session?.user?.email || searchParams.get("email"),
     });
-    if (usageError) {
-      return NextResponse.json({ valid: false, error: usageError }, { status: 400 });
+
+    if (!result.ok) {
+      return NextResponse.json({ valid: false, error: result.error }, { status: 400 });
     }
 
-    // Get country-specific max limit if available
-    let maxLimitAmount = discount.maxLimitAmount;
-    if (discount.countryMaxLimits) {
-      const limits = discount.countryMaxLimits as Record<string, number>;
-      if (limits[country.toUpperCase()]) {
-        maxLimitAmount = limits[country.toUpperCase()];
-      }
-    }
-
-    // Return discount info
-    const discountValue = discount.discountType === "PERCENTAGE" 
-      ? discount.value / 100 
-      : discount.value;
-
+    const { rule } = result;
     return NextResponse.json({
       valid: true,
-      discount: discountValue,
-      code: discount.code,
-      description: discount.description,
-      type: discount.discountType,
-      minimumOrderValue: discount.minimumOrderValue,
-      maxLimitAmount: maxLimitAmount,
+      code: result.code,
+      description: result.description,
+      type: rule.type,
+      value: rule.value,
+      rule,
+      // Legacy fields (fraction for %, amount for fixed) kept for older callers.
+      discount: rule.type === "PERCENTAGE" ? rule.value / 100 : rule.value,
+      minimumOrderValue: rule.minOrder,
+      maxLimitAmount: rule.maxLimit,
+      eligibleProductIds: rule.eligibleProductIds,
     });
   } catch (error) {
     console.error("Coupon validation error:", error);

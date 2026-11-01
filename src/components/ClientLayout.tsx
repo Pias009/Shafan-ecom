@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { FloatingCartButton } from "./FloatingCartButton";
 import { LenisProvider } from "./LenisProvider";
 import SiteHealthReporter from "./SiteHealthReporter";
+import SitePopupBanner from "./SitePopupBanner";
 
 interface ClientLayoutProps {
   children: React.ReactNode;
@@ -42,6 +43,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       </Suspense>
       {children}
       {isClient && !isUeAdmin && <FloatingCartButton />}
+      {/* Admin-set coupon popup — once per visitor, on the landing page */}
+      {isClient && !isUeAdmin && <SitePopupBanner />}
       {/* Real-user speed + JS errors for Kira's Engineering team (storefront only) */}
       {!isUeAdmin && <SiteHealthReporter />}
     </>

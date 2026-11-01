@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { X, Search, Check, Loader2 } from "lucide-react";
+import { X, Search, Check, Loader2, ChevronDown } from "lucide-react";
+import { PopupBannerFields, popupBannerError } from "@/components/admin/PopupBannerFields";
 
 interface Category {
   id: string;
@@ -14,6 +15,12 @@ interface Product {
   id: string;
   name: string;
   sku?: string | null;
+  brandId?: string | null;
+}
+
+interface Brand {
+  id: string;
+  name: string;
 }
 
 interface DiscountFormData {
@@ -27,6 +34,8 @@ interface DiscountFormData {
   applyToAll: boolean;
   productIds: string[];
   categoryIds: string[];
+  /** Whole brands. Individual products picked inside a brand go in productIds. */
+  brandIds: string[];
   countries: string[];
   minimumOrderValue?: number;
   startDate: string;
@@ -37,6 +46,10 @@ interface DiscountFormData {
   maxUsesPerUser?: number;
   maxUsesPerOrder?: number;
   autoApply: boolean;
+  popupEnabled: boolean;
+  popupImage: string;
+  popupAction: "COPY_CODE" | "LINK" | "NONE";
+  popupLink: string;
 }
 
 interface DiscountFormProps {
@@ -61,6 +74,10 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [searchProduct, setSearchProduct] = useState("");
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loadingBrands, setLoadingBrands] = useState(false);
+  const [searchBrand, setSearchBrand] = useState("");
+  const [expandedBrandId, setExpandedBrandId] = useState<string | null>(null);
 
   const [form, setForm] = useState<DiscountFormData>({
     code: (initialData?.code || '') as string,
@@ -73,6 +90,7 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
     applyToAll: initialData?.applyToAll || false,
     productIds: initialData?.productIds || [],
     categoryIds: initialData?.categoryIds || [],
+    brandIds: initialData?.brandIds || [],
     countries: initialData?.countries || COUNTRIES.map((c) => c.code),
     minimumOrderValue: initialData?.minimumOrderValue,
     startDate: initialData?.startDate || "",
@@ -83,6 +101,10 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
     maxUsesPerUser: initialData?.maxUsesPerUser || 1,
     maxUsesPerOrder: initialData?.maxUsesPerOrder || 1,
     autoApply: initialData?.autoApply || false,
+    popupEnabled: initialData?.popupEnabled || false,
+    popupImage: initialData?.popupImage || "",
+    popupAction: initialData?.popupAction || "COPY_CODE",
+    popupLink: initialData?.popupLink || "",
   });
 
   // Fetch products - lightweight select endpoint
@@ -113,8 +135,22 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
       }
     };
 
+    const fetchBrands = async () => {
+      setLoadingBrands(true);
+      try {
+        const res = await fetch("/api/admin/brands");
+        const data = await res.json();
+        setBrands(Array.isArray(data) ? data.map((b: any) => ({ id: b.id, name: b.name })) : []);
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+      } finally {
+        setLoadingBrands(false);
+      }
+    };
+
     fetchProducts();
     fetchCategories();
+    fetchBrands();
   }, []);
 
   const handleInputChange = (field: keyof DiscountFormData, value: any) => {
@@ -144,6 +180,41 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
       categoryIds: prev.categoryIds.includes(categoryId)
         ? prev.categoryIds.filter((id) => id !== categoryId)
         : [...prev.categoryIds, categoryId],
+    }));
+  };
+
+  // Whole brand on/off. Turning it on drops that brand's individually picked
+  // products (the brand already covers them).
+  const handleBrandToggle = (brandId: string) => {
+    setForm((prev) => {
+      if (prev.brandIds.includes(brandId)) {
+        return { ...prev, brandIds: prev.brandIds.filter((id) => id !== brandId) };
+      }
+      const brandProductIds = new Set(products.filter((p) => p.brandId === brandId).map((p) => p.id));
+      return {
+        ...prev,
+        brandIds: [...prev.brandIds, brandId],
+        productIds: prev.productIds.filter((id) => !brandProductIds.has(id)),
+      };
+    });
+  };
+
+  const handleBrandProductToggle = (productId: string) => {
+    setForm((prev) => ({
+      ...prev,
+      productIds: prev.productIds.includes(productId)
+        ? prev.productIds.filter((id) => id !== productId)
+        : [...prev.productIds, productId],
+    }));
+  };
+
+  const handleBrandProductsBulk = (brandId: string, select: boolean) => {
+    const ids = products.filter((p) => p.brandId === brandId).map((p) => p.id);
+    setForm((prev) => ({
+      ...prev,
+      productIds: select
+        ? [...new Set([...prev.productIds, ...ids])]
+        : prev.productIds.filter((id) => !ids.includes(id)),
     }));
   };
 
@@ -181,6 +252,22 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
 
   const selectedProducts = products.filter((p) => form.productIds.includes(p.id));
 
+  const productsByBrand = useMemo(() => {
+    const map = new Map<string, Product[]>();
+    for (const p of products) {
+      if (!p.brandId) continue;
+      const list = map.get(p.brandId) || [];
+      list.push(p);
+      map.set(p.brandId, list);
+    }
+    return map;
+  }, [products]);
+
+  const filteredBrands = useMemo(() => {
+    const query = searchBrand.trim().toLowerCase();
+    return brands.filter((b) => !query || b.name.toLowerCase().includes(query));
+  }, [brands, searchBrand]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -204,6 +291,22 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
 
       if (form.countries.length === 0) {
         toast.error("Please select at least one country");
+        return;
+      }
+
+      if (
+        !form.applyToAll &&
+        form.productIds.length === 0 &&
+        form.brandIds.length === 0 &&
+        form.categoryIds.length === 0
+      ) {
+        toast.error("Tick \"Apply to all products\" or select the products, brands or categories this code is for");
+        return;
+      }
+
+      const popupError = popupBannerError(form, !!form.code.trim());
+      if (popupError) {
+        toast.error(popupError);
         return;
       }
 
@@ -516,6 +619,11 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
           />
           <span className="text-sm text-gray-700">Apply to all products</span>
         </label>
+        {!form.applyToAll && (
+          <p className="text-xs text-gray-500">
+            The code only discounts the products, brands and categories you select below. Other items in the cart are charged full price.
+          </p>
+        )}
 
         {!form.applyToAll && (
           <div className="space-y-4">
@@ -618,7 +726,179 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
         )}
       </div>
 
+      {/* Brand Selection */}
+      {!form.applyToAll && (
+        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Brands</h2>
+            <p className="text-sm text-gray-500">
+              Give this code to a whole brand (including products added later), or open a brand and pick only some of its products.
+            </p>
+          </div>
+
+          {/* Selected brands summary */}
+          {(() => {
+            const chips = brands
+              .map((brand) => {
+                const brandProducts = productsByBrand.get(brand.id) || [];
+                const picked = brandProducts.filter((p) => form.productIds.includes(p.id)).length;
+                if (form.brandIds.includes(brand.id)) return { brand, label: "Entire brand" };
+                if (picked > 0) return { brand, label: `${picked} of ${brandProducts.length} products` };
+                return null;
+              })
+              .filter(Boolean) as { brand: Brand; label: string }[];
+            if (chips.length === 0) return null;
+            return (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                <span className="text-sm font-semibold text-blue-800">Selected Brands ({chips.length})</span>
+                <div className="flex flex-wrap gap-2">
+                  {chips.map(({ brand, label }) => (
+                    <button
+                      key={brand.id}
+                      type="button"
+                      onClick={() => setExpandedBrandId(brand.id)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-blue-600"
+                    >
+                      {brand.name} · {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search brands..."
+              value={searchBrand}
+              onChange={(e) => setSearchBrand(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="border border-gray-200 rounded-lg max-h-[28rem] overflow-y-auto divide-y divide-gray-100">
+            {loadingBrands || loadingProducts ? (
+              <div className="p-8 text-center">
+                <Loader2 size={24} className="animate-spin mx-auto text-gray-400 mb-2" />
+                <p className="text-sm text-gray-500">Loading brands...</p>
+              </div>
+            ) : filteredBrands.length === 0 ? (
+              <p className="p-8 text-center text-sm text-gray-500">
+                {searchBrand ? `No brands match "${searchBrand}"` : "No brands available"}
+              </p>
+            ) : (
+              filteredBrands.map((brand) => {
+                const brandProducts = productsByBrand.get(brand.id) || [];
+                const wholeBrand = form.brandIds.includes(brand.id);
+                const picked = brandProducts.filter((p) => form.productIds.includes(p.id)).length;
+                const expanded = expandedBrandId === brand.id;
+                return (
+                  <div key={brand.id}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedBrandId(expanded ? null : brand.id)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
+                    >
+                      <ChevronDown
+                        size={16}
+                        className={`shrink-0 text-gray-400 transition-transform ${expanded ? "" : "-rotate-90"}`}
+                      />
+                      <span className="text-sm font-semibold text-gray-900 flex-1 truncate">{brand.name}</span>
+                      <span className="text-xs text-gray-400 shrink-0">{brandProducts.length} products</span>
+                      {wholeBrand ? (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white shrink-0">
+                          Entire brand
+                        </span>
+                      ) : picked > 0 ? (
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 shrink-0">
+                          {picked} selected
+                        </span>
+                      ) : null}
+                    </button>
+
+                    {expanded && (
+                      <div className="px-4 pb-4 pt-1 space-y-3 bg-gray-50/60">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={wholeBrand}
+                            onChange={() => handleBrandToggle(brand.id)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-800">
+                            Entire brand <span className="text-gray-400">— every product of {brand.name}, including new ones</span>
+                          </span>
+                        </label>
+
+                        {!wholeBrand && (
+                          brandProducts.length === 0 ? (
+                            <p className="text-xs text-gray-500">This brand has no active products.</p>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-medium text-gray-600">
+                                  Or pick products ({picked}/{brandProducts.length})
+                                </span>
+                                <div className="flex gap-3 text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleBrandProductsBulk(brand.id, true)}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    Select all
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleBrandProductsBulk(brand.id, false)}
+                                    className="text-gray-500 hover:underline"
+                                  >
+                                    Clear
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-60 overflow-y-auto">
+                                {brandProducts.map((product) => {
+                                  const isSelected = form.productIds.includes(product.id);
+                                  return (
+                                    <button
+                                      key={product.id}
+                                      type="button"
+                                      onClick={() => handleBrandProductToggle(product.id)}
+                                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all ${
+                                        isSelected
+                                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                                          : "bg-white hover:bg-gray-50 border border-gray-200"
+                                      }`}
+                                    >
+                                      <div
+                                        className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${
+                                          isSelected ? "bg-white/20" : "bg-gray-100"
+                                        }`}
+                                      >
+                                        {isSelected && <Check size={14} />}
+                                      </div>
+                                      <span className="text-sm font-medium truncate">{product.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Category Selection */}
+      {!form.applyToAll && (
       <div className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Categories</h2>
         <p className="text-sm text-gray-500">Select categories this discount applies to</p>
@@ -655,6 +935,19 @@ export function DiscountForm({ initialData, isEditing = false }: DiscountFormPro
           </div>
         )}
       </div>
+      )}
+
+      {/* Popup Banner */}
+      <PopupBannerFields
+        value={{
+          popupEnabled: form.popupEnabled,
+          popupImage: form.popupImage,
+          popupAction: form.popupAction,
+          popupLink: form.popupLink,
+        }}
+        onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+        couponCode={form.code}
+      />
 
       {/* Status */}
       <div className="bg-white rounded-lg shadow p-6 space-y-4">

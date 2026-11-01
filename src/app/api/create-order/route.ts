@@ -7,7 +7,8 @@ import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { cookies } from "next/headers";
 import { createPendingCheckout } from "@/services/checkout/pending-checkout";
 import { readGaIds } from "@/lib/ga-server";
-import { customerUsageError } from "@/lib/discount-usage";
+import { resolveCoupon } from "@/lib/coupon";
+import { computeCouponDiscount, type CouponLine } from "@/lib/coupon-math";
 import { convertCurrency } from "@/lib/currency-rates";
 import { loadCountryCharges } from "@/lib/vat-delivery-config";
 import { resolvePickupSelection } from "@/lib/pickup-config";
@@ -121,103 +122,41 @@ async function getProductPrice(productId: string, countryCode: string, storeCode
   return { price: 0, source: 'none' };
 }
 
-// Validate and apply discount from coupon code
+// Validate a coupon and compute its discount over the products it actually
+// covers (selected products / brands / categories, or the whole cart).
 async function applyDiscount(
   couponCode: string | undefined,
   countryCode: string,
-  subtotal: number,
+  lines: CouponLine[],
   userId?: string,
   userEmail?: string
-): Promise<{ discount: number; discountCodeUsed?: string; error?: string; usageLimitReached?: boolean }> {
-  if (!couponCode) {
-    return { discount: 0 };
-  }
+): Promise<{ discount: number; freeShipping: boolean; discountCodeUsed?: string; error?: string; usageLimitReached?: boolean }> {
+  if (!couponCode) return { discount: 0, freeShipping: false };
 
   try {
-    // Find discount by code
-    const discount = await (prisma as any).discount.findUnique({
-      where: { code: couponCode.toUpperCase() },
+    const resolved = await resolveCoupon({
+      code: couponCode,
+      country: countryCode,
+      productIds: lines.map((l) => l.productId),
+      userId,
+      email: userEmail,
     });
-
-    if (!discount) {
-      console.warn(`Discount code not found: ${couponCode}`);
-      return { discount: 0, error: "Code not found" };
+    if (!resolved.ok) {
+      console.warn(`Coupon ${couponCode} rejected: ${resolved.error}`);
+      return { discount: 0, freeShipping: false, error: resolved.error, usageLimitReached: resolved.usageLimitReached };
     }
 
-    // Check if discount is active
-    if (!discount.active || discount.status !== "ACTIVE") {
-      console.warn(`Discount code is not active: ${couponCode}`);
-      return { discount: 0, error: "Code not active" };
+    const result = computeCouponDiscount(lines, resolved.rule);
+    if (result.reason === "MIN_ORDER") {
+      return { discount: 0, freeShipping: false, error: `Minimum order ${resolved.rule.minOrder?.toFixed(2)} required` };
     }
-
-    // Check if discount is valid for the country
-    if (discount.countries && discount.countries.length > 0 && !discount.countries.includes(countryCode)) {
-      console.warn(`Discount code not valid for country: ${countryCode}`);
-      return { discount: 0, error: "Not valid for this country" };
+    if (result.reason === "NO_ELIGIBLE_ITEMS") {
+      return { discount: 0, freeShipping: false, error: "Coupon doesn't apply to these products" };
     }
-
-    // Check if discount is within valid date range
-    const now = new Date();
-    if (discount.startDate && new Date(discount.startDate) > now) {
-      console.warn(`Discount code not yet valid: ${couponCode}`);
-      return { discount: 0, error: "Code not yet valid" };
-    }
-    if (discount.endDate && new Date(discount.endDate) < now) {
-      console.warn(`Discount code expired: ${couponCode}`);
-      return { discount: 0, error: "Code has expired" };
-    }
-
-    // Check minimum order value
-    if (discount.minimumOrderValue && subtotal < discount.minimumOrderValue) {
-      console.warn(`Order doesn't meet minimum for discount: ${couponCode}`);
-      return { discount: 0, error: `Minimum order ${discount.minimumOrderValue.toFixed(2)} required` };
-    }
-
-    // Check max total uses (global limit)
-    if (discount.maxUses) {
-      const totalUsageCount = await (prisma as any).discountUsage.count({
-        where: { discountId: discount.id },
-      });
-      if (totalUsageCount >= discount.maxUses) {
-        console.warn(`Discount code has reached max total uses: ${couponCode}`);
-        return { discount: 0, error: "Code usage limit reached" };
-      }
-    }
-
-    // Check per-customer usage limits (SINGLE_USE or maxUsesPerUser) by user id OR email
-    const usageError = await customerUsageError(discount, { userId, email: userEmail });
-    if (usageError) {
-      console.warn(`Customer has reached usage limit for discount: ${couponCode}`);
-      return { discount: 0, error: usageError, usageLimitReached: true };
-    }
-
-    // Calculate discount amount
-    let rawDiscount = 0;
-    if (discount.discountType === "PERCENTAGE") {
-      rawDiscount = (subtotal * discount.value) / 100;
-    } else if (discount.discountType === "FIXED_AMOUNT") {
-      rawDiscount = discount.value;
-    } else if (discount.discountType === "FREE_SHIPPING") {
-      rawDiscount = 0;
-    }
-
-    // Apply discount cap if configured
-    let discountAmount = rawDiscount;
-    const countryMaxLimits = discount.countryMaxLimits as Record<string, number> | null;
-    const maxCap = countryMaxLimits?.[countryCode] || discount.maxLimitAmount;
-    
-    if (maxCap && maxCap > 0) {
-      discountAmount = Math.min(rawDiscount, maxCap);
-    } else if (discount.maxLimitAmount && discount.maxLimitAmount > 0) {
-      discountAmount = Math.min(rawDiscount, discount.maxLimitAmount);
-    }
-
-    discountAmount = Math.min(discountAmount, subtotal);
-
-    return { discount: discountAmount, discountCodeUsed: discount.id };
+    return { discount: result.discount, freeShipping: result.freeShipping, discountCodeUsed: resolved.discountId };
   } catch (error) {
     console.error("Error applying discount:", error);
-    return { discount: 0 };
+    return { discount: 0, freeShipping: false };
   }
 }
 
@@ -569,16 +508,25 @@ export async function POST(req: Request) {
         const discountResult = await applyDiscount(
           couponCode,
           countryCode,
-          subtotal,
+          orderItemsData.map((item) => ({ productId: item.productId, lineTotal: item.unitPrice * item.quantity })),
           session?.user?.id || undefined,
           session?.user?.email || billing?.email || shipping?.email || undefined
         );
-        if (discountResult.usageLimitReached) {
-          return NextResponse.json({ error: discountResult.error }, { status: 400 });
+        // Never charge a different amount than the cart showed: if the code no
+        // longer applies (expired, cart changed, limit hit), stop and say why.
+        if (discountResult.error && !isUserAdmin) {
+          return NextResponse.json({ error: `Coupon ${couponCode.toUpperCase()}: ${discountResult.error}`, couponError: true }, { status: 400 });
         }
         discount = discountResult.discount || 0;
-        couponCodeApplied = couponCode;
-        discountIdApplied = discountResult.discountCodeUsed || null;
+        if (discountResult.discountCodeUsed) {
+          couponCodeApplied = couponCode.toUpperCase();
+          discountIdApplied = discountResult.discountCodeUsed;
+        }
+        // Free-shipping codes waive delivery (a store-pickup fee still applies).
+        if (discountResult.freeShipping && !pickupDetails) {
+          shippingFee = 0;
+          freeDelivery = true;
+        }
         console.log(`Coupon applied: ${couponCode} -> discount: ${discount}`);
       } catch (discountError: any) {
         console.error("Discount application failed, proceeding without discount:", discountError?.message);

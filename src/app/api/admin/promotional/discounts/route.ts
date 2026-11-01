@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
+import { parsePopupInput } from "@/lib/popup-banner";
 import { prisma } from "@/lib/prisma";
 import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
@@ -148,7 +149,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      code,
       name,
       description,
       discountType = "PERCENTAGE",
@@ -164,8 +164,15 @@ export async function POST(req: NextRequest) {
       autoApply = false,
       productIds = [],
       categoryIds = [],
+      brandIds = [],
       countries = [],
+      usageType = "MULTI_USE",
+      maxUsesPerUser,
+      maxUsesPerOrder,
     } = body;
+    // Codes are matched case-insensitively at checkout; store them uppercase,
+    // and store "no code" as null (an empty string would collide on the unique index).
+    const code = typeof body.code === "string" && body.code.trim() ? body.code.trim().toUpperCase() : null;
 
     // Validate required fields
     if (!name) {
@@ -209,6 +216,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const popup = parsePopupInput(body);
+    if ("error" in popup) {
+      return NextResponse.json({ error: popup.error }, { status: 400 });
+    }
+
     // Parse dates if provided
     const startDateObj = startDate ? new Date(startDate) : null;
     const endDateObj = endDate ? new Date(endDate) : null;
@@ -223,8 +235,8 @@ export async function POST(req: NextRequest) {
 
     // Check if code is unique (if provided)
     if (code) {
-      const existingDiscount = await prisma.discount.findUnique({
-        where: { code },
+      const existingDiscount = await prisma.discount.findFirst({
+        where: { code: { equals: code, mode: "insensitive" } },
       });
       if (existingDiscount) {
         return NextResponse.json(
@@ -251,6 +263,12 @@ export async function POST(req: NextRequest) {
         maxUses,
         active,
         autoApply,
+        usageType,
+        maxUsesPerUser: maxUsesPerUser || null,
+        maxUsesPerOrder: maxUsesPerOrder || null,
+        brandIds: applyToAll ? [] : brandIds,
+        ...popup.data,
+        popupUpdatedAt: popup.data.popupEnabled ? new Date() : null,
         uses: 0,
         countries: countries.length > 0 ? countries : validCountries,
         status: active ? "ACTIVE" : "DRAFT",

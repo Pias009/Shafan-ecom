@@ -287,3 +287,19 @@ export function trackPurchase(order: {
     num_items: order.items.length,
   }, { eventId: eventId || `purchase_${order.id}` });
 }
+
+// GA4 promotion events (site-wide popup banner, checkout incentives).
+export function trackPromotion(
+  event: 'view_promotion' | 'select_promotion',
+  promo: { id: string; name: string; creative: string; slot?: string }
+): void {
+  pushToDataLayer({
+    event,
+    ecommerce: {
+      promotion_id: promo.id,
+      promotion_name: promo.name,
+      creative_name: promo.creative,
+      creative_slot: promo.slot || 'site_popup',
+    },
+  });
+}

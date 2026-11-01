@@ -140,7 +140,7 @@ export async function GET(req: Request) {
       const products = await prisma.product.findMany({
         where: { active: true },
         select: needsFullFields
-          ? { id: true, name: true, sku: true, price: true, discountPrice: true, images: true, weight: true, weightUnit: true }
+          ? { id: true, name: true, sku: true, price: true, discountPrice: true, images: true, weight: true, weightUnit: true, brandId: true }
           : select === 'name,id,sku'
             ? { id: true, name: true, sku: true }
             : { id: true, name: true },

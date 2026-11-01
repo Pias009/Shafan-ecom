@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminApiSession } from "@/lib/admin-session";
+import { parsePopupInput, popupChanged } from "@/lib/popup-banner";
 import { prisma } from "@/lib/prisma";
 import { revalidateOfferSurfaces } from "@/lib/revalidate-offers";
 
@@ -116,7 +117,6 @@ export async function PUT(
   try {
     const body = await req.json();
     const {
-      code,
       name,
       description,
       discountType,
@@ -136,8 +136,13 @@ export async function PUT(
       maxUsesPerOrder,
       productIds,
       categoryIds,
+      brandIds,
       countries,
     } = body;
+    // Codes are matched case-insensitively at checkout; store them uppercase.
+    const code = body.code === undefined
+      ? undefined
+      : typeof body.code === "string" && body.code.trim() ? body.code.trim().toUpperCase() : null;
 
     // Check if discount exists
     const existingDiscount = await prisma.discount.findUnique({
@@ -179,8 +184,8 @@ export async function PUT(
 
     // Check if code is unique (if changing code)
     if (code && code !== existingDiscount.code) {
-      const existingWithCode = await prisma.discount.findUnique({
-        where: { code },
+      const existingWithCode = await prisma.discount.findFirst({
+        where: { code: { equals: code, mode: "insensitive" }, id: { not: id } },
       });
       if (existingWithCode) {
         return NextResponse.json(
@@ -190,9 +195,9 @@ export async function PUT(
       }
     }
 
-    // Parse dates if provided
-    const startDateObj = startDate ? new Date(startDate) : undefined;
-    const endDateObj = endDate ? new Date(endDate) : undefined;
+    // Parse dates if provided; an empty value clears the date
+    const startDateObj = startDate ? new Date(startDate) : startDate === "" || startDate === null ? null : undefined;
+    const endDateObj = endDate ? new Date(endDate) : endDate === "" || endDate === null ? null : undefined;
 
     // Validate date logic if both dates are provided
     if (startDateObj && endDateObj && startDateObj >= endDateObj) {
@@ -229,6 +234,20 @@ export async function PUT(
     if (maxUsesPerUser !== undefined) updateData.maxUsesPerUser = maxUsesPerUser;
     if (maxUsesPerOrder !== undefined) updateData.maxUsesPerOrder = maxUsesPerOrder;
     if (countries !== undefined) updateData.countries = countries.length > 0 ? countries : validCountries;
+    if (brandIds !== undefined) updateData.brandIds = applyToAll ? [] : brandIds;
+
+    // Popup banner (sent together by the discount form). A visible change gets
+    // a new version so every visitor sees the new banner once.
+    if (body.popupEnabled !== undefined) {
+      const popup = parsePopupInput(body);
+      if ("error" in popup) {
+        return NextResponse.json({ error: popup.error }, { status: 400 });
+      }
+      Object.assign(updateData, popup.data);
+      if (popup.data.popupEnabled && (popupChanged(existingDiscount, popup.data) || !existingDiscount.popupUpdatedAt)) {
+        updateData.popupUpdatedAt = new Date();
+      }
+    }
 
     // Handle product connections if provided
     let productConnectDisconnect: any = undefined;

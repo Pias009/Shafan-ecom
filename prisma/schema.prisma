@@ -581,6 +581,14 @@ model OfferSection {
   productIds String[] @db.ObjectId
   sortOrder  Int      @default(0)
   active     Boolean  @default(true)
+  // Coupon code for exactly this section's products (a normal Discount, kept in sync on save)
+  discountId String?  @db.ObjectId
+  // Site-wide popup banner (same behaviour as Discount.popup*)
+  popupEnabled   Boolean   @default(false)
+  popupImage     String?
+  popupAction    String?   // COPY_CODE | LINK | NONE
+  popupLink      String?
+  popupUpdatedAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -629,6 +637,7 @@ model Discount {
 
   // Application scope
   applyToAll        Boolean @default(false)
+  brandIds          String[] @db.ObjectId // Whole brands this code covers (individual products live in productDiscounts)
   minimumOrderValue Float? // Minimum order amount
 
   // Validity
@@ -644,6 +653,13 @@ model Discount {
 
   // Country-specific discount caps
   countryMaxLimits Json? // JSON: { "AE": 50, "KW": 10, "KW": 15 } - max discount per country in that currency
+
+  // Site-wide popup banner (one full image, shown once per visitor)
+  popupEnabled   Boolean   @default(false)
+  popupImage     String?
+  popupAction    String?   // COPY_CODE | LINK | NONE
+  popupLink      String?
+  popupUpdatedAt DateTime? // Bumped when the banner changes, so visitors see the new one once
 
   // Status
   active    Boolean @default(true)

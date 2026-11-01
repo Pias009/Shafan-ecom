@@ -18,6 +18,9 @@ import { getDisplayPrice } from "@/lib/product-utils";
 import { COUNTRY_CONFIG } from "@/lib/address-config";
 import { useLoadingStore } from "@/lib/loading-store";
 import { trackBeginCheckout } from "@/lib/datalayer";
+import { computeCouponDiscount } from "@/lib/coupon-math";
+import { CheckoutOfferBanner } from "@/components/checkout/CheckoutOfferBanner";
+import { MysteryBoxPromo } from "@/components/checkout/MysteryBoxPromo";
 import type { CartItem } from "@/lib/cart-store";
 import PaymentSelection from "@/components/checkout/PaymentSelection";
 import TabbyPromo from "@/components/TabbyPromo";
@@ -175,9 +178,9 @@ function CartPageContent() {
     removeItem,
     updateQuantity,
     couponCode,
-    couponDiscount,
-    couponMaxLimit,
+    couponRule,
     applyCoupon,
+    revalidateCoupon,
     removeCoupon,
     setHasAddress,
     hasAddress,
@@ -383,6 +386,18 @@ function CartPageContent() {
     }
   }, [items, checkoutCountry]);
 
+  // Re-check the applied code whenever the cart's products change: a product-
+  // or brand-specific code stops applying once its products leave the cart.
+  // Also upgrades carts persisted before coupons carried a rule.
+  const cartProductKey = items.map((i) => i.id).sort().join(",");
+  useEffect(() => {
+    if (!couponCode) return;
+    revalidateCoupon().then((err) => {
+      if (err) toast.error(`Coupon ${couponCode} removed: ${err}`);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartProductKey, checkoutCountry]);
+
   if (!mounted) return null;
 
   function getChargeConfig(code: string) {
@@ -396,14 +411,27 @@ function CartPageContent() {
     return acc + (Number(itemPrice) * item.quantity);
   }, 0);
 
-  const rawDiscount = subtotal * couponDiscount;
-  const discount = couponMaxLimit ? Math.min(rawDiscount, couponMaxLimit) : rawDiscount;
+  // Same maths as create-order: only the products the code covers are discounted.
+  const couponResult = couponRule
+    ? computeCouponDiscount(
+        items.map((item) => ({
+          productId: item.id,
+          lineTotal: Number(getDisplayPrice(item, checkoutCountry).price) * item.quantity,
+        })),
+        couponRule
+      )
+    : null;
+  const discount = couponResult?.discount || 0;
+  const couponFreeShipping = !!couponResult?.freeShipping;
+  const couponEligibleCount = couponRule?.eligibleProductIds
+    ? items.filter((i) => couponRule.eligibleProductIds!.includes(i.id)).length
+    : null;
 
   const deliveryConfig = getChargeConfig(checkoutCountry);
   const allItemsFreeDelivery = items.length > 0 && items.every((i) => i.deliveryFeeOption === "FREE");
   const shipping = isPickup
     ? pickupConfig!.fee
-    : (allItemsFreeDelivery ? 0 : (subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee));
+    : (allItemsFreeDelivery || couponFreeShipping ? 0 : (subtotal >= deliveryConfig.freeDelivery ? 0 : deliveryConfig.deliveryFee));
 
   const countryTaxRate = deliveryConfig.taxRate || 0;
   const taxableSubtotal = items.reduce((acc, item) => {
@@ -419,10 +447,10 @@ function CartPageContent() {
   const total = Number((preTaxTotal + taxAmount).toFixed(2));
 
 
-  async function handleApplyCoupon() {
-    if (!couponInput.trim()) return;
+  async function handleApplyCoupon(code: string = couponInput) {
+    if (!code.trim()) return;
     setApplyingCoupon(true);
-    const result = await applyCoupon(couponInput);
+    const result = await applyCoupon(code);
     if (result.success) {
       toast.success(t.cart.couponApplied);
       setCouponInput("");
@@ -550,7 +578,10 @@ function CartPageContent() {
       const calculatedSubtotal = Number(orderItems.reduce((sum: number, i: { productId: string; quantity: number; price: number }) => sum + (i.price * i.quantity), 0));
 
       const deliveryConfigLocal = getChargeConfig(checkoutCountry);
-      const allItemsFree = items.length > 0 && items.every((i: CartItem) => i.deliveryFeeOption === "FREE");
+      const couponLocal = couponRule
+        ? computeCouponDiscount(orderItems.map((i) => ({ productId: i.productId, lineTotal: i.price * i.quantity })), couponRule)
+        : null;
+      const allItemsFree = (items.length > 0 && items.every((i: CartItem) => i.deliveryFeeOption === "FREE")) || !!couponLocal?.freeShipping;
       const freeDeliveryThreshold = deliveryConfigLocal?.freeDelivery || 150;
       const shippingFee = isPickup
         ? pickupConfig!.fee
@@ -559,7 +590,7 @@ function CartPageContent() {
         ? { deliveryMethod: DELIVERY_METHOD_PICKUP, pickupLocationId: selectedPickupLocation?.id }
         : { deliveryMethod: DELIVERY_METHOD_SHIP };
 
-      const discountAmount = Math.min(calculatedSubtotal * couponDiscount, couponMaxLimit ?? Infinity);
+      const discountAmount = couponLocal?.discount || 0;
 
       const taxRateLocal = deliveryConfigLocal?.taxRate || 0;
       const taxableSub = items.reduce((acc, item: CartItem) => {
@@ -727,6 +758,9 @@ function CartPageContent() {
           }
         }
       } else if (!orderRes.ok) {
+        // The code stopped applying since it was added — drop it so the
+        // customer sees the real total before trying again.
+        if (data?.couponError) removeCoupon();
         toast.error(data?.error || `Server error (${orderRes.status})`, { id: "checkout" });
         console.error("Order failed:", orderRes.status, data);
       } else if (data.minOrderRequired) {
@@ -1288,6 +1322,16 @@ function CartPageContent() {
                 )}
               </div>
 
+              {!isEmpty && (
+                <MysteryBoxPromo
+                  units={items.reduce(
+                    (acc: number, i: CartItem) => (getDisplayPrice(i, checkoutCountry).price > 0 ? acc + i.quantity : acc),
+                    0
+                  )}
+                  isArabic={isArabic}
+                />
+              )}
+
               {/* Delivery Data Box — One box after the product box */}
               {!isEmpty && isPickup && selectedPickupLocation && (
                 <div className="rounded-2xl lg:rounded-3xl border border-blue-500/20 bg-blue-500/5 shadow-sm p-4 sm:p-5 flex items-center gap-3">
@@ -1319,6 +1363,13 @@ function CartPageContent() {
               {!isEmpty && (
                 <>
               <div className="rounded-2xl lg:rounded-3xl border border-black/5 bg-white/50 backdrop-blur-md shadow-sm p-5 md:p-6">
+                {!couponCode && (
+                  <CheckoutOfferBanner
+                    country={checkoutCountry}
+                    applying={applyingCoupon}
+                    onApply={(code) => handleApplyCoupon(code)}
+                  />
+                )}
                 {!couponCode ? (
                   <div className="flex gap-2">
                     <input
@@ -1330,7 +1381,7 @@ function CartPageContent() {
                       onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
                     />
                     <button
-                      onClick={handleApplyCoupon}
+                      onClick={() => handleApplyCoupon()}
                       disabled={applyingCoupon || !couponInput.trim()}
                       className="px-5 py-3 bg-black text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-black/80 disabled:opacity-50 transition shrink-0 cursor-pointer active:scale-95"
                     >
@@ -1343,9 +1394,19 @@ function CartPageContent() {
                       <span className="text-[10px] md:text-xs font-black uppercase tracking-wider text-green-600">
                         {t.cart.promo} ({couponCode})
                       </span>
-                      {couponMaxLimit && (
+                      {couponRule?.maxLimit ? (
                         <span className="text-[8px] text-green-500 font-normal">
-                          Max cap: <Price amount={couponMaxLimit} />
+                          Max cap: <Price amount={couponRule.maxLimit} />
+                        </span>
+                      ) : null}
+                      {couponEligibleCount !== null && (
+                        <span className="text-[9px] text-green-600/80 font-bold">
+                          · {couponEligibleCount} of {items.length} item{items.length === 1 ? "" : "s"} eligible
+                        </span>
+                      )}
+                      {couponResult?.reason === "MIN_ORDER" && couponRule?.minOrder && (
+                        <span className="text-[9px] text-amber-600 font-bold">
+                          · Min. order <Price amount={couponRule.minOrder} />
                         </span>
                       )}
                     </div>

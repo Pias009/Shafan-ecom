@@ -3,25 +3,53 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { X, Search, Plus, Loader2, ArrowUp, ArrowDown, Package } from "lucide-react";
+import { X, Search, Plus, Loader2, ArrowUp, ArrowDown, Package, Check } from "lucide-react";
+import { EMPTY_POPUP, PopupBannerFields, popupBannerError, type PopupBannerValue } from "@/components/admin/PopupBannerFields";
 
 interface Product {
   id: string;
   name: string;
   sku?: string | null;
   images?: string[];
+  brandId?: string | null;
 }
 
-interface OfferSectionFormData {
+interface Brand {
+  id: string;
+  name: string;
+}
+
+export interface SectionCouponForm {
+  enabled: boolean;
+  code: string;
+  discountType: "PERCENTAGE" | "FIXED_AMOUNT";
+  value: string;
+  maxLimitAmount: string;
+  minimumOrderValue: string;
+  endDate: string;
+}
+
+const EMPTY_COUPON: SectionCouponForm = {
+  enabled: false,
+  code: "",
+  discountType: "PERCENTAGE",
+  value: "",
+  maxLimitAmount: "",
+  minimumOrderValue: "",
+  endDate: "",
+};
+
+interface OfferSectionFormData extends PopupBannerValue {
   title: string;
   subtitle: string;
   productIds: string[];
   sortOrder: number;
   active: boolean;
+  coupon: SectionCouponForm;
 }
 
 interface OfferSectionFormProps {
-  initialData?: Partial<OfferSectionFormData> & { id?: string };
+  initialData?: Partial<OfferSectionFormData> & { id?: string; couponUses?: number };
   isEditing?: boolean;
 }
 
@@ -48,6 +76,8 @@ export function OfferSectionForm({ initialData, isEditing = false }: OfferSectio
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [searchProduct, setSearchProduct] = useState("");
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [brandId, setBrandId] = useState("");
 
   const [form, setForm] = useState<OfferSectionFormData>({
     title: initialData?.title || "",
@@ -55,7 +85,15 @@ export function OfferSectionForm({ initialData, isEditing = false }: OfferSectio
     productIds: initialData?.productIds || [],
     sortOrder: initialData?.sortOrder ?? 0,
     active: initialData?.active ?? true,
+    coupon: { ...EMPTY_COUPON, ...initialData?.coupon },
+    popupEnabled: initialData?.popupEnabled ?? EMPTY_POPUP.popupEnabled,
+    popupImage: initialData?.popupImage ?? EMPTY_POPUP.popupImage,
+    popupAction: initialData?.popupAction ?? EMPTY_POPUP.popupAction,
+    popupLink: initialData?.popupLink ?? EMPTY_POPUP.popupLink,
   });
+
+  const setCoupon = (patch: Partial<SectionCouponForm>) =>
+    setForm((prev) => ({ ...prev, coupon: { ...prev.coupon, ...patch } }));
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -72,6 +110,10 @@ export function OfferSectionForm({ initialData, isEditing = false }: OfferSectio
       }
     };
     fetchProducts();
+    fetch("/api/admin/brands")
+      .then((res) => res.json())
+      .then((data) => setBrands(Array.isArray(data) ? data.map((b: any) => ({ id: b.id, name: b.name })) : []))
+      .catch(() => {});
   }, []);
 
   const handleInputChange = <K extends keyof OfferSectionFormData>(field: K, value: OfferSectionFormData[K]) => {
@@ -108,6 +150,28 @@ export function OfferSectionForm({ initialData, isEditing = false }: OfferSectio
     );
   }, [products, searchProduct, form.productIds]);
 
+  // Brands that have active products, for "Add by brand".
+  const brandProducts = useMemo(() => {
+    const map = new Map<string, Product[]>();
+    for (const p of products) {
+      if (!p.brandId) continue;
+      map.set(p.brandId, [...(map.get(p.brandId) || []), p]);
+    }
+    return map;
+  }, [products]);
+  const brandOptions = brands.filter((b) => brandProducts.has(b.id));
+  const currentBrandProducts = brandId ? brandProducts.get(brandId) || [] : [];
+  const currentBrandInSection = currentBrandProducts.filter((p) => form.productIds.includes(p.id)).length;
+
+  const toggleSectionProduct = (productId: string) =>
+    form.productIds.includes(productId) ? handleRemoveProduct(productId) : handleAddProduct(productId);
+
+  const addAllBrandProducts = () =>
+    setForm((prev) => ({
+      ...prev,
+      productIds: [...prev.productIds, ...currentBrandProducts.map((p) => p.id).filter((id) => !prev.productIds.includes(id))],
+    }));
+
   // Keep admin-chosen order; products that are no longer active drop out of the lookup.
   const selectedProducts = form.productIds
     .map((id) => productById.get(id))
@@ -122,6 +186,21 @@ export function OfferSectionForm({ initialData, isEditing = false }: OfferSectio
     }
     if (form.productIds.length === 0) {
       toast.error("Please select at least one product");
+      return;
+    }
+    if (form.coupon.enabled) {
+      if (!form.coupon.code.trim()) {
+        toast.error("Enter the coupon code");
+        return;
+      }
+      if (!(Number(form.coupon.value) > 0)) {
+        toast.error("Enter the coupon discount value");
+        return;
+      }
+    }
+    const popupError = popupBannerError(form, form.coupon.enabled && !!form.coupon.code.trim());
+    if (popupError) {
+      toast.error(popupError);
       return;
     }
 
@@ -248,6 +327,68 @@ export function OfferSectionForm({ initialData, isEditing = false }: OfferSectio
           </div>
         )}
 
+        {/* Add by brand */}
+        <div className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/60">
+          <div className="flex flex-col md:flex-row md:items-center gap-2">
+            <span className="text-sm font-medium text-gray-700 shrink-0">Add products by brand</span>
+            <select
+              value={brandId}
+              onChange={(e) => setBrandId(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Choose a brand…</option>
+              {brandOptions.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} ({brandProducts.get(b.id)?.length || 0})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {brandId && (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">
+                  {currentBrandInSection} of {currentBrandProducts.length} in this section — tick the ones you want
+                </span>
+                <button
+                  type="button"
+                  onClick={addAllBrandProducts}
+                  disabled={currentBrandInSection === currentBrandProducts.length}
+                  className="text-xs font-medium text-blue-600 hover:underline disabled:text-gray-400 disabled:no-underline"
+                >
+                  Add all {currentBrandProducts.length - currentBrandInSection > 0 ? `(${currentBrandProducts.length - currentBrandInSection})` : ""}
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-72 overflow-y-auto">
+                {currentBrandProducts.map((product) => {
+                  const inSection = form.productIds.includes(product.id);
+                  return (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => toggleSectionProduct(product.id)}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all border ${
+                        inSection ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${
+                          inSection ? "bg-white/20" : "bg-gray-100"
+                        }`}
+                      >
+                        {inSection && <Check size={14} />}
+                      </div>
+                      <Thumb product={product} size={28} />
+                      <span className="text-sm font-medium truncate">{product.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+
         {/* Search Bar */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -306,6 +447,119 @@ export function OfferSectionForm({ initialData, isEditing = false }: OfferSectio
           </p>
         )}
       </div>
+
+      {/* Coupon code for this section */}
+      <div className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Coupon Code</h2>
+          <p className="text-sm text-gray-500">
+            A code that discounts only the products in this section — other items in the cart are charged full price.
+          </p>
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.coupon.enabled}
+            onChange={(e) => setCoupon({ enabled: e.target.checked })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-700">Create a coupon code for these products</span>
+        </label>
+
+        {form.coupon.enabled && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Code *</label>
+                <input
+                  type="text"
+                  value={form.coupon.code}
+                  onChange={(e) => setCoupon({ code: e.target.value.toUpperCase().replace(/\s/g, "") })}
+                  placeholder="e.g. UAE55"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Discount type</label>
+                <select
+                  value={form.coupon.discountType}
+                  onChange={(e) => setCoupon({ discountType: e.target.value as SectionCouponForm["discountType"] })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="PERCENTAGE">Percentage (%)</option>
+                  <option value="FIXED_AMOUNT">Fixed amount</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {form.coupon.discountType === "PERCENTAGE" ? "Percent off *" : "Amount off *"}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={form.coupon.value}
+                  onChange={(e) => setCoupon({ value: e.target.value })}
+                  placeholder={form.coupon.discountType === "PERCENTAGE" ? "55" : "20"}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Max discount (optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={form.coupon.maxLimitAmount}
+                  onChange={(e) => setCoupon({ maxLimitAmount: e.target.value })}
+                  placeholder="No cap"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Minimum order (optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={form.coupon.minimumOrderValue}
+                  onChange={(e) => setCoupon({ minimumOrderValue: e.target.value })}
+                  placeholder="None"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ends (optional)</label>
+                <input
+                  type="datetime-local"
+                  value={form.coupon.endDate}
+                  onChange={(e) => setCoupon({ endDate: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Works in all 6 countries and appears under Discounts &amp; coupons. Adding or removing products here updates which
+              products the code covers.{initialData?.couponUses ? ` Used ${initialData.couponUses} time(s) so far.` : ""}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Popup banner */}
+      <PopupBannerFields
+        value={{
+          popupEnabled: form.popupEnabled,
+          popupImage: form.popupImage,
+          popupAction: form.popupAction,
+          popupLink: form.popupLink,
+        }}
+        onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+        couponCode={form.coupon.enabled ? form.coupon.code : ""}
+      />
 
       {/* Status */}
       <div className="bg-white rounded-lg shadow p-6 space-y-4">

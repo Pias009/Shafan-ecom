@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useCountryStore } from "./country-store";
 import { getDisplayPrice } from "./product-utils";
+import type { CouponRule } from "./coupon-math";
 
 export interface ProductSummary {
   id: string;
@@ -27,12 +28,14 @@ export interface CartItem extends ProductSummary {
 interface CartState {
   items: CartItem[];
   couponCode: string | null;
-  couponDiscount: number;
-  couponMaxLimit: number | null;
+  /** Server-resolved rule for the applied code (scope, type, cap, minimum). */
+  couponRule: CouponRule | null;
   addItem: (product: ProductSummary, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
-  applyCoupon: (code: string) => Promise<{ success: boolean; error?: string }>;
+  applyCoupon: (code: string) => Promise<{ success: boolean; error?: string; networkError?: boolean }>;
+  /** Re-checks the applied code against the current cart; drops it and returns the reason if it no longer applies. */
+  revalidateCoupon: () => Promise<string | null>;
   removeCoupon: () => void;
   clearCart: () => void;
   hasAddress: boolean;
@@ -50,8 +53,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       couponCode: null,
-      couponDiscount: 0,
-      couponMaxLimit: null,
+      couponRule: null,
       addItem: (product, quantity = 1) =>
         set((state) => {
           // STRICT: Preserve entire countryPrices object for live recalculation
@@ -92,25 +94,31 @@ export const useCartStore = create<CartState>()(
       applyCoupon: async (code: string) => {
         try {
           const country = useCountryStore.getState().selectedCountry || "AE";
-          const res = await fetch("/api/coupons/validate?code=" + code + "&country=" + country);
+          const productIds = get().items.map((item) => item.id).join(",");
+          const res = await fetch(
+            `/api/coupons/validate?code=${encodeURIComponent(code.trim())}&country=${country}&products=${productIds}`
+          );
           const data = await res.json();
-          if (data.valid && data.discount) {
-            set({ 
-              couponCode: code, 
-              couponDiscount: data.discount,
-              couponMaxLimit: data.maxLimitAmount || null 
-            });
+          if (data.valid && data.rule) {
+            set({ couponCode: data.code || code.trim().toUpperCase(), couponRule: data.rule });
             return { success: true };
           }
-          set({ couponCode: null, couponDiscount: 0, couponMaxLimit: null });
+          set({ couponCode: null, couponRule: null });
           return { success: false, error: data.error || "Invalid coupon" };
         } catch {
-          set({ couponCode: null, couponDiscount: 0, couponMaxLimit: null });
-          return { success: false, error: "Failed to validate coupon" };
+          // Network failure: keep whatever is applied; create-order re-checks anyway.
+          return { success: false, error: "Failed to validate coupon", networkError: true };
         }
       },
-      removeCoupon: () => set({ couponCode: null, couponDiscount: 0, couponMaxLimit: null }),
-      clearCart: () => set({ items: [], couponCode: null, couponDiscount: 0 }),
+      revalidateCoupon: async () => {
+        const { couponCode } = get();
+        if (!couponCode) return null;
+        const result = await get().applyCoupon(couponCode);
+        if (result.success || result.networkError) return null;
+        return result.error || "Coupon removed";
+      },
+      removeCoupon: () => set({ couponCode: null, couponRule: null }),
+      clearCart: () => set({ items: [], couponCode: null, couponRule: null }),
       hasAddress: false,
       setHasAddress: (val) => set({ hasAddress: val }),
       refreshPrices: async () => {

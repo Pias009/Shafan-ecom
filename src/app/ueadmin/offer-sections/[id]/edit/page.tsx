@@ -13,6 +13,20 @@ interface OfferSection {
   productIds: string[];
   sortOrder: number;
   active: boolean;
+  popupEnabled?: boolean;
+  popupImage?: string | null;
+  popupAction?: string | null;
+  popupLink?: string | null;
+  coupon?: {
+    enabled: boolean;
+    code: string;
+    discountType: "PERCENTAGE" | "FIXED_AMOUNT";
+    value: number;
+    maxLimitAmount: number | null;
+    minimumOrderValue: number | null;
+    endDate: string;
+    uses: number;
+  } | null;
 }
 
 export default function EditOfferSectionPage() {
@@ -71,6 +85,22 @@ export default function EditOfferSectionPage() {
             productIds: section.productIds,
             sortOrder: section.sortOrder,
             active: section.active,
+            popupEnabled: !!section.popupEnabled,
+            popupImage: section.popupImage || "",
+            popupAction: (section.popupAction as "COPY_CODE" | "LINK" | "NONE") || "COPY_CODE",
+            popupLink: section.popupLink || "",
+            couponUses: section.coupon?.uses || 0,
+            ...(section.coupon && {
+              coupon: {
+                enabled: section.coupon.enabled,
+                code: section.coupon.code,
+                discountType: section.coupon.discountType,
+                value: String(section.coupon.value ?? ""),
+                maxLimitAmount: section.coupon.maxLimitAmount != null ? String(section.coupon.maxLimitAmount) : "",
+                minimumOrderValue: section.coupon.minimumOrderValue != null ? String(section.coupon.minimumOrderValue) : "",
+                endDate: section.coupon.endDate || "",
+              },
+            }),
           }}
           isEditing={true}
         />

@@ -17,6 +17,7 @@ interface Discount {
   active: boolean;
   status: string;
   applyToAll: boolean;
+  brandIds?: string[];
   startDate: string | null;
   endDate: string | null;
   uses: number;
@@ -34,11 +35,13 @@ function getScopeLabel(discount: Discount): { label: string; tone: "all" | "scop
   if (discount.applyToAll) return { label: "All Products", tone: "all" };
   const productCount = discount._count?.productDiscounts || 0;
   const categoryCount = discount._count?.categoryDiscounts || 0;
-  if (productCount > 0 && categoryCount > 0) {
-    return { label: `${productCount} Products, ${categoryCount} Categories`, tone: "scoped" };
-  }
-  if (productCount > 0) return { label: `${productCount} Product${productCount === 1 ? "" : "s"}`, tone: "scoped" };
-  if (categoryCount > 0) return { label: `${categoryCount} Categor${categoryCount === 1 ? "y" : "ies"}`, tone: "scoped" };
+  const brandCount = discount.brandIds?.length || 0;
+  const parts = [
+    productCount > 0 && `${productCount} Product${productCount === 1 ? "" : "s"}`,
+    brandCount > 0 && `${brandCount} Brand${brandCount === 1 ? "" : "s"}`,
+    categoryCount > 0 && `${categoryCount} Categor${categoryCount === 1 ? "y" : "ies"}`,
+  ].filter(Boolean);
+  if (parts.length > 0) return { label: parts.join(", "), tone: "scoped" };
   return { label: "Not shown on Offers", tone: "none" };
 }
 

@@ -15,6 +15,7 @@ interface Discount {
   applyToAll: boolean;
   productIds?: string[];
   categoryIds?: string[];
+  brandIds?: string[];
   countries: string[];
   minimumOrderValue?: number;
   startDate: string | null;
@@ -106,6 +107,7 @@ export default function EditDiscountPage() {
             applyToAll: discount.applyToAll,
             productIds: discount.productIds || [],
             categoryIds: discount.categoryIds || [],
+            brandIds: discount.brandIds || [],
             countries: discount.countries,
             minimumOrderValue: discount.minimumOrderValue,
             startDate: discount.startDate || '',
@@ -118,6 +120,10 @@ export default function EditDiscountPage() {
             maxUsesPerUser: (discount as any).maxUsesPerUser,
             maxUsesPerOrder: (discount as any).maxUsesPerOrder,
             autoApply: (discount as any).autoApply,
+            popupEnabled: (discount as any).popupEnabled || false,
+            popupImage: (discount as any).popupImage || "",
+            popupAction: (discount as any).popupAction || "COPY_CODE",
+            popupLink: (discount as any).popupLink || "",
           }} 
           isEditing={true} 
         />

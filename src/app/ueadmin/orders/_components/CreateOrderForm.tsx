@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, Plus, Minus, Trash2, User, Mail, Phone, MapPin, Package, CreditCard, Loader2, Scale, Box, Check } from 'lucide-react';
 import { useMemo } from 'react';
 import { COUNTRY_CONFIG } from '@/lib/address-config';
+import { computeCouponDiscount, type CouponRule } from '@/lib/coupon-math';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -55,7 +56,7 @@ export function CreateOrderForm() {
   const [vatRateCustom, setVatRateCustom] = useState<number | null>(null);
   const [vatAmountCustom, setVatAmountCustom] = useState<number | null>(null);
   const [couponCode, setCouponCode] = useState("");
-  const [discountInfo, setDiscountInfo] = useState<{ code: string; type: string; discount: number; maxLimitAmount?: number } | null>(null);
+  const [discountInfo, setDiscountInfo] = useState<{ code: string; type: string; rule: CouponRule } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   // Manual admin discount, applied on top of any coupon
   const [customDiscountType, setCustomDiscountType] = useState<"FIXED" | "PERCENT">("FIXED");
@@ -175,21 +176,14 @@ export function CreateOrderForm() {
     }
   }, [subtotal, selectedCountry, countryCharges, shippingCustom]);
 
+  // Same maths as checkout: only the products the code covers are discounted.
   const couponDiscount = useMemo(() => {
     if (!discountInfo) return 0;
-    let amount = 0;
-    if (discountInfo.type === "PERCENTAGE") {
-      amount = subtotal * discountInfo.discount;
-      if (discountInfo.maxLimitAmount && amount > discountInfo.maxLimitAmount) {
-        amount = discountInfo.maxLimitAmount;
-      }
-    } else if (discountInfo.type === "FIXED_AMOUNT") {
-      amount = discountInfo.discount;
-    } else if (discountInfo.type === "FREE_SHIPPING") {
-      amount = 0; // Handled separately if needed, but usually it just zeros out shipping
-    }
-    return amount;
-  }, [subtotal, discountInfo]);
+    return computeCouponDiscount(
+      selectedItems.map((item) => ({ productId: item.product.id, lineTotal: (item.price || 0) * item.quantity })),
+      discountInfo.rule
+    ).discount;
+  }, [selectedItems, discountInfo]);
 
   const customDiscount = Math.max(0,
     customDiscountType === "PERCENT"
@@ -216,7 +210,8 @@ export function CreateOrderForm() {
     if (!couponCode) return;
     setValidatingCoupon(true);
     try {
-      const res = await fetch(`/api/coupons/validate?code=${couponCode}&country=${selectedCountry}`);
+      const productIds = selectedItems.map((item) => item.product.id).join(",");
+      const res = await fetch(`/api/coupons/validate?code=${encodeURIComponent(couponCode)}&country=${selectedCountry}&products=${productIds}`);
       const data = await res.json();
       if (data.valid) {
         setDiscountInfo(data);
@@ -378,7 +373,7 @@ export function CreateOrderForm() {
               </div>
               {discountInfo && (
                 <div className="px-2 text-[9px] font-bold text-green-600 flex items-center gap-1 mt-1">
-                   <Check size={10} /> {discountInfo.code} Applied ({discountInfo.type === 'PERCENTAGE' ? `${(discountInfo.discount * 100).toFixed(0)}%` : 'Fixed'})
+                   <Check size={10} /> {discountInfo.code} Applied ({discountInfo.type === 'PERCENTAGE' ? `${discountInfo.rule.value}%` : discountInfo.type === 'FREE_SHIPPING' ? 'Free shipping' : 'Fixed'}{discountInfo.rule.eligibleProductIds ? ` · ${discountInfo.rule.eligibleProductIds.length} eligible item(s)` : ''})
                    <button onClick={() => setDiscountInfo(null)} className="text-red-500 hover:underline ml-2">Remove</button>
                 </div>
               )}

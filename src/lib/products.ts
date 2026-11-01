@@ -388,7 +388,7 @@ export async function getProducts(storeCode?: string, page: number = 1, limit: n
 export async function getProductsForSelect(storeCode?: string, includeSku: boolean = false) {
   try {
     const selectFields = includeSku 
-      ? { id: true, name: true, sku: true }
+      ? { id: true, name: true, sku: true, brandId: true }
       : { id: true, name: true };
 
     const dbProducts = await prisma.product.findMany({
@@ -402,6 +402,7 @@ export async function getProductsForSelect(storeCode?: string, includeSku: boole
       id: p.id,
       name: p.name,
       sku: p.sku || null,
+      ...(includeSku ? { brandId: p.brandId || null } : {}),
     }));
   } catch (error: any) {
     console.error("Prisma Product Select Fetch Error:", error);
