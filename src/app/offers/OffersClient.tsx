@@ -169,13 +169,11 @@ function OfferBannerSlider({ banners }: { banners: OfferBanner[] }) {
 }
 
 export function OffersClient({
-  products = [],
   coupons = [],
   flashProducts = [],
   banners = [],
   offerSections = [],
 }: {
-  products: any[];
   coupons: Coupon[];
   flashProducts?: any[];
   banners?: OfferBanner[];
@@ -188,10 +186,6 @@ export function OffersClient({
   const { selectedCountry, _hasHydrated } = useCountryStore();
   const router = useRouter();
   const userCountry = useUserCountry();
-
-  // Deduplicate products between flash sales and special offers
-  const flashIds = new Set((flashProducts || []).map((p: any) => p.id));
-  const otherOfferProducts = (products || []).filter((p: any) => !flashIds.has(p.id));
 
   // Hide a curated section entirely when none of its products are priced for this country.
   // Until the country store hydrates, render all sections so SSR and first client render match.
@@ -359,7 +353,7 @@ export function OffersClient({
               <div className="text-right">
                 <span className="text-[10px] sm:text-xs text-slate-400 block sm:inline">Active: </span>
                 <span className="text-[11px] sm:text-sm font-bold text-slate-800">
-                  {coupons.length + (flashProducts?.length || 0) + otherOfferProducts.length} Deals
+                  {coupons.length + (flashProducts?.length || 0)} Deals
                 </span>
               </div>
             </div>
@@ -664,45 +658,6 @@ export function OffersClient({
               </div>
             </div>
           ))}
-
-          {/* More Special Offers & Discounts Section (Rendered with Product Priority) */}
-          {otherOfferProducts.length > 0 && (
-            <div className="mt-6 sm:mt-12">
-              <div className="flex items-center justify-between mb-2.5 sm:mb-5">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-8 h-8 sm:w-11 sm:h-11 bg-pink-100 rounded-xl sm:rounded-2xl flex items-center justify-center text-[#890754] shadow-xs shrink-0">
-                    <Sparkles size={18} className="sm:w-5 sm:h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-base sm:text-2xl font-black uppercase tracking-tight text-slate-900">
-                      Special Deals & Discounts
-                    </h2>
-                    <p className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      Curated promotional savings
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2-Column Responsive Product Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6">
-                {otherOfferProducts.map((product: any) => (
-                  <div key={product.id} className="w-full">
-                    <ProductCard
-                      product={{
-                        ...product,
-                        price: product.price,
-                        imageUrl: product.imageUrl || product.mainImage,
-                      }}
-                      onQuickView={(p) => setQuickView(p)}
-                      onAddToCart={(p) => addToCart(p)}
-                      onOrderNow={(p) => orderNow(p)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
         </div>
       </section>
