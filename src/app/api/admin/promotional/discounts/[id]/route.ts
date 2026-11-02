@@ -339,37 +339,54 @@ export async function DELETE(
     if (!existingDiscount) {
       return NextResponse.json({ error: "Discount not found" }, { status: 404 });
     }
+    const label = existingDiscount.code || existingDiscount.name;
 
-    // Check if discount is used in any banners
-    const bannersUsingDiscount = await prisma.enhancedOfferBanner.count({
-      where: { discountId: id },
-    });
+    const [bannersUsingDiscount, usageCount] = await Promise.all([
+      prisma.enhancedOfferBanner.count({ where: { discountId: id } }),
+      prisma.discountUsage.count({ where: { discountId: id } }),
+    ]);
 
     if (bannersUsingDiscount > 0) {
       return NextResponse.json(
-        { 
-          error: "Cannot delete discount that is used in banners",
+        {
+          error: `${label} is used by ${bannersUsingDiscount} offer banner${bannersUsingDiscount === 1 ? "" : "s"}`,
           bannersCount: bannersUsingDiscount,
-          suggestion: "Deactivate the discount instead or update the banners first"
+          suggestion: "Deactivate the discount instead or update the banners first",
         },
-        { status: 400 }
+        { status: 409 }
       );
     }
 
-    // Delete the discount (this will cascade to ProductDiscount and CategoryDiscount due to relations)
-    await prisma.discount.delete({
-      where: { id },
-    });
+    // Redemptions are order history (and per-customer limits) — keep them.
+    if (usageCount > 0) {
+      return NextResponse.json(
+        {
+          error: `${label} has been used on ${usageCount} order${usageCount === 1 ? "" : "s"}`,
+          usageCount,
+          suggestion: "Deactivate it instead so order history stays intact",
+        },
+        { status: 409 }
+      );
+    }
+
+    // MongoDB relations don't cascade: product/category links block the delete
+    // unless removed first. Offer sections only hold the id, so unlink them.
+    await prisma.$transaction([
+      prisma.productDiscount.deleteMany({ where: { discountId: id } }),
+      prisma.categoryDiscount.deleteMany({ where: { discountId: id } }),
+      prisma.offerSection.updateMany({ where: { discountId: id }, data: { discountId: null } }),
+      prisma.discount.delete({ where: { id } }),
+    ]);
     revalidateOfferSurfaces();
 
     return NextResponse.json(
-      { message: "Discount deleted successfully" },
+      { message: `${label} deleted` },
       { status: 200 }
     );
   } catch (error) {
     console.error("Error deleting discount:", error);
     return NextResponse.json(
-      { error: "Failed to delete discount" },
+      { error: "Failed to delete discount", detail: error instanceof Error ? error.message.slice(0, 200) : undefined },
       { status: 500 }
     );
   }

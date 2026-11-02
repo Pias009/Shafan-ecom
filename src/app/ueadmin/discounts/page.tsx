@@ -96,21 +96,31 @@ export default function DiscountsPage() {
 
   const handleDelete = async (id: string) => {
     if (!deleteId) return;
+    const target = discounts.find((d) => d.id === id);
+    const label = target?.code || target?.name || "Discount";
 
     try {
       const res = await fetch(`/api/admin/promotional/discounts/${id}`, {
         method: "DELETE",
       });
+      const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) throw new Error("Failed to delete");
-      toast.success("Discount deleted successfully");
+      if (!res.ok) {
+        const reason = [data.error, data.suggestion].filter(Boolean).join(". ");
+        toast.error(`Couldn't delete ${label}${reason ? `: ${reason}` : ""}`, { duration: 7000 });
+        setDeleteId(null);
+        return;
+      }
+      toast.success(`${label} deleted`);
       setDeleteId(null);
       fetchDiscounts();
     } catch (error) {
       console.error("Error deleting discount:", error);
-      toast.error("Failed to delete discount");
+      toast.error(`Couldn't delete ${label}: network error, try again`);
     }
   };
+
+  const pendingDelete = discounts.find((d) => d.id === deleteId);
 
   const handleCopyCode = (code: string | null) => {
     if (!code) {
@@ -341,7 +351,10 @@ export default function DiscountsPage() {
       {deleteId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-sm w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Discount?</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              Delete {pendingDelete?.code ? <span className="font-mono">{pendingDelete.code}</span> : "discount"}?
+            </h3>
+            {pendingDelete?.name && <p className="text-sm text-gray-500 mb-4">{pendingDelete.name}</p>}
             <p className="text-gray-600 mb-6">
               This action cannot be undone. The discount will be permanently deleted.
             </p>
