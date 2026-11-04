@@ -30,7 +30,7 @@ export async function getHomePageData(storeCode?: string) {
   } catch (error) {
     // Not cached: the next request retries instead of serving an empty homepage for a minute
     console.error("HomePage data fetch error:", error);
-    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [], makeupProducts: [], fragranceProducts: [], banners: [], rejuvenateSection: null, haircareSection: null, offerSections: [], homeSections: [] };
+    return { products: [], newArrivals: [], flashSales: [], trending: [], routine: [], bestSellers: [], makeupProducts: [], fragranceProducts: [], banners: [], rejuvenateSection: null, haircareSection: null, homeSections: [] };
   }
 }
 
@@ -93,7 +93,7 @@ async function fetchHomePageData() {
     };
   };
 
-  const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers, makeupProducts, fragranceProducts, banners, rejuvenateSetting, haircareSetting, activeOfferSections, activeHomeSections] = await Promise.all([
+  const [allProducts, newArrivals, flashSales, trending, routineProducts, bestSellers, makeupProducts, fragranceProducts, banners, rejuvenateSetting, haircareSetting, activeHomeSections] = await Promise.all([
     prisma.product.findMany({
       where: { active: true },
       select: selectFields,
@@ -182,10 +182,6 @@ async function fetchHomePageData() {
     (prisma as any).appSettings.findUnique({
       where: { type: 'haircare_section' },
     }).catch(() => null),
-    (prisma as any).offerSection.findMany({
-      where: { active: true },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-    }).catch(() => []),
     prisma.homeSection.findMany({
       where: { active: true },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
@@ -194,8 +190,10 @@ async function fetchHomePageData() {
 
   // Resolve each section's productIds to real, active products, in the
   // admin's chosen order — same two-phase pattern as /offers/page.tsx.
+  // Offer sections (discounted products) are deliberately not fetched here:
+  // they belong on /offers only, never the homepage.
   const sectionProductIds: string[] = Array.from(
-    new Set([...activeOfferSections, ...activeHomeSections].flatMap((s: any) => s.productIds as string[]))
+    new Set(activeHomeSections.flatMap((s: any) => s.productIds as string[]))
   );
   const sectionProducts = sectionProductIds.length
     ? await prisma.product.findMany({
@@ -204,15 +202,6 @@ async function fetchHomePageData() {
       })
     : [];
   const sectionProductById = new Map(sectionProducts.map((p: any) => [p.id, mapProduct(p)]));
-  const offerSections = activeOfferSections
-    .map((s: any) => ({
-      id: s.id,
-      title: s.title,
-      subtitle: s.subtitle,
-      products: s.productIds.map((id: string) => sectionProductById.get(id)).filter(Boolean),
-    }))
-    .filter((s: any) => s.products.length > 0);
-
   // Admin-built homepage rows; the category name only feeds the "See All" link.
   const homeSectionCategoryIds = Array.from(
     new Set(activeHomeSections.map((s) => s.categoryId).filter((id): id is string => Boolean(id)))
@@ -244,7 +233,6 @@ async function fetchHomePageData() {
     banners: filterByPlacement(banners || [], "HERO").filter((b: any) => b.imageUrl && b.imageUrl.trim() !== ""),
     rejuvenateSection: (rejuvenateSetting?.data as any) || null,
     haircareSection: (haircareSetting?.data as any) || null,
-    offerSections,
     homeSections,
   };
 

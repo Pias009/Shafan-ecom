@@ -15,7 +15,6 @@ import { FlashSalesSlider } from "@/components/FlashSalesSlider";
 import { RoutineSection } from "@/components/RoutineSection";
 import RejuvenateBestProductsSection from "@/components/RejuvenateBestProductsSection";
 import { HomeSectionBlock } from "@/components/HomeSectionBlock";
-import { OfferSectionBlock } from "@/components/OfferSectionBlock";
 import HairCareSpotlightSection from "@/components/HairCareSpotlightSection";
 import { HexPinwheelShowcase } from "@/components/HexPinwheelShowcase";
 import MakeupSpotlightSection from "@/components/MakeupSpotlightSection";
@@ -111,7 +110,6 @@ export default function HomeClient({
   banners = [],
   rejuvenateSection = null,
   haircareSection = null,
-  offerSections = [],
   homeSections = []
 }: {
   initialProducts: any[],
@@ -125,7 +123,6 @@ export default function HomeClient({
   banners?: any[],
   rejuvenateSection?: any,
   haircareSection?: any,
-  offerSections?: any[],
   homeSections?: any[]
 }) {
   const [products] = useState<any[]>(initialProducts || []);
@@ -394,13 +391,7 @@ export default function HomeClient({
           />
         ))}
 
-        {/* 4.6 Admin-curated Offer Sections */}
-        <OfferSectionBlock
-          sections={offerSections}
-          onQuickView={setQuickView}
-          addToCart={addToCart}
-          orderNow={orderNow}
-        />
+        {/* Offer sections (discounted products) render only on /offers */}
 
         {/* 4.5 The Luxury Makeup Edit Spotlight Section */}
         {filteredMakeup.length > 0 && (
