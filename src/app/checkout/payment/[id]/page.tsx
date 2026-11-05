@@ -158,7 +158,8 @@ function PaymentPageContent() {
       };
       orderCountry = currencyToCountry[order.currency.toUpperCase()] || "";
     }
-    if (orderCountry === "KW" && method !== "card") {
+    // Kuwait: card or Cash on Delivery only (no Tabby / Tamara).
+    if (orderCountry === "KW" && method !== "card" && method !== "cod") {
       setMethod("card");
     } else if (method === "tamara" && !isTamaraAvailable(orderCountry) && orderCountry !== "BD") {
       // Tamara isn't enabled for this country on the merchant account.
@@ -610,21 +611,19 @@ function PaymentPageContent() {
                   {method === "card" && <CheckCircle2 className="text-black" size={18} />}
                 </div>
 
-                {!isKuwait && (
-                  <div
-                    onClick={() => setMethod("cod")}
-                    className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
-                  >
-                    <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
-                      <Banknote size={20} className="md:w-6 md:h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
-                      <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
-                    </div>
-                    {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
+                <div
+                  onClick={() => setMethod("cod")}
+                  className={`flex items-center gap-4 p-4 md:p-5 rounded-3xl border-2 transition-all cursor-pointer bg-white ${method === "cod" ? "border-black shadow-lg" : "border-black/5 hover:border-black/10"}`}
+                >
+                  <div className={`p-2.5 md:p-3 rounded-2xl ${method === "cod" ? "bg-black text-white" : "bg-black/5"}`}>
+                    <Banknote size={20} className="md:w-6 md:h-6" />
                   </div>
-                )}
+                  <div className="flex-1">
+                    <div className="font-bold text-base md:text-lg">Cash on Delivery</div>
+                    <div className="text-[10px] md:text-xs text-black/40 font-medium">Pay when you receive</div>
+                  </div>
+                  {method === "cod" && <CheckCircle2 className="text-black" size={18} />}
+                </div>
 
                 {!isKuwait && (country === "AE" || country === "SA" || country === "KW" || country === "BD") && (
                   <div

@@ -2,7 +2,7 @@ import {
   LayoutDashboard, LineChart, Sparkles, ShoppingBag, Package, Tag, Layers, FolderTree, Users,
   Home, Gift, Zap, Leaf, Flame, Palette, Image as ImageIcon, GalleryHorizontal, Megaphone,
   Bell, Percent, Mail, Activity, Truck, Receipt, ShoppingCart, Store, BookOpen, FlaskConical,
-  ShieldCheck, UserCog, KeyRound, Boxes, ScanFace, Droplets, Brush, Plus, type LucideIcon,
+  ShieldCheck, UserCog, KeyRound, Boxes, ScanFace, Droplets, Brush, Plus, FileText, type LucideIcon,
 } from "lucide-react";
 
 export type NavItem = {
@@ -73,6 +73,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Shipping", href: "/ueadmin/settings/shipping", icon: Truck, keywords: "couriers rates" },
       { label: "VAT & delivery", href: "/ueadmin/settings/vat-delivery", icon: Receipt, keywords: "tax minimum order" },
       { label: "Store pickup", href: "/ueadmin/settings/pickup", icon: Store },
+      { label: "Privacy policy", href: "/ueadmin/privacy-policy", icon: FileText, keywords: "legal data cookies gdpr page" },
       { label: "Email test", href: "/ueadmin/email-test", icon: FlaskConical },
     ],
   },
